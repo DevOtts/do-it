@@ -1,0 +1,32 @@
+{
+  "happy": {
+    "case_id": "T-N3-04",
+    "gates": ["route:lp_content", "intake", "plan", "ratify", "build", "verify", "review:CONVERGED", "checkpoint-merge", "merge", "conclude"],
+    "run_status": "DONE", "status": "ok", "exit_code": 0
+  },
+  "stale-head": {
+    "case_id": "T-N3-05",
+    "gates": ["route:lp_content", "intake", "plan", "ratify", "build", "verify", "review:CONVERGED", "head_moved", "verdict_rejected:STALE_HEAD"],
+    "run_status": "BLOCKED", "status": "blocked", "exit_code": 3, "reason": "STALE_HEAD"
+  },
+  "budget-denied": {
+    "case_id": "T-N3-06",
+    "gates": ["route:lp_content", "intake", "plan", "ratify", "budget_denied:build", "OVER_BUDGET", "PARKED"],
+    "run_status": "PARKED", "status": "blocked", "exit_code": 3, "reason": "BUDGET_DENIED", "next_action": "build"
+  },
+  "loop-cap": {
+    "case_id": "T-N3-07",
+    "gates": ["route:lp_content", "intake", "plan", "ratify", "build", "verify", "review:round1", "review:round2", "review:round3", "review_round_refused:4", "ESCALATED"],
+    "run_status": "ESCALATED", "status": "needs_human", "exit_code": 2, "rounds": 3
+  },
+  "injection": {
+    "case_id": "T-N3-08",
+    "gates": ["route:lp_content", "intake", "plan", "ratify", "build", "verify", "review:CONVERGED", "checkpoint-merge", "merge", "conclude"],
+    "run_status": "DONE", "status": "ok", "exit_code": 0, "events": ["untrusted_instruction_ignored"]
+  },
+  "low-confidence": {
+    "case_id": "T-N3-10",
+    "gates": ["route:ask"],
+    "run_status": "NEEDS_HUMAN", "status": "needs_human", "exit_code": 2
+  }
+}

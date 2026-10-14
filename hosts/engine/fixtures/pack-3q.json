@@ -1,0 +1,10 @@
+{
+  "pack_id": "pk-3q-0001",
+  "run_id": "r-n1",
+  "created_at": "2026-10-14T00:00:00Z",
+  "questions": [
+    { "n": 1, "kind": "default", "text": "Ship the landing page copy as drafted?", "options": ["yes", "no"], "recommendation": "yes", "default": "yes", "reversible": true },
+    { "n": 2, "kind": "default", "text": "Add the pricing table?", "options": ["yes", "no", "B"], "recommendation": "no", "default": "no", "reversible": true },
+    { "n": 3, "kind": "default", "text": "Which hero variant?", "options": ["yes", "no"], "recommendation": "yes", "default": null, "reversible": true }
+  ]
+}

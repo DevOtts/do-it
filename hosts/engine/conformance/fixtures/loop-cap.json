@@ -1,0 +1,5 @@
+{
+  "extends": "lp_content-card",
+  "id": "card-loop-cap",
+  "review_script": [["major-a"], ["major-b"], ["major-c"], ["major-d"]]
+}

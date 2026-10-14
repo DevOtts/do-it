@@ -1,0 +1,5 @@
+{
+  "extends": "lp_content-card",
+  "id": "card-stale-head",
+  "head_moves_after_review": "bbbb2222"
+}

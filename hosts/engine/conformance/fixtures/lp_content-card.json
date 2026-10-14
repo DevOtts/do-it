@@ -1,0 +1,10 @@
+{
+  "id": "card-lp-content-1",
+  "title": "Landing page copy refresh",
+  "body": "Rewrite the hero and pricing sections of the landing page.",
+  "work_type_scores": { "lp_content": 0.92, "feature": 0.05 },
+  "head_sha": "aaaa1111",
+  "review_script": [[]],
+  "budget": { "admit": true },
+  "settings": { "repo": "acme/site", "host": "engine" }
+}
