@@ -10,3 +10,4 @@
 2026-10-14T21:23:59Z N2 merged @944191e 18/18 (T-N2-04 INV-NOT-VERIFIED: no Engine staging probed; retry in W3 with .secrets access, user authorized)
 2026-10-14T21:26:23Z P1+P4 merged @0074c77: pipelines 11, review-loop 23, personas 7, routing 24 (all 0 fail); SKILL.md regenerated
 2026-10-14T21:28:15Z S4 merged @3100612: spine 89/89 (T-S5-18 now VERIFIED), all suites green
+2026-10-14T21:29:51Z H2+H3 merged @a42ebdf: codex 17, opencode 18 (paid-call cases gated DOIT_REAL_CALLS=1, verified once by worker; log has VERIFIED lines), schema enum + ESCALATED,TIER_UNROUTED; hosts all green

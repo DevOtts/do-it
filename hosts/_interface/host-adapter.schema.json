@@ -46,7 +46,7 @@
         "output": { "type": "object" },
         "outcomes": {
           "type": "array", "minItems": 1,
-          "items": { "enum": ["ok", "HANDOFF_FAILED", "PARKED", "UNTIERED_SPAWN", "NOT_SUPPORTED"] }
+          "items": { "enum": ["ok", "HANDOFF_FAILED", "PARKED", "UNTIERED_SPAWN", "NOT_SUPPORTED", "ESCALATED", "TIER_UNROUTED"] }
         }
       }
     },
