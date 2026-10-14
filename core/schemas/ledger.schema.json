@@ -1,0 +1,28 @@
+{
+  "$id": "do-it-ledger/1",
+  "title": "ledger.json: latest verdict and evidence per DoD row",
+  "type": "object",
+  "required": ["schema", "run_id", "rows"],
+  "properties": {
+    "schema": { "const": "do-it-ledger/1" },
+    "run_id": { "type": "string", "minLength": 1 },
+    "rows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["row", "verdict", "evidence", "evidence_sha256", "real", "recorded_at", "updated_at"],
+        "properties": {
+          "row": { "type": "string", "minLength": 1 },
+          "verdict": { "enum": ["VERIFIED", "IMPLEMENTED-NOT-VERIFIED", "BLOCKED"] },
+          "evidence": { "type": ["string", "null"] },
+          "evidence_path": { "type": ["string", "null"] },
+          "evidence_sha256": { "type": ["string", "null"] },
+          "real": { "type": "boolean" },
+          "reason": { "type": ["string", "null"] },
+          "recorded_at": { "type": "string", "minLength": 1 },
+          "updated_at": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

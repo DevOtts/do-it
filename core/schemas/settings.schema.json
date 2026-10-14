@@ -1,0 +1,91 @@
+{
+  "$id": "do-it-settings/1",
+  "title": "do-it settings (workspace, global or merged)",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "version": { "const": 1 },
+    "interaction": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "owner_pack": { "enum": ["auto", "native", "html", "markdown"] },
+        "fallback": { "type": "array", "items": { "enum": ["native", "html", "markdown"] } }
+      }
+    },
+    "host": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "driver": { "type": "string", "minLength": 1 },
+        "alias": { "type": ["string", "null"] }
+      }
+    },
+    "isolation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "driver": { "type": "string", "minLength": 1 } }
+    },
+    "state": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "backend": { "type": "string", "minLength": 1 },
+        "engine": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": { "blobs": { "enum": ["rows", "r2", "fs-mirror"] } }
+        }
+      }
+    },
+    "secrets": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "provider": { "enum": ["file", "env", "aws-secrets-manager", "onepassword", "1password"] },
+        "ref": { "type": "string" }
+      }
+    },
+    "handoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": { "enum": ["auto", "ask"] },
+        "max_per_run": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_rounds": { "type": "integer", "minimum": 1 },
+        "cost_cap_tokens": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "tiers": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "T1": { "type": "string" }, "T2": { "type": "string" }, "T3": { "type": "string" } }
+    },
+    "ceilings": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "warn_tokens": { "type": "integer", "minimum": 0 },
+        "warn_pct": { "type": "number", "minimum": 0, "maximum": 100 },
+        "block_tokens": { "type": "integer", "minimum": 0 },
+        "block_pct": { "type": "number", "minimum": 0, "maximum": 100 }
+      }
+    },
+    "stop_gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "patience": { "type": "integer", "minimum": 0 } }
+    },
+    "observability": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "provider": { "type": "string", "minLength": 1 } }
+    }
+  }
+}
