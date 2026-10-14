@@ -15,3 +15,4 @@
 - W4 TODO: rerun node scripts/sync-mirror.mjs --write after final merges; mirror copies core tests dirs (consider excluding).
 - B14: codex tiers.json T1-T3 mapping guessed (needs owner confirm at init, R8). meter-provider conformance order-dependence left (minor). paid H2/H3 cases verified once by worker only; coordinator did not re-run (cost).
 - B15: Engine-Core docs/implementation/do-it-engine-layer edits are uncommitted in the Engine-Core repo (allowed folder) -> mention in report. Live Engine attempt in W4 via worker: start Docker Desktop (open -a Docker), bring up Engine-Core LOCAL dev stack only (never staging/prod), run hosts/engine/live/live-cases.mjs + T-N2-04; stop stack afterwards (reap).
+- B16: Engine gaps for owner (R3-style finding): ask-cards route, step metadata field for x_do_it, card inject/state endpoint, generic row store. Test squads do-it-live-* left in local dev mongo.

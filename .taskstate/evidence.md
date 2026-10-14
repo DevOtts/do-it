@@ -14,3 +14,4 @@
 2026-10-14T21:31:39Z P3 merged @2ed8c6d 18/18; routing, spine green
 2026-10-14T21:34:12Z R3 merged @df235b3: catalog 16/16; siblings clean except prompt-it 1 pre-existing dirty line (not ours; R3 worker touched none)
 2026-10-14T21:37:45Z N1+N3 merged @433cffd: engine 32/32 (N1 18 incl 3 INV-NOT-VERIFIED live; N3 14 incl T-N3-14 INV-NOT-VERIFIED); no live Engine (docker daemon down, DO_IT_ENGINE_URL unset); state-stores 18, spine 89, plugin 15+1skip
+2026-10-14T21:42:22Z live-w4 merged @c6d3db6: LIVE local Engine (brain-api-core :3001): T-N1-16 VERIFIED live; T-N1-17/18, T-N3-14, T-N2-04 stay INV-NOT-VERIFIED (Engine lacks ask-cards route, x_do_it metadata, card inject, generic row store). engine suite 32/32. Dev Mongo holds test squads do-it-live-*.
