@@ -1,0 +1,13 @@
+{
+  "branches": 5,
+  "fixture": "reconcile",
+  "labelled_worktrees": 2,
+  "labels": {
+    "dirty": 1,
+    "in-flight": 1,
+    "landed": 2,
+    "superseded": 1
+  },
+  "repos": 2,
+  "worktrees": 2
+}

@@ -1,0 +1,10 @@
+{
+  "schema": "do-it-deploy-adapter/0",
+  "note": "Scripted adapter for the R4 fixtures. No cloud target; every command is local and deterministic.",
+  "target": "target/app.txt",
+  "legs": [
+    { "leg": "write", "run": "node .deploy-it/ops.mjs write", "verify": "node .deploy-it/ops.mjs verify-write", "rollback": "node .deploy-it/ops.mjs rollback-write" },
+    { "leg": "verify-digest", "run": "node .deploy-it/ops.mjs claim-digest", "verify": "node .deploy-it/ops.mjs verify-digest", "rollback": "node .deploy-it/ops.mjs rollback-digest" },
+    { "leg": "publish", "run": "node .deploy-it/ops.mjs publish", "verify": "node .deploy-it/ops.mjs verify-publish", "rollback": "node .deploy-it/ops.mjs rollback-publish" }
+  ]
+}

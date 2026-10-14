@@ -1,0 +1,104 @@
+{
+  "schema": "do-it-claims/1",
+  "claims": [
+    {
+      "id": "fixture.feature.dod_rows",
+      "statement": "The overnight feature fixture has 4 DoD rows",
+      "value": 4,
+      "status": "measured",
+      "host": "none",
+      "source": "node scripts/measure-fixture.mjs feature-overnight",
+      "fixture": "feature-overnight"
+    },
+    {
+      "id": "fixture.investigate.failing_checks",
+      "statement": "The investigate-fix fixture starts with 1 failing check",
+      "value": 1,
+      "status": "measured",
+      "host": "none",
+      "source": "node scripts/measure-fixture.mjs investigate-fix",
+      "fixture": "investigate-fix"
+    },
+    {
+      "id": "fixture.drain.cards",
+      "statement": "The weekly drain fixture holds 10 backlog cards",
+      "value": 10,
+      "status": "measured",
+      "host": "none",
+      "source": "node scripts/measure-fixture.mjs weekly-drain",
+      "fixture": "weekly-drain"
+    },
+    {
+      "id": "fixture.drain.needs_build",
+      "statement": "4 of 10 drain cards need a build sandbox",
+      "value": 4,
+      "status": "measured",
+      "host": "none",
+      "source": "node scripts/measure-fixture.mjs weekly-drain",
+      "fixture": "weekly-drain"
+    },
+    {
+      "id": "fixture.drain.dispositions",
+      "statement": "The drain fixture resolves to 4 BUILT, 2 CLOSED, 3 PARKED, 1 DEFERRED",
+      "value": {
+        "BUILT": 4,
+        "CLOSED": 2,
+        "PARKED": 3,
+        "DEFERRED": 1
+      },
+      "status": "measured",
+      "host": "none",
+      "source": "node scripts/measure-fixture.mjs weekly-drain",
+      "fixture": "weekly-drain"
+    },
+    {
+      "id": "fixture.review.converge_rounds",
+      "statement": "The converge review variant ends in round 3 with 2 minors",
+      "value": 3,
+      "status": "measured",
+      "host": "none",
+      "source": "node scripts/measure-fixture.mjs review-loop",
+      "fixture": "review-loop"
+    },
+    {
+      "id": "fixture.reconcile.shape",
+      "statement": "The reconcile fixture has 2 repos, 5 branches and 2 worktrees",
+      "value": {
+        "repos": 2,
+        "branches": 5,
+        "worktrees": 2
+      },
+      "status": "measured",
+      "host": "none",
+      "source": "node scripts/measure-fixture.mjs reconcile",
+      "fixture": "reconcile"
+    },
+    {
+      "id": "fixture.deploy.legs",
+      "statement": "The deploy fixture has 3 legs",
+      "value": 3,
+      "status": "measured",
+      "host": "none",
+      "source": "node scripts/measure-fixture.mjs deploy",
+      "fixture": "deploy"
+    },
+    {
+      "id": "run.feature.tokens_per_verified_row",
+      "statement": "Tokens per VERIFIED row on the overnight feature fixture, real Claude Code host",
+      "value": null,
+      "status": "unmeasured",
+      "host": "claude-code",
+      "source": "node tests/e2e/run.mjs --fixture feature-overnight --host claude-code",
+      "needs": "T-R4-02 VERIFIED (H1 host driver, build-it pipeline)"
+    },
+    {
+      "id": "run.feature.rows_verified",
+      "statement": "DoD rows VERIFIED with evidence on the overnight feature fixture, real Claude Code host",
+      "value": null,
+      "status": "unmeasured",
+      "host": "claude-code",
+      "source": "node tests/e2e/run.mjs --fixture feature-overnight --host claude-code",
+      "needs": "T-R4-02 VERIFIED"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "checks": [
+    "node checks/dod-1.mjs",
+    "node checks/dod-2.mjs",
+    "node checks/dod-3.mjs",
+    "node checks/dod-4.mjs"
+  ],
+  "dod_count": 4,
+  "dod_ids": [
+    "DOD-1",
+    "DOD-2",
+    "DOD-3",
+    "DOD-4"
+  ],
+  "fixture": "feature-overnight",
+  "request_words": 39
+}

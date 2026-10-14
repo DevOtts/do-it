@@ -1,0 +1,16 @@
+{
+  "fixture": "deploy",
+  "leg_count": 3,
+  "legs": [
+    "write",
+    "verify-digest",
+    "publish"
+  ],
+  "pre_deploy_sha256": "66fa3700056b3ea50a0eb669ba2ac557b1f8ed83697780c599e1d9e6e0e4f448",
+  "release_sha256": "ed9e64689b047fa79d4a6c7a1224a206c8bab17e1f2e9cc3c1528c937cf5aaf4",
+  "reverse_leg_order": [
+    "publish",
+    "verify-digest",
+    "write"
+  ]
+}

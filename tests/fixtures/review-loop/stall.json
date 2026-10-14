@@ -1,0 +1,8 @@
+{
+  "variant": "stall",
+  "rounds": [
+    { "round": 1, "fingerprint": "rot-same", "findings": [ {"sev":"blocker","id":"b-stuck"} ], "cost_tokens": 3000 },
+    { "round": 2, "fingerprint": "rot-same", "findings": [ {"sev":"blocker","id":"b-stuck"} ], "cost_tokens": 3000 }
+  ],
+  "owner_reply": null
+}

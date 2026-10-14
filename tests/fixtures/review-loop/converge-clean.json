@@ -1,0 +1,8 @@
+{
+  "variant": "converge-clean",
+  "rounds": [
+    { "round": 1, "fingerprint": "rot-a1", "findings": [ {"sev":"blocker","id":"b1"}, {"sev":"major","id":"m1"}, {"sev":"major","id":"m2"} ], "cost_tokens": 4000 },
+    { "round": 2, "fingerprint": "rot-b2", "findings": [ {"sev":"major","id":"m3"} ], "cost_tokens": 3000 },
+    { "round": 3, "fingerprint": "rot-c3", "findings": [], "cost_tokens": 2000 }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "card_count": 10,
+  "disposition_sum": 10,
+  "dispositions": {
+    "BUILT": 4,
+    "CLOSED": 2,
+    "DEFERRED": 1,
+    "PARKED": 3
+  },
+  "fixture": "weekly-drain",
+  "needs_build_count": 4,
+  "needs_decision_count": 3,
+  "overdue_count": 4,
+  "per_card": {
+    "c01": "BUILT",
+    "c02": "BUILT",
+    "c03": "CLOSED",
+    "c04": "PARKED",
+    "c05": "PARKED",
+    "c06": "CLOSED",
+    "c07": "DEFERRED",
+    "c08": "BUILT",
+    "c09": "PARKED",
+    "c10": "BUILT"
+  }
+}
