@@ -8,3 +8,4 @@
 2026-10-14T21:21:32Z S2+S5 merged (conflict resolved by coordinator, spine rebuilt): spine 72/72, h0 18, h1 29, plugin 15+1skip, routing 18, r4 13 pass/2 FAIL (T-R4-04,06 -> fix-w1)
 2026-10-14T21:23:08Z fix-w1 merged @641aa37: r4 15 pass 0 fail 11 skip; spine 72
 2026-10-14T21:23:59Z N2 merged @944191e 18/18 (T-N2-04 INV-NOT-VERIFIED: no Engine staging probed; retry in W3 with .secrets access, user authorized)
+2026-10-14T21:26:23Z P1+P4 merged @0074c77: pipelines 11, review-loop 23, personas 7, routing 24 (all 0 fail); SKILL.md regenerated
