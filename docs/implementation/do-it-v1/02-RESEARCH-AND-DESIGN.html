@@ -1,0 +1,1011 @@
+<title>do-it Research and Design</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Layout concept: a working design memo. Sticky section index, wide diagram band, one dense table per topic.
+   Node grammar borrowed from the reference video: human = amber, agent = indigo, code = green. */
+:root{
+  --bg:#f5f6f8; --surface:#ffffff; --fg:#14181f; --muted:#5a6270; --line:#d9dde4;
+  --accent:#1f4fd8; --accent-soft:#e6ecfc;
+  --human:#a85d00; --human-soft:#fdf0dc;
+  --agent:#4338ca; --agent-soft:#e8e7fb;
+  --code:#17794a; --code-soft:#dff3e8;
+  --bad:#b42318; --bad-soft:#fde8e6;
+  --display:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1318; --surface:#171c23; --fg:#e8ebf0; --muted:#9aa3b2; --line:#2a313b;
+  --accent:#7ea2ff; --accent-soft:#1b2744;
+  --human:#f0b25a; --human-soft:#33260f;
+  --agent:#a5a0ff; --agent-soft:#25234a;
+  --code:#59d598; --code-soft:#12301f;
+  --bad:#ff8a7d; --bad-soft:#3a1814; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1318; --surface:#171c23; --fg:#e8ebf0; --muted:#9aa3b2; --line:#2a313b;
+  --accent:#7ea2ff; --accent-soft:#1b2744;
+  --human:#f0b25a; --human-soft:#33260f;
+  --agent:#a5a0ff; --agent-soft:#25234a;
+  --code:#59d598; --code-soft:#12301f;
+  --bad:#ff8a7d; --bad-soft:#3a1814; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:15px/1.6 var(--body);margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1040px;margin:0 auto;padding-block:28px 80px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:clamp(2rem,5vw,3.1rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.65rem;font-weight:700;letter-spacing:-.01em;margin-top:56px;padding-top:8px}
+h3{font-size:1.1rem;font-weight:600;margin-top:28px}
+h4{font:600 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:24px 0 0}
+p{margin:.6em 0;max-width:68ch}
+a{color:var(--accent)}
+code,.mono{font-family:var(--mono);font-size:.86em}
+code{background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.eyebrow{font:500 .72rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+header .lede{font-size:1.15rem;max-width:62ch;color:var(--muted);margin-top:14px}
+.meta{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:16px;color:var(--muted);font:.78rem var(--mono)}
+nav.index{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line);
+  margin:24px 0 0;display:flex;gap:4px;overflow-x:auto;padding:8px 0}
+nav.index a{white-space:nowrap;text-decoration:none;color:var(--muted);font:500 .8rem var(--mono);padding:4px 10px;border-radius:6px}
+nav.index a:hover,nav.index a:focus-visible{background:var(--accent-soft);color:var(--accent);outline:none}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;padding:18px 20px;margin-top:28px}
+.verdict ol{margin:8px 0 0;padding-left:20px}.verdict li{margin:6px 0;max-width:72ch}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));margin-top:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px;min-width:0}
+.card h3{margin-top:0;font-size:1rem}
+.card p{font-size:.92rem;margin:.4em 0}
+.stat{font:700 2rem var(--display);line-height:1}
+.stat small{display:block;font:400 .78rem var(--body);color:var(--muted);margin-top:6px}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface);margin-top:14px}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:.88rem}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line)}
+th{font:500 .72rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg);position:sticky;top:0}
+tr:last-child td{border-bottom:0}
+.tag{display:inline-block;font:500 .7rem var(--mono);padding:1px 7px;border-radius:99px;white-space:nowrap}
+.t-h{background:var(--human-soft);color:var(--human)}.t-a{background:var(--agent-soft);color:var(--agent)}
+.t-c{background:var(--code-soft);color:var(--code)}.t-b{background:var(--bad-soft);color:var(--bad)}
+.callout{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:12px 16px;margin-top:16px;font-size:.92rem}
+.callout.warn{border-left:4px solid var(--human)}.callout.bad{border-left:4px solid var(--bad)}
+.callout b:first-child{font-family:var(--display)}
+pre{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px;overflow-x:auto;font:.8rem/1.55 var(--mono);margin:14px 0}
+.diagram{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:16px;overflow-x:auto}
+.diagram svg{min-width:860px;width:100%;height:auto;display:block}
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:10px;font-size:.8rem;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+/* svg */
+.n-a rect{fill:var(--agent-soft);stroke:var(--agent)}.n-c rect{fill:var(--code-soft);stroke:var(--code)}
+.n-h polygon{fill:var(--human-soft);stroke:var(--human)}
+.n rect,.n polygon{stroke-width:1.5}
+.n text{fill:var(--fg);font:600 13px var(--body)}.n .sub{font:400 10.5px var(--mono);fill:var(--muted)}
+.edge{stroke:var(--muted);stroke-width:1.6;fill:none}.edge.loop{stroke:var(--bad);stroke-dasharray:5 4}
+.edge.soft{stroke-dasharray:3 4}
+.lbl{font:500 10.5px var(--mono);fill:var(--muted)}.lbl.bad{fill:var(--bad)}
+.spine rect{fill:var(--code-soft);stroke:var(--code);stroke-width:1.5}
+
+.lane{fill:var(--bg);stroke:var(--line)}.lanel{font:500 9.5px var(--mono);fill:var(--muted);letter-spacing:.06em}
+.n-h rect{fill:var(--human-soft);stroke:var(--human)}
+.pair{display:grid;gap:14px;margin-top:14px}
+/* layers */
+.layers{display:grid;gap:8px;margin-top:16px}
+.layer{display:grid;grid-template-columns:150px 1fr;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+.layer b{font:600 .78rem var(--mono);color:var(--accent)}.layer span{font-size:.9rem;min-width:0}
+@media(max-width:560px){.layer{grid-template-columns:1fr;gap:4px}}
+/* use cases */
+.uc{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:18px 20px;margin-top:18px}
+.uc h3{margin:0}.uc .trigger{font:.84rem var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px 10px;margin:10px 0;overflow-wrap:anywhere}
+.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:12px 0}
+.flow .s{font:500 .76rem var(--mono);padding:4px 9px;border-radius:6px;border:1px solid}
+.flow .s.a{background:var(--agent-soft);border-color:var(--agent);color:var(--agent)}
+.flow .s.c{background:var(--code-soft);border-color:var(--code);color:var(--code)}
+.flow .s.h{background:var(--human-soft);border-color:var(--human);color:var(--human)}
+.flow .ar{color:var(--muted)}
+.uc dl{display:grid;grid-template-columns:110px 1fr;gap:6px 14px;margin:10px 0 0;font-size:.9rem}
+.uc dt{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding-top:3px}.uc dd{margin:0;min-width:0}
+@media(max-width:560px){.uc dl{grid-template-columns:1fr}}
+/* checklist */
+.progress{position:sticky;top:calc(env(safe-area-inset-top,0px) + 46px);z-index:4;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 14px;display:flex;gap:14px;align-items:center;margin-top:14px}
+.bar{flex:1;height:8px;background:var(--line);border-radius:4px;overflow:hidden}.bar i{display:block;height:100%;width:0;background:var(--code);transition:width .2s}
+.progress button{font:500 .78rem var(--mono);background:none;border:1px solid var(--line);color:var(--muted);border-radius:6px;padding:4px 10px;cursor:pointer}
+.progress button:focus-visible,details summary:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+details.grp{background:var(--surface);border:1px solid var(--line);border-radius:8px;margin-top:10px}
+details.grp summary{cursor:pointer;padding:11px 14px;font:600 .95rem var(--display);display:flex;gap:10px;justify-content:space-between}
+details.grp summary .cnt{font:400 .75rem var(--mono);color:var(--muted)}
+.ck{display:grid;grid-template-columns:22px 1fr;gap:8px;padding:9px 14px;border-top:1px solid var(--line);font-size:.88rem}
+.ck input{margin-top:3px;width:16px;height:16px;accent-color:var(--accent)}
+.ck .id{font:500 .72rem var(--mono);color:var(--accent);margin-right:6px}
+.ck .how{display:block;color:var(--muted);font:.78rem/1.5 var(--mono);margin-top:3px;overflow-wrap:anywhere}
+.ck.done label{color:var(--muted)}
+ol.dec{padding-left:20px}ol.dec li{margin:12px 0;max-width:74ch}
+.src li{margin:4px 0;font-size:.9rem}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">DevOtts · do-it v1 · research and design memo · 2026-10-14</div>
+  <h1>do-it: one message in, a verified feature out</h1>
+  <p class="lede">What seven research tracks say do-it should be, how it would work, and what has to change in prompt-it, plan-it, build-it, review-it, conclude-it and the two plugins still to be cut (deploy-it, reconcile-it).</p>
+  <div class="meta"><span>Tracks: video · 6 plugin repos · 112 sessions · Engine squads · engine-dev-squad review · 20 benchmarks · cache prior art · revision-brainstorm</span><span>Raw notes: <code>research/01…09-*.md</code> · updated with your feedback of the same day</span></div>
+</header>
+
+<nav class="index" aria-label="Sections">
+  <a href="#verdict">Verdict</a><a href="#findings">Findings</a><a href="#you">How you work</a><a href="#bench">Benchmarks</a><a href="#harness">Harness today</a>
+  <a href="#design">Design</a><a href="#finish">Behaviors</a><a href="#engine">Engine</a><a href="#tokens">Tokens</a><a href="#flow">Workflow</a><a href="#contract">Contract</a><a href="#cases">5 use cases</a><a href="#hosts">Hosts</a><a href="#repo">Repo layout</a><a href="#changes">Plugin changes</a><a href="#check">Checklist</a><a href="#decide">Decisions</a><a href="#caveats">Caveats</a>
+</nav>
+
+<section id="verdict">
+  <div class="verdict">
+    <div class="eyebrow">The short version</div>
+    <ol>
+      <li><b>do-it is a small deterministic spine plus a thin conductor, not a smart manager agent.</b> Code owns state, gates, resume and the ledger. Models do the work inside stages. The reference video, the Engine squad model and the benchmark literature all land on this shape.</li>
+      <li><b>LLM-agnostic means a file contract, not a plugin API.</b> Stages are <code>SKILL.md</code> files, state is <code>.do-it/</code> JSON on disk, and a dependency-free CLI is the only writer. Claude Code, opencode, Codex, DeepSeek-through-opencode and Engine each get a thin adapter.</li>
+      <li><b>Your plugins are not drivable yet.</b> Every handoff today is you pasting a prompt, and only plan-it has exit codes. The first deliverable is a shared <code>result.json</code> envelope in each plugin, before any orchestration.</li>
+      <li><b>The design target is your three real pains:</b> "done" that is not done (the most repeated complaint), token burn from long-lived contexts, and glue work (kickoff pastes, limit-resume pings, owner questions, deploy collisions).</li>
+      <li><b>Token economy is a core job of do-it, with four levers in this order:</b> keep contexts small, route each slice to the cheapest tier that can pass its test, split work so small models take the parts that do not need a big one, and shape every brief so the provider cache hits. The success metric is tokens per VERIFIED DoD row (section <a href="#tokens">Tokens</a>).</li>
+      <li><b>Two correction notes:</b> the video is a talk about AI Developer Workflows, not a demo of Engine squads. And the <code>do-it-revision-brainstorm</code> transcript no longer exists, only its ledger card, so its checklist is reconstructed (see Caveats).</li>
+    </ol>
+  </div>
+</section>
+
+<section id="findings">
+  <h2>What the research found</h2>
+  <div class="grid">
+    <div class="card"><div class="eyebrow">Video</div><h3>Router plus fixed pipelines</h3>
+      <p>IndyDevDan's talk builds up an AI Developer Workflow step by step: build agent, code gates that loop failures back, a test agent, a planner, worktrees, sandboxes, a ticket board where <em>code</em> moves status, a hotfix path with an approve/reject node, and a "factory router" that picks a workflow per ticket type. The router can be one LLM call or plain code (19:40).</p></div>
+    <div class="card"><div class="eyebrow">Engine</div><h3>Squad = pipeline of steps</h3>
+      <p>The conductor persona only sets a default tier. The versioned pipeline definition conducts: steps of type <code>persona</code>, <code>checkpoint</code>, <code>decision</code>, <code>render</code>, <code>publish</code>, with portable tiers (<code>powerful/balanced/cheap</code>), a one-hop <code>consumes_previous</code> handoff, and review rounds capped at 2.</p></div>
+    <div class="card"><div class="eyebrow">Benchmarks</div><h3>Single writer, disk memory</h3>
+      <p>Multi-agent runs cost about 15x chat tokens (Anthropic). Parallel writer swarms still fail (Cognition, Apr 2026). What works: one writer, read-only subagents, clean-context reviewers, state on disk, results recorded once.</p></div>
+    <div class="card"><div class="eyebrow">Your sessions</div><h3>Same shape every time</h3>
+      <p>brain-dump, plan, ratify, fresh build session, review loop, deploy train, conclude. You repeat the glue by hand: pasting kickoffs, resuming after limits, asking "is X still running?", and chasing items that never reached <code>0-done</code>.</p></div>
+  </div>
+
+  <h3>What the video does and does not give us</h3>
+  <p>It gives us a <strong>grammar</strong>: three actor types (human, agent, code), reliability ordered code &gt; engineer &gt; agent, humans only at the two ends, and failure edges that loop back to the build agent. We reuse that grammar for every diagram here. It does not show personas, squads, or a manager delegating by chat. That part of your idea comes from Engine itself, so the squad design below is taken from Engine's schemas, not from the video.</p>
+
+  <div class="callout warn"><b>The founding failure is already documented.</b> <code>01-TOKEN-DISCIPLINE.md</code> measured the 2026-09-26 runs: a coordinator grew to 857K context, a finished planning session kept polling (64M tokens), ten spec'd workers were spawned on the top tier. Cost tracks the sum of context read on every call, so long-lived conductors are the leak. do-it inherits those rules as gates (section <a href="#design">Design</a>).</div>
+</section>
+
+<section id="you">
+  <h2>How you work, last 30 days in Engine-Core</h2>
+  <div class="grid">
+    <div class="card"><div class="stat">112<small>ledger cards 09-14 to 10-14, six aliases</small></div></div>
+    <div class="card"><div class="stat">~57<small>marked shipped; 26 concluded; 9 honest partials</small></div></div>
+    <div class="card"><div class="stat">2–4<small>aliases running at once on a normal day; peak 16 live sessions in one hour</small></div></div>
+    <div class="card"><div class="stat">966 / 568<small>/conclude-it vs /build-it mentions: closing matters as much as building</small></div></div>
+  </div>
+
+  <h3>Twelve recurring task shapes, folded into five do-it presets</h3>
+  <div class="tablewrap"><table>
+    <tr><th>Preset</th><th>Archetypes it absorbs</th><th>Your phrasing</th></tr>
+    <tr><td><b>feature</b></td><td>brain-dump → plan → ratify → fresh build → conclude; pasted <code>/build-it /goal … DoD</code>; overnight heartbeat run; limit continuation</td><td>"Let's plan-it @docs/implementation/…" · "give me the /next-session-prompt"</td></tr>
+    <tr><td><b>investigate-fix</b></td><td>live bug, investigate-only first, then fix and prove live</td><td>"Investigue o pq … (nao faça nenhuma mudança)"</td></tr>
+    <tr><td><b>drain</b></td><td>weekly backlog drain with dispositions and deploy waves</td><td>"107 cards. let's tackle them?"</td></tr>
+    <tr><td><b>review-loop</b></td><td>reviewer session walks the roteiro with CDP and sends findings to the builder</td><td>"until 100% pass and we are finally able to /conclude-it"</td></tr>
+    <tr><td><b>reconcile</b></td><td>branch and worktree takeover, <code>0-done</code> moves, reaping</td><td>"be careful to not delete code that we didn't ship"</td></tr>
+  </table></div>
+
+  <h3>What you push back on, in your words</h3>
+  <div class="tablewrap"><table>
+    <tr><th>Complaint</th><th>Evidence</th><th>What do-it must do</th></tr>
+    <tr><td>"Done" is not done</td><td>"why I still see the implementations not in 0-done?" (repeated)</td><td>Done is a lookup in an evidence ledger. Close is blocked on any unaccounted row.</td></tr>
+    <tr><td>Token and limit burn</td><td>"50% of my weekly session in 5 hours" (09-26)</td><td>Context ceilings, tier gates, no polling on fat contexts, a meter.</td></tr>
+    <tr><td>Cheap model laziness, wrong top model</td><td>"who is using fable? stop right now! only opus 5.5 at the top"</td><td>Explicit tier on every spawn. Conductor is T2. Escalate on failure only.</td></tr>
+    <tr><td>Unverified claims</td><td>"you click using chrome CDP and you monitor"</td><td>[REAL] probes. The verifier is never the author.</td></tr>
+    <tr><td>Parallel deploy collisions</td><td>"check /deploy-router, we still have other session running"</td><td>Deploy stage takes the lock first, always.</td></tr>
+    <tr><td>Leftovers</td><td>test cards, stale sessions, orphan processes</td><td>Conclude sweeps; reconcile is a stage, not an afterthought.</td></tr>
+  </table></div>
+  <p><strong>What you keep for yourself:</strong> plan ratification, production flag flips on real clients, credential rotation, spend, destructive deletes. <strong>What you delegate:</strong> implementation, model choice below the top tier, deploy sequencing, test-data cleanup. You answer in terse numbered replies ("1 yes, 2 no, 4 merge"), so do-it should ask that way.</p>
+</section>
+
+<section id="bench">
+  <h2>Benchmarks: what to steal, what to avoid</h2>
+  <div class="tablewrap"><table>
+    <tr><th>System</th><th>Steal</th><th>Avoid</th></tr>
+    <tr><td>Claude Code (plugins, hooks, <code>-p</code>, Agent SDK)</td><td>Reference "rich" adapter: <code>--output-format json</code>, <code>--resume</code>, <code>--max-budget-usd</code>, Stop-hook gates</td><td>Agent teams: experimental, not in <code>-p</code>, teammates not restored on resume</td></tr>
+    <tr><td>Agent Skills (<code>SKILL.md</code>) and AGENTS.md</td><td>The portable unit of procedure; host-neutral instructions in AGENTS.md</td><td>Expecting the spec to carry state or hooks. It carries neither.</td></tr>
+    <tr><td>GitHub Spec Kit</td><td>Artifact chain; one source generating per-host command files</td><td>Pure prompt chain with no check that "done" is true</td></tr>
+    <tr><td>Kiro</td><td>Requirements → design → tasks traceability</td><td>Closed IDE</td></tr>
+    <tr><td>obra/superpowers</td><td>The portability recipe: per-host packaging plus a bootstrap skill. Closest peer.</td><td>No disk state machine, so no resume guarantees</td></tr>
+    <tr><td>OpenHands</td><td>Append-only event log as source of truth</td><td>Heavy runtime</td></tr>
+    <tr><td>LangGraph, Temporal</td><td><code>interrupt()</code>/resume semantics; record each stage result once, never redo it</td><td>Needing a server or hosting code</td></tr>
+    <tr><td>Aider</td><td>Commit per step as rollback; strong/weak model split</td><td>No lifecycle beyond edit and test</td></tr>
+    <tr><td>Ralph loop</td><td>Fresh context per iteration, memory in files and git, as the inner build loop</td><td>Running without a budget cap or an independent verifier</td></tr>
+    <tr><td>BMAD, CrewAI, swarm packs</td><td>Story sharding</td><td>Persona theatre; self-reported metrics</td></tr>
+    <tr><td>Copilot agent, Jules, Devin</td><td>The PR or diff as the standard human gate</td><td>Vendor lock-in</td></tr>
+  </table></div>
+
+  <h3>Ten lessons that shape the design</h3>
+  <ol>
+    <li>One writer at a time; many read-only readers and an independent reviewer.</li>
+    <li>Disk is the memory. The context window is a cache.</li>
+    <li>Record each stage result once. Resume skips what is recorded.</li>
+    <li>Handoffs are written briefs with objective, output format, boundaries.</li>
+    <li>Gates are data records with exit codes, not prose promises.</li>
+    <li>"Done" is a ledger lookup checked by someone who did not write the code.</li>
+    <li>Scale effort to the size of the task; a typo fix must not spin up a swarm.</li>
+    <li>Pick the model per stage; escalate on failure rather than pre-paying.</li>
+    <li>Git is the undo and the audit trail.</li>
+    <li>Do not depend on any host's experimental feature.</li>
+  </ol>
+  <p class="callout">Evidence quality is uneven. The Anthropic, Cognition (Apr 2026), Claude Code, agentskills.io and superpowers sources were read directly. Kiro, BMAD, Spec Kit, Aider, Cline, Devin, Codex and CrewAI details come from secondary sources and need re-checking before we rely on flag names or pricing. Full table with tags: <code>research/07-benchmarks.md</code>.</p>
+</section>
+
+<section id="harness">
+  <h2>The harness today: where each stage stands</h2>
+  <div class="tablewrap"><table>
+    <tr><th>Stage</th><th>Exists as</th><th>Machine-readable result?</th><th>Human pause</th><th>Main gap for do-it</th></tr>
+    <tr><td><b>prompt-it</b> 0.3.0</td><td>plugin</td><td><span class="tag t-b">no</span> chat block only</td><td>none</td><td>No file output, no non-interactive flag</td></tr>
+    <tr><td><b>plan-it</b> 4.0.0</td><td>plugin</td><td><span class="tag t-h">partial</span> state.json + gate-check exit codes</td><td>G0, G1, G4</td><td>No <code>PLAN-RESULT.json</code>; launch prompt buried in KICKOFF.md</td></tr>
+    <tr><td><b>build-it</b> 3.1.x</td><td>plugin</td><td><span class="tag t-b">no</span> markdown report</td><td>none (BLOCKED only)</td><td>Never reads plan-it's CONTRACT or epics; no run-level verdict</td></tr>
+    <tr><td><b>review-it</b> 1.0.0</td><td>plugin</td><td><span class="tag t-b">no</span> prose</td><td>confirm derived cases</td><td>Vocabulary PASS/FAIL/INV differs from the rest</td></tr>
+    <tr><td><b>deploy-it</b></td><td>engine-deploy + deploy-router, Engine-only</td><td><span class="tag t-c">yes</span> LEG lines, <code>RESULT</code>, exit 0/1/2, run.json</td><td>urgency disputes</td><td>Hosts, tenants, ghcr, terraform are hard-coded; needs an adapter layer</td></tr>
+    <tr><td><b>conclude-it</b> 1.1.0</td><td>plugin</td><td><span class="tag t-b">no</span></td><td>setup interview, "ship or just close?"</td><td>Ship pipeline duplicates review-it and deploy; needs a close-only mode taking evidence in</td></tr>
+    <tr><td><b>reconcile-it</b></td><td>loose skill</td><td><span class="tag t-b">no</span></td><td>Phase 3 approval</td><td>Not packaged; split into scan / apply / plan</td></tr>
+  </table></div>
+  <div class="callout bad"><b>Drift to fix first.</b> The plan-it and build-it marketplaces both pin prompt-it 0.2.1 while it is at 0.3.0. Root and plugin <code>SKILL.md</code> differ in prompt-it and build-it. Tiering is described four different ways, and build-it's "anti-context-anxiety" wording conflicts with the context ceilings in <code>01-TOKEN-DISCIPLINE.md</code>. Whether build-it writes <code>.build-it-reports/</code> or the older <code>.fable-it-reports/</code> was not confirmed.</div>
+</section>
+
+<section id="design">
+  <h2>How do-it would work</h2>
+  <p>Five layers, from the host down to the disk. Everything above the disk layer can be swapped without touching the state.</p>
+  <div class="layers">
+    <div class="layer"><b>Host adapters</b><span>Claude Code (plugin, hooks, <code>claude -p --bare</code>) · opencode (JS plugin on <code>session.idle</code>) · Codex (<code>codex exec</code>) · generic runner for any CLI including DeepSeek via opencode or OpenRouter · Engine (compile the squad file into a <code>pipeline_definition</code>). Each adapter declares what it can do: hooks, subagents, resume.</span></div>
+    <div class="layer"><b>Conductor</b><span>A thin T2 persona with a context ceiling. It reads <code>do-it next</code>, spawns the stage persona with a brief of 8K tokens or less, and goes back to sleep. It restarts from state files at the ceiling. It never reads whole files or relays worker chatter.</span></div>
+    <div class="layer"><b>Stage personas</b><span>Plain markdown files with <code>name, description, tier, tools</code> frontmatter, like Engine's <code>engine-verifier.md</code>: intake, planner, builder, reviewer, deployer, concluder, reconciler, and an independent verifier. Each wraps one stage plugin skill.</span></div>
+    <div class="layer"><b>Spine CLI</b><span>One dependency-free <code>do-it</code> script, the only writer of run state. Commands: <code>start, next, record, gate, park, resume, status --json, meter, doctor</code>. Exit codes 0 ok · 1 failed · 2 needs human · 3 blocked or limit. Where hooks exist it is called from them; where they do not, it is called by the conductor checklist.</span></div>
+    <div class="layer"><b>Disk</b><span>One folder, <code>.do-it/</code>, holds all machine state and reports for every stage (layout in section <a href="#finish">Behaviors</a>, part 4). Host config such as <code>.claude/</code>, <code>.agents/</code>, <code>.opencode/</code> and <code>.secrets/</code> stays where the host expects it.</span></div>
+  </div>
+
+  <h3>The pipeline is data, in Engine's own step vocabulary</h3>
+<pre>name: feature
+version: 1
+router: deterministic-first      # keyword/shape rules, one cheap LLM call only if ambiguous
+steps:
+  - id: intake    type: persona     persona: intake     skill: prompt-it  tier: cheap
+  - id: plan      type: persona     persona: planner    skill: plan-it    tier: powerful
+  - id: ratify    type: checkpoint  gate: G4            ask: owner-pack   # human, numbered reply
+  - id: build     type: persona     persona: builder    skill: build-it   tier: balanced
+                  consumes_previous: true               # one hop of file refs, never chat
+  - id: verify    type: persona     persona: verifier   tier: balanced    # never the builder
+                  eval: { veto: [dod-unverified], max_retries: 2 }
+  - id: review    type: persona     persona: reviewer   skill: review-it  loop_to: build  max_rounds: 2
+  - id: deploy    type: code        adapter: deploy-it  needs: [router-lock]
+  - id: prove     type: persona     persona: verifier   probe: real
+  - id: conclude  type: persona     persona: concluder  skill: conclude-it  tier: balanced
+on_limit: park_and_wake        # persist, then schedule resume; never wait for a human</pre>
+
+  <h3>Rules the spine enforces, from your own corrections</h3>
+  <div class="grid">
+    <div class="card"><h3>Tiers</h3><p>Every spawn names a tier. T1 needs a written reason or is downgraded. Conductor defaults to T2, never the top model. A failed contract re-runs one tier up and the escalation is logged. Tiers map to models per provider in a config asked for once.</p></div>
+    <div class="card"><h3>Context</h3><p>Warn at 150K or 40% of window, block tool calls at 250K or 60% until a checkpoint and reset. Resuming from state files must reproduce goal, DoD and next action. No wake-up on a context above 50K.</p></div>
+    <div class="card"><h3>Done</h3><p>A DoD row is <code>VERIFIED</code> only with an evidence reference. Builder output starts at <code>IMPLEMENTED-NOT-VERIFIED</code>. Conclude refuses to close with an unaccounted row, a live worker, or a pending wake-up.</p></div>
+    <div class="card"><h3>Humans</h3><p>Four gate kinds: plan ratify, owner gates (prod flag, credentials, spend, destructive, client-facing), attended checks, and review rounds past the cap. All questions from all stages collect into one numbered owner pack. Your terse reply is parsed and routed back.</p></div>
+    <div class="card"><h3>Limits</h3><p>On a usage-limit signal the run parks with a resume note and schedules itself. A fresh context starts at each wake. The first wake after the reset resumes from <code>state.json</code>, and no run waits for you to return.</p></div>
+    <div class="card"><h3>Deploys</h3><p>The deploy stage takes the router lock first, canaries on the lowest-risk target, and requires every leg the adapter declares. A green image with a missing leg is not a closed deploy.</p></div>
+  </div>
+
+  <h3>Mapping to an Engine squad</h3>
+  <p>The same <code>lifecycle.squad.yaml</code> compiles to a <code>pipeline_definition</code>: <code>persona</code> steps stay, <code>checkpoint</code> becomes a Mission Control card, <code>code</code> steps become <code>render/publish</code> capability calls, tiers pass through unchanged. The persona files become persona-agent documents. What does not carry over without Engine: the database, dispatcher, Kubernetes jobs, Mission Control UI, seats and billing. Note that Codex is typed but refused as a backbone, and opencode is not a backbone, so "Engine runs do-it" needs a runner-side decision (see Decisions).</p>
+</section>
+
+<section id="finish">
+  <h2>Four behaviors that made your runs good, made mechanical</h2>
+  <p>These come from how you described what works. Each one is currently kept alive by you (a nag, a rule you repeat, a folder you tidy), and the design moves it into the spine so it survives without you.</p>
+
+  <h3>1. Plan once, ask once</h3>
+  <p><b>What works today:</b> the plan-it run that asks every question up front, writes the whole plan, and hands you one document of decisions that already carry a recommendation. You approve or disagree. It fails when the plan stops halfway and asks questions in pieces.</p>
+  <ul>
+    <li><b>Readiness verdict.</b> Planning ends only with <code>.do-it/plan/READINESS.json</code>: every decision is <code>RESOLVED</code> (you answered) or <code>DEFAULTED</code> (recommendation recorded, marked reversible or not); the access preflight passed (credentials, tools, repos and hosts probed live, not assumed); no build slice depends on an answer from you. Build cannot start without it.</li>
+    <li><b>One decision document.</b> <code>.do-it/plan/DECISIONS.md</code> lists each decision with the options, the recommendation and the reason, so your reply is "approve all except 4 and 7".</li>
+    <li><b>No mid-run questions.</b> A question that surfaces during build is decided by its recorded recommendation, written to the decision log, and shown in the owner pack at the end. The exception is an owner gate (production flag, credentials, spend, destructive, client-facing): only that slice parks, the others continue.</li>
+  </ul>
+
+  <h3>2. Run to the finish line</h3>
+  <p><b>What you observed:</b> with everything pre-answered and access granted, a session still stopped after a wave and left the rest. Asking "why are these still not in <code>0-done</code>?" made it continue. My reading, which fits your ledger (it is the most repeated complaint) but has not been tested: the model needs a visible end state to pull toward, and "do everything" lets it declare victory at the first natural pause. So do-it asks that question itself, every time, in code.</p>
+  <div class="grid">
+    <div class="card"><h3>Finish-line board</h3><p>At plan handoff the spine writes <code>.do-it/finish-line.json</code>: every wave, package and DoD row. A row is terminal only as <code>DONE</code> (evidence recorded and the package archived to <code>0-done</code>), <code>PARKED</code> with an owner question, or <code>BLOCKED</code> with a reason.</p></div>
+    <div class="card"><h3>Stop-gate</h3><p>The run cannot end a turn or a session while a row is non-terminal and no blocker exists. It answers with the board: "6 of 9 rows non-terminal; next is wave 3". Claude Code uses a Stop hook; other hosts use the conductor checklist.</p></div>
+    <div class="card"><h3>Waves scheduled by code</h3><p><code>do-it next</code> returns the next runnable wave. The conductor does not decide whether to continue, so finishing a wave never reads as finishing the job.</p></div>
+    <div class="card"><h3>Board on every wake</h3><p>The board is injected on each resume in about 300 tokens, so the end state is always in view. That is far cheaper than the context it saves.</p></div>
+  </div>
+  <p class="callout warn"><b>Guard against its own loop.</b> The stop-gate refuses at most N times in a row without progress, then parks the run and asks you, so it cannot spin forever on a row that is genuinely stuck.</p>
+
+  <h3>3. Convergence control for review loops</h3>
+  <p><b>Keep:</b> the reviewer creates the roteiro, another agent (ideally) runs it, the builder fixes, and the cycle repeats. This is where quality jumped. <b>Add:</b> the exit condition, which neither the reviewer (always finds something) nor the builder (wants to be done) can judge, so it sits in do-it.</p>
+  <div class="tablewrap"><table>
+    <tr><th>Control</th><th>How it works</th><th>Prevents</th></tr>
+    <tr><td>Frozen roteiro</td><td>Fingerprinted before the first run. New cases enter only as amendment rows with an origin tag and a reason; a new class of finding appearing in round 3 is flagged as scope growth.</td><td>Moving goalposts</td></tr>
+    <tr><td>Severity classes and a bar set at plan time</td><td><code>blocker</code>: breaks a DoD row or the contract, loses data, security. <code>major</code>: wrong behavior on a common path. <code>minor</code> and <code>nit</code>. Only blockers and majors loop. Minors become backlog cards linked from the report, recorded not fixed.</td><td>Perfectionism</td></tr>
+    <tr><td>Round budget</td><td>Default three review rounds, configurable. Engine's squad cap is two, so the Engine layer may set it lower.</td><td>Endless loops</td></tr>
+    <tr><td>Convergence check</td><td>Blocker and major counts must fall each round. The same finding fingerprint recurring twice means the builder cannot fix that class: raise the tier once, then send to the owner with the diagnosis. Flat or rising counts after round two stop the loop.</td><td>Thrashing</td></tr>
+    <tr><td>Diminishing returns</td><td>A round that finds only minors ends the loop.</td><td>Polishing</td></tr>
+    <tr><td>Cost cap</td><td>A loop may spend a set share of the run budget, then it parks.</td><td>Silent token burn</td></tr>
+    <tr><td>Separate contexts</td><td>Author, runner and builder never share a context. A mechanical script (API test) runs as code, a visual walk runs on a mid tier, and the reviewer classifies severity from the raw evidence.</td><td>Self-grading</td></tr>
+  </table></div>
+  <p>Loop exits are recorded as one of four states: <code>CONVERGED</code>, <code>CONVERGED_WITH_MINORS</code> (backlog cards created), <code>STALLED</code> (owner decides) or <code>OVER_BUDGET</code> (parked).</p>
+
+  <h3>4. One home for everything: <code>.do-it/</code></h3>
+  <p>Your Engine-Core root currently carries <code>.build-it-reports</code>, <code>.fable-it-reports</code>, <code>.plan-it</code>, <code>.review-it</code> and <code>.taskstate</code>, next to the host folders. In the do-it family every stage writes under one folder.</p>
+<pre>.do-it/
+  config.json            driver, tier map, adapters, path overrides
+  finish-line.json       every wave/package/DoD row and its terminal state
+  runs/&lt;run-id&gt;/        state.json  events.jsonl  ledger.json  token-meter.jsonl
+                         briefs/  results/  owner-pack.md
+  plan/                  was .plan-it/        (+ READINESS.json, DECISIONS.md)
+  build/                 was .build-it-reports/, .fable-it-reports/, .taskstate/
+  review/                was .review-it/      (+ ATTENDED-GATE.html)
+  deploy/                run logs, leg results
+  conclude/  reconcile/
+  digests/               content-hash digests (see Tokens)</pre>
+  <ul>
+    <li><b>Stays outside:</b> host-owned config (<code>.claude/</code>, <code>.agents/</code>, <code>.opencode/</code>), <code>.secrets/</code>, and the human-facing deliverables a plan writes into <code>docs/implementation/&lt;x&gt;/</code>. Those are project documents and keep their current home. Say if you would rather have those under <code>.do-it/</code> too.</li>
+    <li><b>Mechanism:</b> every stage plugin resolves its root from <code>DO_IT_HOME</code>, defaulting to <code>&lt;repo&gt;/.do-it</code>. The same default applies when a plugin runs standalone, so there is one layout, not two.</li>
+    <li><b>Migration:</b> <code>do-it doctor --migrate</code> moves legacy folders when no run is in flight. In-flight runs stay on the legacy path until they finish, and the plugins read the legacy path as a fallback for resume.</li>
+    <li><b>Git:</b> one ignore line for <code>.do-it/</code>. A decision that must outlive the clone belongs in the project docs, not here.</li>
+    <li><b>Open:</b> with git worktrees (Engine uses <code>.wt/</code>), is there one <code>.do-it/</code> in the main checkout or one per worktree? <code>engine-deploy</code> already writes its run log in the main checkout. Recommend the main checkout, resolved through <code>git rev-parse --git-common-dir</code>.</li>
+  </ul>
+</section>
+
+<section id="engine">
+  <h2>The Engine layer: a spec we hand over, not something do-it builds</h2>
+  <p>do-it stays generic. For Engine it ships a written spec so Engine can later run the same lifecycle natively. The video's idea (a router plus fixed pipelines with human nodes) maps onto Engine's squad vocabulary, and the in-progress <code>engine-dev-squad</code> is the first real test of that mapping.</p>
+
+  <h3>Flat squad or hierarchy of agents?</h3>
+  <p><b>Recommendation: a flat, data-defined pipeline with one router level, and no manager-agent hierarchy.</b> The reasons come from Engine's own constraints, not from taste:</p>
+  <ul>
+    <li><code>spawn_agent</code> is off in production, and squad steps are fenced from starting squads, so nested agents are not available at runtime.</li>
+    <li>Handoffs are one hop of artifact references, and a manager persona would need many more tools than the roughly 122 already used of a 128 per-turn cap.</li>
+    <li>Cross-repo or oversized work is already split by the PM into dependent cards. That gives a hierarchy of <em>work</em> without a hierarchy of <em>agents</em>.</li>
+    <li>The router (chief of staff) picks the work type, and the work type picks the step list. That is the video's factory router and Engine's existing routing table.</li>
+  </ul>
+  <p>The one place a second level pays is the build side (orchestrator, epic builders, adversarial verifier), which is do-it's conductor-to-stage-persona model, kept one level deep and reaped.</p>
+  <div class="grid">
+    <div class="card"><h3>Experiment 1</h3><p>Replay five landing-page cards and three bug-fix cards through (a) a per-work-type step list as data and (b) one generic definition where a PM persona chooses the next role. Measure tokens per verified assertion, loops per card, and wrong skips (designer or QA skipped when needed). Expected: (a) wins on cost and wrong skips; (b) only on unfamiliar work types, where a manager would be added for <code>unknown</code> only.</p></div>
+    <div class="card"><h3>Experiment 2</h3><p>Take one full-stack feature and run it as two dependent cards versus one card with one dev job. Measure review rounds, rework, stale-head events and cost. If two cards is not worse by a margin, hierarchy-by-cards is the default and nested agents are never needed.</p></div>
+  </div>
+
+  <h3>What the dev squad is, and where it already matches</h3>
+  <p>A card-to-squad pipeline on Control Tower: chief of staff, PM, designer (new UI only), dev, reviewer, QA, merge, docs round. Control flow lives in a code statechart of about 35 states. The plan is 26 epics and 549 test cases (95 tagged live-tenant). Wave 2 closed on 2026-10-10 and wave 3 is next. The real board is <code>delivery/STATUS.md</code>; the top-level <code>STATUS.md</code> is stale.</p>
+  <p>It already matches do-it on tiers, the review cap of two, and the four-term status vocabulary, including <code>IMPLEMENTED-NOT-VERIFIED</code>. It is <em>ahead</em> of do-it in places, so do-it should copy it:</p>
+  <ul>
+    <li><b>Per-case test contract with a live-system tag.</b> A live-tenant case that cannot be reached stays <code>IMPLEMENTED-NOT-VERIFIED</code> and never goes green. DoD rows in do-it should carry the same tag and rule.</li>
+    <li><b>Head-commit binding.</b> A review or QA verdict is bound to the commit it saw, and a moved head makes it stale. The do-it verifier should do the same.</li>
+    <li><b>Default-accept-by-ID owner questions,</b> which cut your reply to the exceptions.</li>
+    <li><b>Frozen contract with an amendment log.</b> Squads file amendments and the orchestrator folds them in, which removes parallel-writer conflicts. Useful for multi-lane builds.</li>
+    <li><b>Collision board with gate and deploy slots,</b> and an <b>untrusted-input boundary</b> (text from outside never picks tools or repos, and a persona holds no write token).</li>
+    <li><b>Kickoff files as resume prompts</b> that pin the main-branch commit and stop on a mismatch.</li>
+  </ul>
+
+  <h3>Where it conflicts, and twelve small adjustments to make now</h3>
+  <p>Four real conflicts: the orchestrator runs on the top model while do-it wants a mid-tier conductor; loops live in the statechart instead of pipeline data; there is no result envelope; and the two status boards are hand-edited and already disagree. All adjustments below are documentation or decision changes, none touches the contract schemas, wave order or test contracts.</p>
+  <div class="tablewrap"><table>
+    <tr><th>#</th><th>Change</th><th>Why</th><th>Size</th></tr>
+    <tr><td>1</td><td>Write an <code>it-result/1</code> JSON next to each wave's build and conclude report (<code>RESULT-W3.json</code> onward)</td><td>Makes a finished wave machine-readable; lets do-it replay W3 to test the spine</td><td>S per wave</td></tr>
+    <tr><td>2</td><td>Mark <code>delivery/STATUS.md</code> as the single source; generate or delete the stale top-level board</td><td>do-it needs one board</td><td>S</td></tr>
+    <tr><td>3</td><td>One-page map from the <code>.taskstate/engine-dev-squad-wN/</code> files (decisions, evidence, run-memory, owner asks) to the do-it run layout; move nothing</td><td>An adapter can then read Engine state</td><td>S</td></tr>
+    <tr><td>4</td><td>Add a tier column (T1/T2/T3 with powerful/balanced/cheap) to the run policy and record tier per run</td><td>Closes an open residual; tiers become driver config</td><td>S</td></tr>
+    <tr><td>5</td><td>Decide: the top-model orchestrator only for plan and ratify; build waves run under a fresh mid-tier conductor restarted from the wave kickoff file</td><td>Kickoff files already work as resume prompts, so this is mostly a policy line</td><td>S</td></tr>
+    <tr><td>6</td><td>State the loop cap in the statechart and contract (PD-06 already says 3, then escalated)</td><td>Docs only say "loop budget exhausted"</td><td>S</td></tr>
+    <tr><td>7</td><td>One numbered owner pack per wave with default-accept-by-ID, generated from the existing owner asks</td><td>The plan review carried 11 questions, 60 plan decisions and 25 decisions</td><td>M</td></tr>
+    <tr><td>8</td><td>Document the router as table-driven with a confidence threshold that falls back to asking</td><td>It is do-it's deterministic-first router, already partly there</td><td>S</td></tr>
+    <tr><td>9</td><td>State the one-hop rule and a maximum size on every typed handoff artifact</td><td>Makes the squad portable</td><td>S</td></tr>
+    <tr><td>10</td><td>Archive finished wave-1 files into <code>delivery/archive-W1/</code> with a manifest</td><td>About 60 files at the top level; matches the <code>0-done</code> habit</td><td>S</td></tr>
+    <tr><td>11</td><td>Tag every statechart transition as <code>code</code>, <code>persona</code>, <code>checkpoint</code> or <code>decision</code></td><td>Lets a do-it squad file compile to Engine's pipeline definition and back</td><td>M</td></tr>
+    <tr><td>12</td><td>Put the cross-program asks and the cancel-honouring dependency into the owner pack with an owner and a date</td><td>They are the real critical path for wave 4</td><td>S</td></tr>
+  </table></div>
+  <p class="callout warn"><b>I have not changed anything in Engine-Core.</b> Other sessions work in that repo, so these stay as proposals until you say which to apply. The review behind this section did not read the research bodies, the 146 KB contract, or the epics and PRDs, and did not find the statechart's loop-budget number.</p>
+
+  <h3>What the Engine layer spec should contain</h3>
+  <ol>
+    <li>Scope and non-goals: a file contract only, no Engine runtime code.</li>
+    <li>Squad file format and the compile table to <code>pipeline_definition</code>, with a round-trip rule and the roster derived from steps (no separate roster, since 8 of 10 existing rosters drifted).</li>
+    <li>Persona file format, hard-limit skeleton, and the deny table (no starting squads, no deploys).</li>
+    <li>Tier map and resolution order, escalation rule, conductor tier.</li>
+    <li>Result envelope, run states, exit codes, and their mapping to Control Tower card states.</li>
+    <li>State layout, how Engine persists it (artifact store references instead of files), resume rules, and how a usage-limit park maps to seat health.</li>
+    <li>Gate and evidence contract: evidence reference, live-system tag, non-author verifier, head-commit binding, close blocked on unaccounted rows.</li>
+    <li>Handoff rules: one hop, references only, brief at most 8K tokens, pointers validated, typed artifact names reused from the squad.</li>
+    <li>Human gates, owner pack format, terse reply parse, default-accept-by-ID, review cap of two.</li>
+    <li>Safety: untrusted-input boundary, no write token in personas, deploy lock first, secret handling, spend caps.</li>
+    <li>Router: the work-type table as data, a closed list, low confidence asks.</li>
+    <li>Token hooks: meter format, provider usage and cache hit reporting, stable-prefix brief order.</li>
+    <li>Delegation policy: flat by default, hierarchy by card dependency, no nested agents unless a host declares support.</li>
+    <li>Conformance suite: replay one wave-3 landing-page card as the acceptance test, plus negative cases (stale head, budget denied, loop cap, injection).</li>
+    <li>What Engine must provide natively, what stays optional, version rules.</li>
+  </ol>
+</section>
+
+<section id="tokens">
+  <h2>Token economy: do-it's own job</h2>
+  <p><code>01-TOKEN-DISCIPLINE.md</code> already fixes lever 1 (context volume) and the tier rules TR-1 to TR-5. It does not yet say how to <em>decide</em> a tier per slice, how to split work so small models carry the cheap parts, or how to arrange briefs for the cache. This section adds those, and they need matching sections in that doc (proposed 4.6 to 4.8).</p>
+
+  <h3>Four levers, in priority order</h3>
+  <div class="tablewrap"><table>
+    <tr><th>#</th><th>Lever</th><th>What do-it does</th><th>Already in 01?</th></tr>
+    <tr><td>1</td><td><b>Volume</b></td><td>Context ceilings, reset from state files, no polling on fat contexts, tee tool output to files.</td><td><span class="tag t-c">yes</span> 4.1, 4.2, 4.4</td></tr>
+    <tr><td>2</td><td><b>Routing</b></td><td>Pick the tier per slice; upgrade or downgrade on evidence.</td><td><span class="tag t-h">rules only</span> 4.3 has no classifier or triggers</td></tr>
+    <tr><td>3</td><td><b>Decomposition</b></td><td>Split a stage so code does what code can, cheap models prepare, mid models execute, the top tier decides.</td><td><span class="tag t-b">no</span></td></tr>
+    <tr><td>4</td><td><b>Cache shape</b></td><td>Stable prefixes, batched siblings, digests keyed by content hash.</td><td><span class="tag t-h">cost model only</span> no design</td></tr>
+  </table></div>
+
+  <h3>Routing: which tier, and when to move</h3>
+  <div class="tablewrap"><table>
+    <tr><th>Slice class</th><th>Runs on</th><th>Examples</th><th>Move up when</th><th>Move down when</th></tr>
+    <tr><td>Deterministic</td><td><span class="tag t-c">code, zero tokens</span></td><td>run tests, collect git and branch state, format, compute digests, write ledger rows, parse the owner reply</td><td>never; if it needs judgement it was misclassified</td><td>n/a</td></tr>
+    <tr><td>Gather and summarize, read-only</td><td>cheap (T3)</td><td>repo reporter, log digest, brief writer, report drafting</td><td>digest fails the fixed-shape check twice</td><td>n/a</td></tr>
+    <tr><td>Spec'd implementation against a test contract</td><td>balanced (T2)</td><td>build lanes, fixes with a failing test in hand</td><td>contract still red after one retry, or the worker flags ambiguity</td><td>three slices in a row pass first try in this run</td></tr>
+    <tr><td>Hard reasoning</td><td>powerful (T1), written reason required</td><td>contract design, root cause with no repro, crown-jewel piece, adversarial verify</td><td>n/a</td><td>no reason logged, or the slice turns out to be spec'd once diagnosed</td></tr>
+    <tr><td>Conductor</td><td>balanced (T2)</td><td>spawns, reads digests, never edits</td><td>never</td><td>n/a</td></tr>
+  </table></div>
+  <ul>
+    <li><b>Change tier only at a spawn or a stage boundary, never inside a fat context.</b> Switching models on a 900K context changes the price per token, not the token count (TR-5; the 2026-09-26 case).</li>
+    <li><b>Escalation is capped:</b> one step up per slice, logged with the reason. A second failure goes to you in the owner pack instead of climbing again.</li>
+    <li><b>The classifier is deterministic first:</b> touches only test files, file count, presence of a test contract, cross-file dependency. One cheap LLM call only when those rules disagree, and the call is logged.</li>
+    <li><b>Planning hands over a tier hint per slice.</b> plan-it already writes a per-run tier policy in <code>CONTRACT.md</code>, so the slice list carries <code>difficulty</code> and <code>tier_hint</code>, and the spine may downgrade but only upgrades with evidence.</li>
+  </ul>
+
+  <h3>Decomposition: split so the big model touches few tokens</h3>
+  <p>Illustrative shape of a bug-fix stage. The point is who reads what, not the token counts, which are not measured here.</p>
+  <div class="flow"><span class="s c">collect logs, git state, failing test</span><span class="ar">→</span><span class="s a">cheap: digest to ≤2K tokens</span><span class="ar">→</span><span class="s a">top: diagnose from the digest only</span><span class="ar">→</span><span class="s a">mid: implement against the test</span><span class="ar">→</span><span class="s c">gates</span><span class="ar">→</span><span class="s a">cheap: write report</span></div>
+  <div class="grid">
+    <div class="card"><h3>Split when</h3><p>A slice has a deterministic part, a read-heavy part, or a decision part that can be separated by a file. The top tier then reads a digest, not the repository.</p></div>
+    <div class="card"><h3>Do not split when</h3><p>The saving is smaller than the spawn cost. Each fresh worker pays its brief and a cold start (workers in the founding case began near 57K tokens of context). A one-file change runs inline, as <code>engine-deploy</code> already says.</p></div>
+    <div class="card"><h3>Write-side rule</h3><p>Splitting applies to reading and thinking. Writing stays single-threaded per area, because parallel writers produce incompatible work (Cognition, Apr 2026).</p></div>
+  </div>
+
+  <h3>The "token hallucination" problem: three failure forms</h3>
+  <p>I read this as spend that buys nothing, plus the model reporting spend or progress it never measured. It has three forms, each with a different control.</p>
+  <div class="tablewrap"><table>
+    <tr><th>Form</th><th>Example</th><th>Control</th></tr>
+    <tr><td><b>Phantom spend</b></td><td>Polling a finished session; relays; reasoning output re-read every turn</td><td>Idle-turn share and rent ratio from the meter; SL and CB gates (01, 4.1 to 4.2)</td></tr>
+    <tr><td><b>Invented numbers</b></td><td>"About 40% of budget used", "cheap and fast" with nothing measured</td><td>Models never state usage. Figures come from the provider usage field, or from a character estimate flagged <code>estimated:true</code>. Unknown stays "unknown".</td></tr>
+    <tr><td><b>Invented pointers</b></td><td>A brief naming a path, ID or function that does not exist, so the worker burns a context searching</td><td>Brief builder is code: every path and ID is checked to exist before the brief is written. Failures become questions, not guesses. prompt-it's "unvalidated pointers" list feeds this.</td></tr>
+  </table></div>
+
+  <h3>Cache management: use what exists, build only the gaps</h3>
+  <p>A separate pass (<code>research/09-cache-prior-art.md</code>) checked providers, coding agents and GitHub projects. Most figures come from primary documentation read that day; model names and prices change often, so re-verify them when the drivers are written.</p>
+
+  <h4>Use, adapt or ignore</h4>
+  <div class="tablewrap"><table>
+    <tr><th>Source</th><th>What it gives</th><th>Verdict for do-it</th></tr>
+    <tr><td>Provider-native caching (Anthropic, OpenAI, DeepSeek, Gemini)</td><td>Prefix caching with a discount on reads</td><td><span class="tag t-c">use</span> never build a local cache</td></tr>
+    <tr><td>Claude Code's own prefix discipline (Anthropic engineering post, 2026-04-30)</td><td>Static system and tools first; updates travel as messages, never as system edits; no tool or model changes mid-session; compaction forks the parent prefix</td><td><span class="tag t-c">use</span> leave a harness's prefix alone; copy its rules for the briefs do-it writes</td></tr>
+    <tr><td>LiteLLM</td><td>Usage and cost fields normalized across providers, cache passthrough</td><td><span class="tag t-c">use</span> as an optional normalizer, or copy its field map</td></tr>
+    <tr><td>OpenRouter <code>session_id</code></td><td>Sticky routing so repeat calls hit the same cache; normalized cache fields</td><td><span class="tag t-c">use</span> as a driver kind (also the route to DeepSeek)</td></tr>
+    <tr><td>ccusage</td><td>Reads Claude Code and Codex logs for tokens, cache and cost</td><td><span class="tag t-c">use</span> read-only, for observed spend on those hosts</td></tr>
+    <tr><td>repomix, Aider's repo map</td><td>Deterministic repo digest; layer order system → read-only → map → editable</td><td><span class="tag t-c">use</span> as the stable, cacheable digest block</td></tr>
+    <tr><td>claude-mem pattern</td><td>Cross-session memory injected at the tail</td><td><span class="tag t-h">adapt</span> the idea (tail, never prefix), do not build a memory store</td></tr>
+    <tr><td>Langfuse, context-mode</td><td>Usage tracing with cache token types; tool-output truncation</td><td><span class="tag t-h">adapt</span> optional OTel export; the truncation pattern</td></tr>
+    <tr><td>Anthropic <code>max_tokens:0</code> pre-warm and 1-hour TTL</td><td>Warm a prefix without generating; longer window</td><td><span class="tag t-c">use</span> instead of Aider-style keepalive pings</td></tr>
+    <tr><td>GPTCache</td><td>Caches whole responses, not prefixes</td><td><span class="tag t-b">ignore</span> wrong problem for tool-using agents</td></tr>
+    <tr><td>LLMLingua and other prompt compression</td><td>Rewrites the prompt</td><td><span class="tag t-b">ignore</span> rewriting the prefix busts the cache</td></tr>
+    <tr><td>vLLM, SGLang, LMCache</td><td>Server-side prefix caching for self-hosted models</td><td><span class="tag t-b">later</span> only if a local-model driver is added</td></tr>
+    <tr><td>mem0, Letta, Zep</td><td>Memory services</td><td><span class="tag t-b">ignore</span> for cache; memory is a separate concern</td></tr>
+  </table></div>
+
+  <h4>Rules do-it codifies (13, each from a cited source)</h4>
+  <ol>
+    <li><b>Stable prefix, volatile tail.</b> Static instructions and tools first. No timestamps, run IDs or git status in the system block or early blocks.</li>
+    <li><b>Append-only history.</b> Never edit, reorder or summarize earlier messages in place. Compaction only as a fork that reuses the parent prefix.</li>
+    <li><b>Deterministic serialization.</b> Tools sorted by name, stable JSON key order, stable order for MCP tools. (A Codex fix for hash-map tool order is the cautionary tale.)</li>
+    <li><b>Never add or remove tools mid-session.</b> Restrict through state messages or deferred stubs.</li>
+    <li><b>Never switch model mid-session.</b> Hand off through a fresh subagent with a written brief. This agrees with the routing rule above.</li>
+    <li><b>Updates go in the next message,</b> not the system prompt: time, changed files, finish-line board.</li>
+    <li><b>Do not change thinking or effort level, tool choice, images or speed mid-thread.</b></li>
+    <li><b>Put the cache breakpoint on the last byte-identical block.</b></li>
+    <li><b>Warm, then fan out.</b> Send one request, wait for its first response, then start sibling workers on the same prefix. Starting them all at once means none finds a cache entry.</li>
+    <li><b>Pick the TTL by the expected gap.</b> When the gap between calls exceeds five minutes, the one-hour option pays back after two reads on Anthropic's published multipliers.</li>
+    <li><b>Prefer fewer, larger prefix-sharing workers.</b> A prefix below the provider's minimum (512 to 4096 tokens, by model) does not cache, so do not pay a write premium there.</li>
+    <li><b>Measure every call.</b> Hit rate = read ÷ (read + write + uncached). Alert on drops; ignore sessions under about 20 requests.</li>
+    <li><b>Send a session affinity key on every route</b> that supports one.</li>
+  </ol>
+
+  <h4>What each driver declares in <code>driver.json</code></h4>
+  <div class="tablewrap"><table>
+    <tr><th>Driver</th><th>Window</th><th>Min prefix</th><th>Read cost</th><th>Write premium</th><th>Controls</th></tr>
+    <tr><td>Anthropic</td><td>5 min default, 1 hour opt-in</td><td>512 to 4096 by model</td><td>0.1x (0.05x on the newest Opus and Sonnet)</td><td>1.25x (5 min), 2x (1 hour)</td><td>up to 4 breakpoints, automatic mode, pre-warm</td></tr>
+    <tr><td>OpenAI, newest models</td><td>30 min minimum</td><td>1024</td><td>0.1x</td><td>1.25x</td><td>breakpoints, TTL options, cache key</td></tr>
+    <tr><td>OpenAI, older</td><td>5 to 10 min, up to 24 h</td><td>about 1024</td><td>model-dependent (secondary source)</td><td>none</td><td>cache key, retention option</td></tr>
+    <tr><td>DeepSeek</td><td>hours to days, best effort</td><td>none stated</td><td>about 0.02x to 0.03x</td><td>none</td><td>automatic only</td></tr>
+    <tr><td>Gemini</td><td>implicit, not guaranteed</td><td>2048 to 4096 (sources disagree)</td><td>about 0.1x, derived from prices</td><td>none</td><td>implicit only on the newest generation</td></tr>
+    <tr><td>OpenRouter</td><td>provider's own; sticky for about 10 min idle</td><td>provider's</td><td>0.1x to 0.5x by provider</td><td>by provider</td><td><code>session_id</code>, cache control passthrough</td></tr>
+    <tr><td>Claude Code, Codex, opencode (host-owned)</td><td>host decides</td><td>n/a</td><td>observed only</td><td>n/a</td><td>none from outside; read logs</td></tr>
+  </table></div>
+  <p>Gemini minimum tokens conflict between Google's page and OpenRouter's, and opencode's exact cache logic is unread (secondary source only). Both are marked unverified in the notes. A driver with no declared behavior is treated as no cache.</p>
+
+  <h4>What do-it adds itself, and only that</h4>
+  <p>do-it cannot inject into a harness's prefix when it delegates to Claude Code, Codex or opencode. The prior-art pass found no existing project that covers these, so they are the build list:</p>
+  <ol>
+    <li><b>Cache-safe handoff across harnesses:</b> a fresh subagent with a short stable preamble plus a tail brief, so each spawn starts with a prefix the host can cache.</li>
+    <li><b>One cache telemetry format across hosts.</b> ccusage covers Claude Code and Codex logs and LiteLLM covers API calls, but nothing unifies them with opencode, DeepSeek and Engine.</li>
+    <li><b>A cost-aware policy:</b> when to pay for the longer window, when to keep a worker warm or restart it, when a model switch beats staying. No project publishes one (absence of evidence, not proof).</li>
+    <li><b>Fan-out warming across mixed providers,</b> each in its own provider's way.</li>
+    <li><b>Cache-safe compaction on non-Claude drivers.</b> The fork pattern is specific to Claude Code.</li>
+    <li><b>A prefix diff detector</b> that names the block that busted the cache. Anthropic mentions a cache diagnostics feature; check it before building this.</li>
+  </ol>
+  <p>Published hit rates (about 92% for Claude Code and 89% for opencode in one secondary dataset) are not a baseline. do-it measures its own.</p>
+
+  <h4>Local mechanics that sit on top</h4>
+  <ul>
+    <li><b>Digests keyed by content hash.</b> A file read once becomes <code>.do-it/digests/&lt;sha&gt;.md</code> (built with a deterministic packer such as repomix where it fits). Later briefs cite it, and a changed file gets a new key.</li>
+    <li><b>The resume prompt is a fixed template</b> built from state files, so it caches too.</li>
+    <li><b>Wake rules follow the cache window.</b> Waking a large context after expiry pays a full write, so reset first (01, SL-3).</li>
+    <li><b>Keep the always-loaded surface small.</b> Stage skills load on demand and the tool list is identical across spawns.</li>
+  </ul>
+
+  <h3>What the meter reports</h3>
+  <div class="grid">
+    <div class="card"><div class="stat" style="font-size:1.25rem">Tokens per VERIFIED row</div><small class="mono" style="color:var(--muted)">the headline KPI: cost of a proven result, not of activity</small></div>
+    <div class="card"><div class="stat" style="font-size:1.25rem">Tier mix and escalation rate</div><small class="mono" style="color:var(--muted)">share on T1, and how often a slice had to move up</small></div>
+    <div class="card"><div class="stat" style="font-size:1.25rem">Cache hit ratio</div><small class="mono" style="color:var(--muted)">per context; low on a long context means the prefix is unstable</small></div>
+    <div class="card"><div class="stat" style="font-size:1.25rem">Rent ratio, idle-turn share</div><small class="mono" style="color:var(--muted)">from 01, section 6.1</small></div>
+  </div>
+</section>
+
+<section id="flow">
+  <h2>Workflow, end to end</h2>
+  <p>Solid arrows are the happy path. Red dashed arrows are failure loops, capped at three rounds before a human decides. The green bar is what do-it adds underneath every stage.</p>
+  <div class="diagram">
+  <svg viewBox="0 0 1000 500" role="img" aria-label="do-it lifecycle: intake, plan, ratify, build, gates, review, attended check, deploy, prove, conclude, reconcile, with failure loops and a state spine">
+    <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker>
+    <marker id="ahr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--bad)"/></marker></defs>
+    <!-- row 1 -->
+    <g class="n n-a"><rect x="20" y="70" width="150" height="64" rx="8"/><text x="95" y="98" text-anchor="middle">Intake</text><text class="sub" x="95" y="116" text-anchor="middle">prompt-it · brief</text></g>
+    <g class="n n-a"><rect x="220" y="70" width="150" height="64" rx="8"/><text x="295" y="98" text-anchor="middle">Plan</text><text class="sub" x="295" y="116" text-anchor="middle">plan-it · contract</text></g>
+    <g class="n n-h"><polygon points="495,62 565,102 495,142 425,102"/><text x="495" y="100" text-anchor="middle">Ratify</text><text class="sub" x="495" y="115" text-anchor="middle">G4 owner</text></g>
+    <g class="n n-a"><rect x="620" y="70" width="150" height="64" rx="8"/><text x="695" y="98" text-anchor="middle">Build</text><text class="sub" x="695" y="116" text-anchor="middle">build-it · T2 lanes</text></g>
+    <g class="n n-c"><rect x="820" y="70" width="150" height="64" rx="8"/><text x="895" y="98" text-anchor="middle">Local gates</text><text class="sub" x="895" y="116" text-anchor="middle">lint·types·tests·REAL</text></g>
+    <path class="edge" d="M170 102H218" marker-end="url(#ah)"/><path class="edge" d="M370 102H423" marker-end="url(#ah)"/>
+    <path class="edge" d="M565 102H618" marker-end="url(#ah)"/><path class="edge" d="M770 102H818" marker-end="url(#ah)"/>
+    <path class="edge loop" d="M895 70V34H695V68" marker-end="url(#ahr)"/><text class="lbl bad" x="795" y="28" text-anchor="middle">fail → same session fixes</text>
+    <!-- row 2 -->
+    <path class="edge" d="M895 134V180H60V288" marker-end="url(#ah)"/>
+    <g class="n n-a"><rect x="20" y="290" width="150" height="64" rx="8"/><text x="95" y="318" text-anchor="middle">Review</text><text class="sub" x="95" y="336" text-anchor="middle">review-it · CDP walk</text></g>
+    <g class="n n-h"><polygon points="295,282 370,322 295,362 220,322"/><text x="295" y="320" text-anchor="middle">Attended</text><text class="sub" x="295" y="334" text-anchor="middle">only if rows</text></g>
+    <g class="n n-c"><rect x="420" y="290" width="150" height="64" rx="8"/><text x="495" y="318" text-anchor="middle">Deploy</text><text class="sub" x="495" y="336" text-anchor="middle">lock→canary→fleet</text></g>
+    <g class="n n-a"><rect x="620" y="290" width="150" height="64" rx="8"/><text x="695" y="318" text-anchor="middle">Prove</text><text class="sub" x="695" y="336" text-anchor="middle">legs + live probe</text></g>
+    <g class="n n-a"><rect x="820" y="290" width="150" height="64" rx="8"/><text x="895" y="318" text-anchor="middle">Conclude</text><text class="sub" x="895" y="336" text-anchor="middle">ledger·0-done·reap</text></g>
+    <path class="edge" d="M170 322H218" marker-end="url(#ah)"/><path class="edge" d="M370 322H418" marker-end="url(#ah)"/>
+    <path class="edge" d="M570 322H618" marker-end="url(#ah)"/><path class="edge" d="M770 322H818" marker-end="url(#ah)"/>
+    <path class="edge loop" d="M140 290V236H650V136" marker-end="url(#ahr)"/><text class="lbl bad" x="400" y="230" text-anchor="middle">findings → build, max 3 rounds, then owner</text>
+    <!-- reconcile -->
+    <g class="n n-a"><rect x="820" y="410" width="150" height="56" rx="8" stroke-dasharray="5 4"/><text x="895" y="435" text-anchor="middle">Reconcile</text><text class="sub" x="895" y="452" text-anchor="middle">periodic · reconcile-it</text></g>
+    <path class="edge soft" d="M895 354V408" marker-end="url(#ah)"/>
+    <!-- spine -->
+    <g class="spine"><rect x="20" y="410" width="760" height="56" rx="8"/></g>
+    <text x="40" y="432" style="font:600 13px var(--body);fill:var(--fg)">do-it spine</text>
+    <text class="sub" x="40" y="451" style="font:400 11px var(--mono);fill:var(--muted)">state.json · events.jsonl · evidence ledger · token meter · owner pack · tier gate · router lock · host driver</text>
+  </svg></div>
+  <div class="legend"><span><i style="background:var(--human-soft);border:1.5px solid var(--human)"></i>human decision</span><span><i style="background:var(--agent-soft);border:1.5px solid var(--agent)"></i>agent stage</span><span><i style="background:var(--code-soft);border:1.5px solid var(--code)"></i>code, deterministic</span><span><i style="background:var(--bad-soft);border:1.5px solid var(--bad)"></i>failure loop</span></div>
+
+  <h3>Run states</h3>
+  <p><code>INTAKE → PLANNING → AWAIT_RATIFY → BUILDING → VERIFYING → REVIEWING → (FIXING ↺) → DEPLOYING → PROVING → CONCLUDING → DONE</code>, with three side exits: <code>NEEDS_HUMAN</code> (exit 2, an owner pack is waiting), <code>PARKED</code> (usage limit, a wake is scheduled), and <code>BLOCKED</code> (exit 3, a gate failed past its retry cap). <code>RECONCILING</code> runs on a schedule or after a burst of runs, outside any single feature.</p>
+</section>
+
+<section id="contract">
+  <h2>The contract that makes stages drivable</h2>
+  <p>Each stage plugin writes one atomic <code>result.json</code> as its last act. This is the smallest change that unlocks everything else.</p>
+<pre>{ "schema": "it-result/1",
+  "stage": "prompt-it | plan-it | build-it | review-it | deploy-it | conclude-it | reconcile-it",
+  "run_id": "", "version": "",
+  "status": "ok | needs_human | blocked | failed | context_reset | usage_limit",
+  "exit_code": 0,
+  "next": { "stage": "build-it", "input": "relative/path", "launch_prompt": "relative/path" },
+  "pending_human": { "gate": "G4", "questions_path": "", "twin_html": "" },
+  "artifacts": [ { "path": "", "kind": "", "sha256": "" } ],
+  "resume": { "state_files": [""], "next_action": "one line" },
+  "tokens": { "meter": ".taskstate/token-meter.jsonl", "peak_ctx": 0, "tier_mix": { "T1": 0, "T2": 0, "T3": 0 } } }</pre>
+  <p>Stage-specific fields extend it: plan-it adds tallies, waves and DoD rows; build-it adds per-row <code>VERIFIED / IMPLEMENTED-NOT-VERIFIED / BLOCKED</code> with an evidence reference and a run verdict (<code>DONE_ALL_VERIFIED, DONE_WITH_RESIDUALS, BLOCKED, NEEDS_RESET, USAGE_LIMIT</code>); deploy-it adds its leg list. One vocabulary replaces PASS/FAIL/INV, GREEN/RED/UNVERIFIED and PASS/FAIL/SKIP.</p>
+
+  <h3>deploy-it adapter, so the Engine specifics move out of the plugin</h3>
+  <p>Executable-first, so any host can drive it: a <code>.deploy-it/adapter.json</code> manifest plus commands that already speak the LEG protocol <code>engine-deploy.sh</code> uses. Required leg ids are fixed, and the result states are <code>DEPLOYED_VERIFIED, DEPLOYED_UNVERIFIED, HELD, FAILED, NEEDS_HUMAN</code>. The Engine adapter keeps the tenants box, ghcr registry, terraform digest pin, the three-deployment rule and the seam-contract probe. A Vercel or plain-Docker adapter would be a second, small file.</p>
+</section>
+
+<section id="cases">
+  <h2>Five use cases</h2>
+
+  <article class="uc">
+    <h3>1. Feature from a brain-dump, overnight, limit-proof</h3>
+    <div class="trigger">/do-it "Ship the p2p persona highway W0–W2 on fernando-ott. DoD: …  Out of scope: …"</div>
+    <div class="flow"><span class="s a">intake</span><span class="ar">→</span><span class="s a">plan</span><span class="ar">→</span><span class="s h">ratify G4</span><span class="ar">→</span><span class="s a">build lanes</span><span class="ar">→</span><span class="s c">gates</span><span class="ar">→</span><span class="s a">review</span><span class="ar">→</span><span class="s c">deploy canary→fleet</span><span class="ar">→</span><span class="s a">prove</span><span class="ar">→</span><span class="s a">conclude</span></div>
+    <dl><dt>Today</dt><dd>You run plan-it, ratify, ask for <code>/next-session-prompt</code>, paste it into a fresh session on some alias, paste the same token-discipline block again, write wake pings when the limit hits, then run review, deploy and conclude as separate sessions.</dd>
+    <dt>With do-it</dt><dd>You send one message and answer one owner pack at the ratify gate. The planning context closes at handoff. The build conductor stays under its ceiling and restarts from files. A limit hit parks the run and the first wake after the reset resumes it.</dd>
+    <dt>You see</dt><dd>One morning report: per-criterion VERIFIED / not, the deploy legs, token meter summary, anything under "Needs you".</dd></dl>
+  </article>
+
+  <article class="uc">
+    <h3>2. Live bug: investigate first, then fix and prove it live</h3>
+    <div class="trigger">/do-it "O Secretário não está recebendo as mensagens completas" + chat URL (no changes yet)</div>
+    <div class="flow"><span class="s a">investigate read-only</span><span class="ar">→</span><span class="s h">proceed? + premise check</span><span class="ar">→</span><span class="s a">fix</span><span class="ar">→</span><span class="s c">local gate</span><span class="ar">→</span><span class="s c">deploy fo canary</span><span class="ar">→</span><span class="s a">live CDP proof, watch 5 min</span><span class="ar">→</span><span class="s c">widen</span><span class="ar">→</span><span class="s a">conclude</span></div>
+    <dl><dt>Today</dt><dd>You say "investigate, change nothing", read the finding, then restart the conversation as a fix, then ask whether it was checked live.</dd>
+    <dt>With do-it</dt><dd>The preset starts read-only and returns root cause, with a correction when your premise is wrong. One yes moves it to fix. The live proof is part of the preset, and widening to the other tenants waits for it.</dd>
+    <dt>Honest states</dt><dd>Root cause found · built-not-shipped · premise corrected, nothing to fix.</dd></dl>
+  </article>
+
+  <article class="uc">
+    <h3>3. Weekly backlog drain</h3>
+    <div class="trigger">/do-it drain "107 cards still in the backlog folder"</div>
+    <div class="flow"><span class="s a">verify-before-build discovery</span><span class="ar">→</span><span class="s h">one batched owner gate</span><span class="ar">→</span><span class="s a">waves (T2 workers)</span><span class="ar">→</span><span class="s c">deploy train</span><span class="ar">→</span><span class="s c">archive to 0-done</span><span class="ar">→</span><span class="s a">per-card status table</span></div>
+    <dl><dt>Today</dt><dd>A marathon session where you later ask "why do I still see N items?".</dd>
+    <dt>With do-it</dt><dd>Every card ends in a disposition (drained, trimmed, promoted, attended, parked) with an evidence reference. Conclude cannot close while a card is unaccounted for, so the archive question answers itself.</dd></dl>
+  </article>
+
+  <article class="uc">
+    <h3>4. Review and builder loop with a real browser</h3>
+    <div class="trigger">/do-it review "docs/implementation/tenant-workspace-vms" until 100% pass</div>
+    <div class="flow"><span class="s a">reviewer: derive cases</span><span class="ar">→</span><span class="s h">confirm cases</span><span class="ar">→</span><span class="s a">CDP walk of the roteiro</span><span class="ar">→</span><span class="s a">findings → builder</span><span class="ar">→</span><span class="s c">gates</span><span class="ar">→</span><span class="s a">re-walk</span><span class="ar">→</span><span class="s h">round 3: owner decides</span><span class="ar">→</span><span class="s a">conclude</span></div>
+    <dl><dt>Today</dt><dd>Two sessions relayed by hand with <code>sendMessage</code>, ending in a verdict like "10/0/3".</dd>
+    <dt>With do-it</dt><dd>One run owns the roles as separate personas with separate contexts: the reviewer writes the roteiro, another agent runs it (browser, API or whatever the test is), the builder fixes. Findings travel as a file. do-it, looking from above, owns the exit condition: a frozen roteiro, severity classes, a round budget and a convergence check (section <a href="#finish">Behaviors</a>, part 3). An attended FAIL must produce an automated regression test or an explicit "cannot automate because X" (the ratchet from the brainstorm).</dd></dl>
+  </article>
+
+  <article class="uc">
+    <h3>5. The same task on a different host</h3>
+    <div class="trigger">/do-it chore "bump dependency X, keep CI green" --host opencode --model deepseek</div>
+    <div class="flow"><span class="s a">intake (cheap)</span><span class="ar">→</span><span class="s a">single build agent</span><span class="ar">→</span><span class="s c">lint·types·tests</span><span class="ar">→</span><span class="s a">review (clean context)</span><span class="ar">→</span><span class="s c">PR</span><span class="ar">→</span><span class="s a">conclude</span></div>
+    <dl><dt>Today</dt><dd>Every plugin assumes Claude Code, so a cheap chore either burns Claude quota or is done outside the harness with no ledger.</dd>
+    <dt>With do-it</dt><dd>The router picks the lightweight chore path. The driver config maps tiers to the host's models. The same <code>.do-it/</code> state means you can start on one alias or host, hit a limit, and resume on another. Where a host has no hooks, gates degrade to the conductor checklist and the meter is rebuilt from transcripts, and the run says so.</dd></dl>
+  </article>
+</section>
+
+
+<section id="hosts">
+  <h2>Running it: one session or Engine, settings, sandboxes</h2>
+  <p>Answers to the questions of 2026-10-14. Everything below is design; nothing is built or tested. Where a host's behavior is unverified, the cell says so.</p>
+
+  <h3>The drain, in Claude Code: you open one session</h3>
+  <p>You type <code>/do-it drain "107 cards still in the backlog folder"</code> once. The session you opened is the conductor. Every persona (discovery, builder, reviewer, runner) is a subagent the conductor spawns with an explicit model and a fresh context, so you never open the other sessions yourself. A second session appears only in two cases, both automatic: a handoff at the context ceiling, and a wake-up after a usage limit.</p>
+  <div class="diagram"><svg viewBox="0 0 1000 410" role="img" aria-label="Weekly backlog drain in Claude Code: one session, conductor, spine and subagent workers"><defs><marker id="ah1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker><marker id="ahr1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--bad)"/></marker></defs><rect class="lane" x="4" y="8" width="992" height="76" rx="6"/><text class="lanel" x="12" y="24">YOU</text><rect class="lane" x="4" y="94" width="992" height="76" rx="6"/><text class="lanel" x="12" y="110">SPINE (code)</text><rect class="lane" x="4" y="180" width="992" height="142" rx="6"/><text class="lanel" x="12" y="196">WORKERS (subagents)</text><rect class="lane" x="4" y="330" width="992" height="70" rx="6"/><text class="lanel" x="12" y="346">CONDUCTOR</text><path class="edge" d="M196 70V110" marker-end="url(#ah1)"/><path class="edge" d="M252 133H316V200" marker-end="url(#ah1)"/><path class="edge" d="M372 223H436V156" marker-end="url(#ah1)"/><path class="edge" d="M492 133H556V70" marker-end="url(#ah1)"/><path class="edge" d="M612 47H676V200" marker-end="url(#ah1)"/><path class="edge" d="M732 223H796V156" marker-end="url(#ah1)"/><path class="edge" d="M650 246V285H740" marker-end="url(#ah1)"/><path class="edge loop" d="M740 298H690V246" marker-end="url(#ahr1)"/><path class="edge" d="M852 133H860" marker-end="url(#ah1)"/><path class="edge" d="M852 285H916V156" marker-end="url(#ah1)"/><path class="edge" d="M916 110V70" marker-end="url(#ah1)"/><g class="n n-h"><rect x="140" y="24" width="112" height="46" rx="7"/><text x="196.0" y="44" text-anchor="middle" style="font-size:12px">/do-it drain</text><text class="sub" x="196.0" y="59" text-anchor="middle" style="font-size:9.5px">"107 cards"</text></g><g class="n n-c"><rect x="140" y="110" width="112" height="46" rx="7"/><text x="196.0" y="130" text-anchor="middle" style="font-size:12px">start · route</text><text class="sub" x="196.0" y="145" text-anchor="middle" style="font-size:9.5px">preset = drain</text></g><g class="n n-a"><rect x="260" y="200" width="112" height="46" rx="7"/><text x="316.0" y="220" text-anchor="middle" style="font-size:12px">Discover ×N</text><text class="sub" x="316.0" y="235" text-anchor="middle" style="font-size:9.5px">haiku · read-only</text></g><g class="n n-c"><rect x="380" y="110" width="112" height="46" rx="7"/><text x="436.0" y="130" text-anchor="middle" style="font-size:12px">Dispositions</text><text class="sub" x="436.0" y="145" text-anchor="middle" style="font-size:9.5px">+ one owner pack</text></g><g class="n n-h"><rect x="500" y="24" width="112" height="46" rx="7"/><text x="556.0" y="44" text-anchor="middle" style="font-size:12px">Answer once</text><text class="sub" x="556.0" y="59" text-anchor="middle" style="font-size:9.5px">"1 yes 2 no 3 …"</text></g><g class="n n-a"><rect x="620" y="200" width="112" height="46" rx="7"/><text x="676.0" y="220" text-anchor="middle" style="font-size:12px">Build slices</text><text class="sub" x="676.0" y="235" text-anchor="middle" style="font-size:9.5px">sonnet · worktrees</text></g><g class="n n-c"><rect x="740" y="110" width="112" height="46" rx="7"/><text x="796.0" y="130" text-anchor="middle" style="font-size:12px">Gates</text><text class="sub" x="796.0" y="145" text-anchor="middle" style="font-size:9.5px">lint·types·[REAL]</text></g><g class="n n-a"><rect x="740" y="262" width="112" height="46" rx="7"/><text x="796.0" y="282" text-anchor="middle" style="font-size:12px">Review loop</text><text class="sub" x="796.0" y="297" text-anchor="middle" style="font-size:9.5px">runner≠author ≤3</text></g><g class="n n-c"><rect x="860" y="110" width="112" height="46" rx="7"/><text x="916.0" y="130" text-anchor="middle" style="font-size:12px">Deploy · ledger</text><text class="sub" x="916.0" y="145" text-anchor="middle" style="font-size:9.5px">lock→legs→ledger</text></g><g class="n n-h"><rect x="860" y="24" width="112" height="46" rx="7"/><text x="916.0" y="44" text-anchor="middle" style="font-size:12px">Read report</text><text class="sub" x="916.0" y="59" text-anchor="middle" style="font-size:9.5px">dispositions</text></g><g class="n n-a"><rect x="140" y="346" width="832" height="40" rx="7"/><text x="556" y="364" text-anchor="middle" style="font-size:12px">Conductor session (T2): reads a ~300-token board, calls the spine, spawns the workers above</text><text class="sub" x="556" y="379" text-anchor="middle" style="font-size:9.5px">ceiling reached → do-it handoff → fresh conductor resumes from files (capped)</text></g><text class="lbl bad" x="684" y="274" text-anchor="end">findings → rebuild</text></svg></div>
+  <div class="legend"><span><i style="background:var(--human-soft);border:1.5px solid var(--human)"></i>you</span><span><i style="background:var(--agent-soft);border:1.5px solid var(--agent)"></i>LLM work</span><span><i style="background:var(--code-soft);border:1.5px solid var(--code)"></i>code, no tokens</span></div>
+
+  <h3>The same drain, in Engine: nothing to open, the board is the session</h3>
+  <p><b>Answering:</b> the questions do not have to be answered in Control Tower. The ask goes to every channel linked to the org (Control Tower, chat/p2p, WhatsApp) and the terse reply is parsed by question ID, so any of them works. Engine still has to decide what happens when two channels answer.</p>
+  <p>The same card goes in as a Control Tower card. There is no conductor session: the pipeline is data and each step is a Job. This pipeline is <b>proposed</b>; what exists today is the card→squad hand-off, the per-role Jobs, the default-accept-by-ID asks and a review cap of 3 (PD-06).</p>
+  <div class="diagram"><svg viewBox="0 0 1000 410" role="img" aria-label="Weekly backlog drain in Engine: parent card, squad personas as k8s jobs, child cards"><defs><marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker><marker id="ahr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--bad)"/></marker></defs><rect class="lane" x="4" y="8" width="992" height="76" rx="6"/><text class="lanel" x="12" y="24">OWNER</text><rect class="lane" x="4" y="94" width="992" height="76" rx="6"/><text class="lanel" x="12" y="110">CONTROL TOWER</text><rect class="lane" x="4" y="180" width="992" height="142" rx="6"/><text class="lanel" x="12" y="196">PERSONA JOBS (k8s)</text><rect class="lane" x="4" y="330" width="992" height="70" rx="6"/><text class="lanel" x="12" y="346">GITHUB</text><path class="edge" d="M196 70V110" marker-end="url(#ah2)"/><path class="edge" d="M252 133H316V200" marker-end="url(#ah2)"/><path class="edge" d="M372 223H436V156" marker-end="url(#ah2)"/><path class="edge" d="M492 133H556V70" marker-end="url(#ah2)"/><path class="edge" d="M612 47H676V110" marker-end="url(#ah2)"/><path class="edge" d="M732 133H796V200" marker-end="url(#ah2)"/><path class="edge" d="M796 246V262" marker-end="url(#ah2)"/><path class="edge loop" d="M740 285H715V223H738" marker-end="url(#ahr2)"/><path class="edge" d="M796 308V340" marker-end="url(#ah2)"/><path class="edge" d="M852 363H916V156" marker-end="url(#ah2)"/><path class="edge" d="M916 110V70" marker-end="url(#ah2)"/><g class="n n-h"><rect x="140" y="24" width="112" height="46" rx="7"/><text x="196.0" y="44" text-anchor="middle" style="font-size:12px">Drops card</text><text class="sub" x="196.0" y="59" text-anchor="middle" style="font-size:9.5px">"drain 107 cards"</text></g><g class="n n-c"><rect x="140" y="110" width="112" height="46" rx="7"/><text x="196.0" y="130" text-anchor="middle" style="font-size:12px">CoS classifies</text><text class="sub" x="196.0" y="145" text-anchor="middle" style="font-size:9.5px">work_type = drain</text></g><g class="n n-a"><rect x="260" y="200" width="112" height="46" rx="7"/><text x="316.0" y="220" text-anchor="middle" style="font-size:12px">Discovery Job</text><text class="sub" x="316.0" y="235" text-anchor="middle" style="font-size:9.5px">read-only batches</text></g><g class="n n-c"><rect x="380" y="110" width="112" height="46" rx="7"/><text x="436.0" y="130" text-anchor="middle" style="font-size:12px">Owner ask card</text><text class="sub" x="436.0" y="145" text-anchor="middle" style="font-size:9.5px">default-accept ID</text></g><g class="n n-h"><rect x="500" y="24" width="112" height="46" rx="7"/><text x="556.0" y="44" text-anchor="middle" style="font-size:12px">Replies</text><text class="sub" x="556.0" y="59" text-anchor="middle" style="font-size:9.5px">"1 yes 2 no"</text></g><g class="n n-c"><rect x="620" y="110" width="112" height="46" rx="7"/><text x="676.0" y="130" text-anchor="middle" style="font-size:12px">PM splits</text><text class="sub" x="676.0" y="145" text-anchor="middle" style="font-size:9.5px">K dependent cards</text></g><g class="n n-a"><rect x="740" y="200" width="112" height="46" rx="7"/><text x="796.0" y="220" text-anchor="middle" style="font-size:12px">Dev Job ×K</text><text class="sub" x="796.0" y="235" text-anchor="middle" style="font-size:9.5px">one per child</text></g><g class="n n-a"><rect x="740" y="262" width="112" height="46" rx="7"/><text x="796.0" y="282" text-anchor="middle" style="font-size:12px">Review + QA Jobs</text><text class="sub" x="796.0" y="297" text-anchor="middle" style="font-size:9.5px">fresh · ≤3 rounds</text></g><g class="n n-c"><rect x="740" y="340" width="112" height="46" rx="7"/><text x="796.0" y="360" text-anchor="middle" style="font-size:12px">PR + repo gate</text><text class="sub" x="796.0" y="375" text-anchor="middle" style="font-size:9.5px">dev/{task_id}</text></g><g class="n n-c"><rect x="860" y="110" width="112" height="46" rx="7"/><text x="916.0" y="130" text-anchor="middle" style="font-size:12px">Parent closes</text><text class="sub" x="916.0" y="145" text-anchor="middle" style="font-size:9.5px">0 unaccounted rows</text></g><g class="n n-h"><rect x="860" y="24" width="112" height="46" rx="7"/><text x="916.0" y="44" text-anchor="middle" style="font-size:12px">Approve</text><text class="sub" x="916.0" y="59" text-anchor="middle" style="font-size:9.5px">preview / roteiro</text></g><text class="sub" x="150" y="365" style="font-size:10px;fill:var(--muted)">No warm box between Jobs: state = git branch + CT card + result file.</text><text class="sub" x="150" y="381" style="font-size:10px;fill:var(--muted)">Preview (2 h idle teardown) is the only long-lived box today.</text><text class="lbl bad" x="708" y="254" text-anchor="end">findings → fix</text></svg></div>
+  <div class="tablewrap"><table>
+    <tr><th></th><th>Claude Code</th><th>Engine</th></tr>
+    <tr><td><b>What you open</b></td><td>One session and one command</td><td>One card (or WhatsApp / ClickUp intake)</td></tr>
+    <tr><td><b>Who conducts</b></td><td>A T2 conductor session, restartable from files</td><td>The pipeline definition plus Control Tower; no LLM conductor</td></tr>
+    <tr><td><b>Where personas run</b></td><td>Subagents in your machine</td><td>k8s Job + gVisor, one per role per step</td></tr>
+    <tr><td><b>Where state lives</b></td><td><code>.do-it/runs/&lt;id&gt;/</code> on disk</td><td>Engine backend of the <code>StateStore</code> interface: database rows (or interaction records) for state, Cloudflare R2 for blobs, both addressed from the card. Engine chooses; see below</td></tr>
+    <tr><td><b>Owner pack</b></td><td>Native questions, HTML or markdown (setting)</td><td>Ask on Control Tower, chat/p2p or WhatsApp, default-accept by ID</td></tr>
+    <tr><td><b>Isolation</b></td><td>Git worktree via parallel-lifecycle</td><td>The Job itself</td></tr>
+    <tr><td><b>Limit hit</b></td><td>Park + scheduled wake-up</td><td>Seat health and cooling window decide</td></tr>
+  </table></div>
+
+  <h3>Engine state store: rows, interactions or R2</h3>
+  <p>do-it only fixes a <code>StateStore</code> interface (<code>get, put, append, list</code> over <code>runs/&lt;id&gt;/…</code>). Options for the Engine backend: <b>database rows or interaction records</b> for small queryable state (<code>state.json</code>, ledger, events, owner pack); <b>Cloudflare R2</b> for blobs (evidence screenshots, roteiro HTML, large results), addressed by sha256; or both, rows holding refs to R2 objects. My suggestion is the hybrid, but I found nothing in the dev-squad docs saying Engine already uses R2, so that is unverified and Engine's call. Either way a cold Job resumes from git ref, card and store refs, with no local disk.</p>
+
+  <h3>107 cards: how many sandboxes, how many tasks</h3>
+  <div class="uc"><dl>
+    <dt>Sandboxes</dt><dd>Not 107. Boxes follow slices and roles, not cards. Discovery is read-only and handles many cards per worker. Only cards that turn out to need a build become slices. How many that is stays unknown until discovery runs; I will not guess a number.</dd>
+    <dt>Engine tasks</dt><dd>One parent card for the drain. Each card needing a build becomes a dependent child card (the PM split), each worked separately. Cards closed by verification get a disposition row on the parent and no child. If the 107 already are Control Tower cards, Engine's board is the drain and the preset shrinks to a triage card that assigns dispositions.</dd>
+    <dt>Cost rule</dt><dd>Decomposition counts spawn cost: a change that saves less than a Job start is not split. Sandbox time is billed in Engine, so this is real money there.</dd></dl></div>
+
+  <h3>Cloud sandboxes: does Engine keep one open until conclude?</h3>
+  <p>Not today. From the dev-squad docs: dev, reviewer, QA and docs each run as a per-task Job, work survives in the git branch and the card, and the only warm box is the preview (2 h idle teardown). Running do-it local is easy; in the cloud do-it's requirement is only that <b>any step can start cold from a git ref plus the previous result file</b>. A warm lease per card, killed at conclude or on an idle timeout, is an optimization that Engine can add; it should be chosen after measuring Job start, clone and install time, which the docs do not give. That is the Engine layer's call, recorded in the spec (<code>03-ENGINE-LAYER-SPEC.md</code>).</p>
+
+  <h3>When the conductor passes its ceiling</h3>
+  <p>It does not keep going and it does not silently spawn a copy of itself. At the ceiling the spine refuses the next step (a block, not a warning), writes the state and a resume prompt, and the host adapter's <code>continue</code> hook does what the setting says: <code>auto</code> starts a fresh conductor from those files, <code>ask</code> prints the one-line command, <code>off</code> parks the run. Auto handoffs are capped per run (default 5) and each is logged; after the cap the run parks and the report says why. In Claude Code the old session cannot clear itself, so auto means a new headless process; I have not tested that with your subscription aliases, so it is a checklist item. In Engine there is nothing to hand off, because the next step is a new Job anyway.</p>
+
+  <h3>How the owner pack reaches you</h3>
+  <p>The pack is one canonical file (<code>owner-pack.json</code>: numbered questions, each with a recommendation, options and a default). A renderer shows it, and the answer comes back as a terse reply (<code>1 yes 2 no 3: use B</code>) that <code>do-it answer</code> parses. Each host adapter implements the same two calls: <code>render(pack)</code> and <code>collect() → answers</code>. You choose the renderer in settings; the default is <code>auto</code>.</p>
+  <div class="tablewrap"><table>
+    <tr><th>Host</th><th>Default under <code>auto</code></th><th>Answers come back by</th><th>Status</th></tr>
+    <tr><td>Claude Code</td><td>Native multi-question prompt when the pack has 4 questions or fewer; otherwise an HTML page (artifact or local file)</td><td>Picking options, or pasting the terse reply from the page's copy button</td><td>Native prompt limits are from this session's tool schema (up to 4 questions, 2 to 4 options each)</td></tr>
+    <tr><td>Claude Cowork</td><td>Markdown in the chat or an HTML file</td><td>Terse reply in chat</td><td>Not tested; I assume chat-only</td></tr>
+    <tr><td>Engine</td><td>Ask on Control Tower, chat/p2p and WhatsApp, default-accept by ID</td><td>A reply on any of those channels</td><td>Mechanism exists in the dev squad; do-it adapter to be written</td></tr>
+    <tr><td>opencode / DeepSeek / Codex</td><td>Markdown file plus chat</td><td>Terse reply</td><td>Native question tools unverified; markdown always works because it asks nothing of the host</td></tr>
+  </table></div>
+  <pre>// .do-it/settings.json (workspace) overrides ~/.do-it/settings.json (global); a flag on the run overrides both
+{
+  "version": 1,
+  "interaction": { "owner_pack": "auto", "fallback": ["native", "html", "markdown"] },
+  "host":        { "driver": "claude-code", "alias": "claudinho" },
+  "isolation":   { "driver": "worktree" },
+  "state":       { "backend": "local" },
+  "secrets":     { "provider": "file", "ref": ".secrets/" },
+  "handoff":     { "mode": "auto", "max_per_run": 5 },
+  "review":      { "max_rounds": 3 },
+  "observability": { "provider": "none" }
+}</pre>
+
+  <h3>Credentials: asked once at first run</h3>
+  <p><code>do-it init</code> asks where credentials come from: a file (your <code>.secrets/</code> folder, gitignored), an environment variable, AWS Secrets Manager, or 1Password. It stores a <b>reference</b>, never a value. Values go only into the environment of the subprocess that needs them and never into events, briefs, the owner pack or the model context. A missing credential is a blocker found at plan time by a live preflight, not a question in the middle of a build. The AWS and 1Password providers need your own CLI sessions; cloud hosts use their own secret store.</p>
+
+  <h3>Observability: Langfuse and LangSmith go to v2</h3>
+  <p>A real exporter needs a client per vendor, offline buffering and prompt redaction, which breaks the single-file spine. v1 does the cheap half: <code>events.jsonl</code> and <code>token-meter.jsonl</code> freeze the fields a trace needs (run, slice, stage, persona, tier, model, tokens, cache read/write, estimated flag, verdict, parent). v2 then reads those files. The <code>.env.example</code> with <code>LANGFUSE_ENABLE=false</code> and a provider switch is drafted in <code>docs/implementation/do-it-v2/README.md</code>, names only, values resolved through the secrets provider. I did not verify either vendor's current ingestion API.</p>
+
+  <h3>parallel-lifecycle: keep it a separate plugin</h3>
+  <p>Do not merge it into build-it or do-it. It provisions a per-worktree app port, headless Chrome and database through Claude Code hooks, and review-it already reads its <code>.env.worktree</code> contract; folding it in would drag Claude-specific hooks into the generic core. The clean seam is an <code>isolation</code> driver in settings: <code>worktree</code> (parallel-lifecycle), <code>job</code> (Engine), <code>none</code>. do-it declares it as a soft dependency and owns only the scheduling of which slice goes in which isolation. Whether Claude Code plugins can declare plugin dependencies is still unverified; the fallback is <code>do-it doctor --install</code>.</p>
+</section>
+
+<section id="repo">
+  <h2>Repo layout and host adapters</h2>
+  <p>Claude Code, Codex, OpenCode and Engine are four implementations of one abstract <code>HostAdapter</code>. Everything a harness needs (how to spawn a worker, how to ask you a question, how to continue past a ceiling, how to read usage) lives in that harness's own folder under <code>hosts/</code>. <code>core/</code> never mentions a harness name. A host that cannot do something says so in <code>capabilities.json</code>, and the spine routes around it (no subagents means separate passes; no native questions means markdown).</p>
+  <h4>HostAdapter contract</h4>
+  <div class="tablewrap"><table>
+    <tr><th>Call</th><th>What the host does</th><th>If the host cannot</th></tr>
+    <tr><td><code>spawn(role, tier, brief)</code></td><td>Run one worker in a fresh context at the tier's model and return a result file</td><td>Run it as a separate sequential pass in the same process</td></tr>
+    <tr><td><code>ask(pack)</code> / <code>collect()</code></td><td>Show the owner pack and return answers</td><td>Fall back to markdown plus a terse reply</td></tr>
+    <tr><td><code>continue(handoff)</code></td><td>Start a fresh conductor from the resume prompt</td><td>Print the one-line command</td></tr>
+    <tr><td><code>wake(at, prompt)</code></td><td>Schedule a self-resume after a limit</td><td>Park the run and say so</td></tr>
+    <tr><td><code>meter()</code></td><td>Report real usage</td><td>Estimate from characters, flagged <code>estimated:true</code></td></tr>
+    <tr><td><code>isolation</code>, <code>secrets</code>, <code>stateStore</code></td><td>Provide a driver, or name the core one to use</td><td>Use the core default</td></tr>
+  </table></div>
+  <div class="callout warn"><b>Scope change at G1 (2026-10-14).</b> Hermes and OpenClaw were removed from v1. Their research is kept in <code>docs/research/10-hermes-openclaw.md</code> for a later release; no folder or adapter exists for them.</div>
+  <h4>Tree view</h4>
+  <pre>┌ do-it/                                   repo root (DevOtts/do-it)
+├── README.md · CHANGELOG.md · LICENSE
+├── .claude-plugin/marketplace.json        marketplace entry (name: devotts)
+├── SKILL.md                               generated root copy for `npx skills add` hosts
+├── plugins/do-it/                         Claude Code plugin shell, thin
+│   ├── .claude-plugin/plugin.json
+│   ├── skills/do-it/SKILL.md              conductor skill, generated from core/personas/conductor.md
+│   └── hooks/hooks.json                   stop-gate and session hooks, they only call the spine
+│
+├── core/                                  host-agnostic, zero dependencies, knows no harness
+│   ├── spine/
+│   │   ├── do-it.mjs                      single-file build of src/ (what users run)
+│   │   └── src/ cli · state · router · gate · meter · brief · ownerpack · finishline
+│   │            handoff · secrets · doctor · migrate · answer
+│   ├── schemas/                           it-result.1 · state · settings · owner-pack · finish-line
+│   │                                      host-capabilities · squad
+│   ├── pipelines/                         feature · investigate-fix · drain · review-loop · reconcile (data)
+│   ├── personas/                          conductor · intake · planner · builder · reviewer · runner
+│   │                                      deployer · concluder · reconciler (md, tier + deny list in frontmatter)
+│   ├── routing/                           classes.json · tier-policy.json
+│   ├── cache/                             rules.md · drivers.json (per-provider matrix)
+│   ├── renderers/                         owner-pack html · markdown (+ template.html)
+│   ├── state-stores/                      local-fs · git-branch      (Engine's store lives under hosts/engine)
+│   ├── drivers/
+│   │   ├── secrets/                       file · env · aws-secrets-manager · 1password
+│   │   └── isolation/                     worktree (uses parallel-lifecycle) · none
+│   └── companions.json                    prompt-it · plan-it · build-it · review-it · deploy-it
+│                                          conclude-it · reconcile-it · parallel-lifecycle, pinned versions
+│
+├── hosts/                                 one folder per harness; ONLY harness-specific code lives here
+│   ├── _interface/                        HostAdapter contract + conformance suite every adapter must pass
+│   │   ├── host-adapter.schema.json       spawn · ask · collect · continue · wake · meter · isolation · secrets
+│   │   └── conformance/                   same fixtures run against each adapter
+│   ├── claude-code/   adapter.mjs · capabilities.json · tiers.json · spawn · ask (native prompt) · continue (headless)
+│   │                  wake (ScheduleWakeup) · install/ · tests/ · README.md
+│   ├── codex/         same skeleton; capabilities say what it cannot do (e.g. no subagents → separate passes)
+│   ├── opencode/      same skeleton; provider routing for DeepSeek and others
+│   └── engine/        adapter.mjs · capabilities.json · compile/ (squad.yaml → pipeline_definition)
+│                      state-store/ (db rows · R2) · channels/ (control-tower · chat-p2p · whatsapp)
+│                      tests/ · README.md
+│
+├── tests/                                 fixtures · e2e · cases CB-2 … (one per checklist group)
+├── scripts/                               build.mjs (bundle spine, generate SKILL.md per host) · release
+└── docs/implementation/
+    ├── do-it-v1/                          this memo, 01-TOKEN-DISCIPLINE, research/
+    └── do-it-v2/                          observability, parked items
+
+In the user's workspace (created by do-it, not part of the repo):
+.do-it/
+├── settings.json · .env.example           settings and names-only env template
+├── finish-line.json
+├── runs/<id>/ state.json · events.jsonl · ledger.json · token-meter.jsonl · briefs/ · results/ · owner-pack.{json,html,md}
+├── plan/ build/ review/ deploy/ conclude/ reconcile/ digests/
+└── (host dirs .claude .agents .opencode and .secrets stay outside)</pre>
+</section>
+
+<section id="changes">
+  <h2>What has to change in the existing plugins</h2>
+  <div class="tablewrap"><table>
+    <tr><th>Plugin</th><th>Change</th><th>Size</th></tr>
+    <tr><td><b>all</b></td><td>Write the <code>result.json</code> envelope; adopt one tier vocabulary (T1/T2/T3 with Engine's powerful/balanced/cheap as aliases); one result vocabulary; fix marketplace pins and root vs plugin <code>SKILL.md</code> drift.</td><td>S each</td></tr>
+    <tr><td><b>prompt-it</b></td><td>File output (<code>.do-it/prompts/&lt;n&gt;.md</code> plus sidecar), a non-interactive flag, and accept a findings file for its continuation mode.</td><td>S</td></tr>
+    <tr><td><b>plan-it</b></td><td><code>status --json</code>; <code>PENDING-HUMAN.json</code> with exit code 2; <code>PLAN-RESULT.json</code> and a standalone <code>LAUNCH-PROMPT.md</code> at handoff; close its own session at handoff; add the <code>verify-mode</code> column if the brainstorm design is kept.</td><td>M</td></tr>
+    <tr><td><b>build-it</b></td><td>Import DoD rows and test cases from plan-it epics; make <code>dod.md</code> always on; write the run verdict; add <code>token-meter.jsonl</code>; reword anti-context-anxiety to "keep working and reset at the ceiling"; confirm report folder name.</td><td>M</td></tr>
+    <tr><td><b>review-it</b></td><td>Envelope plus shared vocabulary; own and re-cut <code>ATTENDED-GATE.html</code> per round with <code>origin: review</code> rows; take <code>verify_targets</code> from the deploy adapter.</td><td>M</td></tr>
+    <tr><td><b>deploy-it</b> (new)</td><td>Extract from engine-deploy and deploy-router: adapter manifest, required legs, Engine adapter as the first implementation, router lock as a built-in step.</td><td>L</td></tr>
+    <tr><td><b>conclude-it</b></td><td>Close-only mode that takes gate evidence as input, so the ship pipeline stops duplicating review and deploy; block close on unaccounted rows; write meter summary into the ledger card.</td><td>M</td></tr>
+    <tr><td><b>reconcile-it</b> (new plugin)</td><td>Package as <code>scan</code>, <code>apply --approved</code>, <code>plan</code> with a <code>.reconcile-it/&lt;ts&gt;/</code> state directory; keep the approval gate fail-closed.</td><td>M</td></tr>
+    <tr><td><b>parallel-lifecycle</b></td><td>Worktree teardown hook and per-run DB isolation, used by build lanes.</td><td>S</td></tr>
+  </table></div>
+  <h3>Suggested order</h3>
+  <ol>
+    <li><strong>v0.1 contract.</strong> Envelope in the three front plugins, the spine CLI (<code>start, next, record, status, park, resume</code>), the token meter, drift fixes. Success: the founding-case replay fires the right gates.</li>
+    <li><strong>v0.2 back half.</strong> deploy-it adapter, conclude-it close-only mode, reconcile-it packaged, ledger-based "done".</li>
+    <li><strong>v0.3 presets and router.</strong> feature, investigate-fix, drain, review-loop, chore; owner pack with terse-reply parsing.</li>
+    <li><strong>v0.4 hosts.</strong> opencode and Codex adapters, the conformance suite, then the Engine squad compile.</li>
+  </ol>
+  <p class="callout warn"><b>Unverified:</b> "installing do-it installs the rest" depends on whether Claude Code plugins can declare dependencies on other plugins. Not confirmed in this research. Fallback: <code>do-it doctor --install</code> adds the marketplace entries and reports versions.</p>
+</section>
+
+<section id="check">
+  <h2>Acceptance checklist: is do-it implemented?</h2>
+  <p>Each item is a probe and an expected result, worded to hold on any host. Ticks are saved in this browser only. Groups A to F, K, N and T are new; G to I come from the token-discipline doc and the revision brainstorm.</p>
+  <div class="progress"><span class="mono" id="pcount">0 / 0</span><div class="bar"><i id="pbar"></i></div><button type="button" id="preset">Reset</button></div>
+  <div id="groups"></div>
+</section>
+
+<section id="decide">
+  <h2>Decisions I need from you</h2>
+  <p>Each has a recommendation so a one-line answer is enough.</p>
+  <ol class="dec">
+    <li><b>Spine language.</b> Node single-file <code>.mjs</code> (plan-it already ships <code>gate-check.mjs</code>) or bash. <em>Recommend Node, zero dependencies.</em></li>
+    <li><b>Is the revision-brainstorm design still wanted</b> (<code>verify-mode</code>, <code>ATTENDED-GATE.html</code>, the ratchet, fingerprinted LOCKED marks)? The transcript is gone, so it would be re-proposed rather than restored. <em>Recommend yes for the ratchet and fingerprint; fold <code>verify-mode</code> into plan-it's contract; review-it owns the HTML.</em></li>
+    <li><b>Block or warn.</b> <em>Block on context ceiling CB-2, untiered spawn, wake-up on a fat context, and close with unaccounted rows. Warn on the rest.</em></li>
+    <li><b>Ceilings absolute or window-scaled.</b> <em>Both: whichever fires first.</em></li>
+    <li><b>Where the meter lives on hosts with no usage field.</b> <em>Estimate from characters, flagged <code>estimated:true</code>, never presented as exact.</em></li>
+    <li><b>Engine as a host.</b> Settled 2026-10-14: Engine is one host adapter among four (Claude Code, Codex, OpenCode, Engine). Engine's own backbone limits (Codex refused, opencode not a backbone) concern what Engine can run, not do-it's scope. <em>Compile to squads in v0.4.</em></li>
+    <li><b>Name and ownership of the owner pack.</b> One file and one page for all stages, produced by do-it. <em>Recommend yes; stages only append questions.</em></li>
+    <li><b>Escalation cap and downgrade streak.</b> One step up per slice then the owner pack; downgrade after three first-try passes. <em>Recommend these as defaults, tunable per run.</em></li>
+    <li><b>Review round default.</b> Three rounds here; the Engine dev squad's PD-06 is also 3 (I earlier wrote 2: that was the older reviewer's limit). <em>Settled: three, no conflict.</em></li>
+    <li><b>Stop-gate patience.</b> How many refusals without progress before it parks and asks. <em>Recommend three.</em></li>
+    <li><b>Deliverable docs under <code>.do-it/</code> too?</b> Today plan documents stay in <code>docs/implementation/&lt;x&gt;/</code>. <em>Recommend leaving them there: they are project docs, not machine state.</em></li>
+    <li><b>Migration of legacy folders.</b> Move automatically when idle, or only on <code>do-it doctor --migrate</code>. <em>Recommend the explicit command.</em></li>
+    <li><b>Which Engine dev-squad adjustments to apply now</b> (twelve listed in the Engine section). <em>Recommend 1, 2, 4, 6 and 7 first; they are small and unblock the rest. I have changed nothing there.</em></li>
+    <li><b>Is the reference video the right file?</b> It is the ADW talk. If you meant a recording of Engine squads or persona agents in action, send that one and I will redo that track.</li>
+    <li><b>Owner pack delivery default.</b> <code>auto</code>: native prompt for 4 questions or fewer, otherwise HTML, markdown as last fallback, set in <code>settings.json</code>. <em>Recommend this.</em></li>
+    <li><b>Handoff at the ceiling.</b> <code>auto</code> (fresh conductor, cap 5) or <code>ask</code>. <em>Recommend auto with the cap, once the headless start is tested with your aliases.</em></li>
+    <li><b>parallel-lifecycle.</b> Stay a separate plugin behind an <code>isolation</code> driver. <em>Recommend yes.</em></li>
+    <li><b>Engine knowledge destination.</b> A new implementation folder in Engine-Core, or an addendum to <code>engine-dev-squad</code>. Draft is in <code>03-ENGINE-LAYER-SPEC.md</code> here until you choose.</li>
+    <li><b>Host adapters in scope (settled).</b> Claude Code, Codex, OpenCode and Engine, one folder each behind one interface (Hermes and OpenClaw removed at G1).</li>
+    <li><b>Warm cloud box per card.</b> Engine decides after measuring Job start and clone time; do-it only requires cold-start resume. <em>Recommend no warm box in v1.</em></li>
+    <li><b>Secrets providers in v1.</b> file and env in v1, AWS Secrets Manager and 1Password too if cheap. <em>Recommend all four behind one interface, since you named them.</em></li>
+    <li><b>Observability.</b> Langfuse and LangSmith in v2, trace fields frozen in v1. <em>Recommend yes.</em></li>
+  </ol>
+</section>
+
+<section id="caveats">
+  <h2>Caveats and sources</h2>
+  <ul class="src">
+    <li><b>Revision-brainstorm:</b> found only as a ledger card (2026-09-08, claudinho, session 8ad9f20a…). The transcript is not in any of the five config directories. Its content is a card summary, and no <code>ATTENDED-GATE.html</code> exists anywhere.</li>
+    <li><b>Sessions:</b> read from the ledger INDEX and user messages of about 199 transcripts. The per-alias cards and the <code>.plan-it / .build-it-reports / .review-it</code> folders were not read.</li>
+    <li><b>Plugins:</b> review-it and conclude-it were read by a second pass at lower depth; plan-it's 45K-character CONTRACT.md was not read in full. Nothing was installed to test hook path resolution.</li>
+    <li><b>Engine squads:</b> schemas and docs read, not runtime code. Persona memory, tenant isolation and the Mission Control UI were not read in depth.</li>
+    <li><b>Benchmarks:</b> see the evidence note in the Benchmarks section.</li>
+    <li>Raw notes live next to this file in <code>research/</code>: <code>01-video</code>, <code>02-plugins-a</code>, <code>03-plugins-b</code>, <code>04-sessions</code>, <code>05-revision-brainstorm</code>, <code>06-engine-squads</code>, <code>07-benchmarks</code>.</li>
+  </ul>
+</section>
+</div>
+
+<script>
+(function(){
+var G=[
+["A","Spine and state",[
+["A1","Start a run on a fixture task.","<code>do-it start</code> creates <code>.do-it/runs/&lt;id&gt;/state.json</code>; schema validates; <code>do-it status --json</code> exits 0."],
+["A2","Kill the session mid-build, start a new one.","<code>do-it resume</code> reproduces goal, DoD and next action from files only; completed stages are skipped, not redone."],
+["A3","Edit state by hand to an illegal transition.","<code>do-it record</code> refuses it with exit 1 and a reason. Only the CLI writes state."],
+["A4","Run on a host with no hooks.","Gates run from the conductor checklist; the run states plainly that enforcement is degraded."],
+["A5","Router: five sample messages (feature, bug, drain, review, chore).","Each lands on the right preset; an ambiguous one makes at most one cheap LLM call and logs why."]]],
+["B","Stage contract and handoffs",[
+["B1","Run each stage plugin once on a fixture.","Each writes a valid <code>it-result/1</code> envelope as its last act; <code>jq -e</code> validator exits 0."],
+["B2","prompt-it with file output.","Prompt and sidecar land in <code>.do-it/prompts/</code>; no chat-only output required."],
+["B3","plan-it to build-it handoff.","<code>PLAN-RESULT.json</code> and <code>LAUNCH-PROMPT.md</code> exist; build-it imports DoD rows and test cases without a pasted prompt."],
+["B4","plan-it at a human gate.","Exit code 2 and <code>PENDING-HUMAN.json</code>; do-it surfaces it in the owner pack."],
+["B5","Planning session after handoff.","Concluded; no live session or wake-up remains for it."],
+["B6","One vocabulary.","grep finds no stage emitting PASS/FAIL/INV or GREEN/RED outside the shared set."]]],
+["C","Done means done",[
+["C1","Builder claims completion with no evidence.","Row stays IMPLEMENTED-NOT-VERIFIED; run verdict is not DONE_ALL_VERIFIED."],
+["C2","Verifier persona.","Runs the real harness; reports NOT RUN rather than PASS; is a different context from the builder."],
+["C3","Try to conclude with one unaccounted row, one live worker, one pending wake-up.","Conclude refuses each, naming the item."],
+["C4","Backlog drain of a 10-card fixture.","Every card has a disposition and an evidence reference; archive folder matches the table."],
+["C5","Test fixtures created during a run.","Removed before conclude; sweep report lists what was deleted."]]],
+["D","Human gates and owner pack",[
+["D1","Three stages each raise a question.","One numbered <code>owner-pack</code> file and page, with a recommendation per item."],
+["D2","Reply \"1 yes 2 no 4 merge\".","Parsed and routed to the waiting stages; ambiguous token is asked again, not guessed."],
+["D3","Prod flag flip, credential rotation, spend, destructive delete.","Always an owner gate, even under \"green light, take decisions\"."],
+["D4","Review loop past round 2.","Escalates to the owner instead of a third automatic round."]]],
+["E","Deploy, prove, reconcile",[
+["E1","deploy-it dry run with the Engine adapter.","Takes the router lock first; prints waves and prior pins; mutates nothing."],
+["E2","A deploy with one required leg missing.","Result is DEPLOYED_UNVERIFIED, not DEPLOYED_VERIFIED."],
+["E3","Second adapter (plain Docker or Vercel) on a fixture.","Passes the same required-leg list without Engine code."],
+["E4","reconcile-it scan then apply without approval.","Apply refuses; nothing is deleted on its own recommendation."],
+["E5","Canary fails.","Run stops, no widening; rollback line printed."]]],
+["F","Portability",[
+["F1","Same fixture task on Claude Code, opencode and Codex.","Same state schema and same ledger result; only <code>model</code> differs."],
+["F2","Tier map for DeepSeek via opencode.","Config asked once and persisted; spawn uses it."],
+["F3","Start on one alias or host, hit a simulated limit, resume on another.","Resume from <code>.do-it/</code> alone; no transcript needed."],
+["F4","Unknown usage data or unknown model tier.","Shown as \"unknown\" or <code>estimated:true</code>, never invented."],
+["F5","Compile the squad file for Engine.","Valid <code>pipeline_definition</code>; checkpoint steps become approval cards."]]],
+["G","Token discipline (from 01-TOKEN-DISCIPLINE)",[
+["G1","Supervised run.","<code>token-meter.jsonl</code> is append-only, one row per call; count matches the transcript."],
+["G2","Context fixture at 150K or 40%, then 250K or 60%.","Warning and checkpoint demand, then tool calls blocked until reset."],
+["G3","Resume with stale state files.","Reset refused until state is refreshed."],
+["G4","Spawn without a tier; T1 spawn without a reason.","Rejected; downgraded to T2."],
+["G5","Wake-up on a context above 50K, or after cache expiry on a big context.","Refused; reset first."],
+["G6","Tool output above 8K tokens; worker report above 2K.","Truncated head and tail with a file path; report rejected for a fixed-shape digest."],
+["G7","Run start without a declared budget.","Refuses to start; 25/50/75% checkpoints compare progress against spend."],
+["G8","Founding-case replay against the 2026-09-26 transcripts or a synthetic fixture.","Context gates fire on the conductor, idle-turn share fires on the finished planner, tier gates fire on the ten top-tier spawns. Hard gate for release."]]],
+["H","Plugin text amended",[
+["H1","grep build-it for the old anti-context-anxiety wording.","Replaced with keep-working-and-reset-at-ceiling."],
+["H2","conclude-it sweep.","Stops all wake-ups, loops and workers; writes meter summary into the session card."],
+["H3","Marketplace pins.","All plugins pin current versions; root and plugin SKILL.md identical."]]],
+["T","Token economy: routing, slicing, cache",[
+["T1","Classify ten fixture slices (mechanical, gather, spec'd, hard).","Deterministic rules place at least eight without an LLM call; each ambiguous one logs a single cheap call and its reason."],
+["T2","A spec'd slice fails its contract twice.","Moves up exactly one tier, logs the reason; the second failure goes to the owner pack, not a third tier."],
+["T3","Three consecutive first-try passes at T2 in one run.","Next similar slice is offered at T3 and the downgrade is logged."],
+["T4","Try to switch model inside a context above the CB-1 ceiling.","Refused; a fresh spawn or reset is required first."],
+["T5","Bug-fix fixture through the decomposed path.","The T1 step reads only the digest (measured input under the digest cap); the repository is never in its context."],
+["T6","One-file change.","Runs inline with no spawn; the log shows the skip reason."],
+["T7","Brief with a nonexistent path or ID.","Brief builder refuses and turns it into a question; no worker is spawned."],
+["T8","Ask a model to report budget used.","Meter value is shown instead; with no usage field it appears as <code>estimated:true</code> or \"unknown\"."],
+["T9","Spawn three sibling workers on one prefix.","One warming request completes first, then the siblings start; their briefs share a byte-identical prefix (hash check)."],
+["T10","Read the same unchanged file in two stages.","One digest file exists; the second brief cites it; no second summarization call in the meter."],
+["T11","Driver with no declared cache behavior.","Treated as no-cache; the meter shows hit ratio as unknown rather than zero or full."],
+["T12","Finish a run.","Report states tokens per VERIFIED row, tier mix, escalations and cache hit ratio, all from the meter."],
+["T13","Inject a timestamp into the system block of a fixture request.","The prefix diff detector flags it and names the block."],
+["T14","Delegate to a host-owned driver (Claude Code, Codex, opencode).","do-it never edits that host's system prompt or tool list; cache figures come from its logs."],
+["T15","Run the same fixture on a driver with a declared window and one without.","The declared one reports a hit ratio; the other shows unknown."]]],
+["K","Plan once, finish line, review convergence, one home",[
+["K1","Start build with one decision UNRESOLVED or a failed access probe.","<code>do-it next</code> refuses; <code>READINESS.json</code> names the blocker."],
+["K2","A question surfaces mid-build.","Decided by its recorded recommendation, logged, shown in the owner pack. An owner-gate item parks only its own slice."],
+["K3","End the turn with a non-terminal row and no blocker.","Stop-gate answers with the finish-line board and the run continues."],
+["K4","Stop-gate refuses N times with no progress.","Run parks and asks you; no infinite loop."],
+["K5","Wave 1 finishes with waves 2 and 3 pending.","<code>do-it next</code> returns wave 2; the conductor does not choose whether to continue."],
+["K6","Resume after a wake.","Board injected, about 300 tokens or fewer."],
+["K7","Add a case to the roteiro without an amendment row.","Refused; the fingerprint no longer matches."],
+["K8","A review round finds only minors.","Loop exits CONVERGED_WITH_MINORS and creates the backlog cards."],
+["K9","The same blocker fingerprint appears twice.","Tier raised once, then STALLED to the owner with a diagnosis."],
+["K10","Finding counts flat or rising after round two.","Loop stops as diverging."],
+["K11","Loop passes its cost cap.","OVER_BUDGET, parked."],
+["K12","Review run.","Author, runner and builder have distinct session IDs."],
+["K13","Full run on a clean repo with all stage plugins.","The only new root folder is <code>.do-it/</code>; none of <code>.plan-it</code>, <code>.build-it-reports</code>, <code>.fable-it-reports</code>, <code>.review-it</code>, <code>.taskstate</code> appears."],
+["K14","<code>do-it doctor --migrate</code> with legacy folders.","Moves them when no run is in flight; leaves in-flight runs and resumes from the legacy path."],
+["K15","Run from a git worktree.","<code>.do-it</code> resolves to the main checkout."]]],
+["N","Engine layer handoff",[
+["N1","Engine layer spec.","Exists with the 15 sections from the Engine part of this memo."],
+["N2","Compile the fixture squad file to a pipeline definition and back.","No loss; roster derived from steps."],
+["N3","Replay one wave-3 landing-page card against the spec.","Passes, including stale head, budget denied, loop cap and injection cases."],
+["N4","Experiments 1 and 2 (flat vs manager, one card vs two).","Results recorded and the flat-vs-hierarchy decision updated."]]],
+["S","Hosts, settings, secrets",[
+["S1","Settings precedence.","Run flag beats <code>.do-it/settings.json</code>, which beats <code>~/.do-it/settings.json</code>, which beats defaults; <code>do-it doctor</code> prints the resolved value and its source."],
+["S2","Owner pack in three renderers.","Same <code>owner-pack.json</code> renders as native prompt, HTML and markdown; a terse reply parses back to identical answers in all three."],
+["S3","Pack with more than 4 questions on Claude Code.","Under <code>auto</code> it falls back to HTML or markdown instead of truncating."],
+["S4","Handoff at the ceiling.","Spine blocks the next step, writes the resume prompt; <code>auto</code> starts a fresh conductor under the configured alias and it continues from files; the cap parks the run with a reason."],
+["S5","Cold start in a fresh box.","With <code>state.backend</code> other than <code>local</code>, a step started from a git ref plus the previous result file completes without the old disk."],
+["S6","Drain of 10 fixture cards.","Boxes or worktrees created equal slices needing a build, not 10; every card has a disposition."],
+["S7","Secrets provider: file and env.","A value never appears in events, briefs, owner pack or logs (grep proves it); a missing key is a plan-time blocker."],
+["S8","Secrets provider: AWS and 1Password.","Resolved through the user's own CLI session; failure is an honest blocker, not a prompt for the value."],
+["S9","Events carry the trace fields.","Every <code>events.jsonl</code> row has run, slice, stage, persona, tier, model, tokens, estimated; v2 exporter needs no spine change."],
+["S10","Conformance suite per host.","The same fixtures pass on claude-code, codex, opencode and engine, or the adapter's <code>capabilities.json</code> lists exactly what is skipped and why."],
+["S11","No harness name in <code>core/</code>.","A grep for the four host names under <code>core/</code> returns nothing."],
+["S12","Ask answered on another Engine channel.","A reply on WhatsApp or chat/p2p resolves the same pack as a Control Tower reply."],
+["S13","StateStore interface.","local-fs, git-branch and the Engine backend pass one shared test (get, put, append, list, cold resume)."]]],
+["I","Revision-brainstorm items (only if decision 2 says yes)",[
+["I1","plan-it contract.","Has a <code>verify-mode</code> column: auto, attended or judgement."],
+["I2","review-it round.","Re-cuts <code>ATTENDED-GATE.html</code>; rows tickable; <code>origin: build|review</code> tags present."],
+["I3","Attended FAIL with no regression test and no \"cannot automate because X\".","conclude-it blocks close."],
+["I4","Edit a LOCKED check's text.","Mark drops to \"re-run, changed since round N\"."]]]
+];
+var KEY="doit-checklist-v1",st={};
+try{st=JSON.parse(localStorage.getItem(KEY)||"{}")}catch(e){st={}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}}
+var root=document.getElementById("groups"),total=0;
+G.forEach(function(g,gi){
+  var d=document.createElement("details");d.className="grp";if(gi===0)d.open=true;
+  var s=document.createElement("summary");s.innerHTML='<span>'+g[0]+' · '+g[1]+'</span><span class="cnt"></span>';d.appendChild(s);
+  g[2].forEach(function(it){
+    total++;
+    var r=document.createElement("div");r.className="ck";
+    var id="ck-"+it[0];
+    r.innerHTML='<input type="checkbox" id="'+id+'"><label for="'+id+'"><span class="id">'+it[0]+'</span>'+it[1]+'<span class="how">'+it[2]+'</span></label>';
+    var cb=r.querySelector("input");cb.checked=!!st[it[0]];if(cb.checked)r.classList.add("done");
+    cb.addEventListener("change",function(){st[it[0]]=cb.checked;r.classList.toggle("done",cb.checked);save();upd()});
+    d.appendChild(r);
+  });
+  root.appendChild(d);
+});
+function upd(){
+  var n=0;
+  document.querySelectorAll("details.grp").forEach(function(d){
+    var all=d.querySelectorAll("input"),c=0;all.forEach(function(i){if(i.checked){c++;n++}});
+    d.querySelector(".cnt").textContent=c+" / "+all.length;
+  });
+  document.getElementById("pcount").textContent=n+" / "+total;
+  document.getElementById("pbar").style.width=(total?n/total*100:0)+"%";
+}
+document.getElementById("preset").addEventListener("click",function(){
+  st={};save();document.querySelectorAll(".ck input").forEach(function(i){i.checked=false;i.closest(".ck").classList.remove("done")});upd();
+});
+upd();
+})();
+</script>

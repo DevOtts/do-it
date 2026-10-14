@@ -1,0 +1,28 @@
+{
+  "schema": "planit-report/1",
+  "kind": "GLOSSARY",
+  "title": "do-it v1: GLOSSARY",
+  "source": {
+    "path": "GLOSSARY.md"
+  },
+  "output": "GLOSSARY.html",
+  "glossary": {
+    "path": "GLOSSARY.md"
+  },
+  "allow_tokens": [
+    "claude-code", "claude-plugin"
+  ],
+  "sections": [
+    {
+      "id": "body",
+      "heading": "GLOSSARY",
+      "blocks": [
+        {
+          "type": "embed",
+          "path": "GLOSSARY.md",
+          "label": "GLOSSARY.md (full text)"
+        }
+      ]
+    }
+  ]
+}

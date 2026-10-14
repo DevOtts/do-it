@@ -1,0 +1,28 @@
+{
+  "schema": "planit-report/1",
+  "kind": "DECISIONS",
+  "title": "do-it v1: DECISIONS",
+  "source": {
+    "path": "DECISIONS.md"
+  },
+  "output": "DECISIONS.html",
+  "glossary": {
+    "path": "GLOSSARY.md"
+  },
+  "allow_tokens": [
+    "claude-code", "claude-plugin"
+  ],
+  "sections": [
+    {
+      "id": "body",
+      "heading": "DECISIONS",
+      "blocks": [
+        {
+          "type": "embed",
+          "path": "DECISIONS.md",
+          "label": "DECISIONS.md (full text)"
+        }
+      ]
+    }
+  ]
+}

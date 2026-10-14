@@ -1,0 +1,28 @@
+{
+  "schema": "planit-report/1",
+  "kind": "CONTRACT",
+  "title": "do-it v1: CONTRACT",
+  "source": {
+    "path": "CONTRACT.md"
+  },
+  "output": "CONTRACT.html",
+  "glossary": {
+    "path": "GLOSSARY.md"
+  },
+  "allow_tokens": [
+    "claude-code", "claude-plugin"
+  ],
+  "sections": [
+    {
+      "id": "body",
+      "heading": "CONTRACT",
+      "blocks": [
+        {
+          "type": "embed",
+          "path": "CONTRACT.md",
+          "label": "CONTRACT.md (full text)"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="planit-source" content="CONTRACT.md sha256=e9a485e28a8bd16f1034c09c339f0cfb8855b5613504e7f859dafb7c42f98e5d">
+<meta name="planit-embeds" content="CONTRACT.md sha256=e9a485e28a8bd16f1034c09c339f0cfb8855b5613504e7f859dafb7c42f98e5d">
+<meta name="planit-brand" content="default sha256=0206fd2d74525ffb33ff4fc010fe2ce6bb978ebe8a5674fc7ec0ed5d20eccb58">
+<meta name="planit-renderer" content="build-report.mjs/4.0.0 template sha256=ebfa958749844845bc46643049a546fdd9d68de69f36452b7babc089e0a9a410">
+<meta name="planit-kind" content="CONTRACT">
+<title>do-it v1: CONTRACT</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&amp;family=Inter:wght@400;500&amp;family=JetBrains+Mono:wght@400&amp;display=swap">
+<style>
+:root{--bg:#FFFFFF;--card:#F6F8FA;--line:#E6EDF3;--ink:#0D1117;--muted:#484F58;--accent:#0D1117;--accentBg:#00E5A0;--ok:#2EA043;--warn:#D29922;--bad:#F85149;--info:#58A6FF;--chip:#F6F8FA;--hold:#FF6B4A;--font-display:Space Grotesk,sans-serif;--font-body:Inter,sans-serif;--font-mono:JetBrains Mono;}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0D1117;--card:#161B22;--line:#21262D;--ink:#C9D1D9;--muted:#8B949E;--accent:#00E5A0;--accentBg:#00E5A0;--ok:#2EA043;--warn:#D29922;--bad:#F85149;--info:#58A6FF;--chip:#21262D;--hold:#FF6B4A;}}
+:root[data-theme="dark"]{--bg:#0D1117;--card:#161B22;--line:#21262D;--ink:#C9D1D9;--muted:#8B949E;--accent:#00E5A0;--accentBg:#00E5A0;--ok:#2EA043;--warn:#D29922;--bad:#F85149;--info:#58A6FF;--chip:#21262D;--hold:#FF6B4A;}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.55 var(--font-body);padding:2.5rem 1rem}
+main{max-width:900px;margin:0 auto;position:relative}
+h1{font-family:var(--font-display);font-size:1.5rem;margin:0 0 .25rem;text-wrap:balance;padding-right:6rem}
+.eyebrow{color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-size:.78rem;margin:0 0 .3rem}
+.sub{color:var(--muted);margin:0 0 2rem}
+h2{font-family:var(--font-display);font-size:1.05rem;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);
+   margin:2.2rem 0 .8rem;border-bottom:1px solid var(--line);padding-bottom:.4rem}
+#theme-toggle{position:absolute;top:0;right:0;background:var(--card);border:1px solid var(--line);
+  color:var(--muted);border-radius:99px;padding:.3rem .8rem;font:inherit;font-size:.8rem;
+  cursor:pointer;display:inline-flex;align-items:center;gap:.4rem}
+#theme-toggle:hover{color:var(--ink)} #theme-toggle:focus-visible{outline:2px solid var(--accentBg);outline-offset:2px}
+.brand-badge{color:var(--muted);font-size:.75rem;margin:0 0 .6rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;
+      padding:1rem 1.1rem;margin-bottom:.75rem}
+.card h3{margin:0 0 .35rem;font-size:1rem;display:flex;gap:.5rem;align-items:baseline;flex-wrap:wrap}
+.id{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;background:color-mix(in srgb,var(--accentBg) 20%,transparent);border-radius:4px;padding:.05rem .4rem}
+.badge{font-size:.72rem;font-weight:700;letter-spacing:.03em;border-radius:99px;
+       padding:.1rem .55rem;text-transform:uppercase}
+.b-ok{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.b-open{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}
+.b-hold{background:color-mix(in srgb,var(--hold) 20%,transparent);color:var(--ink)}
+.b-act{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--ink)}
+.rename{margin-left:auto;font-size:.75rem;color:var(--muted)}
+.rename code{font-size:.95em}
+.card p{margin:.25rem 0}
+.card ul{margin:.3rem 0 .3rem;padding-left:1.25rem} .card li{margin:.18rem 0}
+code{background:var(--chip);border-radius:4px;padding:.05rem .35rem;font-size:.85em;word-break:break-all;font-family:var(--font-mono)}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);
+      border-radius:10px;overflow:hidden;font-size:.9rem}
+th,td{text-align:left;padding:.5rem .8rem;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600} tr:last-child td{border-bottom:none}
+tr.footer td{font-weight:700}
+.overflow{overflow-x:auto}
+.test{margin-top:.6rem;border-top:1px dashed var(--line);padding-top:.55rem;font-size:.88rem}
+.test b{color:var(--ink);text-transform:uppercase;font-size:.75rem;letter-spacing:.04em}
+.test ul{margin:.3rem 0 0;padding-left:1.25rem}
+.warn{color:var(--warn)} .crit{color:var(--bad);font-weight:600}
+details.more{margin-top:.7rem;border-top:1px dashed var(--line);padding-top:.55rem}
+details.more>summary{cursor:pointer;color:var(--ink);font-weight:600;font-size:.88rem;
+  list-style:none;display:inline-flex;align-items:center;gap:.4rem}
+details.more>summary::before{content:"▸";transition:transform .15s}
+details.more[open]>summary::before{transform:rotate(90deg)}
+.srcnote{font-size:.78rem;color:var(--muted);margin:.6rem 0 .3rem}
+.mdout{background:color-mix(in srgb,var(--chip) 55%,transparent);border:1px solid var(--line);
+       border-radius:8px;padding:.9rem 1rem;font-size:.87rem;overflow-x:auto}
+.mdout h1,.mdout h2,.mdout h3{all:revert;font-size:1.02em;margin:.8em 0 .3em;border:none;
+  text-transform:none;letter-spacing:0;color:var(--ink)}
+.mdout h1{font-size:1.12em}
+.mdout pre{background:var(--chip);padding:.6rem .7rem;border-radius:6px;overflow-x:auto}
+.mdout blockquote{border-left:3px solid var(--line);margin:.5em 0;padding:.1em .8em;color:var(--muted)}
+.mdout ul,.mdout ol{padding-left:1.3em} .mdout li{margin:.15em 0}
+.mdout hr{border:none;border-top:1px solid var(--line);margin:.8em 0}
+.mdout a{color:var(--ink);text-decoration:underline}
+.mdout table{font-size:.85em;margin:.5em 0}
+.mdout td,.mdout th{padding:.35rem .6rem}
+details.glossary{background:var(--card);border:1px solid var(--line);border-radius:10px;
+  padding:.7rem 1rem;margin-bottom:1.2rem;font-size:.88rem}
+details.glossary>summary{cursor:pointer;font-weight:700;color:var(--ink)}
+abbr.gl{text-decoration:underline dotted;cursor:help}
+.gl-x{color:var(--muted);font-size:.82em}
+.decision-card .q{margin:.3rem 0}
+.decision-card .options{margin:.3rem 0;padding-left:1.25rem}
+.decision-card .recommendation{margin:.4rem 0}
+.decision-card .unblocks{margin:.3rem 0;font-size:.85rem;color:var(--muted)}
+.decision-card .ruling{margin:.4rem 0;font-weight:600}
+.mock-win{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:.75rem}
+.mock-bar{background:var(--chip);padding:.4rem .7rem;display:flex;align-items:center;gap:.6rem;font-size:.8rem}
+.mock-dots{color:var(--muted)} .mock-label{color:var(--muted);flex:1}
+.mock-chip{border-radius:99px;padding:.1rem .5rem;font-size:.72rem;font-weight:600}
+.mock-bad{background:color-mix(in srgb,var(--bad) 18%,transparent);color:var(--bad)}
+.mock-ok{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.mock-body{padding:1rem;background:var(--bg)}
+.measure{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.9rem 1.1rem;margin-bottom:.75rem}
+.measure .mvalue{font-family:var(--font-display);font-weight:700;font-size:1.4rem}
+.measure .munit{color:var(--muted);margin-left:.3rem}
+.measure .msrc{color:var(--muted);font-size:.8rem;margin:.3rem 0 0}
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:.75rem}
+.state-col{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.8rem}
+.state-col h4{margin:0 0 .3rem;text-transform:uppercase;font-size:.75rem;letter-spacing:.04em}
+.triage-card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.9rem 1.1rem;margin-bottom:.75rem}
+.triage-card table{border:none}
+.verdict-box{margin-top:.5rem;padding:.5rem .8rem;background:var(--chip);border-radius:8px}
+.lockbox{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accentBg);border-radius:10px;padding:.9rem 1.1rem;margin-bottom:.75rem}
+.lb-head{color:var(--muted);font-size:.85rem;margin:0 0 .4rem}
+.tally-row{display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:.75rem}
+.tally-tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.6rem 1rem;text-align:center}
+.tally-tile .tval{display:block;font-family:var(--font-display);font-weight:700;font-size:1.4rem}
+.tally-tile .tlabel{color:var(--muted);font-size:.78rem}
+pre.copy{background:var(--chip);border-radius:8px;padding:.7rem .9rem;font-family:var(--font-mono);font-size:.85rem;overflow-x:auto}
+.copy-btn{background:var(--card);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:.25rem .7rem;font-size:.78rem;cursor:pointer;margin:-.5rem 0 .75rem}
+pre.mermaid{background:var(--chip);border-radius:8px;padding:.8rem 1rem;font-family:var(--font-mono);font-size:.82rem;overflow-x:auto;white-space:pre-wrap}
+.footer{color:var(--muted);font-size:.75rem;margin-top:2.5rem;border-top:1px solid var(--line);padding-top:.8rem}
+@media (prefers-reduced-motion: reduce){ details.more>summary::before{transition:none} }
+</style>
+</head>
+<body><main>
+<button id="theme-toggle" type="button" aria-label="Toggle light/dark theme">◐ <span id="theme-label">auto</span></button>
+<p class="brand-badge">brand: Her0 default</p>
+<p class="eyebrow">CONTRACT</p>
+<h1>do-it v1: CONTRACT</h1>
+<p class="sub"></p>
+<details class="glossary"><summary>Glossary</summary><div class="overflow"><table><tr><th>ID</th><th>Means</th><th>Where defined</th></tr><tr><td>ADW</td><td>AI Developer Workflow: a repeatable agent pipeline with humans only at the ends</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>ATTENDED-GATE</td><td>HTML checklist a human ticks for checks that cannot be automated</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>Ceiling</td><td>context-size limit at which the conductor hands off</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>CDP</td><td>Chrome DevTools Protocol, used to drive a real browser in review</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>Conductor</td><td>thin session that calls the spine and spawns stage personas</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>DoD</td><td>Definition of Done: numbered, individually verifiable rows</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>EID</td><td>epic ID prefix used in case IDs (S1, P2, H1, N1, R1 ...)</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>Finish line</td><td>board of waves, packages and DoD rows that must all become terminal</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>Handoff</td><td>resume prompt and state written so a fresh conductor can continue</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>Host</td><td>the AI coding harness running do-it (claude-code, codex, opencode, engine)</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>it-result/1</td><td>the atomic result file every stage writes</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>LEG</td><td>one named step of a deploy (the LEG protocol of engine-deploy)</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>Owner pack</td><td>the single numbered question set for the human</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>[REAL]</td><td>a test case that needs a live target; never VERIFIED on a mock</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>Roteiro</td><td>the test script a reviewer writes and another agent runs</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>Spine</td><td>the `do-it` CLI, sole writer of run state</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>StateStore</td><td>interface for reading and writing run files on any backend</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>T1 T2 T3</td><td>tiers: powerful, balanced, cheap</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>VERIFIED</td><td>row with resolvable evidence; otherwise IMPLEMENTED-NOT-VERIFIED</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>Wn</td><td>wave number in the build plan</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>G-n</td><td>governance rule number in delivery/CONTRACT.md</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>Rn</td><td>recorded default number in DECISIONS.md</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>Dn</td><td>owner ruling number in DECISIONS.md</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>T-&lt;EID&gt;-NN</td><td>test case ID, e.g. T-S1-01</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>S1</td><td>epic S1: state, schemas, settings, doctor</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>S2</td><td>epic S2: router, next, finish-line, stop-gate</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>S3</td><td>epic S3: record, gate, evidence, conclude</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>S4</td><td>epic S4: owner pack, answer, renderers</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>S5</td><td>epic S5: handoff, park, resume, ceilings, secrets</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>P1</td><td>epic P1: pipelines and personas</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>P2</td><td>epic P2: tier policy, briefs, meter</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>P3</td><td>epic P3: cache</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>P4</td><td>epic P4: review-loop convergence</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>H0</td><td>epic H0: host interface and conformance</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>H1</td><td>epic H1: claude-code adapter</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>H2</td><td>epic H2: codex adapter</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>H3</td><td>epic H3: opencode adapter</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>N1</td><td>epic N1: engine adapter</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>N2</td><td>epic N2: StateStore and backends</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>N3</td><td>epic N3: Engine-layer handoff and replay</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>R1</td><td>epic R1: README and assets (also default R-numbers R1 to R8 in DECISIONS.md share the R prefix; epics R1 to R4 are the ship lane)</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>R2</td><td>epic R2: plugin shell, marketplace, companions (also default R-numbers R1 to R8 in DECISIONS.md share the R prefix; epics R1 to R4 are the ship lane)</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>R3</td><td>epic R3: companion-change catalog (also default R-numbers R1 to R8 in DECISIONS.md share the R prefix; epics R1 to R4 are the ship lane)</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>R4</td><td>epic R4: fixtures and e2e (also default R-numbers R1 to R8 in DECISIONS.md share the R prefix; epics R1 to R4 are the ship lane)</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>S1-state</td><td>branch name suffix of epic S1</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>S2-router</td><td>branch name suffix of epic S2</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>S3-evidence</td><td>branch name suffix of epic S3</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>S4-ownerpack</td><td>branch name suffix of epic S4</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>S5-handoff</td><td>branch name suffix of epic S5</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>P1-pipelines</td><td>branch name suffix of epic P1</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>P2-tokens</td><td>branch name suffix of epic P2</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>P3-cache</td><td>branch name suffix of epic P3</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>P4-review</td><td>branch name suffix of epic P4</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>H0-interface</td><td>branch name suffix of epic H0</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>H1-claude</td><td>branch name suffix of epic H1</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>H2-codex</td><td>branch name suffix of epic H2</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>H3-opencode</td><td>branch name suffix of epic H3</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>N1-engine</td><td>branch name suffix of epic N1</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>N2-statestore</td><td>branch name suffix of epic N2</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>N3-handoff</td><td>branch name suffix of epic N3</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>R1-readme</td><td>branch name suffix of epic R1</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>R2-shell</td><td>branch name suffix of epic R2</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>R3-companions</td><td>branch name suffix of epic R3</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>R4-fixtures</td><td>branch name suffix of epic R4</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>S1-S5</td><td>range of the five spine epics</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>N1-N3</td><td>range of the three engine epics</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>H0-H3</td><td>range of the four host epics</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>W0</td><td>wave 0: S1, S3, H0, R2</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>W1</td><td>wave 1: S2, S5, P2, H1, R4 skeleton</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>W2</td><td>wave 2: S4, P1, P4, H2, H3, N2</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>W3</td><td>wave 3: P3, N1, N3, R3</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>W4</td><td>wave 4: R1, R4 completion, release gates</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>L1</td><td>lane 1: squad spine</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>L2</td><td>lane 2: squad economy</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>L3</td><td>lane 3: squad hosts-a</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>L4</td><td>lane 4: squad engine</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>L5</td><td>lane 5: squad ship</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>G0</td><td>gate G0: anamnesis questionnaire</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>G1</td><td>gate G1: scope confirmation</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>G4</td><td>gate G4: plan review</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>G-10</td><td>plan-it governance rule: worktrees only</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>T1</td><td>tier 1, powerful</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>T2</td><td>tier 2, balanced</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>PD-06</td><td>Engine dev-squad default 06: review loop cap 3</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>R5</td><td>default R5: Codex and OpenCode stop-gate is a conductor checklist</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>R6</td><td>default R6: SVG hero assets</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>R7</td><td>default R7: README claims only what a fixture measured</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>R8</td><td>default R8: tier-to-model map per host</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>O1</td><td>open question 1: reference video</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>O2</td><td>open question 2: Engine adjustments to apply</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>O3</td><td>open question 3: marketing channels</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>D1</td><td>owner ruling 1 in DECISIONS.md</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>D2</td><td>owner ruling 2 in DECISIONS.md</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>D3</td><td>owner ruling 3 in DECISIONS.md</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>D4</td><td>owner ruling 4 in DECISIONS.md</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>D5</td><td>owner ruling 5 in DECISIONS.md</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>D6</td><td>owner ruling 6 in DECISIONS.md</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>D7</td><td>owner ruling 7 in DECISIONS.md</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>D8</td><td>owner ruling 8 in DECISIONS.md</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>D9</td><td>owner ruling 9 in DECISIONS.md</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>D10</td><td>owner ruling 10 in DECISIONS.md</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>D11</td><td>owner ruling 11 in DECISIONS.md</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>D12</td><td>owner ruling 12 in DECISIONS.md</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>D13</td><td>owner ruling 13 in DECISIONS.md</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>D14</td><td>owner ruling 14 in DECISIONS.md</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>D15</td><td>owner ruling 15 in DECISIONS.md</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>D16</td><td>owner ruling 16 in DECISIONS.md</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>D17</td><td>owner ruling 17 in DECISIONS.md</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>D18</td><td>owner ruling 18 in DECISIONS.md</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>D19</td><td>owner ruling 19 in DECISIONS.md</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>D20</td><td>owner ruling 20 in DECISIONS.md</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>D21</td><td>owner ruling 21 in DECISIONS.md</td><td>CONTRACT.md / DECISIONS.md</td></tr>
+<tr><td>T-*-NN</td><td>test case ID, epic then two digits (T-S1-01)</td><td>CONTRACT.md</td></tr>
+<tr><td>A1</td><td>contract amendment 1 folded into v1.1 (CONTRACT.md section 11)</td><td>CONTRACT.md</td></tr>
+<tr><td>A2</td><td>contract amendment 2 folded into v1.1 (CONTRACT.md section 11)</td><td>CONTRACT.md</td></tr>
+<tr><td>A3</td><td>contract amendment 3 folded into v1.1 (CONTRACT.md section 11)</td><td>CONTRACT.md</td></tr>
+<tr><td>A4</td><td>contract amendment 4 folded into v1.1 (CONTRACT.md section 11)</td><td>CONTRACT.md</td></tr>
+<tr><td>A5</td><td>contract amendment 5 folded into v1.1 (CONTRACT.md section 11)</td><td>CONTRACT.md</td></tr>
+<tr><td>A6</td><td>contract amendment 6 folded into v1.1 (CONTRACT.md section 11)</td><td>CONTRACT.md</td></tr>
+<tr><td>A7</td><td>contract amendment 7 folded into v1.1 (CONTRACT.md section 11)</td><td>CONTRACT.md</td></tr>
+<tr><td>SHA-256</td><td>cryptographic hash used to pin the CONTRACT</td><td>KICKOFF.md</td></tr>
+<tr><td>T3</td><td>tier 3, cheap</td><td>CONTRACT.md</td></tr>
+<tr><td>M1</td><td>core-logic model 1: run lifecycle</td><td>CONTRACT.md</td></tr>
+<tr><td>M2</td><td>core-logic model 2: review loop</td><td>CONTRACT.md</td></tr>
+<tr><td>M3</td><td>core-logic model 3: conductor ceiling</td><td>CONTRACT.md</td></tr></table></div></details>
+<h2>CONTRACT</h2>
+<details class="more" open><summary>CONTRACT.md (full text)</summary><div class="mdout"><script type="text/markdown">
+# CONTRACT: do-it v1
+
+**Version:** v1.1 · 2026-10-14 · run `do-it-v1` · autonomous-draft, ratified at <abbr class="gl" title="gate G4: plan review">G4</abbr> by Fernando Ott (defaults <abbr class="gl" title="epic R1: README and assets (also default R-numbers R1 to R8 in DECISIONS.md share the R prefix; epics R1 to R4 are the ship lane)">R1</abbr> to <abbr class="gl" title="default R8: tier-to-model map per host">R8</abbr> stand; open <abbr class="gl" title="open question 1: reference video">O1</abbr> to <abbr class="gl" title="open question 3: marketing channels">O3</abbr> carried to the build)
+Legend: G-n governance rule · T-EID-NN test case · Wn wave · Rn default · Dn ruling — see GLOSSARY.md
+
+This is the law for every squad. Squads write to it; cross-cutting findings fold back as dated amendments (v1.0 to v1.1). Explanation lives in docs/02 and docs/03.
+
+## 1. Vocabulary
+Run, slice, stage, spine, conductor, host, owner pack, finish line, tier: as defined in GLOSSARY.md. Stages: prompt-it, plan-it, build-it, review-it, deploy-it, conclude-it, reconcile-it. Hosts in v1: claude-code, codex, opencode, engine. Hermes and OpenClaw are out of scope (<abbr class="gl" title="owner ruling 6 in DECISIONS.md">D6</abbr>); no folder, adapter or test for them exists in v1.
+
+## 2. Schemas
+- **it-result/1** (every stage, atomic write): fields schema, stage, run_id, slice_id, version, head_sha, status (ok, needs_human, blocked, failed, context_reset, usage_limit), exit_code, verdicts (row, verdict, evidence, real), run_verdict (DONE_ALL_VERIFIED, DONE_WITH_RESIDUALS, BLOCKED, NEEDS_RESET, USAGE_LIMIT), next, pending_human, artifacts (path, kind, sha256), resume (state_files, next_action), tokens (meter, peak_ctx, tier_mix, estimated). exit_code mirrors status: ok 0, failed 1, needs_human 2, blocked or usage_limit or context_reset 3.
+- **do-it-state/1** (runs/{run_id}/state.json, spine only): run_id, preset, request, status, size, host, stage, slices, gates, handoffs, stop_refusals, review, created_at, updated_at.
+- **events row**: ts, run_id, slice_id, stage, persona, tier, model, host, event, parent_id, verdict. **token-meter row**: events fields plus tokens_in, tokens_out, cache_read, cache_write, estimated, source (provider, estimate, unknown).
+- **finish-line.json**: rows with id, kind (wave, package, dod), state (OPEN, DONE, PARKED, BLOCKED), evidence, owner_question, reason, archived_to.
+- **owner-pack.json**: pack_id, run_id, questions (n, kind, text, options, recommendation, default, reversible). Reply grammar: tokens of the form `N answer`, `all except N N`, `N: free text`.
+- **settings.json**: version, interaction, host, isolation, state, secrets (references only), handoff, review, tiers, ceilings, stop_gate, observability. Precedence: run flag, workspace, global, defaults.
+- **host capabilities.json**: host, version_probed, spawn, ask, continue, wake, meter, hooks, isolation, unknown.
+- **pipeline step** (YAML): id, type (persona, checkpoint, decision, code), persona, skill, tier, gate, ask, consumes_previous, loop_to, max_rounds, eval, adapter, needs, on_limit.
+
+## 3. Interface contract
+**Spine commands:** init, start, next, record, gate, answer, handoff, resume, park, status (with --json), meter, doctor (with --migrate and --install). **Exit codes:** 0 ok, 1 failed, 2 needs human, 3 blocked or usage limit.
+**HostAdapter calls:** spawn(role, tier, brief) returns a result path; ask(pack); collect() returns answers; continue(handoff); wake(at, prompt); meter() returns usage or null; drivers isolation, secrets, stateStore. A missing capability triggers the documented fallback in section 6.
+**StateStore:** get, put, append, list over runs/{run_id}/ paths; backends local-fs, git-branch, engine.
+**deploy-it adapter:** `.deploy-it/adapter.json` plus commands speaking the LEG protocol; results DEPLOYED_VERIFIED, DEPLOYED_UNVERIFIED, HELD, FAILED, NEEDS_HUMAN.
+
+## 4. Enums and constants
+Tiers <abbr class="gl" title="tier 1, powerful">T1</abbr> powerful, <abbr class="gl" title="tier 2, balanced">T2</abbr> balanced, <abbr class="gl" title="tier 3, cheap">T3</abbr> cheap. Task classes: deterministic, gather, implementation, hard. Verdicts: VERIFIED, IMPLEMENTED-NOT-VERIFIED, BLOCKED. Run statuses: INTAKE, PLANNING, AWAIT_RATIFY, BUILDING, VERIFYING, REVIEWING, FIXING, DEPLOYING, PROVING, CONCLUDING, DONE, NEEDS_HUMAN, PARKED, BLOCKED, FAILED, PARTIAL_FAILURE, ROLLED_BACK, ESCALATED. Review exits: CONVERGED, CONVERGED_WITH_MINORS, STALLED, OVER_BUDGET. Severity: blocker, major, minor, nit. Defaults: review rounds 3, stop-gate patience 3, handoff cap 5, brief limit 8000 tokens, ceilings warn 150000 tokens or 40 percent, block 250000 tokens or 60 percent.
+
+## 5. Repo ownership and branch conventions
+Branches: `epic/{EID}-{slug}`, one worktree per squad (<abbr class="gl" title="plan-it governance rule: worktrees only">G-10</abbr> of plan-it: worktrees only). One writer per path.
+| Lane | Squad | Owns |
+|---|---|---|
+| <abbr class="gl" title="lane 1: squad spine">L1</abbr> | spine | core/spine/**, core/schemas/**, core/renderers/**, core/drivers/** |
+| <abbr class="gl" title="lane 2: squad economy">L2</abbr> | economy | core/pipelines/**, core/personas/**, core/routing/**, core/cache/** |
+| <abbr class="gl" title="lane 3: squad hosts-a">L3</abbr> | hosts-a | hosts/_interface/**, hosts/claude-code/**, hosts/codex/**, hosts/opencode/** |
+| <abbr class="gl" title="lane 4: squad engine">L4</abbr> | engine | hosts/engine/**, core/state-stores/**, Engine-Core docs/implementation/do-it-engine-layer/** (docs only) |
+| <abbr class="gl" title="lane 5: squad ship">L5</abbr> | ship | README.md, assets/**, plugins/**, .claude-plugin/**, scripts/**, tests/**, core/companions.json |
+core/ never names a harness (<abbr class="gl" title="governance rule number in delivery/CONTRACT.md">G-12</abbr>). Nothing in Engine-Core outside `do-it-engine-layer/` is edited. Sibling plugin repos are not edited by this program; <abbr class="gl" title="epic R3: companion-change catalog (also default R-numbers R1 to R8 in DECISIONS.md share the R prefix; epics R1 to R4 are the ship lane)">R3</abbr> produces a change catalog only.
+
+## 6. Fallbacks (capability missing)
+No native subagents: run the role as a separate sequential pass. No native question tool or more than 4 questions: html, then markdown. No headless start: `handoff.mode` becomes ask and prints the one-line command. No wake: park and say so. No provider usage: estimate and flag. No stop hook: conductor checklist (<abbr class="gl" title="default R5: Codex and OpenCode stop-gate is a conductor checklist">R5</abbr>).
+
+## 7. Definition of shipped
+An epic is shipped when 100 percent of its Test Contract passes with evidence, `gate-check handoff` and `adversary` are clean, no case marked real is VERIFIED on a mock, and the epic's files live only in its lane. A real case whose target is unreachable is IMPLEMENTED-NOT-VERIFIED.
+
+## 8. Core-logic models
+Full text in docs/03 section 12; frozen here.
+**<abbr class="gl" title="core-logic model 1: run lifecycle">M1</abbr> run lifecycle.**
+INTAKE --> PLANNING --> AWAIT_RATIFY --> BUILDING --> VERIFYING --> REVIEWING --> DEPLOYING --> PROVING --> CONCLUDING --> DONE
+REVIEWING --> FIXING --> VERIFYING
+BUILDING --> FAILED ; FAILED --> BUILDING (retry one tier up, once) ; FAILED --> ESCALATED (second failure)
+DEPLOYING --> PARTIAL_FAILURE ; PARTIAL_FAILURE --> ROLLED_BACK ; ROLLED_BACK --> DEPLOYING (re-verify after fix) ; ROLLED_BACK --> ESCALATED (rollback fails)
+BUILDING --> PARKED ; PARKED --> BUILDING (resume from state)
+AWAIT_RATIFY --> NEEDS_HUMAN ; NEEDS_HUMAN --> BUILDING (answered)
+BUILDING --> BLOCKED ; BLOCKED --> BUILDING (unblocked)
+**<abbr class="gl" title="core-logic model 2: review loop">M2</abbr> review loop.** ROUND_RUNNING --> CONVERGED ; ROUND_RUNNING --> CONVERGED_WITH_MINORS ; ROUND_RUNNING --> STALLED ; ROUND_RUNNING --> OVER_BUDGET ; STALLED --> ESCALATED ; OVER_BUDGET --> PARKED.
+**<abbr class="gl" title="core-logic model 3: conductor ceiling">M3</abbr> conductor ceiling.** CONDUCTOR_ACTIVE --> CEILING_BLOCKED --> HANDOFF_WRITTEN --> CONDUCTOR_RESUMED ; HANDOFF_WRITTEN --> HANDOFF_FAILED ; HANDOFF_FAILED --> HANDOFF_WRITTEN (retry, cap 5) ; HANDOFF_FAILED --> ESCALATED (cap reached).
+Required failure coverage: FAILED, PARTIAL_FAILURE, ROLLED_BACK, ESCALATED, STALLED, OVER_BUDGET, HANDOFF_FAILED, BLOCKED, PARKED each asserted as an outcome, and the five cascade classes covered or waived.
+
+## 9. Governance rules
+- <abbr class="gl" title="governance rule number in delivery/CONTRACT.md">G-1</abbr> The spine is the only writer of run state; no stage, persona or host writes state.json (test: <abbr class="gl" title="test case ID, epic then two digits (T-S1-01)">T-S1-01</abbr>).
+- <abbr class="gl" title="governance rule number in delivery/CONTRACT.md">G-2</abbr> A row is `VERIFIED` only with evidence that resolves to a file or ID the spine can check (test: <abbr class="gl" title="test case ID, epic then two digits (T-S1-01)">T-S3-01</abbr>).
+- <abbr class="gl" title="governance rule number in delivery/CONTRACT.md">G-3</abbr> A case marked real is never VERIFIED on a mock; unreachable target is IMPLEMENTED-NOT-VERIFIED (test: <abbr class="gl" title="test case ID, epic then two digits (T-S1-01)">T-S3-02</abbr>).
+- <abbr class="gl" title="governance rule number in delivery/CONTRACT.md">G-4</abbr> Every spawn names a tier; <abbr>T1</abbr> needs a written reason or is downgraded; conductor default is <abbr>T2</abbr>, never the top model (test: <abbr class="gl" title="test case ID, epic then two digits (T-S1-01)">T-P2-01</abbr>).
+- <abbr class="gl" title="governance rule number in delivery/CONTRACT.md">G-5</abbr> At the context ceiling the spine blocks the next step until a handoff is written (test: <abbr class="gl" title="test case ID, epic then two digits (T-S1-01)">T-S5-01</abbr>).
+- <abbr class="gl" title="governance rule number in delivery/CONTRACT.md">G-6</abbr> Models never state token usage; the meter records provider usage, an estimate flagged estimated, or unknown (test: <abbr class="gl" title="test case ID, epic then two digits (T-S1-01)">T-P2-02</abbr>).
+- <abbr class="gl" title="governance rule number in delivery/CONTRACT.md">G-7</abbr> Credential values never appear in events, briefs, owner packs, logs or model context (test: <abbr class="gl" title="test case ID, epic then two digits (T-S1-01)">T-S5-02</abbr>).
+- <abbr class="gl" title="governance rule number in delivery/CONTRACT.md">G-8</abbr> Build cannot start without a readiness verdict; no mid-run question except an owner gate (test: <abbr class="gl" title="test case ID, epic then two digits (T-S1-01)">T-S2-01</abbr>).
+- <abbr class="gl" title="governance rule number in delivery/CONTRACT.md">G-9</abbr> The stop-gate refuses at most the patience count without progress, then parks and asks (test: <abbr class="gl" title="test case ID, epic then two digits (T-S1-01)">T-S2-02</abbr>).
+- <abbr>G-10</abbr> Review loops exit only through the four review exits; only blockers and majors loop (test: <abbr class="gl" title="test case ID, epic then two digits (T-S1-01)">T-P4-01</abbr>).
+- <abbr class="gl" title="governance rule number in delivery/CONTRACT.md">G-11</abbr> A brief is at most 8000 tokens and every path or ID it cites is validated to exist (test: <abbr class="gl" title="test case ID, epic then two digits (T-S1-01)">T-P2-03</abbr>).
+- <abbr>G-12</abbr> core/ contains no harness name; harness code lives only under hosts/ (test: <abbr class="gl" title="test case ID, epic then two digits (T-S1-01)">T-H0-01</abbr>).
+- <abbr class="gl" title="governance rule number in delivery/CONTRACT.md">G-13</abbr> conclude refuses to close with an unaccounted row, a live worker or a pending wake-up (test: <abbr class="gl" title="test case ID, epic then two digits (T-S1-01)">T-S3-03</abbr>).
+- <abbr class="gl" title="governance rule number in delivery/CONTRACT.md">G-14</abbr> Hermes and OpenClaw have no folder, adapter or test in v1 (test: <abbr class="gl" title="test case ID, epic then two digits (T-S1-01)">T-H0-02</abbr>).
+- <abbr class="gl" title="governance rule number in delivery/CONTRACT.md">G-15</abbr> Public README claims are limited to what a fixture measured (test: <abbr class="gl" title="test case ID, epic then two digits (T-S1-01)">T-R1-01</abbr>).
+- <abbr class="gl" title="governance rule number in delivery/CONTRACT.md">G-16</abbr> Owner reply parsing is deterministic: the same reply yields the same answers on every host (test: <abbr class="gl" title="test case ID, epic then two digits (T-S1-01)">T-S4-01</abbr>).
+- <abbr class="gl" title="governance rule number in delivery/CONTRACT.md">G-17</abbr> Untrusted text never selects tools, repos or hosts; only code publishes (test: <abbr class="gl" title="test case ID, epic then two digits (T-S1-01)">T-N1-01</abbr>).
+
+## RUN-POLICY
+| Role | Tier | Reason |
+|---|---|---|
+| conductor | <abbr>T2</abbr> | thin dispatcher; never the top model |
+| intake | <abbr>T3</abbr> | mechanical gathering |
+| planner | <abbr>T1</abbr> | ambiguity resolution; written reason required |
+| builder | <abbr>T2</abbr> | specified implementation against a test contract |
+| verifier | <abbr>T2</abbr> | never the builder |
+| reviewer | <abbr>T2</abbr> | writes the roteiro, classifies severity |
+| runner | <abbr>T3</abbr> | executes a script; <abbr>T2</abbr> for visual walks |
+| deployer | code | deterministic LEG protocol |
+| concluder | <abbr>T2</abbr> | ledger and archive |
+| reconciler | <abbr>T2</abbr> | inventory and dispositions |
+Escalation: one tier up per slice, once, logged; then the owner pack. Downgrade one tier after three first-try passes of a class. Tier changes only at a spawn or stage boundary.
+Worktrees: reap-on-merge, a squad's worktree and branch are removed once its work is merged and captured on disk. Delivery: every worker writes results to disk and ends with a content-bearing final message; a worker that goes idle without files is re-dispatched (idle is not delivered).
+
+## 11. Amendments folded from squads (v1.1)
+- **<abbr class="gl" title="contract amendment 1 folded into v1.1 (CONTRACT.md section 11)">A1</abbr> settings:** `host.driver` defaults to `auto` (resolved from the capability files under hosts); the settings schema never enumerates harness names. Add `review.cost_cap_tokens` (default 600000, calibrate with fixtures) and `state.engine.blobs` (rows, r2 or fs-mirror; default rows; r2 fails closed when unconfigured).
+- **<abbr class="gl" title="contract amendment 2 folded into v1.1 (CONTRACT.md section 11)">A2</abbr> lane paths:** the plugin manifest source is `hosts/claude-code/plugin/.claude-plugin/plugin.json` (<abbr>L3</abbr>); <abbr>L5</abbr> mirrors it with `scripts/sync-mirror.mjs`, and mirror copies under `plugins/do-it/` count as <abbr>L5</abbr> outputs. The fallback module is `hosts/_interface/lib/fallbacks.mjs`. Lane-local tests live in `hosts/*/tests`, `hosts/engine/fixtures`, `core/spine/test`, `core/state-stores/tests`, `core/state-stores/conformance`; `tests/**` is <abbr>L5</abbr> cross-cutting e2e. <abbr>L5</abbr> also owns root SKILL.md, LICENSE and CHANGELOG.md. The attended-gate generator lives at `core/renderers/attended-gate/**` and is owned by <abbr>L2</abbr>.
+- **<abbr class="gl" title="contract amendment 3 folded into v1.1 (CONTRACT.md section 11)">A3</abbr> <abbr>G-12</abbr> scope:** the harness-name scan excludes test directories and allows provider names (anthropic, openai, deepseek) in `core/`, because drivers.json is keyed by provider. Hook executables are supplied by hosts through the env names `DO_IT_HOST_CONTINUE` and `DO_IT_HOST_WAKE`.
+- **<abbr class="gl" title="contract amendment 4 folded into v1.1 (CONTRACT.md section 11)">A4</abbr> state:** optional state fields `ceiling`, `park`, `handoff_state`; a `.state.sha256` sidecar detects tampering; ledger row `{row, verdict, evidence, real, updated_at}`; deploy legs `{leg, state, evidence, compensate}`; events rows may carry an optional `detail`.
+- **<abbr class="gl" title="contract amendment 5 folded into v1.1 (CONTRACT.md section 11)">A5</abbr> reasons and answers:** STALE_HEAD and BUDGET_DENIED are reasons (result status blocked; budget denial maps to OVER_BUDGET then PARKED), not run statuses. Owner-pack answer states add `answered` and `accepted-by-default`; first valid reply per question ID wins across channels (Engine to confirm).
+- **<abbr class="gl" title="contract amendment 6 folded into v1.1 (CONTRACT.md section 11)">A6</abbr> grammar and constants:** reply grammar accepts `and` and commas in `all except`; a semicolon or newline ends free text. Token estimate is characters divided by 4. Codex reasoning tokens go in an `extra` field and Codex cache_write is recorded as 0. Review-loop exit checks run in this order each round: convergence, cost cap, repeated fingerprint (raise tier once), counts not falling, round budget.
+- **<abbr class="gl" title="contract amendment 7 folded into v1.1 (CONTRACT.md section 11)">A7</abbr> labels:** PRD-local decision numbers are local; owner rulings are cited as `ruling Dn`.
+
+## 12. Changelog
+- v1.1 2026-10-14: ratified at <abbr>G4</abbr> (draft suffix removed); no default contradicted.
+- v1.1-draft 2026-10-14: squad amendments <abbr>A1</abbr> to <abbr>A7</abbr> folded (Fernando Ott ratifies at <abbr>G4</abbr>).
+- v1.0-draft 2026-10-14: frozen from docs/01 to docs/06 for squads; owner rulings <abbr class="gl" title="owner ruling 1 in DECISIONS.md">D1</abbr> to <abbr class="gl" title="owner ruling 21 in DECISIONS.md">D21</abbr> applied; hosts reduced to four at <abbr class="gl" title="gate G1: scope confirmation">G1</abbr> (Fernando Ott).
+
+</script></div></details>
+<p class="footer">html-blocks=0</p>
+<script>
+// Theme toggle: auto → light → dark → auto. Persists per-viewer (try/catch — storage may be blocked).
+(function(){
+  const btn=document.getElementById("theme-toggle"), lab=document.getElementById("theme-label");
+  const order=["auto","light","dark"]; let cur="auto";
+  try{ cur=localStorage.getItem("report-theme")||"auto" }catch(e){}
+  function apply(v){
+    cur=v; lab.textContent=v;
+    if(v==="auto"){ document.documentElement.removeAttribute("data-theme"); }
+    else{ document.documentElement.setAttribute("data-theme",v); }
+    try{ localStorage.setItem("report-theme",v) }catch(e){}
+  }
+  apply(cur);
+  btn.addEventListener("click",()=>apply(order[(order.indexOf(cur)+1)%order.length]));
+})();
+// Copy-to-clipboard: client-side navigator.clipboard, try/catch — API may be unavailable.
+document.querySelectorAll(".copy-btn").forEach(function(btn){
+  btn.addEventListener("click", function(){
+    var pre = btn.previousElementSibling;
+    var text = pre ? pre.textContent : "";
+    try{
+      navigator.clipboard.writeText(text);
+    }catch(e){
+      var note = document.createElement("p");
+      note.className = "warn"; note.textContent = "select the text above";
+      btn.parentNode.insertBefore(note, btn.nextSibling);
+    }
+  });
+});
+</script>
+<script>
+/* MDPARSER-START */
+
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function isSafeUrl(u){
+  var url=String(u).trim();
+  if(url.indexOf('"')!==-1||url.indexOf("'")!==-1) return false;
+  if(/^(https?:|mailto:|#)/i.test(url)) return true;
+  return !/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(url);
+}
+function inline(s){
+  return s
+    .replace(/`([^`]+)`/g,function(m,c){return "<code>"+c+"</code>"})
+    .replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>")
+    .replace(/\*([^*]+)\*/g,"<em>$1</em>")
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g,function(m,label,url){
+      return isSafeUrl(url) ? '<a href="'+esc(url)+'">'+label+'</a>' : label;
+    });
+}
+function md(src){
+  var abbrs=[];
+  var protectedSrc=src.replace(/<abbr\b[^>]*>[\s\S]*?<\/abbr>/gi,function(m){abbrs.push(m);return "\u0001ABBR"+(abbrs.length-1)+"\u0001"});
+  var lines=esc(protectedSrc).split("\n"), out=[], inCode=false, inList=false, inOList=false, inQuote=false, i=0;
+  function closeAll(){
+    if(inList){out.push("</ul>");inList=false}
+    if(inOList){out.push("</ol>");inOList=false}
+    if(inQuote){out.push("</blockquote>");inQuote=false}
+  }
+  while(i<lines.length){
+    var raw=lines[i];
+    if(raw.indexOf("```")===0){closeAll();out.push(inCode?"</pre>":"<pre>");inCode=!inCode;i++;continue}
+    if(inCode){out.push(raw);i++;continue}
+    if(/^\s*\|.*\|\s*$/.test(raw) && i+1<lines.length && /^\s*\|[\s\-:|]+\|\s*$/.test(lines[i+1])){
+      closeAll();
+      var cells=function(r){return r.trim().replace(/^\||\|$/g,"").split("|").map(function(c){return inline(c.trim())})};
+      out.push('<div class="overflow"><table><tr>'+cells(raw).map(function(c){return "<th>"+c+"</th>"}).join("")+"</tr>");
+      i+=2;
+      while(i<lines.length && /^\s*\|.*\|\s*$/.test(lines[i])){
+        out.push("<tr>"+cells(lines[i]).map(function(c){return "<td>"+c+"</td>"}).join("")+"</tr>"); i++;
+      }
+      out.push("</table></div>"); continue;
+    }
+    var l=raw, m;
+    if(/^\s*$/.test(l)){closeAll();i++;continue}
+    if(/^---+\s*$/.test(l)){closeAll();out.push("<hr>");i++;continue}
+    if(m=l.match(/^(#{1,4})\s+(.*)/)){closeAll();var h=m[1].length;out.push("<h"+h+">"+inline(m[2])+"</h"+h+">");i++;continue}
+    if(m=l.match(/^\s*&gt;\s?(.*)/)){if(!inQuote){closeAll();out.push("<blockquote>");inQuote=true}out.push("<p>"+inline(m[1])+"</p>");i++;continue}
+    if(m=l.match(/^\s*[-*]\s+(.*)/)){
+      if(inQuote){out.push("</blockquote>");inQuote=false}
+      if(inOList){out.push("</ol>");inOList=false}
+      if(!inList){out.push("<ul>");inList=true}
+      out.push("<li>"+inline(m[1])+"</li>");i++;continue;
+    }
+    if(m=l.match(/^\s*(\d+)\.\s+(.*)/)){
+      if(inQuote){out.push("</blockquote>");inQuote=false}
+      if(inList){out.push("</ul>");inList=false}
+      if(!inOList){out.push("<ol>");inOList=true}
+      out.push("<li>"+inline(m[2])+"</li>");i++;continue;
+    }
+    closeAll();out.push("<p>"+inline(l)+"</p>");i++;
+  }
+  closeAll(); if(inCode)out.push("</pre>");
+  var result=out.join("\n");
+  result=result.replace(/\u0001ABBR(\d+)\u0001/g,function(m,idx){return abbrs[Number(idx)]});
+  return result;
+}
+
+/* MDPARSER-END */
+document.querySelectorAll('script[type="text/markdown"]').forEach(function(s){
+  var d=document.createElement("div"); d.innerHTML=md(s.textContent.trim());
+  s.parentNode.replaceChild(d,s);
+});
+</script>
+
+</main></body>
+</html>

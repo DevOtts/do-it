@@ -1,0 +1,28 @@
+{
+  "schema": "planit-report/1",
+  "kind": "KICKOFF",
+  "title": "do-it v1: KICKOFF",
+  "source": {
+    "path": "KICKOFF.md"
+  },
+  "output": "KICKOFF.html",
+  "glossary": {
+    "path": "GLOSSARY.md"
+  },
+  "allow_tokens": [
+    "claude-code", "claude-plugin"
+  ],
+  "sections": [
+    {
+      "id": "body",
+      "heading": "KICKOFF",
+      "blocks": [
+        {
+          "type": "embed",
+          "path": "KICKOFF.md",
+          "label": "KICKOFF.md (full text)"
+        }
+      ]
+    }
+  ]
+}

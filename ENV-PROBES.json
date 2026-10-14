@@ -1,0 +1,15 @@
+{
+  "run": "do-it-v1 (shape L)",
+  "note": "Probes are argv arrays run from the repo root with a 10s budget each. Facts are probed, never guessed.",
+  "probes": [
+    { "id": "config-reachability", "fact": "node is present (the spine is zero-dependency Node)", "check": ["node", "--version"] },
+    { "id": "live-registry", "fact": "the three host CLIs in v1 scope are installed", "check": ["sh", "-c", "command -v claude && command -v codex && command -v opencode"] },
+    { "id": "deployed-vs-installed", "fact": "sibling plugin repos the companions.json will pin are cloned", "check": ["sh", "-c", "ls -d ../prompt-it ../plan-it ../build-it ../review-it ../conclude-it ../parallel-lifecycle | tr '\\n' ' '"] },
+    { "id": "credential-validity", "fact": "GitHub CLI is authenticated (release to DevOtts/do-it later)", "check": ["gh", "auth", "status"] },
+    { "id": "dependency-actual-usage", "fact": "plan-it gate-check runs (planning guards)", "check": ["node", "../plan-it/plugins/plan-it/skills/plan-it/scripts/gate-check.mjs", "state", ".plan-it/do-it-v1.state.json"] },
+    { "id": "code-vs-external-split", "fact": "git and python3 for build scripts", "check": ["sh", "-c", "command -v git && command -v python3"] },
+    { "id": "tool-availability", "fact": "plugin loader metadata lint available", "check": ["claude", "plugin", "validate", "--help"] },
+    { "id": "caller-consumer-surface", "fact": "the *-it family exists on this machine", "check": ["sh", "-c", "ls ~/.claude/skills ~/.claude-loudr/skills 2>/dev/null | grep -E '^(build-it|review-it|conclude-it|prompt-it|plan-it)$' | sort -u | tr '\\n' ' '"] },
+    { "id": "secret-scan-on-import", "fact": "no secret-shaped strings in docs/ and delivery/", "check": ["sh", "-c", "if grep -rIl -E 'sk-[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|-----BEGIN (RSA|OPENSSH|PRIVATE)|ntn_[A-Za-z0-9]{20,}' docs delivery 2>/dev/null; then exit 1; else echo 'no secret patterns'; fi"] }
+  ]
+}

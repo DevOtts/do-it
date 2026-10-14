@@ -1,0 +1,34 @@
+# README-SPEC: the do-it README, in the DevOtts plan-it / build-it pattern
+
+The owner will promote this plugin, so the README is marketing, not a manual. Derived from reading `plan-it/README.md` (369 lines) and `build-it/README.md`, and their `assets/`. Epic R1 builds `README.md` and `assets/` to this spec. Claims are limited to what a fixture measured (G-15, R7).
+
+## Section order (mandatory)
+1. **Centered header block** (`<div align="center">`): `<h1>do-it</h1>`; `<h3><strong>` one-line tagline `</strong></h3>`; a two-line pitch with the outcome in bold; one `<em>` line positioning it against the family; the hero SVG wrapped in a link to `#how-it-works` (`width="100%"`, real alt text); the badge row; the nav link row (Install, Why, How it works, What's inside, Platforms, Changelog) separated by `&nbsp;·&nbsp;`; one or two `> [!NOTE]` / `> [!IMPORTANT]` callouts (family note; release note); closing `</div>`.
+2. **Opening prose** (2 paragraphs): what agents can already do and what still fails; do-it as the missing step, packaged as one command.
+3. `## The bottleneck it kills` (a short story in second person: one message, overnight, morning), the pipeline SVG linked to `#how-it-works`.
+4. `## Installation`: a `> [!TIP]` universal-installer block (`npx skills add DevOtts/do-it -a <agent>`, `gh skill install DevOtts/do-it`), then one H3 per host with the exact commands: **Claude Code (native)** (`/plugin marketplace add DevOtts/do-it`, `/plugin install do-it@devotts`, which installs the family through `dependencies`), **Codex**, **OpenCode**, **Engine** (how an Engine org adopts the squad; points to the Engine layer spec), **Others**. End with the degrade note ("hosts without subagents run the same pipeline, sequentially").
+5. `## How it works`: numbered steps from message to verified delivery; the four behaviors (plan once ask once; run to the finish line; review loops that converge; one home `.do-it/`); the three human gates.
+6. `## The spine` (the deterministic core section of plan-it, adapted): what code decides, what models do, exit codes, `.do-it/` layout.
+7. `## Token economy`: four levers, tier routing table, cache rules, "tokens per VERIFIED row". Numbers only if a fixture produced them.
+8. `## Five things you can say` (the five use cases, one line each plus the trigger).
+9. `## What the morning report looks like` (a real fixture output, honest states).
+10. `## What's inside` (table: component, role) and the repo tree.
+11. `## do-it x the family` (table: plan-it, build-it, review-it, deploy-it, conclude-it, reconcile-it, prompt-it, parallel-lifecycle; each linked).
+12. `## Status` (version, what is in it, what is not: hosts out of scope are not mentioned as promises).
+13. `## Security considerations` (no secrets stored, references only, values never in model context, everything is plain files).
+14. `## Platform compatibility` (table with Native / Supported / Fallback and a Legend line).
+15. `## License` (MIT, links) and the footer line: `_Built by [DevOtts](https://github.com/DevOtts)._`
+
+## Badges (shields.io, `style=for-the-badge`)
+Quick Start, MIT license, Native Claude Code, portable SKILL.md, author DevOtts; version badge only when a release exists.
+
+## Assets (`assets/`)
+- `do-it-hero.svg` (1200x600): dark gradient background `#0b1220` to `#0d1a2b`, border `#1e2d44`, title 46px `#e8eefc`, subtitle `#7dd3fc`, mono tagline `#5b6b85`; left: "one message" box; middle: router and the spine bar; right: the family lifecycle nodes with human gates; bottom: four host chips (Claude Code, Codex, OpenCode, Engine). Must be well-formed XML, have a title and alt text.
+- `do-it-pipeline.svg`: lifecycle with failure loops (dashed), the spine underneath, the owner pack at the ratify gate, the finish line at the end.
+- Optional later: an animated GIF like build-it's header (not part of v1).
+
+## Tone
+Direct, concrete, second person, honest about limits; a short "honest claim" paragraph like build-it's; no benchmark or savings numbers until fixtures produce them; no dated promises; Hermes and OpenClaw are not mentioned.
+
+## Acceptance (becomes the R1 Test Contract)
+Section order matches; every command in Installation is real (validated with `claude plugin validate`, `npx skills add --list` where runnable); every link resolves; both SVGs parse; claims trace to a fixture; footer and license present; the README is under 450 lines.

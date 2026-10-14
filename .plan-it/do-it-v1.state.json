@@ -1,0 +1,261 @@
+{
+  "schemaVersion": 1,
+  "machineVersion": "4.0.0",
+  "run": {
+    "name": "do-it-v1",
+    "goal": "Plan the do-it v1 plugin: the conductor of the DevOtts harness (prompt-it, plan-it, build-it, review-it, deploy-it, conclude-it, reconcile-it), LLM-agnostic via 6 host adapters, token-optimized, with a marketing-grade README.",
+    "startedAt": "2026-10-14T00:00:00Z",
+    "mode": "autonomous-draft",
+    "topology": "orchestrator+squads",
+    "deliveryRoot": ".",
+    "anamnesis": {
+      "access": "none needed; no credentials read",
+      "fences": "see delivery/SCOPE-BRIEF.md",
+      "naming": "repo DevOtts/do-it; plugin name do-it; marketplace devotts",
+      "topology": "orchestrator+squads (recommended)",
+      "liveProbe": "--help/--version of installed CLIs and read-only web research only",
+      "knownDecisions": "owner agreed all recommendations in the memo Decisions section on 2026-10-14"
+    },
+    "hosts": [
+      "claude-code",
+      "codex",
+      "opencode",
+      "engine"
+    ]
+  },
+  "state": "done",
+  "size": "L",
+  "shape": 1,
+  "gates": {
+    "G0": {
+      "approved": true,
+      "owner": "Fernando Ott (derived from session answers, contradict at G4)",
+      "date": "2026-10-14"
+    },
+    "G1": {
+      "approved": true,
+      "owner": "Fernando Ott",
+      "date": "2026-10-14",
+      "note": "size L; Hermes and OpenClaw removed from scope, Engine kept"
+    },
+    "G2": {
+      "defaults": [
+        {
+          "id": "R1",
+          "question": "Spine file and Node floor",
+          "default": "do-it.mjs, Node 22",
+          "rationale": "see DECISIONS.md",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R2",
+          "question": "License",
+          "default": "MIT",
+          "rationale": "see DECISIONS.md",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R3",
+          "question": "Install name",
+          "default": "do-it@devotts",
+          "rationale": "see DECISIONS.md",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R4",
+          "question": "Versioning",
+          "default": "0.1.0 start; 1.0.0 after v0.3",
+          "rationale": "see DECISIONS.md",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R5",
+          "question": "Codex/OpenCode stop-gate",
+          "default": "conductor checklist",
+          "rationale": "see DECISIONS.md",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R6",
+          "question": "Hero assets",
+          "default": "SVG",
+          "rationale": "see DECISIONS.md",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R7",
+          "question": "README claims",
+          "default": "measured only",
+          "rationale": "see DECISIONS.md",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R8",
+          "question": "Tier map",
+          "default": "hosts/<host>/tiers.json",
+          "rationale": "see DECISIONS.md",
+          "source": "recommended",
+          "contradicted": false
+        }
+      ],
+      "approved": true,
+      "owner": "Fernando Ott",
+      "date": "2026-10-14",
+      "note": "collapsed into G4 (autonomous-draft)"
+    },
+    "G4": {
+      "approved": true,
+      "owner": "Fernando Ott",
+      "date": "2026-10-14",
+      "contradictions": [],
+      "note": "approved by requesting the kickoff; no default contradicted"
+    },
+    "G3": {
+      "approved": true,
+      "owner": "Fernando Ott",
+      "date": "2026-10-14",
+      "note": "collapsed into G4 (autonomous-draft)"
+    }
+  },
+  "contract": {
+    "version": "v1.1",
+    "path": "delivery/CONTRACT.md",
+    "frozenAt": "2026-10-14",
+    "draft": false
+  },
+  "artifacts": [
+    {
+      "path": "delivery/PLAN-REVIEW.md",
+      "phase": 10,
+      "verifiedAt": "2026-10-14T00:00:00Z"
+    }
+  ],
+  "history": [
+    {
+      "state": "intake",
+      "event": "INTAKE_CAPTURED",
+      "at": "2026-10-14T00:00:00Z"
+    },
+    {
+      "state": "triage",
+      "event": "TRIAGE_PLAN",
+      "at": "2026-10-14T19:18:38Z"
+    },
+    {
+      "state": "anamnesis",
+      "event": "G0_ANSWERED",
+      "at": "2026-10-14T19:18:50Z"
+    },
+    {
+      "state": "dodLock",
+      "event": "DOD_LOCKED",
+      "at": "2026-10-14T19:18:50Z"
+    },
+    {
+      "state": "scopeBrief",
+      "event": "BRIEF_RENDERED",
+      "at": "2026-10-14T19:18:50Z"
+    },
+    {
+      "state": "scopeGate",
+      "event": "G1_APPROVED",
+      "at": "2026-10-14T19:23:54Z"
+    },
+    {
+      "state": "preGround",
+      "event": "GROUNDED",
+      "at": "2026-10-14T19:23:54Z"
+    },
+    {
+      "state": "discovery",
+      "event": "FANOUT_COMPLETE",
+      "at": "2026-10-14T19:23:54Z"
+    },
+    {
+      "state": "preflight",
+      "event": "PREFLIGHT_VERIFIED",
+      "at": "2026-10-14T19:24:11Z"
+    },
+    {
+      "state": "synthesis",
+      "event": "SYNTHESIZED",
+      "at": "2026-10-14T19:26:51Z"
+    },
+    {
+      "state": "specAuthoring",
+      "event": "SPECS_DRAFTED_AUTONOMOUS",
+      "at": "2026-10-14T19:26:51Z"
+    },
+    {
+      "state": "defaultsApplied",
+      "event": "DEFAULTS_APPLIED",
+      "at": "2026-10-14T19:26:51Z"
+    },
+    {
+      "state": "coherencePass",
+      "event": "COHERENT_AUTONOMOUS",
+      "at": "2026-10-14T19:26:51Z"
+    },
+    {
+      "state": "backboneFreeze",
+      "event": "CONTRACT_FROZEN",
+      "at": "2026-10-14T19:28:25Z"
+    },
+    {
+      "state": "parallelPlanning",
+      "event": "AMENDMENT",
+      "at": "2026-10-14T19:41:12Z"
+    },
+    {
+      "state": "parallelPlanning",
+      "event": "SQUADS_COMPLETE",
+      "at": "2026-10-14T19:42:12Z"
+    },
+    {
+      "state": "verify",
+      "event": "LINT_CLEAN",
+      "at": "2026-10-14T19:42:12Z"
+    },
+    {
+      "state": "adversaryGate",
+      "event": "ADVERSARY_CLEAN",
+      "at": "2026-10-14T19:42:12Z"
+    },
+    {
+      "state": "render",
+      "event": "REVIEW_READY",
+      "at": "2026-10-14T19:42:12Z"
+    },
+    {
+      "state": "planReview",
+      "event": "REVIEW_ANSWERED",
+      "at": "2026-10-14T20:13:35Z"
+    },
+    {
+      "state": "freeze",
+      "event": "CONTRACT_FINAL",
+      "at": "2026-10-14T20:14:13Z"
+    },
+    {
+      "state": "handoff",
+      "event": "HANDED_OFF",
+      "at": "2026-10-14T20:14:31Z"
+    }
+  ],
+  "triage": {
+    "verdict": "plan",
+    "measuredAt": "2026-10-14",
+    "measurements": [
+      "9 research tracks on disk",
+      "design memo v5 with 14 resolved decisions",
+      "greenfield repo, no code yet"
+    ]
+  }
+}
