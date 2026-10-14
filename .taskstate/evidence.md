@@ -3,3 +3,4 @@
 2026-10-14T21:07:08Z S1+S3 merged @93d544f: core/spine tests 35/35 pass. Integration: H0 17/18 (T-H0-02 flags s1.test.mjs 'hermes' regex), R2 12/16 (T-R2-12..14 fail: doctor --install fallback cmds)
 2026-10-14T21:09:03Z W0 integration @fcba7a2 merged: spine 35, hosts/_interface 18, plugin 16 all pass 0 fail 0 skip
 2026-10-14T21:10:12Z P2 merged @77b1f07: core/routing tests run on main
+2026-10-14T21:15:46Z R4 skeleton merged @61c6dc8
