@@ -35,6 +35,35 @@ do-it is the conductor above the *-it family. The spine (`do-it` CLI) is the onl
 
 If the host did not install the companions, run `do-it doctor --install`; it reads `core/companions.json`.
 
+## Presets
+
+- approval
+- drain
+- drain-ledger
+- feature
+- investigate-fix
+- lint-pipelines
+- reconcile
+- review-loop
+- review-loop
+- tests
+- yaml-lite
+
+## Personas
+
+- builder
+- concluder
+- conductor
+- deployer
+- intake
+- lint-personas
+- planner
+- reconciler
+- reviewer
+- runner
+- tests
+- verifier
+
 ## Hosts
 
 ```

@@ -1,0 +1,31 @@
+pipeline: drain
+version: 1
+steps:
+  - id: discover
+    type: code
+    adapter: drain-discover
+    eval: already-implemented none|partial|full with proof per card
+  - id: classify
+    type: persona
+    persona: intake
+    tier: T3
+    needs: [discover]
+  - id: owner-decisions
+    type: decision
+    gate: owner-gate
+    ask: one batched pack for every card that needs a decision
+    needs: [classify]
+  - id: execute-waves
+    type: persona
+    persona: builder
+    needs: [owner-decisions]
+  - id: ledger-check
+    type: code
+    adapter: drain-ledger-check
+    on_limit: UNACCOUNTED_CARD
+    needs: [execute-waves]
+  - id: conclude
+    type: persona
+    persona: concluder
+    skill: conclude-it
+    needs: [ledger-check]

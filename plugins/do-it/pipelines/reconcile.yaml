@@ -1,0 +1,28 @@
+pipeline: reconcile
+version: 1
+steps:
+  - id: scan
+    type: persona
+    persona: reconciler
+    skill: reconcile-it
+  - id: plan
+    type: persona
+    persona: reconciler
+    consumes_previous: true
+  - id: approval
+    type: decision
+    gate: owner-gate
+    ask: approve the dispositions before anything is deleted
+    needs: [plan]
+  - id: apply
+    type: code
+    adapter: reconcile-apply
+    needs: [approval]
+  - id: verify
+    type: persona
+    persona: verifier
+    consumes_previous: true
+  - id: conclude
+    type: persona
+    persona: concluder
+    skill: conclude-it
