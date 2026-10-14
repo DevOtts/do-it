@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "note": "Exact listing of core/cache/. Adding a module here is a deliberate act and must not reintroduce anything in NOT-BUILDING.md.",
+  "files": [
+    "ALLOWLIST.json", "NOT-BUILDING.md", "brief-prefix.mjs", "canonical.mjs", "drivers-load.mjs", "drivers.json",
+    "drivers.json.sha256", "fanout.mjs", "lint-drivers.mjs", "prefix-diff.mjs", "rules.json", "session-guard.mjs",
+    "telemetry.mjs", "tests", "ttl-policy.mjs"
+  ]
+}

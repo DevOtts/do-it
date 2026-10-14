@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "note": "Cells are {value, status, source}. status is documented only where research/09 tagged the source [P]; anything secondary or unverified is unknown. Host route for DeepSeek lives in the host adapter, not here (G-12). min_prefix_tokens keys are model family labels; the host adapter maps real model ids to them.",
+  "kinds": {
+    "anthropic": {
+      "ttl_default": { "value": "5m", "status": "documented", "source": "research/09 section 1 Anthropic [P]" },
+      "ttl_extended": { "value": "1h", "status": "documented", "source": "research/09 section 1 Anthropic [P]" },
+      "min_prefix_tokens": {
+        "value": {
+          "opus-5.5": 512, "opus-5": 512, "sonnet-5.5": 512, "haiku-5.5": 512, "fable-5": 512, "fable-5.1": 512,
+          "sonnet-5": 1024, "sonnet-4.6": 1024, "sonnet-4.5": 1024, "opus-4.8": 1024, "opus-4.1": 1024, "opus-4": 1024,
+          "opus-4.7": 2048, "haiku-3.5": 2048,
+          "opus-4.6": 4096, "opus-4.5": 4096, "haiku-4.5": 4096
+        },
+        "status": "documented",
+        "source": "research/09 section 1 Anthropic [P]"
+      },
+      "read_multiplier": { "value": 0.1, "status": "documented", "source": "research/09 section 1 Anthropic [P]; 0.05 and 0.025 on newer models" },
+      "write_premium_5m": { "value": 1.25, "status": "documented", "source": "research/09 section 1 Anthropic [P]" },
+      "write_premium_1h": { "value": 2, "status": "documented", "source": "research/09 section 1 Anthropic [P]" },
+      "explicit_prewarm": { "value": true, "status": "documented", "source": "research/09 section 1 Anthropic pre-warm max_tokens 0 [P]" },
+      "write_controls": { "value": ["cache_control", "ttl", "max_tokens:0"], "status": "documented", "source": "research/09 section 6 [P]" },
+      "usage_fields": { "value": ["cache_read_input_tokens", "cache_creation_input_tokens"], "status": "documented", "source": "research/09 section 1 Anthropic [P]" },
+      "diagnostics_feature": { "value": null, "status": "unknown", "source": "research/09 section 7 item 6: not read in detail" }
+    },
+    "openai-compatible": {
+      "explicit_prewarm": { "value": false, "status": "unknown", "source": "research/09 section 1 OpenAI [P] covers the first-party API only" },
+      "generic": {
+        "caching": { "value": null, "status": "unknown", "source": "D15: generic endpoint caching behaviour not read" },
+        "usage_fields": { "value": null, "status": "unknown", "source": "docs/research/11 unknown 1: host JSON usage shapes unverified" }
+      },
+      "affinity_key": { "value": "prompt_cache_key", "status": "documented", "source": "research/09 section 1 OpenAI [P]" }
+    },
+    "deepseek": {
+      "caching": { "value": "automatic", "status": "documented", "source": "research/09 section 1 DeepSeek [P]" },
+      "explicit_prewarm": { "value": false, "status": "documented", "source": "research/09 section 1 DeepSeek automatic only [P]" },
+      "min_prefix_tokens": { "value": null, "status": "unknown", "source": "research/09 section 1 DeepSeek: none stated" },
+      "ttl_guarantee": { "value": null, "status": "unknown", "source": "research/09 section 1 DeepSeek: best-effort, hours to days" },
+      "usage_fields": { "value": ["prompt_cache_hit_tokens", "prompt_cache_miss_tokens"], "status": "documented", "source": "research/09 section 1 DeepSeek [P]" }
+    },
+    "host-owned": {
+      "write_controls": { "value": null, "status": "unknown", "source": "research/09 section 6 harness row [P/S]: none from outside" },
+      "explicit_prewarm": { "value": false, "status": "unknown", "source": "research/09 section 6 harness row [P/S]" },
+      "observed_only": { "value": true, "status": "unknown", "source": "research/09 section 2 [S]: read ccusage or logs" }
+    }
+  }
+}
