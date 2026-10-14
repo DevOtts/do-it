@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 const EMBEDDED_SCHEMAS = {"do-it-state.1.schema.json":{"$id":"do-it-state/1","title":"do-it run state (written only by the spine)","type":"object","required":["schema","run_id","preset","request","status","size","host","stage","slices","gates","handoffs","stop_refusals","review","created_at","updated_at"],"properties":{"schema":{"const":"do-it-state/1"},"run_id":{"type":"string","minLength":1},"preset":{"type":["string","null"]},"request":{"type":"string"},"status":{"enum":["INTAKE","PLANNING","AWAIT_RATIFY","BUILDING","VERIFYING","REVIEWING","FIXING","DEPLOYING","PROVING","CONCLUDING","DONE","NEEDS_HUMAN","PARKED","BLOCKED","FAILED","PARTIAL_FAILURE","ROLLED_BACK","ESCALATED"]},"size":{"type":["integer","string","null"]},"host":{"type":["string","null"]},"stage":{"type":["string","null"]},"slices":{"type":"array","items":{"type":"object","required":["id","status"],"properties":{"id":{"type":"string","minLength":1},"lane":{"type":["string","null"]},"tier":{"type":["string","null"]},"status":{"type":"string"},"attempts":{"type":"integer","minimum":0},"escalations":{"type":"integer","minimum":0}}}},"gates":{"type":"object"},"handoffs":{"type":"integer","minimum":0},"stop_refusals":{"type":"integer","minimum":0},"review":{"type":"object","required":["round","exit"],"properties":{"round":{"type":"integer","minimum":0},"exit":{"type":["string","null"]}}},"created_at":{"type":"string","minLength":1},"updated_at":{"type":"string","minLength":1},"ceiling":{"type":["string","object","null"]},"park":{"type":["object","null"]},"handoff_state":{"type":["string","object","null"]},"run_verdict":{"enum":["DONE_ALL_VERIFIED","DONE_WITH_RESIDUALS","BLOCKED","NEEDS_RESET","USAGE_LIMIT",null]},"deploy":{"type":["object","null"]},"last_journal":{"type":["string","null"]}}},"events.schema.json":{"$id":"do-it-event/1","title":"events.jsonl row (trace fields frozen for v2 exporters)","type":"object","required":["ts","run_id","slice_id","stage","persona","tier","model","host","event","parent_id","verdict"],"properties":{"ts":{"type":"string","minLength":1},"run_id":{"type":"string","minLength":1},"slice_id":{"type":["string","null"]},"stage":{"type":["string","null"]},"persona":{"type":["string","null"]},"tier":{"type":["string","null"]},"model":{"type":["string","null"]},"host":{"type":["string","null"]},"event":{"type":"string","minLength":1},"parent_id":{"type":["string","null"]},"verdict":{"type":["string","null"]},"detail":{"type":["object","string","null"]}},"additionalProperties":false},"it-result.1.schema.json":{"$id":"it-result/1","title":"Result file every stage writes as its last act","type":"object","required":["schema","stage","run_id","status","exit_code"],"properties":{"schema":{"const":"it-result/1"},"stage":{"enum":["prompt-it","plan-it","build-it","review-it","deploy-it","conclude-it","reconcile-it"]},"run_id":{"type":"string","minLength":1},"slice_id":{"type":["string","null"]},"version":{"type":["string","null"]},"head_sha":{"type":["string","null"]},"status":{"enum":["ok","needs_human","blocked","failed","context_reset","usage_limit"]},"exit_code":{"type":"integer","minimum":0,"maximum":3},"verdicts":{"type":"array","items":{"type":"object","required":["row","verdict"],"properties":{"row":{"type":"string","minLength":1},"verdict":{"enum":["VERIFIED","IMPLEMENTED-NOT-VERIFIED","BLOCKED"]},"evidence":{"type":["string","null"]},"real":{"type":"boolean"}}}},"run_verdict":{"enum":["DONE_ALL_VERIFIED","DONE_WITH_RESIDUALS","BLOCKED","NEEDS_RESET","USAGE_LIMIT",null]},"next":{"type":["object","null"]},"pending_human":{"type":["object","null"]},"artifacts":{"type":"array","items":{"type":"object","required":["path"],"properties":{"path":{"type":"string"},"kind":{"type":["string","null"]},"sha256":{"type":["string","null"]}}}},"resume":{"type":["object","null"]},"tokens":{"type":["object","null"]},"rollback":{"type":"boolean"},"legs":{"type":"array","items":{"type":"object","required":["leg","state"],"properties":{"leg":{"type":"string","minLength":1},"state":{"enum":["DEPLOYED_VERIFIED","DEPLOYED_UNVERIFIED","HELD","FAILED","NEEDS_HUMAN","ROLLED_BACK","ROLLBACK_FAILED"]},"evidence":{"type":["string","null"]},"compensate":{"type":["string","object","array","null"]}}}}}},"ledger.schema.json":{"$id":"do-it-ledger/1","title":"ledger.json: latest verdict and evidence per DoD row","type":"object","required":["schema","run_id","rows"],"properties":{"schema":{"const":"do-it-ledger/1"},"run_id":{"type":"string","minLength":1},"rows":{"type":"array","items":{"type":"object","required":["row","verdict","evidence","evidence_sha256","real","recorded_at","updated_at"],"properties":{"row":{"type":"string","minLength":1},"verdict":{"enum":["VERIFIED","IMPLEMENTED-NOT-VERIFIED","BLOCKED"]},"evidence":{"type":["string","null"]},"evidence_path":{"type":["string","null"]},"evidence_sha256":{"type":["string","null"]},"real":{"type":"boolean"},"reason":{"type":["string","null"]},"recorded_at":{"type":"string","minLength":1},"updated_at":{"type":"string","minLength":1}}}}}},"settings.schema.json":{"$id":"do-it-settings/1","title":"do-it settings (workspace, global or merged)","type":"object","additionalProperties":false,"properties":{"version":{"const":1},"interaction":{"type":"object","additionalProperties":false,"properties":{"owner_pack":{"enum":["auto","native","html","markdown"]},"fallback":{"type":"array","items":{"enum":["native","html","markdown"]}}}},"host":{"type":"object","additionalProperties":false,"properties":{"driver":{"type":"string","minLength":1},"alias":{"type":["string","null"]}}},"isolation":{"type":"object","additionalProperties":false,"properties":{"driver":{"type":"string","minLength":1}}},"state":{"type":"object","additionalProperties":false,"properties":{"backend":{"type":"string","minLength":1},"engine":{"type":"object","additionalProperties":false,"properties":{"blobs":{"enum":["rows","r2","fs-mirror"]}}}}},"secrets":{"type":"object","additionalProperties":false,"properties":{"provider":{"enum":["file","env","aws-secrets-manager","onepassword","1password"]},"ref":{"type":"string"}}},"handoff":{"type":"object","additionalProperties":false,"properties":{"mode":{"enum":["auto","ask"]},"max_per_run":{"type":"integer","minimum":1}}},"review":{"type":"object","additionalProperties":false,"properties":{"max_rounds":{"type":"integer","minimum":1},"cost_cap_tokens":{"type":"integer","minimum":1}}},"tiers":{"type":"object","additionalProperties":false,"properties":{"T1":{"type":"string"},"T2":{"type":"string"},"T3":{"type":"string"}}},"ceilings":{"type":"object","additionalProperties":false,"properties":{"warn_tokens":{"type":"integer","minimum":0},"warn_pct":{"type":"number","minimum":0,"maximum":100},"block_tokens":{"type":"integer","minimum":0},"block_pct":{"type":"number","minimum":0,"maximum":100}}},"stop_gate":{"type":"object","additionalProperties":false,"properties":{"patience":{"type":"integer","minimum":0}}},"observability":{"type":"object","additionalProperties":false,"properties":{"provider":{"type":"string","minLength":1}}}}},"token-meter.schema.json":{"$id":"do-it-token-meter/1","title":"token-meter.jsonl row: the event fields plus usage fields","type":"object","required":["ts","run_id","slice_id","stage","persona","tier","model","host","event","parent_id","verdict","tokens_in","tokens_out","cache_read","cache_write","estimated","source"],"properties":{"ts":{"type":"string","minLength":1},"run_id":{"type":"string","minLength":1},"slice_id":{"type":["string","null"]},"stage":{"type":["string","null"]},"persona":{"type":["string","null"]},"tier":{"type":["string","null"]},"model":{"type":["string","null"]},"host":{"type":["string","null"]},"event":{"type":"string","minLength":1},"parent_id":{"type":["string","null"]},"verdict":{"type":["string","null"]},"tokens_in":{"type":"integer","minimum":0},"tokens_out":{"type":"integer","minimum":0},"cache_read":{"type":"integer","minimum":0},"cache_write":{"type":"integer","minimum":0},"estimated":{"type":"boolean"},"source":{"enum":["provider","estimate","unknown"]},"extra":{"type":["object","null"]}},"additionalProperties":false}};
 
 // ---- cli.mjs ----
-const BOOL_FLAGS = new Set(['json', 'migrate', 'install', 'secrets', 'append', 'force', 'finalize', 'help', 'version', 'verbose']);
+const BOOL_FLAGS = new Set(['json', 'migrate', 'install', 'secrets', 'append', 'force', 'finalize', 'help', 'version', 'verbose', 'dry-run']);
 const COMMANDS = ['init', 'start', 'next', 'record', 'gate', 'answer', 'handoff', 'resume', 'park', 'status', 'meter', 'doctor'];
 
 function parseArgs(argv) {
@@ -46,6 +46,7 @@ function renderHuman(result) {
   const lines = ['OUTCOME: ' + result.outcome];
   for (const key of Object.keys(result)) {
     if (key === 'outcome') continue;
+    if (key === 'lines') { lines.push(...result[key]); continue; }
     const v = result[key];
     lines.push(key + ': ' + (typeof v === 'string' ? v : JSON.stringify(v)));
   }
@@ -275,7 +276,7 @@ function makeCtx(opts) {
 // ---- doctor.mjs ----
 function cmdDoctor(ctx, args) {
   const f = args.flags;
-  if (f.install) return cmdInstall(ctx);
+  if (f.install) return typeof f.host === 'string' ? cmdInstallCompanions(ctx, args) : cmdInstall(ctx);
   if (f.migrate) return cmdMigrate(ctx);
   if (f.secrets) return notImplemented('S5', 'doctor --secrets');
   const loaded = loadSettings(ctx, args.sets);
@@ -582,6 +583,54 @@ function cmdInstall(ctx) {
   }
   if (printed !== DO_IT_VERSION) throw fail('INSTALL_VERIFY_FAILED', 1, { dest, printed, expected: DO_IT_VERSION });
   return { outcome: 'INSTALLED', exit: 0, bin_dir: binDir, path: dest, version: printed, sha256: sha256File(dest) };
+}
+
+function loadCompanions(ctx) {
+  const candidates = [
+    path.join(path.dirname(installSource()), '..', 'companions.json'),
+    path.join(ctx.root, 'core', 'companions.json'),
+  ];
+  for (const file of candidates) {
+    if (fs.existsSync(file)) return JSON.parse(fs.readFileSync(file, 'utf8'));
+  }
+  throw fail('INSTALL_NO_COMPANIONS', 1, { message: 'core/companions.json not found', tried: candidates });
+}
+
+// Fallback for hosts without a plugin manifest: one `npx skills add` per
+// required companion, in order, recorded per host so a re-run installs only the
+// missing ones. Stops at the first failure (PARTIAL_FAILURE).
+function cmdInstallCompanions(ctx, args) {
+  const host = args.flags.host;
+  const dry = !!args.flags['dry-run'];
+  const required = loadCompanions(ctx).companions.filter((c) => c.required);
+  const stateFile = path.join(ctx.home, 'companions-installed.json');
+  let done = {};
+  try { done = JSON.parse(fs.readFileSync(stateFile, 'utf8')); } catch { done = {}; }
+  const have = new Set(done[host] || []);
+  const cmdOf = (c) => ['skills', 'add', c.repo, '-a', host];
+  const todo = required.filter((c) => !have.has(c.name));
+  const finished = required.filter((c) => have.has(c.name)).map((c) => c.name);
+  if (dry) {
+    return { outcome: 'INSTALL_DRY_RUN', exit: 0, host, lines: todo.map((c) => 'npx ' + cmdOf(c).join(' ')) };
+  }
+  for (const c of todo) {
+    const r = cp.spawnSync('npx', cmdOf(c), { encoding: 'utf8', env: ctx.env, stdio: ['ignore', 'pipe', 'pipe'] });
+    if (r.status !== 0) {
+      return {
+        outcome: 'PARTIAL_FAILURE',
+        exit: 1,
+        host,
+        failed: c.name,
+        finished,
+        missing: todo.slice(todo.indexOf(c)).map((x) => x.name),
+        message: ((r.stderr || '') + (r.error ? String(r.error.message) : '')).trim(),
+      };
+    }
+    finished.push(c.name);
+    done[host] = finished.slice();
+    atomicWriteJson(stateFile, done);
+  }
+  return { outcome: 'INSTALLED_COMPANIONS', exit: 0, host, finished, missing: [] };
 }
 
 // ---- ledger.mjs ----

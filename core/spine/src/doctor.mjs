@@ -1,11 +1,11 @@
 import { notImplemented } from './cli.mjs';
-import { cmdInstall } from './install.mjs';
+import { cmdInstall, cmdInstallCompanions } from './install.mjs';
 import { cmdMigrate } from './migrate.mjs';
 import { loadSettings } from './settings.mjs';
 import { DO_IT_VERSION } from './version.mjs';
 export function cmdDoctor(ctx, args) {
   const f = args.flags;
-  if (f.install) return cmdInstall(ctx);
+  if (f.install) return typeof f.host === 'string' ? cmdInstallCompanions(ctx, args) : cmdInstall(ctx);
   if (f.migrate) return cmdMigrate(ctx);
   if (f.secrets) return notImplemented('S5', 'doctor --secrets');
   const loaded = loadSettings(ctx, args.sets);

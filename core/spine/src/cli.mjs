@@ -15,7 +15,7 @@ import { advanceRunStatus, loadState, newRunId, newState, runDir, selectRunId, w
 import { gateVerify } from './verify.mjs';
 import { DO_IT_VERSION } from './version.mjs';
 
-export const BOOL_FLAGS = new Set(['json', 'migrate', 'install', 'secrets', 'append', 'force', 'finalize', 'help', 'version', 'verbose']);
+export const BOOL_FLAGS = new Set(['json', 'migrate', 'install', 'secrets', 'append', 'force', 'finalize', 'help', 'version', 'verbose', 'dry-run']);
 export const COMMANDS = ['init', 'start', 'next', 'record', 'gate', 'answer', 'handoff', 'resume', 'park', 'status', 'meter', 'doctor'];
 
 export function parseArgs(argv) {
@@ -51,6 +51,7 @@ export function renderHuman(result) {
   const lines = ['OUTCOME: ' + result.outcome];
   for (const key of Object.keys(result)) {
     if (key === 'outcome') continue;
+    if (key === 'lines') { lines.push(...result[key]); continue; }
     const v = result[key];
     lines.push(key + ': ' + (typeof v === 'string' ? v : JSON.stringify(v)));
   }
