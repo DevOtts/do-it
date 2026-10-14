@@ -1,0 +1,117 @@
+TAP version 13
+# VERDICT T-H2-13 IMPLEMENTED-NOT-VERIFIED paid model call; set DOIT_REAL_CALLS=1
+# VERDICT T-H2-14 IMPLEMENTED-NOT-VERIFIED depends on T-H2-13 (paid call)
+# Subtest: T-H2-01 capabilities.json is re-probed against the real binary
+ok 1 - T-H2-01 capabilities.json is re-probed against the real binary
+  ---
+  duration_ms: 252.706833
+  type: 'test'
+  ...
+# Subtest: T-H2-02 the flags the adapter uses exist in the real help
+ok 2 - T-H2-02 the flags the adapter uses exist in the real help
+  ---
+  duration_ms: 247.718167
+  type: 'test'
+  ...
+# Subtest: T-H2-03 the question feature flag is read from the real binary
+ok 3 - T-H2-03 the question feature flag is read from the real binary
+  ---
+  duration_ms: 68.071041
+  type: 'test'
+  ...
+# Subtest: T-H2-04 spawn builds the exact codex command
+ok 4 - T-H2-04 spawn builds the exact codex command
+  ---
+  duration_ms: 10.169834
+  type: 'test'
+  ...
+# Subtest: T-H2-05 read-only roles get a read-only sandbox
+ok 5 - T-H2-05 read-only roles get a read-only sandbox
+  ---
+  duration_ms: 0.138625
+  type: 'test'
+  ...
+# Subtest: T-H2-06 continue builds resume with the captured session id
+ok 6 - T-H2-06 continue builds resume with the captured session id
+  ---
+  duration_ms: 0.487209
+  type: 'test'
+  ...
+# Subtest: T-H2-07 ask is markdown unless the flag is on
+ok 7 - T-H2-07 ask is markdown unless the flag is on
+  ---
+  duration_ms: 0.460917
+  type: 'test'
+  ...
+# Subtest: T-H2-08 stop-gate is a conductor checklist
+ok 8 - T-H2-08 stop-gate is a conductor checklist
+  ---
+  duration_ms: 393.754917
+  type: 'test'
+  ...
+# Subtest: T-H2-09 meter parses codex usage
+ok 9 - T-H2-09 meter parses codex usage
+  ---
+  duration_ms: 0.574375
+  type: 'test'
+  ...
+# Subtest: T-H2-10 cost is estimated and flagged, never invented
+ok 10 - T-H2-10 cost is estimated and flagged, never invented
+  ---
+  duration_ms: 0.377042
+  type: 'test'
+  ...
+# Subtest: T-H2-11 no wake: park
+ok 11 - T-H2-11 no wake: park
+  ---
+  duration_ms: 0.3435
+  type: 'test'
+  ...
+# Subtest: T-H2-12 headless start fails on the real binary: HANDOFF_FAILED
+ok 12 - T-H2-12 headless start fails on the real binary: HANDOFF_FAILED
+  ---
+  duration_ms: 35.598625
+  type: 'test'
+  ...
+# Subtest: T-H2-13 real spawn of a trivial prompt
+ok 13 - T-H2-13 real spawn of a trivial prompt
+  ---
+  duration_ms: 0.352125
+  type: 'test'
+  ...
+# Subtest: T-H2-14 real resume of the T-H2-13 session
+ok 14 - T-H2-14 real resume of the T-H2-13 session
+  ---
+  duration_ms: 0.060583
+  type: 'test'
+  ...
+# Subtest: T-H2-15 recovery after the codex child dies mid-spawn
+ok 15 - T-H2-15 recovery after the codex child dies mid-spawn
+  ---
+  duration_ms: 179.768542
+  type: 'test'
+  ...
+# Subtest: T-H2-16 cap reached: ESCALATED
+ok 16 - T-H2-16 cap reached: ESCALATED
+  ---
+  duration_ms: 287.834875
+  type: 'test'
+  ...
+# Subtest: T-H2-17 conformance suite on the codex adapter
+ok 17 - T-H2-17 conformance suite on the codex adapter
+  ---
+  duration_ms: 409.336833
+  type: 'test'
+  ...
+1..17
+# tests 17
+# suites 0
+# pass 17
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1931.955333
+---- paid cases (DOIT_REAL_CALLS=1, T-H2-12..14 only)
+VERDICT T-H2-13 VERIFIED session 01a13c4b-1eec-77d3-a49b-466d17db10ef tokens_in 16689
+VERDICT T-H2-14 VERIFIED same session 01a13c4b-1eec-77d3-a49b-466d17db10ef

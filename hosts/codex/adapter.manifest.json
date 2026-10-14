@@ -1,0 +1,135 @@
+{
+  "host": "codex",
+  "version": "0.1.0",
+  "calls": {
+    "spawn": {
+      "input": {
+        "type": "object",
+        "required": [
+          "role",
+          "tier",
+          "brief"
+        ]
+      },
+      "output": {
+        "type": "object",
+        "required": [
+          "outcome",
+          "result_path"
+        ]
+      },
+      "outcomes": [
+        "ok",
+        "UNTIERED_SPAWN",
+        "HANDOFF_FAILED"
+      ]
+    },
+    "ask": {
+      "input": {
+        "type": "object",
+        "required": [
+          "questions"
+        ]
+      },
+      "output": {
+        "type": "object",
+        "required": [
+          "outcome"
+        ]
+      },
+      "outcomes": [
+        "ok",
+        "NOT_SUPPORTED"
+      ]
+    },
+    "collect": {
+      "input": {
+        "type": "object"
+      },
+      "output": {
+        "type": "object",
+        "required": [
+          "results",
+          "partial"
+        ]
+      },
+      "outcomes": [
+        "ok"
+      ]
+    },
+    "continue": {
+      "input": {
+        "type": "object",
+        "required": [
+          "run_id",
+          "path"
+        ]
+      },
+      "output": {
+        "type": "object",
+        "required": [
+          "outcome"
+        ]
+      },
+      "outcomes": [
+        "ok",
+        "HANDOFF_FAILED",
+        "NOT_SUPPORTED"
+      ]
+    },
+    "wake": {
+      "input": {
+        "type": "object",
+        "required": [
+          "at",
+          "prompt"
+        ]
+      },
+      "output": {
+        "type": "object",
+        "required": [
+          "outcome"
+        ]
+      },
+      "outcomes": [
+        "ok",
+        "PARKED",
+        "NOT_SUPPORTED"
+      ]
+    },
+    "meter": {
+      "input": {
+        "type": "object"
+      },
+      "output": {
+        "type": "object"
+      },
+      "outcomes": [
+        "ok"
+      ]
+    }
+  },
+  "drivers": {
+    "isolation": {
+      "methods": [
+        "create",
+        "remove"
+      ]
+    },
+    "secrets": {
+      "methods": [
+        "use",
+        "redact",
+        "describe"
+      ]
+    },
+    "stateStore": {
+      "methods": [
+        "get",
+        "put",
+        "append",
+        "list"
+      ]
+    }
+  }
+}

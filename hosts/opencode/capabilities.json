@@ -1,0 +1,19 @@
+{
+  "host": "opencode",
+  "version_probed": "2.0.18",
+  "spawn": { "native": false, "per_spawn_model": true, "max_parallel": 1 },
+  "ask": { "native": false, "max_questions": 4 },
+  "continue": { "headless": true },
+  "wake": { "native": false },
+  "meter": { "provider_usage": true, "cache_fields": true },
+  "hooks": { "stop_gate": false },
+  "isolation": ["worktree"],
+  "unknown": [
+    "question-tool-unconfirmed",
+    "run-json-carries-usage",
+    "agent-definition-format",
+    "per-agent-model",
+    "plugin-can-block-tool",
+    "exit-codes"
+  ]
+}
