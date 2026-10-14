@@ -1,0 +1,112 @@
+TAP version 13
+# Subtest: T-R1-01 section order and claims ledger
+ok 1 - T-R1-01 section order and claims ledger
+  ---
+  duration_ms: 85.300916
+  type: 'test'
+  ...
+# Subtest: T-R1-02 length cap
+ok 2 - T-R1-02 length cap
+  ---
+  duration_ms: 55.572334
+  type: 'test'
+  ...
+# Subtest: T-R1-03 hero svg is well formed
+ok 3 - T-R1-03 hero svg is well formed
+  ---
+  duration_ms: 5.202583
+  type: 'test'
+  ...
+# Subtest: T-R1-04 pipeline svg is well formed
+ok 4 - T-R1-04 pipeline svg is well formed
+  ---
+  duration_ms: 4.445333
+  type: 'test'
+  ...
+# Subtest: T-R1-05 links and anchors resolve
+ok 5 - T-R1-05 links and anchors resolve # SKIP IMPLEMENTED-NOT-VERIFIED: hosts/engine/README.md (lane L4, epic N3) is absent from this branch; the link is real and the checker names it
+  ---
+  duration_ms: 0.127
+  type: 'test'
+  ...
+# Subtest: T-R1-05b broken link in a scratch copy is named
+ok 6 - T-R1-05b broken link in a scratch copy is named
+  ---
+  duration_ms: 27.186167
+  type: 'test'
+  ...
+# Subtest: T-R1-06 Claude Code commands are valid [REAL]
+ok 7 - T-R1-06 Claude Code commands are valid [REAL]
+  ---
+  duration_ms: 1260.292708
+  type: 'test'
+  ...
+# Subtest: T-R1-07 universal installer commands are valid [REAL]
+ok 8 - T-R1-07 universal installer commands are valid [REAL]
+  ---
+  duration_ms: 542.754083
+  type: 'test'
+  ...
+# Subtest: T-R1-08 out-of-scope hosts are absent
+ok 9 - T-R1-08 out-of-scope hosts are absent
+  ---
+  duration_ms: 0.712458
+  type: 'test'
+  ...
+# Subtest: T-R1-09 header block structure
+ok 10 - T-R1-09 header block structure
+  ---
+  duration_ms: 29.895333
+  type: 'test'
+  ...
+# Subtest: T-R1-10 badges point at real targets
+ok 11 - T-R1-10 badges point at real targets
+  ---
+  duration_ms: 32.03425
+  type: 'test'
+  ...
+# Subtest: T-R1-11 installation section covers the hosts
+ok 12 - T-R1-11 installation section covers the hosts
+  ---
+  duration_ms: 30.236625
+  type: 'test'
+  ...
+# Subtest: T-R1-12 dependency claim is gated on evidence
+ok 13 - T-R1-12 dependency claim is gated on evidence
+  ---
+  duration_ms: 0.389042
+  type: 'test'
+  ...
+# Subtest: T-R1-13 footer and license
+ok 14 - T-R1-13 footer and license
+  ---
+  duration_ms: 30.796083
+  type: 'test'
+  ...
+# Subtest: T-R1-14 external links resolve [REAL]
+ok 15 - T-R1-14 external links resolve [REAL]
+  ---
+  duration_ms: 1226.626083
+  type: 'test'
+  ...
+# Subtest: T-R1-15 morning report is real output, equals a fresh stub-host harness run [REAL]
+ok 16 - T-R1-15 morning report is real output, equals a fresh stub-host harness run [REAL]
+  ---
+  duration_ms: 1184.374042
+  type: 'test'
+  ...
+# Subtest: T-R1-16 tone and placeholders
+ok 17 - T-R1-16 tone and placeholders
+  ---
+  duration_ms: 31.770625
+  type: 'test'
+  ...
+1..17
+# tests 17
+# suites 0
+# pass 16
+# fail 0
+# cancelled 0
+# skipped 1
+# todo 0
+# duration_ms 4594.317834

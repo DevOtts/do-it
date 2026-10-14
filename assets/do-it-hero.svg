@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="1200" height="600" role="img" aria-labelledby="t d">
+  <title id="t">do-it: one message in, a verified delivery out</title>
+  <desc id="d">A single message enters a router and a deterministic spine, then flows through the family lifecycle prompt-it, plan-it, build-it, review-it, deploy-it and conclude-it, with three human gates. Four host chips sit underneath: Claude Code, Codex, OpenCode and Engine.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1220"/>
+      <stop offset="1" stop-color="#0d1a2b"/>
+    </linearGradient>
+  </defs>
+  <rect x="1" y="1" width="1198" height="598" rx="18" fill="url(#bg)" stroke="#1e2d44" stroke-width="2"/>
+  <text x="60" y="88" font-family="Helvetica, Arial, sans-serif" font-size="46" font-weight="700" fill="#e8eefc">do-it</text>
+  <text x="60" y="124" font-family="Helvetica, Arial, sans-serif" font-size="20" fill="#7dd3fc">One message. The whole lifecycle. Verified in the morning.</text>
+  <text x="60" y="152" font-family="Menlo, Consolas, monospace" font-size="14" fill="#5b6b85">code decides, models work, every row needs evidence</text>
+
+  <!-- left: one message -->
+  <rect x="60" y="230" width="190" height="110" rx="12" fill="#10203a" stroke="#38bdf8" stroke-width="2"/>
+  <text x="155" y="272" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="18" font-weight="700" fill="#e8eefc">one message</text>
+  <text x="155" y="300" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="13" fill="#7dd3fc">"ship W0-W2"</text>
+  <text x="155" y="322" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="13" fill="#7dd3fc">"drain the backlog"</text>
+  <path d="M250 285 H310" stroke="#38bdf8" stroke-width="3" fill="none"/>
+  <path d="M302 277 L312 285 L302 293 Z" fill="#38bdf8"/>
+
+  <!-- middle: router and spine -->
+  <rect x="312" y="200" width="190" height="170" rx="12" fill="#10203a" stroke="#1e2d44" stroke-width="2"/>
+  <text x="407" y="236" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="18" font-weight="700" fill="#e8eefc">router</text>
+  <text x="407" y="262" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="13" fill="#7dd3fc">picks a preset</text>
+  <text x="407" y="284" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="13" fill="#5b6b85">rules first</text>
+  <text x="407" y="306" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="13" fill="#5b6b85">model if ambiguous</text>
+  <rect x="332" y="326" width="150" height="30" rx="6" fill="#0b3a52" stroke="#38bdf8"/>
+  <text x="407" y="346" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="13" fill="#e8eefc">spine</text>
+  <path d="M502 285 H560" stroke="#38bdf8" stroke-width="3" fill="none"/>
+  <path d="M552 277 L562 285 L552 293 Z" fill="#38bdf8"/>
+
+  <!-- right: lifecycle nodes -->
+  <g font-family="Menlo, Consolas, monospace" font-size="14" fill="#e8eefc" text-anchor="middle">
+    <rect x="564" y="210" width="120" height="40" rx="8" fill="#10203a" stroke="#1e2d44"/><text x="624" y="235">prompt-it</text>
+    <rect x="700" y="210" width="120" height="40" rx="8" fill="#10203a" stroke="#1e2d44"/><text x="760" y="235">plan-it</text>
+    <rect x="836" y="210" width="120" height="40" rx="8" fill="#10203a" stroke="#1e2d44"/><text x="896" y="235">build-it</text>
+    <rect x="564" y="330" width="120" height="40" rx="8" fill="#10203a" stroke="#1e2d44"/><text x="624" y="355">review-it</text>
+    <rect x="700" y="330" width="120" height="40" rx="8" fill="#10203a" stroke="#1e2d44"/><text x="760" y="355">deploy-it</text>
+    <rect x="836" y="330" width="120" height="40" rx="8" fill="#10203a" stroke="#1e2d44"/><text x="896" y="355">conclude-it</text>
+  </g>
+  <path d="M684 230 H700 M820 230 H836 M896 250 V290 H624 V330 M684 350 H700 M820 350 H836" stroke="#5b6b85" stroke-width="2" fill="none"/>
+  <path d="M624 330 V300 H896 V250" stroke="#f59e0b" stroke-width="2" stroke-dasharray="6 5" fill="none"/>
+
+  <!-- human gates -->
+  <g font-family="Menlo, Consolas, monospace" font-size="12" fill="#fbbf24" text-anchor="middle">
+    <circle cx="760" cy="196" r="9" fill="none" stroke="#fbbf24" stroke-width="2"/><text x="760" y="180">ratify</text>
+    <circle cx="760" cy="384" r="9" fill="none" stroke="#fbbf24" stroke-width="2"/><text x="760" y="412">deploy</text>
+    <circle cx="896" cy="384" r="9" fill="none" stroke="#fbbf24" stroke-width="2"/><text x="896" y="412">accept</text>
+  </g>
+  <text x="1010" y="292" font-family="Helvetica, Arial, sans-serif" font-size="16" fill="#7dd3fc">verified delivery</text>
+  <text x="1010" y="314" font-family="Menlo, Consolas, monospace" font-size="13" fill="#5b6b85">one owner pack</text>
+
+  <!-- bottom: hosts -->
+  <text x="60" y="478" font-family="Menlo, Consolas, monospace" font-size="13" fill="#5b6b85">runs on</text>
+  <g font-family="Helvetica, Arial, sans-serif" font-size="16" fill="#e8eefc" text-anchor="middle">
+    <rect x="60" y="492" width="200" height="44" rx="22" fill="#10203a" stroke="#38bdf8"/><text x="160" y="520">Claude Code</text>
+    <rect x="280" y="492" width="200" height="44" rx="22" fill="#10203a" stroke="#1e2d44"/><text x="380" y="520">Codex</text>
+    <rect x="500" y="492" width="200" height="44" rx="22" fill="#10203a" stroke="#1e2d44"/><text x="600" y="520">OpenCode</text>
+    <rect x="720" y="492" width="200" height="44" rx="22" fill="#10203a" stroke="#1e2d44"/><text x="820" y="520">Engine</text>
+  </g>
+</svg>
