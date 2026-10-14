@@ -84,21 +84,25 @@
     },
     {
       "id": "run.feature.tokens_per_verified_row",
-      "statement": "Tokens per VERIFIED row on the overnight feature fixture, real Claude Code host",
-      "value": null,
-      "status": "unmeasured",
+      "statement": "Input plus output tokens per VERIFIED row on the overnight feature fixture, real Claude Code host (cache tokens excluded)",
+      "value": 442.5,
+      "status": "measured",
       "host": "claude-code",
-      "source": "node tests/e2e/run.mjs --fixture feature-overnight --host claude-code",
-      "needs": "T-R4-02 VERIFIED (H1 host driver, build-it pipeline)"
+      "source": "node tests/e2e/run.mjs --fixture feature-overnight --host claude-code (DOIT_REAL_CALLS=1)",
+      "fixture": "feature-overnight",
+      "model_tier": "T3",
+      "estimated": false
     },
     {
       "id": "run.feature.rows_verified",
       "statement": "DoD rows VERIFIED with evidence on the overnight feature fixture, real Claude Code host",
-      "value": null,
-      "status": "unmeasured",
+      "value": 4,
+      "status": "measured",
       "host": "claude-code",
-      "source": "node tests/e2e/run.mjs --fixture feature-overnight --host claude-code",
-      "needs": "T-R4-02 VERIFIED"
+      "source": "node tests/e2e/run.mjs --fixture feature-overnight --host claude-code (DOIT_REAL_CALLS=1)",
+      "fixture": "feature-overnight",
+      "model_tier": "T3",
+      "estimated": false
     }
   ]
 }

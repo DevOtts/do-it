@@ -31,7 +31,7 @@ export function materialize(fixture, opts) {
 }
 
 export function startRun(ctx, preset, request) {
-  const r = spine(ctx, ['start', '--preset', preset, '--request', request, '--host', 'stub']);
+  const r = spine(ctx, ['start', '--preset', preset, '--request', request, '--host', ctx.host || 'stub']);
   if (r.code !== 0) throw new Error('start failed: ' + r.stdout + r.stderr);
   ctx.runId = r.out.run_id;
   return ctx.runId;

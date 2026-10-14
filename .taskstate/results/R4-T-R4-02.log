@@ -1,0 +1,4 @@
+ok 1 - T-R4-02 feature fixture on the real Claude Code host (G-3) [REAL]
+ok 2 - R4-LIB a real host is never replaced by the stub (T-R4-02 honesty rule)
+# pass 2
+# fail 0

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // e2e harness: run a fixture on a host and write tests/e2e/out/{fixture}/ (state, ledger, events, token meter).
 // usage: node tests/e2e/run.mjs --fixture NAME [--host stub|claude-code|codex|opencode] [--variant V] [--out DIR]
+// Real calls (claude-code, feature-overnight) need DOIT_REAL_CALLS=1.
 // Exit: the conclude exit code of the run (0 = concluded), 4 = host or pipeline not available
 // (IMPLEMENTED-NOT-VERIFIED: a real host is never replaced by the stub).
 import cp from 'node:child_process';
@@ -8,6 +9,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { materialize } from './lib/fixture.mjs';
+import { realCallsEnabled, runFeatureOnClaude } from './lib/realhost.mjs';
 import { ROTEIROS } from './lib/roteiros.mjs';
 import { doItDir, readJson, runDirOf } from './lib/spine.mjs';
 
@@ -41,10 +43,21 @@ export function runFixture(opts) {
   if (host !== 'stub') {
     const bin = HOST_BINARY[host];
     if (!bin) return { exit: 1, outcome: 'USAGE', reason: 'unknown host ' + host };
+    const gate = opts.realCalls === undefined ? realCallsEnabled() : opts.realCalls;
+    if (host === 'claude-code' && fixture === 'feature-overnight' && gate) {
+      const real = runFeatureOnClaude({});
+      if (!real.available) return { exit: EXIT_NOT_AVAILABLE, outcome: 'IMPLEMENTED-NOT-VERIFIED', reason: real.reason + '; the stub is never substituted for a real host (G-3)' };
+      const outDir = opts.outDir || path.join(HERE, 'out', fixture + '-' + host);
+      exportOut(real.ctx, outDir);
+      const state = readJson(path.join(runDirOf(real.ctx), 'state.json'));
+      const summary = { fixture, host, variant: '', run_id: real.ctx.runId, status: state.status, run_verdict: state.run_verdict === undefined ? null : state.run_verdict, alias: real.alias, model: real.model, cost_usd: real.cost_usd, last: { code: real.last.code, outcome: real.last.out && real.last.out.outcome }, out_dir: outDir };
+      fs.writeFileSync(path.join(outDir, 'summary.json'), JSON.stringify(summary, null, 2) + '\n');
+      return { exit: real.last.code, outcome: summary.last.outcome, summary, ctx: real.ctx, last: real.last, real };
+    }
     return {
       exit: EXIT_NOT_AVAILABLE,
       outcome: 'IMPLEMENTED-NOT-VERIFIED',
-      reason: (onPath(bin) ? '`' + bin + '` is installed but the host driver and the pipelines are not built yet (H1-H3, P1-P4, S2/S4/S5)' : '`' + bin + '` is not installed') + '; the stub is never substituted for a real host (G-3)',
+      reason: (onPath(bin) ? '`' + bin + '` is installed but real calls are off (set DOIT_REAL_CALLS=1 to allow a few tiny paid calls) or no driver exists for this fixture on this host' : '`' + bin + '` is not installed') + '; the stub is never substituted for a real host (G-3)',
     };
   }
   if (!ROTEIROS[fixture]) {

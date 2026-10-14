@@ -51,13 +51,17 @@ export function reviewOutcome(variant) {
   let exit = null;
   let used = 0;
   let spent = 0;
+  let raised = false; // the first repeat raises the builder tier once; a repeat after the raise stalls (CONTRACT M2)
   for (let i = 0; i < rounds.length; i++) {
     const r = rounds[i];
     if (variant.token_ceiling !== undefined && spent + r.cost_tokens > variant.token_ceiling) { exit = 'OVER_BUDGET'; used = r.round; break; }
     spent += r.cost_tokens;
     used = r.round;
     const prev = rounds[i - 1];
-    if (prev && prev.fingerprint === r.fingerprint && r.blocker_ids.length && r.blocker_ids.every((id) => prev.blocker_ids.includes(id))) { exit = 'STALLED'; break; }
+    if (prev && prev.fingerprint === r.fingerprint && r.blocker_ids.length && r.blocker_ids.every((id) => prev.blocker_ids.includes(id))) {
+      if (raised) { exit = 'STALLED'; break; }
+      raised = true;
+    }
     if (r.blocking === 0) { exit = r.minors > 0 ? 'CONVERGED_WITH_MINORS' : 'CONVERGED'; break; }
   }
   return { rounds, exit, rounds_used: used, minors_written: exit === 'CONVERGED_WITH_MINORS' ? rounds[used - 1].minors : 0, blocking_per_round: rounds.map((r) => r.blocking) };
