@@ -5,6 +5,7 @@ import { fail } from './errors.mjs';
 import { appendEvent } from './events.mjs';
 import { atomicWrite } from './fs-atomic.mjs';
 import { sha256Bytes } from './hash.mjs';
+import { redactText } from './redact.mjs';
 import { loadSchemaFile, validateSchema } from './schema.mjs';
 
 // The only module that writes run state (G-1): state.json and its sidecar digest.
@@ -44,7 +45,7 @@ export function writeState(ctx, state) {
   const errors = validateSchema(loadSchemaFile('do-it-state.1.schema.json'), state);
   if (errors.length) throw fail('STATE_INVALID', 1, { errors });
   const dir = runDir(ctx, state.run_id);
-  const bytes = JSON.stringify(state, null, 2) + '\n';
+  const bytes = redactText(JSON.stringify(state, null, 2) + '\n');
   const fault = ctx.env.DO_IT_FAULT === 'after_tmp';
   atomicWrite(path.join(dir, 'state.json'), bytes, { faultAfterTmp: fault });
   atomicWrite(path.join(dir, '.state.sha256'), sha256Bytes(bytes) + '\n');

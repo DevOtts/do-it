@@ -1,0 +1,24 @@
+{
+  "$id": "do-it-finish-line/1",
+  "title": "finish-line.json: rows that must all become terminal",
+  "type": "object",
+  "required": ["rows"],
+  "properties": {
+    "rows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "kind", "state"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "kind": { "enum": ["wave", "package", "dod"] },
+          "state": { "enum": ["OPEN", "DONE", "PARKED", "BLOCKED"] },
+          "evidence": { "type": ["string", "null"] },
+          "owner_question": { "type": ["string", "null"] },
+          "reason": { "type": ["string", "null"] },
+          "archived_to": { "type": ["string", "null"] }
+        }
+      }
+    }
+  }
+}

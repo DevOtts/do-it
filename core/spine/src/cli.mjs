@@ -1,16 +1,26 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { gateCeiling } from './ceiling.mjs';
 import { gateConclude } from './conclude.mjs';
 import { makeCtx } from './ctx.mjs';
 import { cmdDoctor } from './doctor.mjs';
 import { CliError, fail } from './errors.mjs';
 import { appendEvent } from './events.mjs';
 import { cleanStaleTmp } from './fs-atomic.mjs';
+import { cmdHandoff } from './handoff.mjs';
 import { cmdInit } from './init.mjs';
+import { renderBoard, readFinishLine } from './finish-line.mjs';
 import { cmdMeter } from './meter.mjs';
-import { cmdNext } from './next.mjs';
+import { cmdNext, gateRoute } from './next.mjs';
+import { gateBuild } from './readiness.mjs';
+import { cmdPark } from './park.mjs';
 import { cmdRecord } from './record.mjs';
+import { redactInit, redactText } from './redact.mjs';
+import { cmdResume } from './resume.mjs';
+import { redactFlushEvents } from './secrets.mjs';
+import { route } from './router.mjs';
 import { loadSettings } from './settings.mjs';
+import { gateStop } from './stopgate.mjs';
 import { advanceRunStatus, loadState, newRunId, newState, runDir, selectRunId, writeState } from './state.mjs';
 import { gateVerify } from './verify.mjs';
 import { DO_IT_VERSION } from './version.mjs';
@@ -49,8 +59,9 @@ export function notImplemented(epic, what) {
 
 export function renderHuman(result) {
   const lines = ['OUTCOME: ' + result.outcome];
+  if (Array.isArray(result.say)) lines.push(...result.say);
   for (const key of Object.keys(result)) {
-    if (key === 'outcome') continue;
+    if (key === 'outcome' || key === 'say') continue;
     if (key === 'lines') { lines.push(...result[key]); continue; }
     const v = result[key];
     lines.push(key + ': ' + (typeof v === 'string' ? v : JSON.stringify(v)));
@@ -70,9 +81,9 @@ export function dispatch(ctx, args) {
     case 'gate': return cmdGate(ctx, args);
     case 'next': return cmdNext(ctx, args);
     case 'answer': return notImplemented('S4', 'answer');
-    case 'handoff': return notImplemented('S5', 'handoff');
-    case 'resume': return notImplemented('S5', 'resume');
-    case 'park': return notImplemented('S5', 'park');
+    case 'handoff': return cmdHandoff(ctx, args);
+    case 'resume': return cmdResume(ctx, args);
+    case 'park': return cmdPark(ctx, args);
     default:
       throw fail('USAGE', 1, { message: 'unknown command', commands: COMMANDS });
   }
@@ -94,6 +105,7 @@ export function cliMain(argv, opts) {
       result = { outcome: 'USAGE', exit: args.flags.help ? 0 : 1, commands: COMMANDS };
     } else {
       ctx = makeCtx({ cwd: opts && opts.cwd, env: opts && opts.env });
+      redactInit(ctx);
       result = dispatch(ctx, args);
     }
   } catch (e) {
@@ -109,7 +121,9 @@ export function cliMain(argv, opts) {
     if (result.root === undefined) result.root = ctx.root;
     if (result.home === undefined) result.home = ctx.home;
   }
-  return { exit, stdout: json ? JSON.stringify(result) + '\n' : renderHuman(result) };
+  const stdout = redactText(json ? JSON.stringify(result) + '\n' : renderHuman(result));
+  if (ctx) redactFlushEvents(ctx, result);
+  return { exit, stdout };
 }
 
 export function cmdStart(ctx, args) {
@@ -124,9 +138,17 @@ export function cmdStart(ctx, args) {
     size,
     host: typeof f.host === 'string' ? f.host : settings.values.host.driver,
   });
+  const routed = state.preset ? null : route(f.request);
+  if (routed && routed.preset) {
+    state.preset = routed.preset;
+    if (state.size === null && routed.size !== null) state.size = routed.size;
+  }
   fs.mkdirSync(path.join(runDir(ctx, runId), 'results'), { recursive: true });
   writeState(ctx, state);
   appendEvent(ctx, runId, { event: 'run_started', stage: state.stage, host: state.host, verdict: null });
+  if (routed && routed.preset) {
+    appendEvent(ctx, runId, { event: 'route', stage: state.stage, host: state.host, verdict: routed.preset, detail: { rule: routed.rule, model_call: false } });
+  }
   return { outcome: 'STARTED', exit: 0, run_id: runId, status: state.status, preset: state.preset, root: ctx.root, home: ctx.home };
 }
 
@@ -148,6 +170,7 @@ export function cmdStatus(ctx, args) {
     handoffs: state.handoffs,
     stop_refusals: state.stop_refusals,
     run_verdict: state.run_verdict === undefined ? null : state.run_verdict,
+    board: renderBoard(readFinishLine(ctx)),
     stale_tmp_removed: removed,
   };
 }
@@ -158,12 +181,12 @@ export function cmdGate(ctx, args) {
     case 'verify': return gateVerify(ctx, args);
     case 'conclude': return gateConclude(ctx, args);
     case 'advance': return gateAdvance(ctx, args);
-    case 'build':
-    case 'stop':
-    case 'ceiling':
-      return notImplemented('S2/S5', 'gate ' + sub);
+    case 'build': return gateBuild(ctx, args);
+    case 'stop': return gateStop(ctx, args);
+    case 'route': return gateRoute(ctx, args);
+    case 'ceiling': return gateCeiling(ctx, args);
     default:
-      throw fail('USAGE', 1, { message: 'gate needs a subcommand', subcommands: ['verify', 'conclude', 'advance', 'build', 'stop', 'ceiling'] });
+      throw fail('USAGE', 1, { message: 'gate needs a subcommand', subcommands: ['verify', 'conclude', 'advance', 'build', 'stop', 'route', 'ceiling'] });
   }
 }
 

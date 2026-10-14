@@ -1,0 +1,33 @@
+{
+  "$id": "do-it-readiness/1",
+  "title": "plan/READINESS.json: the verdict that lets a build start (G-8)",
+  "type": "object",
+  "required": ["decisions", "preflight"],
+  "properties": {
+    "decisions": {
+      "type": ["array", "object"]
+    },
+    "preflight": {
+      "type": "object",
+      "required": ["passed"],
+      "properties": { "passed": { "type": "boolean" } }
+    },
+    "credentials": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "owner_dependent_slices": { "type": "integer", "minimum": 0 },
+    "slices": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "lane": { "type": ["string", "null"] },
+          "tier": { "type": ["string", "null"] },
+          "class": { "enum": ["deterministic", "gather", "implementation", "hard", null] },
+          "depends_on": { "type": "array", "items": { "type": "string" } },
+          "depends_on_owner_answer": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}

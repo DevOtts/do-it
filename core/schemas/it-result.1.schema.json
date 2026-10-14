@@ -25,6 +25,7 @@
         }
       }
     },
+    "reason": { "type": ["string", "null"] },
     "run_verdict": { "enum": ["DONE_ALL_VERIFIED", "DONE_WITH_RESIDUALS", "BLOCKED", "NEEDS_RESET", "USAGE_LIMIT", null] },
     "next": { "type": ["object", "null"] },
     "pending_human": { "type": ["object", "null"] },

@@ -7,7 +7,64 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const EMBEDDED_SCHEMAS = {"do-it-state.1.schema.json":{"$id":"do-it-state/1","title":"do-it run state (written only by the spine)","type":"object","required":["schema","run_id","preset","request","status","size","host","stage","slices","gates","handoffs","stop_refusals","review","created_at","updated_at"],"properties":{"schema":{"const":"do-it-state/1"},"run_id":{"type":"string","minLength":1},"preset":{"type":["string","null"]},"request":{"type":"string"},"status":{"enum":["INTAKE","PLANNING","AWAIT_RATIFY","BUILDING","VERIFYING","REVIEWING","FIXING","DEPLOYING","PROVING","CONCLUDING","DONE","NEEDS_HUMAN","PARKED","BLOCKED","FAILED","PARTIAL_FAILURE","ROLLED_BACK","ESCALATED"]},"size":{"type":["integer","string","null"]},"host":{"type":["string","null"]},"stage":{"type":["string","null"]},"slices":{"type":"array","items":{"type":"object","required":["id","status"],"properties":{"id":{"type":"string","minLength":1},"lane":{"type":["string","null"]},"tier":{"type":["string","null"]},"status":{"type":"string"},"attempts":{"type":"integer","minimum":0},"escalations":{"type":"integer","minimum":0}}}},"gates":{"type":"object"},"handoffs":{"type":"integer","minimum":0},"stop_refusals":{"type":"integer","minimum":0},"review":{"type":"object","required":["round","exit"],"properties":{"round":{"type":"integer","minimum":0},"exit":{"type":["string","null"]}}},"created_at":{"type":"string","minLength":1},"updated_at":{"type":"string","minLength":1},"ceiling":{"type":["string","object","null"]},"park":{"type":["object","null"]},"handoff_state":{"type":["string","object","null"]},"run_verdict":{"enum":["DONE_ALL_VERIFIED","DONE_WITH_RESIDUALS","BLOCKED","NEEDS_RESET","USAGE_LIMIT",null]},"deploy":{"type":["object","null"]},"last_journal":{"type":["string","null"]}}},"events.schema.json":{"$id":"do-it-event/1","title":"events.jsonl row (trace fields frozen for v2 exporters)","type":"object","required":["ts","run_id","slice_id","stage","persona","tier","model","host","event","parent_id","verdict"],"properties":{"ts":{"type":"string","minLength":1},"run_id":{"type":"string","minLength":1},"slice_id":{"type":["string","null"]},"stage":{"type":["string","null"]},"persona":{"type":["string","null"]},"tier":{"type":["string","null"]},"model":{"type":["string","null"]},"host":{"type":["string","null"]},"event":{"type":"string","minLength":1},"parent_id":{"type":["string","null"]},"verdict":{"type":["string","null"]},"detail":{"type":["object","string","null"]}},"additionalProperties":false},"it-result.1.schema.json":{"$id":"it-result/1","title":"Result file every stage writes as its last act","type":"object","required":["schema","stage","run_id","status","exit_code"],"properties":{"schema":{"const":"it-result/1"},"stage":{"enum":["prompt-it","plan-it","build-it","review-it","deploy-it","conclude-it","reconcile-it"]},"run_id":{"type":"string","minLength":1},"slice_id":{"type":["string","null"]},"version":{"type":["string","null"]},"head_sha":{"type":["string","null"]},"status":{"enum":["ok","needs_human","blocked","failed","context_reset","usage_limit"]},"exit_code":{"type":"integer","minimum":0,"maximum":3},"verdicts":{"type":"array","items":{"type":"object","required":["row","verdict"],"properties":{"row":{"type":"string","minLength":1},"verdict":{"enum":["VERIFIED","IMPLEMENTED-NOT-VERIFIED","BLOCKED"]},"evidence":{"type":["string","null"]},"real":{"type":"boolean"}}}},"run_verdict":{"enum":["DONE_ALL_VERIFIED","DONE_WITH_RESIDUALS","BLOCKED","NEEDS_RESET","USAGE_LIMIT",null]},"next":{"type":["object","null"]},"pending_human":{"type":["object","null"]},"artifacts":{"type":"array","items":{"type":"object","required":["path"],"properties":{"path":{"type":"string"},"kind":{"type":["string","null"]},"sha256":{"type":["string","null"]}}}},"resume":{"type":["object","null"]},"tokens":{"type":["object","null"]},"rollback":{"type":"boolean"},"legs":{"type":"array","items":{"type":"object","required":["leg","state"],"properties":{"leg":{"type":"string","minLength":1},"state":{"enum":["DEPLOYED_VERIFIED","DEPLOYED_UNVERIFIED","HELD","FAILED","NEEDS_HUMAN","ROLLED_BACK","ROLLBACK_FAILED"]},"evidence":{"type":["string","null"]},"compensate":{"type":["string","object","array","null"]}}}}}},"ledger.schema.json":{"$id":"do-it-ledger/1","title":"ledger.json: latest verdict and evidence per DoD row","type":"object","required":["schema","run_id","rows"],"properties":{"schema":{"const":"do-it-ledger/1"},"run_id":{"type":"string","minLength":1},"rows":{"type":"array","items":{"type":"object","required":["row","verdict","evidence","evidence_sha256","real","recorded_at","updated_at"],"properties":{"row":{"type":"string","minLength":1},"verdict":{"enum":["VERIFIED","IMPLEMENTED-NOT-VERIFIED","BLOCKED"]},"evidence":{"type":["string","null"]},"evidence_path":{"type":["string","null"]},"evidence_sha256":{"type":["string","null"]},"real":{"type":"boolean"},"reason":{"type":["string","null"]},"recorded_at":{"type":"string","minLength":1},"updated_at":{"type":"string","minLength":1}}}}}},"settings.schema.json":{"$id":"do-it-settings/1","title":"do-it settings (workspace, global or merged)","type":"object","additionalProperties":false,"properties":{"version":{"const":1},"interaction":{"type":"object","additionalProperties":false,"properties":{"owner_pack":{"enum":["auto","native","html","markdown"]},"fallback":{"type":"array","items":{"enum":["native","html","markdown"]}}}},"host":{"type":"object","additionalProperties":false,"properties":{"driver":{"type":"string","minLength":1},"alias":{"type":["string","null"]}}},"isolation":{"type":"object","additionalProperties":false,"properties":{"driver":{"type":"string","minLength":1}}},"state":{"type":"object","additionalProperties":false,"properties":{"backend":{"type":"string","minLength":1},"engine":{"type":"object","additionalProperties":false,"properties":{"blobs":{"enum":["rows","r2","fs-mirror"]}}}}},"secrets":{"type":"object","additionalProperties":false,"properties":{"provider":{"enum":["file","env","aws-secrets-manager","onepassword","1password"]},"ref":{"type":"string"}}},"handoff":{"type":"object","additionalProperties":false,"properties":{"mode":{"enum":["auto","ask"]},"max_per_run":{"type":"integer","minimum":1}}},"review":{"type":"object","additionalProperties":false,"properties":{"max_rounds":{"type":"integer","minimum":1},"cost_cap_tokens":{"type":"integer","minimum":1}}},"tiers":{"type":"object","additionalProperties":false,"properties":{"T1":{"type":"string"},"T2":{"type":"string"},"T3":{"type":"string"}}},"ceilings":{"type":"object","additionalProperties":false,"properties":{"warn_tokens":{"type":"integer","minimum":0},"warn_pct":{"type":"number","minimum":0,"maximum":100},"block_tokens":{"type":"integer","minimum":0},"block_pct":{"type":"number","minimum":0,"maximum":100}}},"stop_gate":{"type":"object","additionalProperties":false,"properties":{"patience":{"type":"integer","minimum":0}}},"observability":{"type":"object","additionalProperties":false,"properties":{"provider":{"type":"string","minLength":1}}}}},"token-meter.schema.json":{"$id":"do-it-token-meter/1","title":"token-meter.jsonl row: the event fields plus usage fields","type":"object","required":["ts","run_id","slice_id","stage","persona","tier","model","host","event","parent_id","verdict","tokens_in","tokens_out","cache_read","cache_write","estimated","source"],"properties":{"ts":{"type":"string","minLength":1},"run_id":{"type":"string","minLength":1},"slice_id":{"type":["string","null"]},"stage":{"type":["string","null"]},"persona":{"type":["string","null"]},"tier":{"type":["string","null"]},"model":{"type":["string","null"]},"host":{"type":["string","null"]},"event":{"type":"string","minLength":1},"parent_id":{"type":["string","null"]},"verdict":{"type":["string","null"]},"tokens_in":{"type":"integer","minimum":0},"tokens_out":{"type":"integer","minimum":0},"cache_read":{"type":"integer","minimum":0},"cache_write":{"type":"integer","minimum":0},"estimated":{"type":"boolean"},"source":{"enum":["provider","estimate","unknown"]},"extra":{"type":["object","null"]}},"additionalProperties":false}};
+const EMBEDDED_SCHEMAS = {"do-it-state.1.schema.json":{"$id":"do-it-state/1","title":"do-it run state (written only by the spine)","type":"object","required":["schema","run_id","preset","request","status","size","host","stage","slices","gates","handoffs","stop_refusals","review","created_at","updated_at"],"properties":{"schema":{"const":"do-it-state/1"},"run_id":{"type":"string","minLength":1},"preset":{"type":["string","null"]},"request":{"type":"string"},"status":{"enum":["INTAKE","PLANNING","AWAIT_RATIFY","BUILDING","VERIFYING","REVIEWING","FIXING","DEPLOYING","PROVING","CONCLUDING","DONE","NEEDS_HUMAN","PARKED","BLOCKED","FAILED","PARTIAL_FAILURE","ROLLED_BACK","ESCALATED"]},"size":{"type":["integer","string","null"]},"host":{"type":["string","null"]},"stage":{"type":["string","null"]},"slices":{"type":"array","items":{"type":"object","required":["id","status"],"properties":{"id":{"type":"string","minLength":1},"lane":{"type":["string","null"]},"tier":{"type":["string","null"]},"status":{"type":"string"},"attempts":{"type":"integer","minimum":0},"escalations":{"type":"integer","minimum":0}}}},"gates":{"type":"object"},"handoffs":{"type":"integer","minimum":0},"stop_refusals":{"type":"integer","minimum":0},"review":{"type":"object","required":["round","exit"],"properties":{"round":{"type":"integer","minimum":0},"exit":{"type":["string","null"]}}},"created_at":{"type":"string","minLength":1},"updated_at":{"type":"string","minLength":1},"ceiling":{"type":["string","object","null"]},"park":{"type":["object","null"]},"handoff_state":{"type":["string","object","null"]},"run_verdict":{"enum":["DONE_ALL_VERIFIED","DONE_WITH_RESIDUALS","BLOCKED","NEEDS_RESET","USAGE_LIMIT",null]},"deploy":{"type":["object","null"]},"last_journal":{"type":["string","null"]}}},"events.schema.json":{"$id":"do-it-event/1","title":"events.jsonl row (trace fields frozen for v2 exporters)","type":"object","required":["ts","run_id","slice_id","stage","persona","tier","model","host","event","parent_id","verdict"],"properties":{"ts":{"type":"string","minLength":1},"run_id":{"type":"string","minLength":1},"slice_id":{"type":["string","null"]},"stage":{"type":["string","null"]},"persona":{"type":["string","null"]},"tier":{"type":["string","null"]},"model":{"type":["string","null"]},"host":{"type":["string","null"]},"event":{"type":"string","minLength":1},"parent_id":{"type":["string","null"]},"verdict":{"type":["string","null"]},"detail":{"type":["object","string","null"]}},"additionalProperties":false},"finish-line.schema.json":{"$id":"do-it-finish-line/1","title":"finish-line.json: rows that must all become terminal","type":"object","required":["rows"],"properties":{"rows":{"type":"array","items":{"type":"object","required":["id","kind","state"],"properties":{"id":{"type":"string","minLength":1},"kind":{"enum":["wave","package","dod"]},"state":{"enum":["OPEN","DONE","PARKED","BLOCKED"]},"evidence":{"type":["string","null"]},"owner_question":{"type":["string","null"]},"reason":{"type":["string","null"]},"archived_to":{"type":["string","null"]}}}}}},"it-result.1.schema.json":{"$id":"it-result/1","title":"Result file every stage writes as its last act","type":"object","required":["schema","stage","run_id","status","exit_code"],"properties":{"schema":{"const":"it-result/1"},"stage":{"enum":["prompt-it","plan-it","build-it","review-it","deploy-it","conclude-it","reconcile-it"]},"run_id":{"type":"string","minLength":1},"slice_id":{"type":["string","null"]},"version":{"type":["string","null"]},"head_sha":{"type":["string","null"]},"status":{"enum":["ok","needs_human","blocked","failed","context_reset","usage_limit"]},"exit_code":{"type":"integer","minimum":0,"maximum":3},"verdicts":{"type":"array","items":{"type":"object","required":["row","verdict"],"properties":{"row":{"type":"string","minLength":1},"verdict":{"enum":["VERIFIED","IMPLEMENTED-NOT-VERIFIED","BLOCKED"]},"evidence":{"type":["string","null"]},"real":{"type":"boolean"}}}},"reason":{"type":["string","null"]},"run_verdict":{"enum":["DONE_ALL_VERIFIED","DONE_WITH_RESIDUALS","BLOCKED","NEEDS_RESET","USAGE_LIMIT",null]},"next":{"type":["object","null"]},"pending_human":{"type":["object","null"]},"artifacts":{"type":"array","items":{"type":"object","required":["path"],"properties":{"path":{"type":"string"},"kind":{"type":["string","null"]},"sha256":{"type":["string","null"]}}}},"resume":{"type":["object","null"]},"tokens":{"type":["object","null"]},"rollback":{"type":"boolean"},"legs":{"type":"array","items":{"type":"object","required":["leg","state"],"properties":{"leg":{"type":"string","minLength":1},"state":{"enum":["DEPLOYED_VERIFIED","DEPLOYED_UNVERIFIED","HELD","FAILED","NEEDS_HUMAN","ROLLED_BACK","ROLLBACK_FAILED"]},"evidence":{"type":["string","null"]},"compensate":{"type":["string","object","array","null"]}}}}}},"ledger.schema.json":{"$id":"do-it-ledger/1","title":"ledger.json: latest verdict and evidence per DoD row","type":"object","required":["schema","run_id","rows"],"properties":{"schema":{"const":"do-it-ledger/1"},"run_id":{"type":"string","minLength":1},"rows":{"type":"array","items":{"type":"object","required":["row","verdict","evidence","evidence_sha256","real","recorded_at","updated_at"],"properties":{"row":{"type":"string","minLength":1},"verdict":{"enum":["VERIFIED","IMPLEMENTED-NOT-VERIFIED","BLOCKED"]},"evidence":{"type":["string","null"]},"evidence_path":{"type":["string","null"]},"evidence_sha256":{"type":["string","null"]},"real":{"type":"boolean"},"reason":{"type":["string","null"]},"recorded_at":{"type":"string","minLength":1},"updated_at":{"type":"string","minLength":1}}}}}},"readiness.schema.json":{"$id":"do-it-readiness/1","title":"plan/READINESS.json: the verdict that lets a build start (G-8)","type":"object","required":["decisions","preflight"],"properties":{"decisions":{"type":["array","object"]},"preflight":{"type":"object","required":["passed"],"properties":{"passed":{"type":"boolean"}}},"credentials":{"type":"array","items":{"type":"string","minLength":1}},"owner_dependent_slices":{"type":"integer","minimum":0},"slices":{"type":"array","items":{"type":"object","required":["id"],"properties":{"id":{"type":"string","minLength":1},"lane":{"type":["string","null"]},"tier":{"type":["string","null"]},"class":{"enum":["deterministic","gather","implementation","hard",null]},"depends_on":{"type":"array","items":{"type":"string"}},"depends_on_owner_answer":{"type":"boolean"}}}}}},"settings.schema.json":{"$id":"do-it-settings/1","title":"do-it settings (workspace, global or merged)","type":"object","additionalProperties":false,"properties":{"version":{"const":1},"interaction":{"type":"object","additionalProperties":false,"properties":{"owner_pack":{"enum":["auto","native","html","markdown"]},"fallback":{"type":"array","items":{"enum":["native","html","markdown"]}}}},"host":{"type":"object","additionalProperties":false,"properties":{"driver":{"type":"string","minLength":1},"alias":{"type":["string","null"]}}},"isolation":{"type":"object","additionalProperties":false,"properties":{"driver":{"type":"string","minLength":1}}},"state":{"type":"object","additionalProperties":false,"properties":{"backend":{"type":"string","minLength":1},"engine":{"type":"object","additionalProperties":false,"properties":{"blobs":{"enum":["rows","r2","fs-mirror"]}}}}},"secrets":{"type":"object","additionalProperties":false,"properties":{"provider":{"enum":["file","env","aws-secrets-manager","onepassword","1password"]},"ref":{"type":"string"}}},"handoff":{"type":"object","additionalProperties":false,"properties":{"mode":{"enum":["auto","ask"]},"max_per_run":{"type":"integer","minimum":1}}},"review":{"type":"object","additionalProperties":false,"properties":{"max_rounds":{"type":"integer","minimum":1},"cost_cap_tokens":{"type":"integer","minimum":1}}},"tiers":{"type":"object","additionalProperties":false,"properties":{"T1":{"type":"string"},"T2":{"type":"string"},"T3":{"type":"string"}}},"ceilings":{"type":"object","additionalProperties":false,"properties":{"warn_tokens":{"type":"integer","minimum":0},"warn_pct":{"type":"number","minimum":0,"maximum":100},"block_tokens":{"type":"integer","minimum":0},"block_pct":{"type":"number","minimum":0,"maximum":100}}},"stop_gate":{"type":"object","additionalProperties":false,"properties":{"patience":{"type":"integer","minimum":0}}},"observability":{"type":"object","additionalProperties":false,"properties":{"provider":{"type":"string","minLength":1}}}}},"token-meter.schema.json":{"$id":"do-it-token-meter/1","title":"token-meter.jsonl row: the event fields plus usage fields","type":"object","required":["ts","run_id","slice_id","stage","persona","tier","model","host","event","parent_id","verdict","tokens_in","tokens_out","cache_read","cache_write","estimated","source"],"properties":{"ts":{"type":"string","minLength":1},"run_id":{"type":"string","minLength":1},"slice_id":{"type":["string","null"]},"stage":{"type":["string","null"]},"persona":{"type":["string","null"]},"tier":{"type":["string","null"]},"model":{"type":["string","null"]},"host":{"type":["string","null"]},"event":{"type":"string","minLength":1},"parent_id":{"type":["string","null"]},"verdict":{"type":["string","null"]},"tokens_in":{"type":"integer","minimum":0},"tokens_out":{"type":"integer","minimum":0},"cache_read":{"type":"integer","minimum":0},"cache_write":{"type":"integer","minimum":0},"estimated":{"type":"boolean"},"source":{"enum":["provider","estimate","unknown"]},"extra":{"type":["object","null"]}},"additionalProperties":false}};
+
+// ---- ceiling.mjs ----
+// G-5, ruling D4: absolute tokens or window percent, whichever fires first.
+function ceilingLevel(ceilings, ctxTokens, windowTokens) {
+  const pct = (ctxTokens / windowTokens) * 100;
+  if (ctxTokens >= ceilings.block_tokens || pct >= ceilings.block_pct) {
+    return { level: 'BLOCKED', by: ctxTokens >= ceilings.block_tokens ? 'absolute' : 'percent', pct };
+  }
+  if (ctxTokens >= ceilings.warn_tokens || pct >= ceilings.warn_pct) {
+    return { level: 'WARN', by: ctxTokens >= ceilings.warn_tokens ? 'absolute' : 'percent', pct };
+  }
+  return { level: 'OK', by: null, pct };
+}
+
+function ceilingNumber(flags, name) {
+  const raw = flags[name];
+  if (raw === undefined || !/^\d+$/.test(String(raw)) || Number(raw) <= 0) throw fail('USAGE', 1, { message: 'gate ceiling requires --ctx-tokens N and --window W as positive integers' });
+  return Number(raw);
+}
+
+function handoffWritten(state) {
+  const h = state.handoff_state;
+  return !!(h && typeof h === 'object' && h.path && fs.existsSync(h.path));
+}
+
+// `next` refuses while the ceiling block stands; it clears only when the fresh
+// conductor calls `resume`. Nothing is written here.
+function ceilingBlock(_ctx, state) {
+  if (state.ceiling !== 'BLOCKED') return null;
+  return {
+    outcome: 'CEILING_BLOCKED',
+    exit: 3,
+    run_id: state.run_id,
+    action: 'NONE',
+    handoff_written: handoffWritten(state),
+    message: handoffWritten(state) ? 'handoff written; start a fresh conductor and call resume' : 'write a handoff (do-it handoff) before continuing',
+  };
+}
+
+function gateCeiling(ctx, args) {
+  const runId = selectRunId(ctx, args.flags);
+  const state = loadState(ctx, runId);
+  const ctxTokens = ceilingNumber(args.flags, 'ctx-tokens');
+  const windowTokens = ceilingNumber(args.flags, 'window');
+  const ceilings = loadSettings(ctx, args.sets).values.ceilings;
+  const r = ceilingLevel(ceilings, ctxTokens, windowTokens);
+  const pct = Math.round(r.pct * 10) / 10;
+  const keep = state.ceiling === 'BLOCKED' ? 'BLOCKED' : r.level;
+  if (state.ceiling !== keep) {
+    state.ceiling = keep;
+    writeState(ctx, state);
+    appendEvent(ctx, runId, { event: 'ceiling_' + r.level.toLowerCase(), stage: state.stage, host: state.host, verdict: r.level, detail: { ctx_tokens: ctxTokens, window: windowTokens, pct, by: r.by } });
+  }
+  const base = { run_id: runId, ctx_tokens: ctxTokens, window: windowTokens, pct, by: r.by, ceiling: state.ceiling };
+  if (r.level === 'BLOCKED') return { outcome: 'CEILING_BLOCKED', exit: 3, ...base, handoff_written: handoffWritten(state) };
+  return { outcome: r.level === 'WARN' ? 'CEILING_WARN' : 'CEILING_OK', exit: 0, ...base };
+}
 
 // ---- cli.mjs ----
 const BOOL_FLAGS = new Set(['json', 'migrate', 'install', 'secrets', 'append', 'force', 'finalize', 'help', 'version', 'verbose', 'dry-run']);
@@ -44,8 +101,9 @@ function notImplemented(epic, what) {
 
 function renderHuman(result) {
   const lines = ['OUTCOME: ' + result.outcome];
+  if (Array.isArray(result.say)) lines.push(...result.say);
   for (const key of Object.keys(result)) {
-    if (key === 'outcome') continue;
+    if (key === 'outcome' || key === 'say') continue;
     if (key === 'lines') { lines.push(...result[key]); continue; }
     const v = result[key];
     lines.push(key + ': ' + (typeof v === 'string' ? v : JSON.stringify(v)));
@@ -65,9 +123,9 @@ function dispatch(ctx, args) {
     case 'gate': return cmdGate(ctx, args);
     case 'next': return cmdNext(ctx, args);
     case 'answer': return notImplemented('S4', 'answer');
-    case 'handoff': return notImplemented('S5', 'handoff');
-    case 'resume': return notImplemented('S5', 'resume');
-    case 'park': return notImplemented('S5', 'park');
+    case 'handoff': return cmdHandoff(ctx, args);
+    case 'resume': return cmdResume(ctx, args);
+    case 'park': return cmdPark(ctx, args);
     default:
       throw fail('USAGE', 1, { message: 'unknown command', commands: COMMANDS });
   }
@@ -89,6 +147,7 @@ function cliMain(argv, opts) {
       result = { outcome: 'USAGE', exit: args.flags.help ? 0 : 1, commands: COMMANDS };
     } else {
       ctx = makeCtx({ cwd: opts && opts.cwd, env: opts && opts.env });
+      redactInit(ctx);
       result = dispatch(ctx, args);
     }
   } catch (e) {
@@ -104,7 +163,9 @@ function cliMain(argv, opts) {
     if (result.root === undefined) result.root = ctx.root;
     if (result.home === undefined) result.home = ctx.home;
   }
-  return { exit, stdout: json ? JSON.stringify(result) + '\n' : renderHuman(result) };
+  const stdout = redactText(json ? JSON.stringify(result) + '\n' : renderHuman(result));
+  if (ctx) redactFlushEvents(ctx, result);
+  return { exit, stdout };
 }
 
 function cmdStart(ctx, args) {
@@ -119,9 +180,17 @@ function cmdStart(ctx, args) {
     size,
     host: typeof f.host === 'string' ? f.host : settings.values.host.driver,
   });
+  const routed = state.preset ? null : route(f.request);
+  if (routed && routed.preset) {
+    state.preset = routed.preset;
+    if (state.size === null && routed.size !== null) state.size = routed.size;
+  }
   fs.mkdirSync(path.join(runDir(ctx, runId), 'results'), { recursive: true });
   writeState(ctx, state);
   appendEvent(ctx, runId, { event: 'run_started', stage: state.stage, host: state.host, verdict: null });
+  if (routed && routed.preset) {
+    appendEvent(ctx, runId, { event: 'route', stage: state.stage, host: state.host, verdict: routed.preset, detail: { rule: routed.rule, model_call: false } });
+  }
   return { outcome: 'STARTED', exit: 0, run_id: runId, status: state.status, preset: state.preset, root: ctx.root, home: ctx.home };
 }
 
@@ -143,6 +212,7 @@ function cmdStatus(ctx, args) {
     handoffs: state.handoffs,
     stop_refusals: state.stop_refusals,
     run_verdict: state.run_verdict === undefined ? null : state.run_verdict,
+    board: renderBoard(readFinishLine(ctx)),
     stale_tmp_removed: removed,
   };
 }
@@ -153,12 +223,12 @@ function cmdGate(ctx, args) {
     case 'verify': return gateVerify(ctx, args);
     case 'conclude': return gateConclude(ctx, args);
     case 'advance': return gateAdvance(ctx, args);
-    case 'build':
-    case 'stop':
-    case 'ceiling':
-      return notImplemented('S2/S5', 'gate ' + sub);
+    case 'build': return gateBuild(ctx, args);
+    case 'stop': return gateStop(ctx, args);
+    case 'route': return gateRoute(ctx, args);
+    case 'ceiling': return gateCeiling(ctx, args);
     default:
-      throw fail('USAGE', 1, { message: 'gate needs a subcommand', subcommands: ['verify', 'conclude', 'advance', 'build', 'stop', 'ceiling'] });
+      throw fail('USAGE', 1, { message: 'gate needs a subcommand', subcommands: ['verify', 'conclude', 'advance', 'build', 'stop', 'route', 'ceiling'] });
   }
 }
 
@@ -278,7 +348,7 @@ function cmdDoctor(ctx, args) {
   const f = args.flags;
   if (f.install) return typeof f.host === 'string' ? cmdInstallCompanions(ctx, args) : cmdInstall(ctx);
   if (f.migrate) return cmdMigrate(ctx);
-  if (f.secrets) return notImplemented('S5', 'doctor --secrets');
+  if (f.secrets) return doctorSecrets(ctx, args);
   const loaded = loadSettings(ctx, args.sets);
   const settings = {};
   for (const e of loaded.entries) settings[e.key] = { value: e.value, source: e.source };
@@ -390,7 +460,11 @@ function resolveEvidence(ctx, runId, evidence, artifacts) {
 }
 
 // ---- finish-line.mjs ----
-// Minimal finish-line access for S3; S2 owns the board renderer and stop-gate.
+// finish-line.json: the board of rows that must all become terminal (CONTRACT section 2).
+// States: OPEN, DONE (the closed state, needs evidence), PARKED (needs owner_question),
+// BLOCKED (needs reason).
+const BOARD_CAP = 1200;
+
 function finishLinePath(ctx) {
   return path.join(ctx.home, 'finish-line.json');
 }
@@ -402,6 +476,8 @@ function readFinishLine(ctx) {
 }
 
 function writeFinishLine(ctx, fl) {
+  const errors = validateSchema(loadSchemaFile('finish-line.schema.json'), fl);
+  if (errors.length) throw fail('FINISH_LINE_INVALID', 1, { errors });
   atomicWriteJson(finishLinePath(ctx), fl);
 }
 
@@ -415,6 +491,63 @@ function finishLineUpsert(fl, id, patch) {
   return row;
 }
 
+function nonEmpty(v) {
+  return typeof v === 'string' && v.trim() !== '';
+}
+
+// Terminal = closed with evidence, or PARKED with a question, or BLOCKED with a reason.
+function rowTerminal(row) {
+  if (row.state === 'DONE') return nonEmpty(row.evidence);
+  if (row.state === 'PARKED') return nonEmpty(row.owner_question);
+  if (row.state === 'BLOCKED') return nonEmpty(row.reason);
+  return false;
+}
+
+function rowClosed(row) {
+  return row.state === 'DONE' && nonEmpty(row.evidence);
+}
+
+function openRows(fl) {
+  return fl.rows.filter((r) => !rowTerminal(r));
+}
+
+// Signature of row states: any change in it is progress for the stop-gate.
+function rowsSignature(fl) {
+  return fl.rows.map((r) => r.id + '=' + r.state + (rowTerminal(r) ? '+' : '-')).join('|');
+}
+
+function clip(s, n) {
+  const t = String(s || '').replace(/\s+/g, ' ').trim();
+  return t.length > n ? t.slice(0, n - 1) + '~' : t;
+}
+
+// Roughly 300 tokens, never more than BOARD_CAP characters, deterministic.
+function renderBoard(fl) {
+  const rows = fl.rows;
+  const closed = rows.filter(rowClosed);
+  const parked = rows.filter((r) => r.state === 'PARKED');
+  const blocked = rows.filter((r) => r.state === 'BLOCKED');
+  const open = rows.filter((r) => !rowClosed(r) && r.state !== 'PARKED' && r.state !== 'BLOCKED');
+  const build = (detail) => {
+    const lines = ['FINISH LINE: ' + closed.length + ' of ' + rows.length + ' closed'];
+    if (open.length) lines.push('OPEN (' + open.length + '): ' + open.map((r) => r.id).join(' '));
+    if (parked.length) lines.push('PARKED (' + parked.length + '): ' + parked.map((r) => r.id + (detail ? ' [' + clip(r.owner_question, detail) + ']' : '')).join('; '));
+    if (blocked.length) lines.push('BLOCKED (' + blocked.length + '): ' + blocked.map((r) => r.id + (detail ? ' [' + clip(r.reason, detail) + ']' : '')).join('; '));
+    return lines.join('\n');
+  };
+  for (const detail of [40, 16, 0]) {
+    const text = build(detail);
+    if (text.length <= BOARD_CAP) return text;
+  }
+  // very large boards: keep the counts and as many ids as fit
+  let text = build(0);
+  while (text.length > BOARD_CAP - 24) {
+    const cut = text.lastIndexOf(' ', BOARD_CAP - 30);
+    text = text.slice(0, cut > 0 ? cut : BOARD_CAP - 30);
+  }
+  return text + ' ... (truncated)';
+}
+
 // ---- fs-atomic.mjs ----
 const TMP_PATTERN = /\.tmp-\d+-[0-9a-f]{8}$/;
 
@@ -426,7 +559,7 @@ function atomicWrite(file, data, opts) {
   const tmp = path.join(dir, '.' + path.basename(file) + '.tmp-' + process.pid + '-' + crypto.randomBytes(4).toString('hex'));
   const fd = fs.openSync(tmp, 'w');
   try {
-    fs.writeSync(fd, data);
+    fs.writeSync(fd, typeof data === 'string' ? redactText(data) : data);
     fs.fsyncSync(fd);
   } finally {
     fs.closeSync(fd);
@@ -447,7 +580,7 @@ function atomicWriteJson(file, value, opts) {
 
 function appendLine(file, line) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.appendFileSync(file, line + '\n');
+  fs.appendFileSync(file, redactText(line) + '\n');
 }
 
 function readJsonIfExists(file) {
@@ -471,6 +604,131 @@ function cleanStaleTmp(dir) {
     }
   }
   return removed;
+}
+
+// ---- handoff.mjs ----
+const HANDOFF_MAX_CHARS = 32000;
+const HANDOFF_EVENTS = 5;
+const HANDOFF_EVENT_CLIP = 700;
+
+function handoffPath(ctx, runId) {
+  return path.join(runDir(ctx, runId), 'handoff.md');
+}
+
+// Files a fresh process needs: the run's own files plus whatever the last result
+// listed in resume.state_files. Declared files that are gone are returned as missing.
+function collectStateFiles(ctx, runId, state) {
+  const dir = runDir(ctx, runId);
+  const found = [];
+  const missing = [];
+  const add = (abs, required) => {
+    if (fs.existsSync(abs)) { if (!found.includes(abs)) found.push(abs); } else if (required) missing.push(abs);
+  };
+  for (const n of ['state.json', 'events.jsonl', 'ledger.json', 'owner-pack.json']) add(path.join(dir, n), n === 'state.json');
+  add(path.join(ctx.home, 'finish-line.json'), false);
+  add(path.join(ctx.home, 'plan', 'READINESS.json'), false);
+  const declared = state.handoff_state && Array.isArray(state.handoff_state.state_files) ? state.handoff_state.state_files : [];
+  for (const rel of declared) add(path.resolve(ctx.repo, rel), true);
+  return { files: found, missing };
+}
+
+function nextActionOf(state) {
+  const h = state.handoff_state;
+  if (h && typeof h.next_action === 'string' && h.next_action.trim()) return h.next_action.trim();
+  return 'run `do-it next --run ' + state.run_id + '` and follow its action';
+}
+
+function resumeCommand(runId) {
+  return 'do-it resume --run ' + runId;
+}
+
+function lastEvents(ctx, runId, n) {
+  let lines = [];
+  try { lines = fs.readFileSync(eventsPath(ctx, runId), 'utf8').split('\n').filter(Boolean); } catch { /* none yet */ }
+  return lines.slice(-n).map((l) => (l.length > HANDOFF_EVENT_CLIP ? l.slice(0, HANDOFF_EVENT_CLIP) : l));
+}
+
+function renderHandoff(ctx, state, files, board, events) {
+  const lines = [
+    '# do-it handoff ' + state.run_id,
+    '',
+    'resume_prompt: You are the fresh conductor for run ' + state.run_id + '. Read this file, call `' + resumeCommand(state.run_id) + '`, then `do-it next` and follow it.',
+    'run_status: ' + state.status,
+    'next_action: ' + nextActionOf(state),
+    '',
+    'state_files:',
+    ...files.map((f) => '- ' + f),
+    '',
+    'board:',
+    board,
+    '',
+    'events (last ' + HANDOFF_EVENTS + '):',
+    ...events.map((e) => '- ' + e),
+    '',
+  ];
+  return lines.join('\n');
+}
+
+function runContinueHook(ctx, hook, file) {
+  const r = cp.spawnSync(hook, [file], { env: ctx.env, cwd: ctx.cwd, stdio: 'ignore', timeout: 120000 });
+  return { ok: !r.error && r.status === 0, status: r.error ? null : r.status, error: r.error ? r.error.code || 'spawn_error' : null };
+}
+
+function escalateHandoffCap(ctx, runId, state, cap) {
+  packAppend(ctx, runId, [{
+    kind: 'owner-gate',
+    text: 'The handoff cap of ' + cap + ' was reached without a fresh conductor starting. Start one by hand (' + resumeCommand(runId) + ') or stop the run?',
+    options: ['start by hand', 'stop run'],
+    recommendation: 'start by hand',
+    default: 'start by hand',
+    reversible: true,
+  }]);
+  if (state.status !== 'ESCALATED') {
+    const from = state.status;
+    state.status = 'ESCALATED';
+    writeState(ctx, state);
+    appendEvent(ctx, runId, { event: 'handoff_escalated', stage: state.stage, host: state.host, verdict: 'ESCALATED', detail: { from, handoffs: state.handoffs, cap } });
+  }
+  return { outcome: 'ESCALATED', exit: 2, run_id: runId, status: 'ESCALATED', handoffs: state.handoffs, cap, message: 'handoff cap of ' + cap + ' reached; owner pack asks' };
+}
+
+// M3: write handoff.md, count the attempt, then start a fresh conductor through the
+// host's continue hook (env DO_IT_HOST_CONTINUE, the handoff path as its only argument).
+function cmdHandoff(ctx, args) {
+  const runId = selectRunId(ctx, args.flags);
+  const state = loadState(ctx, runId);
+  const settings = loadSettings(ctx, args.sets).values.handoff;
+  const cap = settings.max_per_run;
+  if (state.handoffs >= cap) return escalateHandoffCap(ctx, runId, state, cap);
+
+  const { files, missing } = collectStateFiles(ctx, runId, state);
+  if (missing.length) throw fail('HANDOFF_PATH_INVALID', 1, { run_id: runId, missing });
+  const board = renderBoard(readFinishLine(ctx));
+  const events = lastEvents(ctx, runId, HANDOFF_EVENTS);
+  let text = renderHandoff(ctx, state, files, board, events);
+  if (text.length > HANDOFF_MAX_CHARS) text = renderHandoff(ctx, state, files, board.slice(0, 1200), events.map((e) => e.slice(0, 200))).slice(0, HANDOFF_MAX_CHARS);
+  const file = handoffPath(ctx, runId);
+  atomicWrite(file, text);
+
+  state.handoffs += 1;
+  state.handoff_state = { ...(typeof state.handoff_state === 'object' && state.handoff_state ? state.handoff_state : {}), path: file, written_at: ctx.now(), state_files: (state.handoff_state && state.handoff_state.state_files) || [] };
+  const hook = ctx.env.DO_IT_HOST_CONTINUE;
+  const mode = settings.mode === 'ask' || !hook ? 'ask' : 'auto';
+  writeState(ctx, state);
+  appendEvent(ctx, runId, { event: 'handoff_written', stage: state.stage, host: state.host, verdict: mode, detail: { path: file, attempt: state.handoffs } });
+
+  if (mode === 'ask') {
+    const line = 'Run: ' + resumeCommand(runId) + '   (handoff: ' + file + ')';
+    return { outcome: 'HANDOFF_ASK', exit: 2, run_id: runId, mode, handoffs: state.handoffs, handoff: file, command: line, say: [line] };
+  }
+  const hr = runContinueHook(ctx, hook, file);
+  if (hr.ok) {
+    appendEvent(ctx, runId, { event: 'handoff_started', stage: state.stage, host: state.host, verdict: 'HANDOFF_STARTED', detail: { attempt: state.handoffs } });
+    return { outcome: 'HANDOFF_STARTED', exit: 0, run_id: runId, mode, handoffs: state.handoffs, handoff: file };
+  }
+  appendEvent(ctx, runId, { event: 'handoff_failed', stage: state.stage, host: state.host, verdict: 'HANDOFF_FAILED', detail: { attempt: state.handoffs, exit: hr.status, error: hr.error } });
+  if (state.handoffs >= cap) return escalateHandoffCap(ctx, runId, state, cap);
+  throw fail('HANDOFF_FAILED', 1, { run_id: runId, mode, handoffs: state.handoffs, handoff: file, hook_exit: hr.status, retry_allowed: true });
 }
 
 // ---- hash.mjs ----
@@ -631,6 +889,43 @@ function cmdInstallCompanions(ctx, args) {
     atomicWriteJson(stateFile, done);
   }
   return { outcome: 'INSTALLED_COMPANIONS', exit: 0, host, finished, missing: [] };
+}
+
+// ---- ladder.mjs ----
+// Failure ladder (D14, CONTRACT M1): FAILED, retry one tier up once with a
+// written reason, second failure ESCALATED.
+const TIER_UP = { T3: 'T2', T2: 'T1', T1: 'T1' };
+const RETRY_REASON = 'retry after FAILED';
+const LADDER_MAX_ATTEMPTS = 2;
+
+function ladderEscalated(slice) {
+  return (slice.attempts || 0) >= LADDER_MAX_ATTEMPTS;
+}
+
+// Called by `next`: every FAILED slice with one attempt is requeued one tier up.
+// Returns the changes so the caller can log them.
+function ladderRetry(state) {
+  const changes = [];
+  for (const s of state.slices) {
+    if (s.status !== 'FAILED' || ladderEscalated(s)) continue;
+    const from = s.tier || 'T2';
+    s.tier = TIER_UP[from] || 'T1';
+    s.escalations = (s.escalations || 0) + 1;
+    s.status = 'READY';
+    changes.push({ slice_id: s.id, from, to: s.tier, reason: RETRY_REASON });
+  }
+  return changes;
+}
+
+function escalationQuestion(slice) {
+  return {
+    kind: 'owner-gate',
+    text: 'Slice ' + slice.id + ' failed twice (attempts ' + slice.attempts + ', last tier ' + (slice.tier || 'unknown') + ') and was escalated. How should it proceed?',
+    options: ['re-plan slice', 'take over manually', 'drop slice'],
+    recommendation: 're-plan slice',
+    default: 're-plan slice',
+    reversible: true,
+  };
 }
 
 // ---- ledger.mjs ----
@@ -896,14 +1191,78 @@ function cmdMigrate(ctx) {
 }
 
 // ---- next.mjs ----
-// Minimal `next` for S3: the deploy cascade actions and the terminal answers.
-// S2 owns routing, waves and tiers and extends this function.
+const SLICE_TERMINAL = ['DONE', 'BLOCKED', 'ESCALATED'];
+const STEP_CLASS = { code: 'deterministic', checkpoint: 'gather', decision: 'gather', persona: 'implementation' };
+const STEP_ACTION = { code: 'RUN_CODE', checkpoint: 'CHECKPOINT', decision: 'CHECKPOINT', persona: 'SPAWN' };
+
+function none(runId, reason, extra) {
+  return { outcome: 'NEXT', exit: 0, run_id: runId, action: 'NONE', reason, ...(extra || {}) };
+}
+
+function sliceRunnable(state, s) {
+  if (s.status !== 'READY' && s.status !== 'PENDING' && s.status !== undefined) return false;
+  const deps = Array.isArray(s.depends_on) ? s.depends_on : [];
+  return deps.every((d) => {
+    const dep = state.slices.find((x) => x.id === d);
+    return dep && dep.status === 'DONE';
+  });
+}
+
+function nextSlice(ctx, state, runId) {
+  const retried = ladderRetry(state);
+  if (retried.length) {
+    writeState(ctx, state);
+    for (const c of retried) {
+      appendEvent(ctx, runId, { event: 'tier_escalated', slice_id: c.slice_id, stage: state.stage, host: state.host, tier: c.to, verdict: 'RETRY', detail: { from: c.from, to: c.to, reason: c.reason } });
+    }
+  }
+  const s = state.slices.find((x) => sliceRunnable(state, x));
+  if (!s) return null;
+  const klass = s.class || 'implementation';
+  const out = {
+    outcome: 'NEXT', exit: 0, run_id: runId, action: 'SPAWN', slice_id: s.id, lane: s.lane === undefined ? null : s.lane,
+    tier: s.tier || CLASS_TIER[klass] || 'T2', class: klass, attempts: s.attempts || 0, escalations: s.escalations || 0,
+  };
+  if (out.escalations > 0) out.reason = RETRY_REASON;
+  return out;
+}
+
+function nextWave(ctx, state, runId, fl) {
+  const pipe = loadPipeline(ctx, state.preset);
+  if (!pipe || !pipe.steps.length) return { pipe: null };
+  let seeded = false;
+  for (const st of pipe.steps) {
+    if (!fl.rows.some((r) => r.id === st.id)) { finishLineUpsert(fl, st.id, { kind: 'wave' }); seeded = true; }
+  }
+  if (seeded) writeFinishLine(ctx, fl);
+  const rowOf = (id) => fl.rows.find((r) => r.id === id);
+  for (const st of pipe.steps) {
+    const row = rowOf(st.id);
+    if (row.state !== 'OPEN') continue;
+    if (!st.needs.every((n) => rowClosed(rowOf(n)))) continue;
+    const type = st.type || 'persona';
+    const klass = st.class || STEP_CLASS[type] || 'implementation';
+    return {
+      pipe,
+      out: {
+        outcome: 'NEXT', exit: 0, run_id: runId, action: STEP_ACTION[type] || 'SPAWN', wave: st.id, step: st,
+        tier: st.tier || CLASS_TIER[klass] || 'T2', class: klass,
+      },
+    };
+  }
+  return { pipe, out: null };
+}
+
+// `next` is a function of what is on disk. It advances only the deterministic
+// bookkeeping the disk already implies: a FAILED slice is requeued one tier up.
 function cmdNext(ctx, args) {
   const runId = selectRunId(ctx, args.flags);
   const state = loadState(ctx, runId);
-  if (state.status === 'ESCALATED') {
-    return { outcome: 'NEXT', exit: 2, run_id: runId, action: 'NONE', reason: 'escalated' };
-  }
+
+  const blocked = ceilingBlock(ctx, state);
+  if (blocked) return blocked;
+
+  if (state.status === 'ESCALATED') return { outcome: 'NEXT', exit: 2, run_id: runId, action: 'NONE', reason: 'escalated' };
   if (state.status === 'PARTIAL_FAILURE') {
     const deploy = state.deploy || { legs: [], rollback_plan: [] };
     const actions = (deploy.rollback_plan || []).map((name) => {
@@ -912,8 +1271,57 @@ function cmdNext(ctx, args) {
     });
     return { outcome: 'NEXT', exit: 0, run_id: runId, action: 'ROLLBACK', legs: actions.map((a) => a.leg), actions };
   }
-  if (state.status === 'DONE') return { outcome: 'NEXT', exit: 0, run_id: runId, action: 'NONE', reason: 'done' };
-  return { outcome: 'NEXT', exit: 0, run_id: runId, action: 'NONE', reason: 'scheduler_not_installed' };
+  if (state.status === 'DONE') return none(runId, 'done');
+  if (state.status === 'PARKED') return { outcome: 'NEXT', exit: 3, run_id: runId, action: 'NONE', reason: 'parked' };
+  if (state.status === 'NEEDS_HUMAN') return { outcome: 'NEXT', exit: 2, run_id: runId, action: 'NONE', reason: 'needs_human' };
+  if (state.status === 'BLOCKED') {
+    const fl = readFinishLine(ctx);
+    return { outcome: 'BLOCKED', exit: 3, run_id: runId, action: 'NONE', reason: 'blocked', board: renderBoard(fl) };
+  }
+
+  const revoked = rereadReadiness(ctx, state);
+  if (revoked) throw revoked;
+
+  if (!state.preset) {
+    return {
+      outcome: 'NEXT', exit: 0, run_id: runId, action: 'ROUTE_MODEL', class: 'gather', tier: 'T3',
+      request: state.request, presets: PRESET_NAMES,
+      instruction: 'Pick exactly one preset for the request, then run: do-it gate route --preset <name> --reason "<why>"',
+    };
+  }
+
+  const fl = readFinishLine(ctx);
+  if (state.slices.length) {
+    const out = nextSlice(ctx, state, runId);
+    if (out) return out;
+    if (state.slices.some((s) => s.status === 'READY' || s.status === 'RUNNING' || s.status === 'NEEDS_HUMAN')) {
+      return none(runId, 'waiting', { slices: state.slices.filter((s) => !SLICE_TERMINAL.includes(s.status)).map((s) => s.id) });
+    }
+    if (fl.rows.length && !openRows(fl).length) return { outcome: 'FINISH_LINE_REACHED', exit: 0, run_id: runId, action: 'NONE', board: renderBoard(fl) };
+    return none(runId, 'awaiting_verification', { board: renderBoard(fl) });
+  }
+
+  const wave = nextWave(ctx, state, runId, fl);
+  if (wave.out) return wave.out;
+  if (wave.pipe) {
+    if (!openRows(fl).length) return { outcome: 'FINISH_LINE_REACHED', exit: 0, run_id: runId, action: 'NONE', board: renderBoard(fl) };
+    return none(runId, 'waiting', { board: renderBoard(fl) });
+  }
+  if (fl.rows.length && !openRows(fl).length) return { outcome: 'FINISH_LINE_REACHED', exit: 0, run_id: runId, action: 'NONE', board: renderBoard(fl) };
+  return none(runId, 'no_runnable_work');
+}
+
+function gateRoute(ctx, args) {
+  const f = args.flags;
+  const runId = selectRunId(ctx, f);
+  const state = loadState(ctx, runId);
+  if (typeof f.preset !== 'string' || !PRESET_NAMES.includes(f.preset)) throw fail('USAGE', 1, { message: 'gate route requires --preset <name>', presets: PRESET_NAMES });
+  if (typeof f.reason !== 'string' || !f.reason.trim()) throw fail('ROUTE_REASON_REQUIRED', 1, { message: 'a model route answer needs --reason' });
+  if (state.preset) throw fail('ROUTE_ALREADY_SET', 1, { run_id: runId, preset: state.preset });
+  state.preset = f.preset;
+  writeState(ctx, state);
+  appendEvent(ctx, runId, { event: 'route_model', stage: state.stage, host: state.host, tier: 'T3', verdict: f.preset, detail: { preset: f.preset, reason: f.reason.trim(), model_call: true } });
+  return { outcome: 'ROUTED', exit: 0, run_id: runId, preset: f.preset };
 }
 
 // ---- pack.mjs ----
@@ -947,6 +1355,205 @@ function packAppend(ctx, runId, questions) {
     atomicWriteJson(file, pack);
   }
   return added;
+}
+
+// ---- park.mjs ----
+const PARK_NO_FROM = ['DONE', 'ESCALATED'];
+
+function parkPath(ctx, runId) {
+  return path.join(runDir(ctx, runId), 'park.json');
+}
+
+// park --reason usage_limit --reset-at ISO: PARKED, park.json, then the wake hook.
+function cmdPark(ctx, args) {
+  const f = args.flags;
+  const runId = selectRunId(ctx, f);
+  const state = loadState(ctx, runId);
+  if (PARK_NO_FROM.includes(state.status)) throw fail('TRANSITION_REFUSED', 1, { from: state.status, to: 'PARKED' });
+  const reason = typeof f.reason === 'string' && f.reason ? f.reason : 'usage_limit';
+  let resetAt = null;
+  if (f['reset-at'] !== undefined) {
+    if (typeof f['reset-at'] !== 'string' || Number.isNaN(Date.parse(f['reset-at']))) throw fail('USAGE', 1, { message: '--reset-at must be an ISO timestamp' });
+    resetAt = f['reset-at'];
+  }
+  const { files } = collectStateFiles(ctx, runId, state);
+  const from = state.status;
+  const park = {
+    run_id: runId,
+    reason,
+    reset_at: resetAt,
+    parked_at: ctx.now(),
+    from_status: from,
+    resume: { state_files: files, next_action: nextActionOf(state) },
+  };
+  atomicWriteJson(parkPath(ctx, runId), park);
+  state.status = 'PARKED';
+  state.park = { reason, reset_at: resetAt };
+  writeState(ctx, state);
+  appendEvent(ctx, runId, { event: 'run_parked', stage: state.stage, host: state.host, verdict: 'PARKED', detail: { from, reason, reset_at: resetAt } });
+  const wake = scheduleWake(ctx, runId, resetAt, resumeCommand(runId));
+  appendEvent(ctx, runId, { event: 'wake_' + wake.status, stage: state.stage, host: state.host, verdict: wake.status, detail: { id: wake.id, at: resetAt } });
+  const out = { outcome: 'PARKED', exit: 3, run_id: runId, status: 'PARKED', reason, reset_at: resetAt, wake: wake.status, wake_id: wake.id };
+  if (wake.status !== 'scheduled') out.say = [NO_WAKE_TEXT];
+  return out;
+}
+
+// ---- pipeline.mjs ----
+function pipelineDirs(ctx) {
+  const dirs = [];
+  if (ctx.env.DO_IT_PIPELINES) dirs.push(path.resolve(ctx.cwd, ctx.env.DO_IT_PIPELINES));
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  dirs.push(path.join(here, '..', 'pipelines'), path.join(here, '..', '..', 'pipelines'));
+  return dirs;
+}
+
+function pipelineFile(ctx, preset) {
+  for (const dir of pipelineDirs(ctx)) {
+    for (const ext of ['.yaml', '.yml']) {
+      const file = path.join(dir, preset + ext);
+      if (fs.existsSync(file)) return file;
+    }
+  }
+  return null;
+}
+
+// Preset steps in declaration order: { id, type, persona, tier, class, needs, ... }.
+// Returns null when no preset file exists (the host may not ship pipelines).
+function loadPipeline(ctx, preset) {
+  if (!preset) return null;
+  const file = pipelineFile(ctx, preset);
+  if (!file) return null;
+  const doc = parseYamlLite(fs.readFileSync(file, 'utf8'));
+  const raw = doc && Array.isArray(doc.steps) ? doc.steps : null;
+  if (!raw) throw fail('PIPELINE_INVALID', 1, { file, message: 'a preset needs a steps list' });
+  const ids = new Set();
+  const steps = raw.map((s, i) => {
+    if (!s || typeof s !== 'object' || typeof s.id !== 'string' || !s.id) throw fail('PIPELINE_INVALID', 1, { file, message: 'step ' + i + ' has no id' });
+    if (ids.has(s.id)) throw fail('PIPELINE_INVALID', 1, { file, message: 'duplicate step id ' + s.id });
+    ids.add(s.id);
+    const needs = s.needs === undefined || s.needs === null ? [] : (Array.isArray(s.needs) ? s.needs.map(String) : [String(s.needs)]);
+    return { ...s, needs };
+  });
+  for (const s of steps) {
+    for (const n of s.needs) if (!ids.has(n)) throw fail('PIPELINE_INVALID', 1, { file, message: 'step ' + s.id + ' needs unknown step ' + n });
+  }
+  return { file, name: doc.name || preset, steps };
+}
+
+// ---- readiness.mjs ----
+const CLASS_TIER = { deterministic: 'T3', gather: 'T3', implementation: 'T2', hard: 'T1' };
+const GATE_BUILD_FROM = ['INTAKE', 'PLANNING', 'AWAIT_RATIFY', 'BLOCKED', 'NEEDS_HUMAN'];
+const CRED_ROW_ID = 'readiness:credentials';
+
+function readinessPath(ctx) {
+  return path.join(ctx.home, 'plan', 'READINESS.json');
+}
+
+function decisionList(decisions) {
+  if (Array.isArray(decisions)) {
+    return decisions.map((d) => ({ id: d && d.id !== undefined ? String(d.id) : '?', state: d ? (d.state !== undefined ? d.state : d.status) : undefined }));
+  }
+  return Object.keys(decisions || {}).map((id) => {
+    const v = decisions[id];
+    return { id, state: v && typeof v === 'object' ? (v.state !== undefined ? v.state : v.status) : v };
+  });
+}
+
+// G-8: the verdict is judged from disk each time it is asked. Returns
+// { ok, outcome, extra, data, sha256 }; never throws for a bad verdict.
+function checkReadiness(ctx) {
+  const file = readinessPath(ctx);
+  let bytes;
+  try { bytes = fs.readFileSync(file); } catch (e) {
+    if (e.code === 'ENOENT') return { ok: false, outcome: 'READINESS_MISSING', extra: { file } };
+    throw e;
+  }
+  let data;
+  try { data = JSON.parse(bytes.toString('utf8')); } catch (e) {
+    return { ok: false, outcome: 'READINESS_INVALID', extra: { file, errors: [{ pointer: '', message: 'not JSON: ' + e.message }] } };
+  }
+  const errors = validateSchema(loadSchemaFile('readiness.schema.json'), data);
+  if (errors.length) return { ok: false, outcome: 'READINESS_INVALID', extra: { file, errors } };
+  const unresolved = decisionList(data.decisions).filter((d) => d.state !== 'RESOLVED' && d.state !== 'DEFAULTED').map((d) => d.id);
+  if (unresolved.length) return { ok: false, outcome: 'READINESS_UNRESOLVED', extra: { decisions: unresolved } };
+  if (data.preflight.passed !== true) return { ok: false, outcome: 'READINESS_PREFLIGHT_FAILED', extra: {} };
+  const dependent = (data.slices || []).filter((s) => s.depends_on_owner_answer === true).map((s) => s.id);
+  if (dependent.length || (data.owner_dependent_slices || 0) > 0) {
+    return { ok: false, outcome: 'READINESS_OWNER_DEPENDENT', extra: { slices: dependent, owner_dependent_slices: data.owner_dependent_slices || dependent.length } };
+  }
+  return { ok: true, outcome: 'READINESS_OK', extra: {}, data, sha256: sha256Bytes(bytes) };
+}
+
+// `next` calls this for a run whose build gate was approved: an edit after the
+// gate cannot slip through. The run status is never advanced here.
+function rereadReadiness(ctx, state) {
+  const gate = state.gates && state.gates.build;
+  if (!gate || gate.approved !== true) return null;
+  const v = checkReadiness(ctx);
+  if (v.ok) return null;
+  appendEvent(ctx, state.run_id, { event: 'readiness_revoked', stage: state.stage, host: state.host, verdict: v.outcome, detail: { outcome: v.outcome, ...v.extra } });
+  return fail(v.outcome, 1, { run_id: state.run_id, revoked: true, ...v.extra });
+}
+
+function seedSlices(state, data) {
+  if (state.slices.length || !Array.isArray(data.slices)) return;
+  for (const s of data.slices) {
+    const klass = s.class || 'implementation';
+    state.slices.push({
+      id: s.id,
+      lane: s.lane === undefined ? null : s.lane,
+      tier: s.tier || CLASS_TIER[klass] || 'T2',
+      class: klass,
+      depends_on: Array.isArray(s.depends_on) ? s.depends_on : [],
+      status: 'READY',
+      attempts: 0,
+      escalations: 0,
+    });
+  }
+}
+
+function gateBuild(ctx, args) {
+  const runId = selectRunId(ctx, args.flags);
+  const state = loadState(ctx, runId);
+  const v = checkReadiness(ctx);
+  if (!v.ok) {
+    appendEvent(ctx, runId, { event: 'build_refused', stage: state.stage, host: state.host, verdict: v.outcome, detail: v.extra });
+    throw fail(v.outcome, 1, { run_id: runId, status: state.status, ...v.extra });
+  }
+  if (state.status !== 'BUILDING' && !GATE_BUILD_FROM.includes(state.status)) {
+    throw fail('TRANSITION_REFUSED', 1, { from: state.status, to: 'BUILDING', allowed: GATE_BUILD_FROM });
+  }
+  const names = v.data.credentials || [];
+  const settings = loadSettings(ctx, []);
+  const missing = names.length ? resolveCredentials(ctx, runId, names, settings.values.secrets).filter((r) => !r.ok) : [];
+  const fl = readFinishLine(ctx);
+  const now = ctx.now();
+  if (missing.length) {
+    const provider = settings.values.secrets.provider;
+    const reason = 'missing credential ' + missing.map((m) => m.name).join(', ') + ' via provider ' + provider;
+    const from = state.status;
+    state.status = 'BLOCKED';
+    writeState(ctx, state);
+    finishLineUpsert(fl, CRED_ROW_ID, { kind: 'package', state: 'BLOCKED', reason, evidence: null });
+    writeFinishLine(ctx, fl);
+    appendEvent(ctx, runId, { event: 'build_blocked', stage: state.stage, host: state.host, verdict: 'CREDENTIAL_MISSING', detail: { from, credentials: missing.map((m) => m.name), provider } });
+    return { outcome: 'BLOCKED', exit: 3, run_id: runId, status: 'BLOCKED', reason, missing: missing.map((m) => m.name), provider };
+  }
+  const from = state.status;
+  seedSlices(state, v.data);
+  state.gates.build = { approved: true, owner: 'readiness', date: now, readiness_sha256: v.sha256 };
+  state.status = 'BUILDING';
+  writeState(ctx, state);
+  for (const s of state.slices) {
+    if (!fl.rows.some((r) => r.id === s.id)) finishLineUpsert(fl, s.id, { kind: 'package' });
+  }
+  const credRow = fl.rows.find((r) => r.id === CRED_ROW_ID);
+  if (credRow && credRow.state === 'BLOCKED') {
+    finishLineUpsert(fl, CRED_ROW_ID, { state: 'DONE', reason: null, evidence: path.relative(ctx.repo, readinessPath(ctx)) });
+  }
+  writeFinishLine(ctx, fl);
+  appendEvent(ctx, runId, { event: 'build_approved', stage: state.stage, host: state.host, verdict: 'READINESS_OK', detail: { from, readiness_sha256: v.sha256, slices: state.slices.length } });
+  return { outcome: 'READINESS_OK', exit: 0, run_id: runId, status: 'BUILDING', slices: state.slices.map((s) => s.id) };
 }
 
 // ---- record.mjs ----
@@ -1126,7 +1733,18 @@ function planRecord(ctx, runId, state, result) {
     plan.extra.rows = mockRows;
   }
 
-  plan.events.push({ event: 'result_recorded', slice_id: result.slice_id || null, stage: result.stage, verdict: result.status });
+  const recordedEvent = { event: 'result_recorded', slice_id: result.slice_id || null, stage: result.stage, verdict: result.status };
+  if (result.next && typeof result.next.launch_prompt === 'string' && result.next.launch_prompt) {
+    recordedEvent.detail = { next_stage: result.next.stage || null, launch_prompt: result.next.launch_prompt.slice(0, 300) };
+  }
+  plan.events.push(recordedEvent);
+  if (result.resume && ((Array.isArray(result.resume.state_files) && result.resume.state_files.length) || result.resume.next_action)) {
+    next.handoff_state = {
+      ...(typeof state.handoff_state === 'object' && state.handoff_state ? state.handoff_state : {}),
+      state_files: Array.isArray(result.resume.state_files) ? result.resume.state_files : [],
+      next_action: result.resume.next_action || '',
+    };
+  }
 
   if (isDeploy) {
     const resolveLeg = (leg) => legResolved.get(leg.leg) || null;
@@ -1144,19 +1762,79 @@ function planRecord(ctx, runId, state, result) {
     if (d.outcome !== 'RECORDED' || outcome === 'RECORDED') { outcome = d.outcome; exit = d.exit; }
     if (d.questions.length) plan.extra.question = d.questions[0].text;
   } else {
+    const slice = result.slice_id ? next.slices.find((x) => x.id === result.slice_id) : null;
+    let reason = null;
+    if (slice && result.status === 'blocked') {
+      reason = blockReason(result);
+      if (!reason) throw fail('BLOCK_REASON_REQUIRED', 1, { slice_id: slice.id, message: 'a BLOCKED slice needs a reason' });
+    }
     applyStatusToState(next, result);
     next.stage = result.stage;
+    if (slice && outcome === 'RECORDED') {
+      const sl = planSliceOutcome(plan, next, result, slice, reason);
+      if (sl) { outcome = sl.outcome; exit = sl.exit; }
+    }
   }
 
   if (result.status === 'needs_human' && result.pending_human && result.pending_human.questions_path) {
     const qs = readQuestionsFile(ctx, result.pending_human.questions_path);
-    plan.questions.push(...qs);
+    const midrun = !isDeploy && state.status === 'BUILDING' ? qs.filter((q) => q && q.kind !== 'owner-gate') : [];
+    if (midrun.length) {
+      // G-8: no question to the owner mid-run; the recommendation decides and the end report shows it.
+      for (const q of midrun) {
+        const answer = q.recommendation !== undefined && q.recommendation !== null ? q.recommendation : (q.default === undefined ? null : q.default);
+        plan.events.push({ event: 'default_applied', slice_id: result.slice_id || null, stage: result.stage, verdict: 'MIDRUN_QUESTION_REFUSED', detail: { answer, text: q.text, kind: q.kind || null } });
+        plan.questions.push({ ...q, kind: 'default', recommendation: answer, default: answer });
+      }
+      plan.questions.push(...qs.filter((q) => !midrun.includes(q)));
+      next.status = state.status;
+      next.slices = JSON.parse(JSON.stringify(state.slices));
+      outcome = 'MIDRUN_QUESTION_REFUSED';
+      exit = 1;
+    } else {
+      plan.questions.push(...qs);
+    }
   }
   if (result.run_verdict !== undefined && result.run_verdict !== null) plan.extra.reported_run_verdict = result.run_verdict;
   plan.outcome = outcome;
   plan.exit = exit;
   plan.nextState = next;
   return plan;
+}
+
+function blockReason(result) {
+  if (typeof result.reason === 'string' && result.reason.trim()) return result.reason.trim();
+  const v = (result.verdicts || []).find((x) => x.verdict === 'BLOCKED' && typeof x.evidence === 'string' && x.evidence.trim());
+  return v ? v.evidence.trim() : null;
+}
+
+// Slice-attached results (D14, CONTRACT M1): FAILED, ESCALATED, BLOCKED and the
+// run settling to BLOCKED once only blocked slices are left.
+function planSliceOutcome(plan, next, result, slice, reason) {
+  let out = null;
+  if (result.status === 'failed') {
+    if (ladderEscalated(slice)) {
+      slice.status = 'ESCALATED';
+      next.status = 'ESCALATED';
+      plan.questions.push(escalationQuestion(slice));
+      plan.events.push({ event: 'escalated', slice_id: slice.id, stage: result.stage, tier: slice.tier || null, verdict: 'ESCALATED', detail: { attempts: slice.attempts } });
+      out = { outcome: 'ESCALATED', exit: 2 };
+    } else {
+      plan.events.push({ event: 'slice_failed', slice_id: slice.id, stage: result.stage, tier: slice.tier || null, verdict: 'FAILED', detail: { attempts: slice.attempts } });
+      out = { outcome: 'FAILED', exit: 1 };
+    }
+  } else if (result.status === 'blocked') {
+    plan.flOps.push({ id: slice.id, patch: { state: 'BLOCKED', reason } });
+    plan.events.push({ event: 'slice_blocked', slice_id: slice.id, stage: result.stage, verdict: 'BLOCKED', detail: { reason } });
+    out = { outcome: 'BLOCKED', exit: 3 };
+  }
+  const terminal = ['DONE', 'BLOCKED', 'ESCALATED'];
+  if (next.status === 'BUILDING' && next.slices.length && next.slices.every((x) => terminal.includes(x.status)) && next.slices.some((x) => x.status === 'BLOCKED')) {
+    next.status = 'BLOCKED';
+    plan.events.push({ event: 'run_blocked', stage: result.stage, verdict: 'BLOCKED', detail: { slices: next.slices.filter((x) => x.status === 'BLOCKED').map((x) => x.id) } });
+    out = { outcome: 'BLOCKED', exit: 3 };
+  }
+  return out;
 }
 
 function readQuestionsFile(ctx, file) {
@@ -1192,6 +1870,159 @@ function applyStatusToState(st, result) {
     default:
       break;
   }
+}
+
+// ---- redact.mjs ----
+// G-7: values the process knows are secrets never reach a file or an output.
+// The set lives for the process; every spine write and the final stdout pass through redactText.
+const REDACT_MIN_LENGTH = 6;
+const REDACT_VALUES = new Map();
+const REDACT_HITS = new Set();
+
+function redactAdd(name, value) {
+  if (typeof value !== 'string' || value.length < REDACT_MIN_LENGTH) return;
+  const forms = [value];
+  const escaped = JSON.stringify(value).slice(1, -1);
+  if (escaped !== value) forms.push(escaped);
+  for (const form of forms) REDACT_VALUES.set(form, name);
+}
+
+function redactReset() {
+  REDACT_VALUES.clear();
+  REDACT_HITS.clear();
+}
+
+function redactText(text) {
+  if (!REDACT_VALUES.size || typeof text !== 'string') return text;
+  let out = text;
+  const forms = Array.from(REDACT_VALUES.keys()).sort((a, b) => b.length - a.length);
+  for (const form of forms) {
+    if (!out.includes(form)) continue;
+    const name = REDACT_VALUES.get(form);
+    REDACT_HITS.add(name);
+    out = out.split(form).join('[REDACTED:' + name + ']');
+  }
+  return out;
+}
+
+// Names the project declares: READINESS credentials and .env.example NAME= lines.
+function redactDeclaredNames(ctx) {
+  const names = new Set();
+  try {
+    const r = JSON.parse(fs.readFileSync(path.join(ctx.home, 'plan', 'READINESS.json'), 'utf8'));
+    for (const n of Array.isArray(r.credentials) ? r.credentials : []) if (typeof n === 'string' && n) names.add(n);
+  } catch { /* no readiness yet */ }
+  try {
+    for (const line of fs.readFileSync(path.join(ctx.home, '.env.example'), 'utf8').split(/\r?\n/)) {
+      const m = /^([A-Za-z_][A-Za-z0-9_]*)=/.exec(line);
+      if (m) names.add(m[1]);
+    }
+  } catch { /* no example */ }
+  return Array.from(names).sort();
+}
+
+// Cheap, side-effect free sources only: the file directory and the environment.
+// Credentials behind a user CLI join the set in the process that resolves them.
+function redactInit(ctx) {
+  redactReset();
+  try {
+    const dir = path.resolve(ctx.repo, '.secrets');
+    for (const n of fs.readdirSync(dir)) {
+      const f = path.join(dir, n);
+      const st = fs.statSync(f);
+      if (st.isFile() && st.size <= 65536) redactAdd(n, fs.readFileSync(f, 'utf8').replace(/\r?\n$/, ''));
+    }
+  } catch { /* no .secrets */ }
+  for (const n of redactDeclaredNames(ctx)) redactAdd(n, ctx.env[n]);
+}
+
+// ---- resume.mjs ----
+// resume works from a fresh process using state alone. It clears a ceiling block
+// (after a handoff exists) or un-parks a parked run, re-queues RUNNING slices
+// without counting an attempt, and re-reads every VERIFIED row by hash.
+function cmdResume(ctx, args) {
+  const runId = selectRunId(ctx, args.flags);
+  const state = loadState(ctx, runId);
+  const force = !!args.flags.force;
+  const ceilingHeld = state.ceiling === 'BLOCKED';
+  if (state.status !== 'PARKED' && !ceilingHeld) throw fail('NOT_PARKED', 1, { run_id: runId, status: state.status });
+
+  if (state.status === 'PARKED') {
+    const park = readJsonIfExists(parkPath(ctx, runId));
+    if (park && park.reset_at && !force && Date.parse(park.reset_at) > Date.parse(ctx.now())) {
+      throw fail('STILL_PARKED', 3, { run_id: runId, reset_at: park.reset_at, message: 'before reset_at ' + park.reset_at + '; use --force to resume anyway' });
+    }
+  } else if (!handoffWritten(state) && !force) {
+    throw fail('CEILING_BLOCKED', 3, { run_id: runId, reason: 'no_handoff', message: 'the ceiling block clears only after a handoff exists' });
+  }
+
+  const requeued = [];
+  for (const s of state.slices) {
+    if (s.status === 'RUNNING') { s.status = 'READY'; requeued.push(s.id); }
+  }
+  const changed = verifyEvidence(ctx, runId);
+  const reopened = [];
+  for (const c of changed) {
+    const s = state.slices.find((x) => x.id === c.row);
+    if (s && s.status === 'DONE') { s.status = 'READY'; reopened.push(s.id); }
+  }
+  const from = state.status;
+  if (state.status === 'PARKED') state.status = 'BUILDING';
+  if (ceilingHeld) state.ceiling = 'OK';
+  state.park = null;
+  writeState(ctx, state);
+  const wake = consumeWake(ctx, runId);
+  appendEvent(ctx, runId, { event: 'run_resumed', stage: state.stage, host: state.host, verdict: 'RESUMED', detail: { from, requeued, reopened, warnings: changed.length, forced: force, ceiling_cleared: ceilingHeld } });
+  return {
+    outcome: 'RESUMED', exit: 0, run_id: runId, status: state.status, requeued, reopened, warnings: changed.length,
+    changed: changed.map((c) => c.row), wake: wake ? wake.status : null, ceiling: state.ceiling || null,
+  };
+}
+
+// ---- router.mjs ----
+// Deterministic-first routing (D9): an ordered rule table. A request that
+// matches no rule, or ties between presets at the best priority, goes to the
+// single logged model fallback (ROUTE_MODEL) which `next` requests once.
+const PRESET_NAMES = ['feature', 'investigate-fix', 'drain', 'review-loop', 'reconcile'];
+
+function routeWords(list) {
+  return new RegExp('(?<![\\p{L}\\p{N}_])(?:' + list.join('|') + ')(?![\\p{L}\\p{N}_])', 'iu');
+}
+
+const ROUTE_RULES = [
+  { id: 'R-DRAIN', preset: 'drain', priority: 1, re: routeWords(['drain', 'backlog', 'burn ?down', 'work through the (?:cards|tickets|issues)']) },
+  { id: 'R-RECONCILE', preset: 'reconcile', priority: 1, re: routeWords(['reconcile', 'stray branches', 'worktrees?', 'clean ?up (?:the )?branches', 'branch(?:es)? inventory']) },
+  { id: 'R-REVIEW', preset: 'review-loop', priority: 2, re: routeWords(['review', 'roteiro', 'audit', 'walk ?through', 'attended gate']) },
+  {
+    id: 'R-BUG',
+    preset: 'investigate-fix',
+    priority: 3,
+    re: routeWords([
+      'bugs?', 'fix(?:es|ed)?', 'broken', 'crash(?:es|ed|ing)?', 'fail(?:s|ed|ing|ure)?', 'regress(?:ion)?', 'exception', 'stack ?trace',
+      'not working', "doesn'?t work", 'does not work', "can'?t", 'cannot', 'incomplete', 'wrong',
+      'n[aã]o (?:recebe|funciona|abre|carrega|envia|salva|chega|aparece|responde)', 'erro', 'falha', 'quebrad[oa]', 'travou', 'incompleta?s?',
+    ]),
+  },
+  { id: 'R-FEATURE', preset: 'feature', priority: 3, re: routeWords(['ship', 'build', 'add', 'implement', 'create', 'features?', 'w\\d+(?:\\s*(?:-|to|a)\\s*w?\\d+)?', 'waves?', 'epics?', 'prds?', 'release', 'launch', 'integrate', 'support']) },
+];
+
+// First integer in the request: the size hint for drain-shaped work.
+function routeSizeHint(text) {
+  const m = /(?<![\p{L}\p{N}_.])(\d{1,6})(?![\p{L}\p{N}_.])/u.exec(text);
+  return m ? Number(m[1]) : null;
+}
+
+function route(text) {
+  const request = String(text || '');
+  const hits = ROUTE_RULES.filter((r) => r.re.test(request));
+  if (!hits.length) return { preset: null, rule: null, model_call: false, ambiguous: true, reason: 'no_rule_matched' };
+  const best = Math.min(...hits.map((h) => h.priority));
+  const top = hits.filter((h) => h.priority === best);
+  const presets = Array.from(new Set(top.map((h) => h.preset)));
+  if (presets.length > 1) return { preset: null, rule: null, model_call: false, ambiguous: true, reason: 'tie:' + presets.join(',') };
+  const out = { preset: top[0].preset, rule: top[0].id, model_call: false, ambiguous: false, size: null };
+  if (out.preset === 'drain') out.size = routeSizeHint(request);
+  return out;
 }
 
 // ---- schema.mjs ----
@@ -1294,6 +2125,62 @@ function loadSchemaFile(name) {
   const file = path.join(here, '..', '..', 'schemas', name);
   if (!fs.existsSync(file)) throw fail('SCHEMA_NOT_FOUND', 1, { schema: name });
   return JSON.parse(fs.readFileSync(file, 'utf8'));
+}
+
+// ---- secrets.mjs ----
+const SECRET_DRIVERS = {
+  file: secretsFileResolve,
+  env: secretsEnvResolve,
+  'aws-secrets-manager': secretsAwsResolve,
+  '1password': secretsOnepasswordResolve,
+};
+
+// Resolve every named credential through the provider driver. The value goes
+// into the redaction set and no further: results carry name, ok and length only.
+function resolveCredentials(ctx, _runId, names, secrets) {
+  const provider = secrets && secrets.provider ? secrets.provider : 'file';
+  const driver = SECRET_DRIVERS[provider];
+  return names.map((name) => {
+    if (!driver) return { name, ok: false, length: 0, detail: 'unknown_provider' };
+    const r = driver(name, secrets.ref, ctx);
+    if (r.ok) redactAdd(name, r.value);
+    return { name, ok: r.ok, length: r.ok ? r.length : 0, detail: r.ok ? null : r.detail };
+  });
+}
+
+// doctor --secrets [--name A,B]: names from the flag, READINESS and .env.example.
+// Prints names, status and lengths only.
+function doctorSecrets(ctx, args) {
+  const settings = loadSettings(ctx, args.sets);
+  const flagNames = typeof args.flags.name === 'string' ? args.flags.name.split(',').map((s) => s.trim()).filter(Boolean) : [];
+  const names = Array.from(new Set([...flagNames, ...redactDeclaredNames(ctx)])).sort();
+  const provider = settings.values.secrets.provider;
+  if (!SECRET_DRIVERS[provider]) throw fail('CREDENTIAL_PROVIDER_UNKNOWN', 1, { provider, providers: Object.keys(SECRET_DRIVERS) });
+  const results = resolveCredentials(ctx, null, names, settings.values.secrets);
+  const secrets = results.map((r) => ({ name: r.name, status: r.ok ? 'ok' : 'missing', length: r.length, ...(r.ok ? {} : { detail: r.detail }) }));
+  const missing = secrets.filter((s) => s.status !== 'ok');
+  let runId = null;
+  try { runId = selectRunId(ctx, {}); } catch { /* no run yet */ }
+  if (runId) {
+    try {
+      appendEvent(ctx, runId, { event: 'secrets_checked', verdict: missing.length ? 'CREDENTIAL_MISSING' : 'SECRETS_OK', detail: { provider, names, missing: missing.map((m) => m.name) } });
+    } catch { /* the check result matters more than the trace */ }
+  }
+  const out = { provider, ref: settings.values.secrets.ref, secrets };
+  if (missing.length) return { outcome: 'CREDENTIAL_MISSING', exit: 3, ...out, missing: missing.map((m) => m.name) };
+  return { outcome: 'SECRETS_OK', exit: 0, ...out };
+}
+
+// Names redacted during this command go to the run's events, names only.
+function redactFlushEvents(ctx, result) {
+  if (!REDACT_HITS.size) return;
+  const names = Array.from(REDACT_HITS).sort();
+  REDACT_HITS.clear();
+  try {
+    const runId = result && typeof result.run_id === 'string' ? result.run_id : null;
+    if (!runId) return;
+    for (const name of names) appendEvent(ctx, runId, { event: 'secret_redacted', verdict: 'REDACTED', detail: { name } });
+  } catch { /* redaction must never fail a command */ }
 }
 
 // ---- settings.mjs ----
@@ -1504,7 +2391,7 @@ function writeState(ctx, state) {
   const errors = validateSchema(loadSchemaFile('do-it-state.1.schema.json'), state);
   if (errors.length) throw fail('STATE_INVALID', 1, { errors });
   const dir = runDir(ctx, state.run_id);
-  const bytes = JSON.stringify(state, null, 2) + '\n';
+  const bytes = redactText(JSON.stringify(state, null, 2) + '\n');
   const fault = ctx.env.DO_IT_FAULT === 'after_tmp';
   atomicWrite(path.join(dir, 'state.json'), bytes, { faultAfterTmp: fault });
   atomicWrite(path.join(dir, '.state.sha256'), sha256Bytes(bytes) + '\n');
@@ -1607,6 +2494,47 @@ function advanceRunStatus(ctx, state, to) {
   return { from, to };
 }
 
+// ---- stopgate.mjs ----
+// G-9: refuse to stop with open rows, with the board, `patience` times without
+// progress; the next call parks the run and asks the owner.
+function gateStop(ctx, args) {
+  const runId = selectRunId(ctx, args.flags);
+  const state = loadState(ctx, runId);
+  const fl = readFinishLine(ctx);
+  const open = openRows(fl);
+  const board = renderBoard(fl);
+  if (!open.length) {
+    return { outcome: 'STOP_ALLOWED', exit: 0, run_id: runId, stop_refusals: state.stop_refusals, board };
+  }
+  const patience = loadSettings(ctx, []).values.stop_gate.patience;
+  const sig = rowsSignature(fl);
+  const prev = state.gates.stop_gate;
+  if (prev && prev.sig !== sig) state.stop_refusals = 0;
+  if (state.stop_refusals >= patience) {
+    const ids = open.map((r) => r.id);
+    packAppend(ctx, runId, [{
+      kind: 'default',
+      text: 'The run stopped with ' + ids.length + ' open row(s) after ' + patience + ' refusals: ' + ids.join(', ') + '. Resume the run or close it with the open rows as residuals?',
+      options: ['resume run', 'close with residuals'],
+      recommendation: 'resume run',
+      default: 'resume run',
+      reversible: true,
+    }]);
+    state.stop_refusals = 0;
+    state.gates.stop_gate = { sig };
+    const from = state.status;
+    state.status = 'PARKED';
+    writeState(ctx, state);
+    appendEvent(ctx, runId, { event: 'stop_parked', stage: state.stage, host: state.host, verdict: 'PARKED', detail: { from, open: ids } });
+    return { outcome: 'PARKED', exit: 2, run_id: runId, status: 'PARKED', open: ids, board };
+  }
+  state.stop_refusals += 1;
+  state.gates.stop_gate = { sig };
+  writeState(ctx, state);
+  appendEvent(ctx, runId, { event: 'stop_refused', stage: state.stage, host: state.host, verdict: 'STOP_REFUSED', detail: { refusals: state.stop_refusals, open: open.map((r) => r.id) } });
+  throw fail('STOP_REFUSED', 1, { run_id: runId, stop_refusals: state.stop_refusals, patience, open: open.map((r) => r.id), board });
+}
+
 // ---- verify.mjs ----
 // Re-read the world: recompute every VERIFIED row's evidence hash (never mtime).
 // A changed or missing file downgrades the row and reopens its finish-line row.
@@ -1647,6 +2575,267 @@ function gateVerify(ctx, args) {
 
 // ---- version.mjs ----
 const DO_IT_VERSION = '0.1.0';
+
+// ---- wake.mjs ----
+const NO_WAKE_TEXT = 'no wake: parked; run do-it resume after the reset';
+
+function wakePath(ctx, runId) {
+  return path.join(runDir(ctx, runId), 'wake.json');
+}
+
+function readWake(ctx, runId) {
+  return readJsonIfExists(wakePath(ctx, runId));
+}
+
+// Hook contract: executable in env DO_IT_HOST_WAKE, args `at` and a prompt file
+// path; exit 0 with the wake id on stdout means a wake is scheduled.
+function scheduleWake(ctx, runId, at, resumeLine) {
+  const promptFile = path.join(runDir(ctx, runId), 'wake-prompt.md');
+  atomicWrite(promptFile, 'Resume do-it run ' + runId + ' from state: run `' + resumeLine + '`, then `do-it next`.\n');
+  const hook = ctx.env.DO_IT_HOST_WAKE;
+  let wake;
+  if (!hook) {
+    wake = { status: 'unavailable', run_id: runId, at, prompt_file: promptFile, id: null, reason: 'no_hook' };
+  } else {
+    const r = cp.spawnSync(hook, [at || '', promptFile], { env: ctx.env, cwd: ctx.cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 60000 });
+    const id = r.error ? '' : String(r.stdout || '').trim().split('\n')[0].trim();
+    if (!r.error && r.status === 0 && id) {
+      wake = { status: 'scheduled', run_id: runId, at, prompt_file: promptFile, id, scheduled_at: ctx.now() };
+    } else {
+      wake = { status: 'failed', run_id: runId, at, prompt_file: promptFile, id: null, reason: r.error ? r.error.code || 'spawn_error' : 'hook_exit_' + r.status };
+    }
+  }
+  atomicWriteJson(wakePath(ctx, runId), wake);
+  return wake;
+}
+
+function consumeWake(ctx, runId) {
+  const wake = readWake(ctx, runId);
+  if (!wake || wake.status === 'consumed') return wake;
+  const next = { ...wake, status: 'consumed', consumed_at: ctx.now() };
+  atomicWriteJson(wakePath(ctx, runId), next);
+  return next;
+}
+
+// ---- yaml-lite.mjs ----
+// YAML subset for pipeline presets (D10): block maps, block lists, scalars,
+// flow lists of scalars, comments. Anything else is PIPELINE_UNSUPPORTED_YAML.
+function yamlUnsupported(line, reason) {
+  return fail('PIPELINE_UNSUPPORTED_YAML', 1, { line, reason });
+}
+
+function yamlStripComment(raw) {
+  let quote = null;
+  for (let i = 0; i < raw.length; i++) {
+    const c = raw[i];
+    if (quote) {
+      if (c === '\\' && quote === '"') i++;
+      else if (c === quote) quote = null;
+    } else if (c === '"' || c === "'") {
+      if (i === 0 || /[\s:\[,-]/.test(raw[i - 1])) quote = c;
+    } else if (c === '#' && (i === 0 || /\s/.test(raw[i - 1]))) {
+      return raw.slice(0, i);
+    }
+  }
+  return raw;
+}
+
+function yamlLines(text) {
+  const out = [];
+  const raw = String(text).split(/\r?\n/);
+  let docs = 0;
+  for (let i = 0; i < raw.length; i++) {
+    const line = yamlStripComment(raw[i]).replace(/\s+$/, '');
+    if (!line.trim()) continue;
+    if (/^ *\t/.test(line)) throw yamlUnsupported(i + 1, 'tab indentation');
+    if (line.trim() === '---') {
+      docs++;
+      if (docs > 1 || out.length) throw yamlUnsupported(i + 1, 'multiple documents');
+      continue;
+    }
+    if (line.trim() === '...') throw yamlUnsupported(i + 1, 'document end marker');
+    out.push({ indent: line.match(/^ */)[0].length, text: line.trim(), n: i + 1 });
+  }
+  return out;
+}
+
+function yamlSplitFlow(inner, n) {
+  const parts = [];
+  let cur = '';
+  let quote = null;
+  for (let i = 0; i < inner.length; i++) {
+    const c = inner[i];
+    if (quote) {
+      cur += c;
+      if (c === '\\' && quote === '"') { cur += inner[++i] || ''; } else if (c === quote) quote = null;
+    } else if (c === '"' || c === "'") { quote = c; cur += c; }
+    else if (c === ',') { parts.push(cur); cur = ''; }
+    else if (c === '[' || c === '{') throw yamlUnsupported(n, 'nested flow collection');
+    else cur += c;
+  }
+  if (quote) throw yamlUnsupported(n, 'unterminated quote');
+  if (cur.trim() || parts.length) parts.push(cur);
+  return parts.map((p) => yamlScalar(p.trim(), n));
+}
+
+function yamlScalar(s, n) {
+  if (s === '') return null;
+  const first = s[0];
+  if (first === '&' || first === '*') throw yamlUnsupported(n, 'anchors and aliases');
+  if (first === '!') throw yamlUnsupported(n, 'tags');
+  if (first === '|' || first === '>') throw yamlUnsupported(n, 'block scalars');
+  if (first === '{') {
+    if (s === '{}') return {};
+    throw yamlUnsupported(n, 'flow map');
+  }
+  if (first === '[') {
+    if (s[s.length - 1] !== ']') throw yamlUnsupported(n, 'multi-line flow list');
+    return yamlSplitFlow(s.slice(1, -1), n);
+  }
+  if (first === '"') {
+    if (s.length < 2 || s[s.length - 1] !== '"') throw yamlUnsupported(n, 'unterminated quote');
+    return s.slice(1, -1).replace(/\\(["\\nt])/g, (_m, c) => (c === 'n' ? '\n' : c === 't' ? '\t' : c));
+  }
+  if (first === "'") {
+    if (s.length < 2 || s[s.length - 1] !== "'") throw yamlUnsupported(n, 'unterminated quote');
+    return s.slice(1, -1).replace(/''/g, "'");
+  }
+  if (s === 'true') return true;
+  if (s === 'false') return false;
+  if (s === 'null' || s === '~') return null;
+  if (/^-?\d+$/.test(s)) return Number(s);
+  if (/^-?\d+\.\d+$/.test(s)) return Number(s);
+  return s;
+}
+
+function yamlKeyOf(text) {
+  const m = /^("[^"]*"|'[^']*'|[^\s:"'\[\]{},#&*!|>-][^:]*?|-[^\s:][^:]*?)\s*:(?:\s+(.*))?$/.exec(text);
+  if (!m) return null;
+  let key = m[1];
+  if (key[0] === '"' || key[0] === "'") key = key.slice(1, -1);
+  return { key, rest: m[2] === undefined ? '' : m[2].trim() };
+}
+
+function yamlIsItem(text) {
+  return text === '-' || text.startsWith('- ');
+}
+
+function yamlParseNode(lines, pos, indent) {
+  return yamlIsItem(lines[pos.i].text) ? yamlParseList(lines, pos, indent) : yamlParseMap(lines, pos, indent);
+}
+
+function yamlChild(lines, pos, indent, allowSameIndentList) {
+  const nxt = lines[pos.i];
+  if (!nxt) return null;
+  if (nxt.indent > indent) return yamlParseNode(lines, pos, nxt.indent);
+  if (allowSameIndentList && nxt.indent === indent && yamlIsItem(nxt.text)) return yamlParseList(lines, pos, indent);
+  return null;
+}
+
+function yamlParseMap(lines, pos, indent) {
+  const out = {};
+  while (pos.i < lines.length) {
+    const line = lines[pos.i];
+    if (line.indent < indent) break;
+    if (line.indent > indent) throw yamlUnsupported(line.n, 'unexpected indentation');
+    if (yamlIsItem(line.text)) break;
+    const kv = yamlKeyOf(line.text);
+    if (!kv) throw yamlUnsupported(line.n, 'not a key: value line');
+    if (Object.prototype.hasOwnProperty.call(out, kv.key)) throw yamlUnsupported(line.n, 'duplicate key ' + kv.key);
+    pos.i++;
+    out[kv.key] = kv.rest === '' ? yamlChild(lines, pos, indent, true) : yamlScalar(kv.rest, line.n);
+  }
+  return out;
+}
+
+function yamlParseList(lines, pos, indent) {
+  const out = [];
+  while (pos.i < lines.length) {
+    const line = lines[pos.i];
+    if (line.indent < indent) break;
+    if (line.indent > indent) throw yamlUnsupported(line.n, 'unexpected indentation');
+    if (!yamlIsItem(line.text)) break;
+    const body = line.text === '-' ? '' : line.text.slice(2).trim();
+    if (body === '') {
+      pos.i++;
+      out.push(yamlChild(lines, pos, indent, false));
+    } else if (yamlIsItem(body)) {
+      throw yamlUnsupported(line.n, 'nested inline list');
+    } else if (yamlKeyOf(body) && body[0] !== '[' && body[0] !== '"' && body[0] !== "'") {
+      const offset = line.text.length - body.length;
+      lines[pos.i] = { indent: indent + offset, text: body, n: line.n };
+      out.push(yamlParseMap(lines, pos, indent + offset));
+    } else {
+      pos.i++;
+      out.push(yamlScalar(body, line.n));
+    }
+  }
+  return out;
+}
+
+function parseYamlLite(text) {
+  const lines = yamlLines(text);
+  if (!lines.length) return {};
+  const pos = { i: 0 };
+  const value = yamlParseNode(lines, pos, lines[0].indent);
+  if (pos.i < lines.length) throw yamlUnsupported(lines[pos.i].n, 'unexpected content');
+  return value;
+}
+
+// ---- drivers/secrets/aws-secrets-manager.mjs ----
+// Secrets driver `aws-secrets-manager` (D16): runs the user's own `aws` CLI.
+// Its stderr is never surfaced. No SDK is bundled.
+function secretsAwsResolve(name, ref, ctx) {
+  const base = String(ref || '').replace(/\/+$/, '');
+  const id = base ? base + '/' + name : name;
+  const argv = ['secretsmanager', 'get-secret-value', '--secret-id', id, '--query', 'SecretString', '--output', 'text'];
+  const r = cp.spawnSync('aws', argv, { env: ctx.env, cwd: ctx.cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 30000 });
+  if (r.error) return { ok: false, detail: r.error.code === 'ENOENT' ? 'cli_not_found' : 'cli_error' };
+  if (r.status !== 0) return { ok: false, detail: 'cli_failed' };
+  const value = String(r.stdout || '').replace(/\r?\n$/, '');
+  if (!value || value === 'None') return { ok: false, detail: 'secret_empty' };
+  return { ok: true, value, length: value.length };
+}
+
+// ---- drivers/secrets/env.mjs ----
+// Secrets driver `env` (D16): the credential is an environment variable. A ref
+// made of capitals, digits and underscores is a name prefix; any other ref is ignored.
+function secretsEnvResolve(name, ref, ctx) {
+  const prefix = typeof ref === 'string' && /^[A-Z0-9_]+$/.test(ref) ? ref : '';
+  const value = ctx.env[prefix + name];
+  if (typeof value !== 'string' || value === '') return { ok: false, detail: 'env_missing' };
+  return { ok: true, value, length: value.length };
+}
+
+// ---- drivers/secrets/file.mjs ----
+// Secrets driver `file` (D16): one file per credential under the ref directory
+// (default `.secrets/`). Returns { ok, value, length } or { ok: false, detail }.
+// The value is for the in-memory redaction set only and is never written.
+function secretsFileResolve(name, ref, ctx) {
+  const dir = path.resolve(ctx.repo, typeof ref === 'string' && ref ? ref : '.secrets/');
+  const file = path.resolve(dir, name);
+  const rel = path.relative(dir, file);
+  if (!rel || rel.startsWith('..') || path.isAbsolute(rel)) return { ok: false, detail: 'name_outside_ref' };
+  let text;
+  try { text = fs.readFileSync(file, 'utf8'); } catch { return { ok: false, detail: 'file_missing' }; }
+  const value = text.replace(/\r?\n$/, '');
+  if (!value) return { ok: false, detail: 'file_empty' };
+  return { ok: true, value, length: value.length };
+}
+
+// ---- drivers/secrets/onepassword.mjs ----
+// Secrets driver `1password` (D16): runs the user's own `op read <ref>/<name>`.
+// Its stderr is never surfaced. No SDK is bundled.
+function secretsOnepasswordResolve(name, ref, ctx) {
+  const base = String(ref || '').replace(/\/+$/, '');
+  if (!base.startsWith('op://')) return { ok: false, detail: 'bad_reference' };
+  const r = cp.spawnSync('op', ['read', base + '/' + name], { env: ctx.env, cwd: ctx.cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 30000 });
+  if (r.error) return { ok: false, detail: r.error.code === 'ENOENT' ? 'cli_not_found' : 'cli_error' };
+  if (r.status !== 0) return { ok: false, detail: 'cli_failed' };
+  const value = String(r.stdout || '').replace(/\r?\n$/, '');
+  if (!value) return { ok: false, detail: 'secret_empty' };
+  return { ok: true, value, length: value.length };
+}
 
 const doItResult = cliMain(process.argv.slice(2), { cwd: process.cwd(), env: process.env });
 process.stdout.write(doItResult.stdout);
