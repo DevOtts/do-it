@@ -16,3 +16,11 @@ export async function sampleWorktrees(repoDir, work, opts) {
   peak = Math.max(peak, worktreeCount(repoDir, opts && opts.env));
   return { before, peak, after: worktreeCount(repoDir, opts && opts.env) };
 }
+
+// D16: peak minus baseline must equal the cards that need a build, and the run must reap what it made.
+// Returns an error string, or null when the sample is right (the harness exits 1 on a string).
+export function sandboxMismatch(sample, needsBuild) {
+  if (sample.peak - sample.before !== needsBuild) return 'peak ' + sample.peak + ' minus baseline ' + sample.before + ' is not ' + needsBuild + ' (cards with needs_build)';
+  if (sample.after !== sample.before) return 'worktree count after the run is ' + sample.after + ', baseline was ' + sample.before + ' (not reaped)';
+  return null;
+}

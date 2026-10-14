@@ -1,0 +1,13 @@
+{
+  "schema": "do-it-measurement/1",
+  "fixture": "feature-overnight",
+  "host": "claude-code",
+  "model_tier": "T3",
+  "rows_verified": 4,
+  "tokens_per_verified_row": 442.5,
+  "tokens_total": 1770,
+  "estimated": false,
+  "provider_rows": 1,
+  "cost_usd": 0.010898285,
+  "source": "node tests/e2e/run.mjs --fixture feature-overnight --host claude-code (DOIT_REAL_CALLS=1)"
+}

@@ -2,165 +2,171 @@ TAP version 13
 # Subtest: T-R4-01 feature fixture reaches the final status on the stub host
 ok 1 - T-R4-01 feature fixture reaches the final status on the stub host
   ---
-  duration_ms: 748.932709
+  duration_ms: 717.677709
   type: 'test'
   ...
 # Subtest: T-R4-03 investigate-fix closes red to green
 ok 2 - T-R4-03 investigate-fix closes red to green
   ---
-  duration_ms: 588.784
+  duration_ms: 554.217709
   type: 'test'
   ...
 # Subtest: T-R4-04 weekly drain ends with zero unaccounted rows
 ok 3 - T-R4-04 weekly drain ends with zero unaccounted rows
   ---
-  duration_ms: 447.912666
+  duration_ms: 431.611416
   type: 'test'
   ...
 # Subtest: T-R4-06 conclude refuses an unaccounted row (G-13)
 ok 4 - T-R4-06 conclude refuses an unaccounted row (G-13)
   ---
-  duration_ms: 587.767416
+  duration_ms: 552.590708
   type: 'test'
   ...
 # Subtest: T-R4-12 tokens per VERIFIED row
 ok 5 - T-R4-12 tokens per VERIFIED row
   ---
-  duration_ms: 432.55675
+  duration_ms: 421.549125
   type: 'test'
   ...
 # Subtest: T-R4-13 deploy partial failure then rollback
 ok 6 - T-R4-13 deploy partial failure then rollback
   ---
-  duration_ms: 738.04225
+  duration_ms: 708.452334
   type: 'test'
   ...
 # Subtest: T-R4-14 rollback fails and the run escalates
 ok 7 - T-R4-14 rollback fails and the run escalates
   ---
-  duration_ms: 802.445583
+  duration_ms: 745.026375
   type: 'test'
   ...
 # Subtest: T-R4-15 recovery by re-verify
 ok 8 - T-R4-15 recovery by re-verify
   ---
-  duration_ms: 1166.928209
+  duration_ms: 1149.089208
   type: 'test'
   ...
 # Subtest: T-R4-16 adversarial verify: tamper between write and verify
 ok 9 - T-R4-16 adversarial verify: tamper between write and verify
   ---
-  duration_ms: 488.457583
+  duration_ms: 459.510958
   type: 'test'
   ...
 # Subtest: T-R4-02 feature fixture on the real Claude Code host (G-3) [REAL]
-ok 10 - T-R4-02 feature fixture on the real Claude Code host (G-3) [REAL] # SKIP DEFERRED to W4: needs H1 host driver, the build-it pipeline and a live `claude -p` run; IMPLEMENTED-NOT-VERIFIED until S and H1 ship
+ok 10 - T-R4-02 feature fixture on the real Claude Code host (G-3) [REAL] # SKIP IMPLEMENTED-NOT-VERIFIED: set DOIT_REAL_CALLS=1 to allow one tiny paid `claude -p` call (cheapest tier, alias anm)
   ---
-  duration_ms: 0.2875
+  duration_ms: 0.350416
   type: 'test'
   ...
 # Subtest: T-R4-05 sandboxes equal slices needing a build (D16) [REAL]
-ok 11 - T-R4-05 sandboxes equal slices needing a build (D16) [REAL] # SKIP DEFERRED to W4: sandbox creation belongs to the engine and the drain preset (S2 scheduler, P pipelines); the stub must not play the engine for a [REAL] case. Sampler is ready: tests/e2e/lib/worktrees.mjs
+ok 11 - T-R4-05 sandboxes equal slices needing a build (D16) [REAL] # SKIP IMPLEMENTED-NOT-VERIFIED: no live Engine (env DO_IT_ENGINE_URL: unset; docker ps: 0 engine/brain containers; http reach: no candidate URL (env unset, no engine containers))
   ---
-  duration_ms: 0.092417
+  duration_ms: 33.622875
   type: 'test'
   ...
 # Subtest: T-R4-07 review loop converges
-ok 12 - T-R4-07 review loop converges # SKIP DEFERRED to W4: needs the review-it pipeline (P4) and its round driver; fixture sequences ready in tests/fixtures/review-loop
+ok 12 - T-R4-07 review loop converges
   ---
-  duration_ms: 0.028
+  duration_ms: 875.280458
   type: 'test'
   ...
 # Subtest: T-R4-08 review loop stalls
-ok 13 - T-R4-08 review loop stalls # SKIP DEFERRED to W4: needs the review-it pipeline (P4), tier raise logging and gate ceiling (S2/S5)
+ok 13 - T-R4-08 review loop stalls
   ---
-  duration_ms: 0.021333
+  duration_ms: 501.688
   type: 'test'
   ...
 # Subtest: T-R4-09 review loop exceeds budget
-ok 14 - T-R4-09 review loop exceeds budget # SKIP DEFERRED to W4: needs gate ceiling and park/resume (S5) and the review-it pipeline (P4)
+ok 14 - T-R4-09 review loop exceeds budget
   ---
-  duration_ms: 0.020541
+  duration_ms: 507.181458
   type: 'test'
   ...
 # Subtest: T-R4-10 reconcile refuses to delete without approval [REAL]
-ok 15 - T-R4-10 reconcile refuses to delete without approval [REAL] # SKIP DEFERRED to W4: needs the reconcile-it pipeline (scan/plan/apply); workspace builder ready in tests/fixtures/reconcile/build.mjs
+ok 15 - T-R4-10 reconcile refuses to delete without approval [REAL]
   ---
-  duration_ms: 0.018292
+  duration_ms: 470.041375
   type: 'test'
   ...
 # Subtest: T-R4-11 reconcile re-verifies at execution time [REAL]
-ok 16 - T-R4-11 reconcile re-verifies at execution time [REAL] # SKIP DEFERRED to W4: needs the reconcile-it pipeline (apply --approved)
+ok 16 - T-R4-11 reconcile re-verifies at execution time [REAL]
   ---
-  duration_ms: 0.018375
+  duration_ms: 530.520958
   type: 'test'
   ...
 # Subtest: T-R4-17 usage limit parks and resume skips finished slices
-ok 17 - T-R4-17 usage limit parks and resume skips finished slices # SKIP DEFERRED to W4: spine resume and park are NOT_IMPLEMENTED (S5); slices come from the S2 scheduler
+ok 17 - T-R4-17 usage limit parks and resume skips finished slices
   ---
-  duration_ms: 0.017458
+  duration_ms: 1513.895916
   type: 'test'
   ...
 # Subtest: T-R4-18 failed slice retries one tier up then escalates
-ok 18 - T-R4-18 failed slice retries one tier up then escalates # SKIP DEFERRED to W4: needs the S2 scheduler (tier-up retry, attempts cap) and a builder stub driven by it
+ok 18 - T-R4-18 failed slice retries one tier up then escalates
   ---
-  duration_ms: 0.021709
+  duration_ms: 433.955917
   type: 'test'
   ...
 # Subtest: T-R4-19 owner gate blocks only its slice
-ok 19 - T-R4-19 owner gate blocks only its slice # SKIP DEFERRED to W4: spine record adds owner-pack questions only for needs_human; the BLOCKED owner-gate question path is S2/S4
+ok 19 - T-R4-19 owner gate blocks only its slice
   ---
-  duration_ms: 0.018459
+  duration_ms: 560.002667
   type: 'test'
   ...
 # Subtest: T-R4-20 handoff failure retries then escalates (G-5)
-ok 20 - T-R4-20 handoff failure retries then escalates (G-5) # SKIP DEFERRED to W4: spine handoff and gate ceiling are NOT_IMPLEMENTED (S5)
+ok 20 - T-R4-20 handoff failure retries then escalates (G-5)
   ---
-  duration_ms: 0.017625
+  duration_ms: 849.28875
   type: 'test'
   ...
 # Subtest: R4-FIX expected.json is current for every fixture
 ok 21 - R4-FIX expected.json is current for every fixture
   ---
-  duration_ms: 530.04525
+  duration_ms: 514.696209
   type: 'test'
   ...
 # Subtest: R4-FIX claims.json is current and marks host-dependent claims unmeasured
 ok 22 - R4-FIX claims.json is current and marks host-dependent claims unmeasured
   ---
-  duration_ms: 385.809666
+  duration_ms: 383.064541
   type: 'test'
   ...
 # Subtest: R4-FIX review-loop variants measure to the Test Contract numbers
 ok 23 - R4-FIX review-loop variants measure to the Test Contract numbers
   ---
-  duration_ms: 0.106125
+  duration_ms: 0.090167
   type: 'test'
   ...
 # Subtest: R4-FIX reconcile builder makes 2 repos, 5 branches, 2 worktrees with real git
 ok 24 - R4-FIX reconcile builder makes 2 repos, 5 branches, 2 worktrees with real git
   ---
-  duration_ms: 279.035792
+  duration_ms: 261.923667
   type: 'test'
   ...
 # Subtest: R4-LIB a real host is never replaced by the stub (T-R4-02 honesty rule)
 ok 25 - R4-LIB a real host is never replaced by the stub (T-R4-02 honesty rule)
   ---
-  duration_ms: 9.685875
+  duration_ms: 9.164958
   type: 'test'
   ...
 # Subtest: R4-LIB stub meter rows are never labelled provider (G-6)
 ok 26 - R4-LIB stub meter rows are never labelled provider (G-6)
   ---
-  duration_ms: 682.424
+  duration_ms: 668.40275
   type: 'test'
   ...
-1..26
-# tests 26
+# Subtest: R4-LIB sandbox sampler sees real git worktrees come and go (T-R4-05 machinery, not the case)
+ok 27 - R4-LIB sandbox sampler sees real git worktrees come and go (T-R4-05 machinery, not the case)
+  ---
+  duration_ms: 231.607416
+  type: 'test'
+  ...
+1..27
+# tests 27
 # suites 0
-# pass 15
+# pass 25
 # fail 0
 # cancelled 0
-# skipped 11
+# skipped 2
 # todo 0
-# duration_ms 7937.692417
+# duration_ms 14128.437584

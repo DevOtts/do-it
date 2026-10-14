@@ -233,9 +233,10 @@ export function planRecord(ctx, runId, state, result) {
     }
   }
 
-  if (result.status === 'needs_human' && result.pending_human && result.pending_human.questions_path) {
+  // A BLOCKED slice (owner-gate) also routes its question into the owner pack (R4 T-R4-19, B10).
+  if ((result.status === 'needs_human' || result.status === 'blocked') && result.pending_human && result.pending_human.questions_path) {
     const qs = readQuestionsFile(ctx, result.pending_human.questions_path);
-    const midrun = !isDeploy && state.status === 'BUILDING' ? qs.filter((q) => q && q.kind !== 'owner-gate') : [];
+    const midrun = result.status === 'needs_human' && !isDeploy && state.status === 'BUILDING' ? qs.filter((q) => q && q.kind !== 'owner-gate') : [];
     if (midrun.length) {
       // G-8: no question to the owner mid-run; the recommendation decides and the end report shows it.
       for (const q of midrun) {

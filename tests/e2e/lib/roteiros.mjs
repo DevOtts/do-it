@@ -1,18 +1,46 @@
 // Stub-host roteiros. The stub plays the part of a pipeline: it runs the fixture's real commands
 // (node, git, sh), writes real evidence files and talks to the real spine. It makes no model call,
 // so results are labelled stub and are never VERIFIED evidence for a [REAL] case (G-3).
+import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { advance, copyTree, materialize, meterStub, seedFinishLine, startRun } from './fixture.mjs';
+import { escalateStalled, parkOverBudget, runReview } from './reviewloop.mjs';
 import { git, ledgerOf, readJson, record, sh, spine, stateOf, writeJson } from './spine.mjs';
-import { dispositionFor, parseFrontmatter } from '../../../scripts/measure-fixture.mjs';
 
 function evidenceLog(ctx, rel, command, r) {
   const f = path.join(ctx.workdir, rel);
   fs.mkdirSync(path.dirname(f), { recursive: true });
   fs.writeFileSync(f, '$ ' + command + '\n' + r.stdout + r.stderr + 'exit: ' + r.code + '\n');
   return rel;
+}
+
+// A record call the roteiro depends on must succeed: an unnoticed failed record would leave the ledger short.
+function recordOk(ctx, o) {
+  const rec = record(ctx, o);
+  assert.equal(rec.code, 0, 'record failed: ' + rec.stdout + rec.stderr);
+  return rec;
+}
+
+// The stub's own intake pass. It reads card frontmatter with its own parser and classifies with its own code,
+// not scripts/measure-fixture.mjs or the fixture's rules.json, so agreement with expected.json is evidence (finding 6).
+function readCard(file, text) {
+  const m = /^---\n([\s\S]*?)\n---/.exec(text);
+  const c = { file };
+  for (const line of (m ? m[1] : '').split('\n')) {
+    const [k, ...rest] = line.split(':');
+    if (!k.trim()) continue;
+    const v = rest.join(':').trim();
+    c[k.trim()] = v === 'true' ? true : v === 'false' ? false : v;
+  }
+  return c;
+}
+
+export function classifyCard(c) {
+  if (c.needs_decision === true) return 'PARKED';
+  if (c.needs_build === true) return 'BUILT';
+  return c.kind === 'idea' ? 'DEFERRED' : 'CLOSED';
 }
 
 function conclude(ctx) {
@@ -41,7 +69,7 @@ export const ROTEIROS = {
       verdicts.push({ row: row.id, verdict: r.code === 0 ? 'VERIFIED' : 'IMPLEMENTED-NOT-VERIFIED', evidence: r.code === 0 ? rel : null, real: false });
       artifacts.push({ path: rel, kind: 'log' });
     }
-    const rec = record(ctx, { verdicts, artifacts });
+    const rec = recordOk(ctx, { verdicts, artifacts });
     ctx.recorded = rec;
     advance(ctx, 'CONCLUDING');
     return conclude(ctx);
@@ -66,7 +94,7 @@ export const ROTEIROS = {
     meterStub(ctx, 'build-it', 500, 120);
     ctx.green = green.code;
     const ok = red.code !== 0 && green.code === 0;
-    const rec = record(ctx, {
+    const rec = recordOk(ctx, {
       verdicts: [{ row: meta.regression_row, verdict: ok ? 'VERIFIED' : 'IMPLEMENTED-NOT-VERIFIED', evidence: ok ? greenRel : null, real: false }],
       artifacts: [{ path: redRel, kind: 'log' }, { path: greenRel, kind: 'log' }],
     });
@@ -76,20 +104,18 @@ export const ROTEIROS = {
   },
 
   'weekly-drain'(ctx, variant) {
-    const rules = readJson(path.join(ctx.workdir, 'rules.json'));
     const cards = fs.readdirSync(path.join(ctx.workdir, 'backlog')).filter((f) => f.endsWith('.md')).sort()
-      .map((f) => ({ file: f, ...parseFrontmatter(fs.readFileSync(path.join(ctx.workdir, 'backlog', f), 'utf8')) }));
+      .map((f) => readCard(f, fs.readFileSync(path.join(ctx.workdir, 'backlog', f), 'utf8')));
     startRun(ctx, 'drain', 'Drain the weekly backlog');
     seedFinishLine(ctx, cards.map((c) => ({ id: c.id, kind: 'dod', text: c.file })));
     advance(ctx, 'BUILDING');
     const leaveOpen = variant && variant.startsWith('leave-open:') ? variant.slice('leave-open:'.length) : null;
     ctx.cards = cards;
-    ctx.rules = rules;
     ctx.pending = [];
     const table = [];
     fs.mkdirSync(path.join(ctx.workdir, 'archive'), { recursive: true });
     for (const c of cards) {
-      const disposition = dispositionFor(c, rules);
+      const disposition = classifyCard(c);
       table.push({ id: c.id, disposition });
       if (c.id === leaveOpen) { ctx.pending.push({ id: c.id, disposition }); continue; }
       drainRow(ctx, c, disposition);
@@ -105,6 +131,15 @@ export const ROTEIROS = {
 
   deploy(ctx, variant) {
     return runDeployVariant(ctx, variant);
+  },
+
+  // Variants are the fixture files: converge, converge-clean, stall, over-budget.
+  'review-loop'(ctx, variant) {
+    const d = runReview(ctx, variant || 'converge');
+    if (d.exit === 'STALLED') return escalateStalled(ctx, d).esc;
+    if (d.exit === 'OVER_BUDGET') return parkOverBudget(ctx, d).park;
+    advance(ctx, 'CONCLUDING');
+    return conclude(ctx);
   },
 };
 
@@ -127,7 +162,7 @@ export function drainRow(ctx, card, disposition) {
 
 export function finishDrain(ctx) {
   if (!ctx.drained || !ctx.drained.length) return null;
-  const rec = record(ctx, { verdicts: ctx.drained.map((d) => d.v), artifacts: ctx.drained.map((d) => d.art) });
+  const rec = recordOk(ctx, { verdicts: ctx.drained.map((d) => d.v), artifacts: ctx.drained.map((d) => d.art) });
   ctx.drained = [];
   git(ctx, ['add', '-A']);
   git(ctx, ['commit', '-q', '-m', 'drain: archive accounted cards']);
