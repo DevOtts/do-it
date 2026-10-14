@@ -5,3 +5,4 @@
 2026-10-14T21:10:12Z P2 merged @77b1f07: core/routing tests run on main
 2026-10-14T21:15:46Z R4 skeleton merged @61c6dc8
 2026-10-14T21:16:51Z H1 merged @9cde3d7: hosts/claude-code 29/29, all other suites green (spine35 h0 18 plugin 15+1skip routing 18)
+2026-10-14T21:21:32Z S2+S5 merged (conflict resolved by coordinator, spine rebuilt): spine 72/72, h0 18, h1 29, plugin 15+1skip, routing 18, r4 13 pass/2 FAIL (T-R4-04,06 -> fix-w1)
