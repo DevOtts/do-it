@@ -1,0 +1,154 @@
+TAP version 13
+# Subtest: T-P1-05 [REAL] real persona files carry the contract frontmatter
+ok 1 - T-P1-05 [REAL] real persona files carry the contract frontmatter
+  ---
+  duration_ms: 33.964375
+  type: 'test'
+  ...
+# Subtest: T-P1-06 missing frontmatter field
+ok 2 - T-P1-06 missing frontmatter field
+  ---
+  duration_ms: 27.832791
+  type: 'test'
+  ...
+# Subtest: T-P1-07 [REAL] persona tiers match RUN-POLICY in the real contract
+ok 3 - T-P1-07 [REAL] persona tiers match RUN-POLICY in the real contract
+  ---
+  duration_ms: 29.899125
+  type: 'test'
+  ...
+# Subtest: T-P1-08 persona tier drift
+ok 4 - T-P1-08 persona tier drift
+  ---
+  duration_ms: 25.826583
+  type: 'test'
+  ...
+# Subtest: T-P1-09 T1 without a written reason
+ok 5 - T-P1-09 T1 without a written reason
+  ---
+  duration_ms: 53.464042
+  type: 'test'
+  ...
+# Subtest: T-P1-19 persona changed after lint
+ok 6 - T-P1-19 persona changed after lint
+  ---
+  duration_ms: 81.711666
+  type: 'test'
+  ...
+# Subtest: capability words are neutral and the visual tier is runner-only
+ok 7 - capability words are neutral and the visual tier is runner-only
+  ---
+  duration_ms: 26.570375
+  type: 'test'
+  ...
+# Subtest: T-P1-14 [REAL] drain discovery verifies before building
+ok 8 - T-P1-14 [REAL] drain discovery verifies before building
+  ---
+  duration_ms: 28.749292
+  type: 'test'
+  ...
+# Subtest: T-P1-14 claim escaping the root is not proof
+ok 9 - T-P1-14 claim escaping the root is not proof
+  ---
+  duration_ms: 27.168708
+  type: 'test'
+  ...
+# Subtest: T-P1-15 one batched owner gate
+ok 10 - T-P1-15 one batched owner gate
+  ---
+  duration_ms: 1.310166
+  type: 'test'
+  ...
+# Subtest: T-P1-16 conclude refuses an unaccounted card
+ok 11 - T-P1-16 conclude refuses an unaccounted card
+  ---
+  duration_ms: 127.600292
+  type: 'test'
+  ...
+# Subtest: T-P1-17 only five dispositions exist
+ok 12 - T-P1-17 only five dispositions exist
+  ---
+  duration_ms: 26.576625
+  type: 'test'
+  ...
+# Subtest: T-P1-01 five presets load, unique step ids, no harness names
+ok 13 - T-P1-01 five presets load, unique step ids, no harness names
+  ---
+  duration_ms: 34.924167
+  type: 'test'
+  ...
+# Subtest: T-P1-02 step type outside the vocabulary
+ok 14 - T-P1-02 step type outside the vocabulary
+  ---
+  duration_ms: 26.736625
+  type: 'test'
+  ...
+# Subtest: T-P1-03 unknown step field fails, contract fields pass
+ok 15 - T-P1-03 unknown step field fails, contract fields pass
+  ---
+  duration_ms: 52.263917
+  type: 'test'
+  ...
+# Subtest: T-P1-04 [REAL] real presets reference real personas and earlier loop targets
+ok 16 - T-P1-04 [REAL] real presets reference real personas and earlier loop targets
+  ---
+  duration_ms: 55.472
+  type: 'test'
+  ...
+# Subtest: T-P1-18 reconcile cannot apply before approval
+ok 17 - T-P1-18 reconcile cannot apply before approval
+  ---
+  duration_ms: 98.768083
+  type: 'test'
+  ...
+# Subtest: lint stays inside the lane and repo root resolves
+ok 18 - lint stays inside the lane and repo root resolves
+  ---
+  duration_ms: 0.082208
+  type: 'test'
+  ...
+# Subtest: T-P1-10 five messages land on the right preset with zero model calls
+ok 19 - T-P1-10 five messages land on the right preset with zero model calls
+  ---
+  duration_ms: 2.145833
+  type: 'test'
+  ...
+# Subtest: T-P1-11 ambiguous message makes one T3 call and logs why
+ok 20 - T-P1-11 ambiguous message makes one T3 call and logs why
+  ---
+  duration_ms: 0.627542
+  type: 'test'
+  ...
+# Subtest: T-P1-12 unusable model answer goes to the owner
+ok 21 - T-P1-12 unusable model answer goes to the owner
+  ---
+  duration_ms: 0.917542
+  type: 'test'
+  ...
+# Subtest: T-P1-12 CLI without a model exits 2
+ok 22 - T-P1-12 CLI without a model exits 2
+  ---
+  duration_ms: 26.223375
+  type: 'test'
+  ...
+# Subtest: T-P1-13 message text cannot choose host, repo or tools
+ok 23 - T-P1-13 message text cannot choose host, repo or tools
+  ---
+  duration_ms: 0.5895
+  type: 'test'
+  ...
+# Subtest: model prompt carries the request as quoted data and a model cannot pick a non-preset
+ok 24 - model prompt carries the request as quoted data and a model cannot pick a non-preset
+  ---
+  duration_ms: 0.167875
+  type: 'test'
+  ...
+1..24
+# tests 24
+# suites 0
+# pass 24
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 319.628

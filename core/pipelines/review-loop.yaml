@@ -1,0 +1,22 @@
+pipeline: review-loop
+version: 1
+steps:
+  - id: roteiro
+    type: persona
+    persona: reviewer
+    skill: review-it
+  - id: run
+    type: persona
+    persona: runner
+    needs: [roteiro]
+  - id: fix
+    type: persona
+    persona: builder
+    consumes_previous: true
+  - id: verify
+    type: persona
+    persona: verifier
+    consumes_previous: true
+    loop_to: run
+    max_rounds: 3
+    on_limit: review-cap

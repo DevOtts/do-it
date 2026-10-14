@@ -1,0 +1,29 @@
+pipeline: investigate-fix
+version: 1
+steps:
+  - id: intake
+    type: persona
+    persona: intake
+    tier: T3
+  - id: investigate
+    type: persona
+    persona: intake
+    skill: iterate
+    consumes_previous: true
+  - id: root-cause
+    type: decision
+    gate: root-cause
+    ask: confirm the root cause before the fix is built
+    needs: [investigate]
+  - id: fix
+    type: persona
+    persona: builder
+    needs: [root-cause]
+  - id: verify
+    type: persona
+    persona: verifier
+    consumes_previous: true
+  - id: conclude
+    type: persona
+    persona: concluder
+    skill: conclude-it
