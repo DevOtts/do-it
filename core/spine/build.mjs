@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const srcDir = path.join(here, 'src');
 const schemaDir = path.join(here, '..', 'schemas');
+const driversDir = path.join(here, '..', 'drivers', 'secrets');
 const outFile = process.argv[2] ? path.resolve(process.argv[2]) : path.join(here, 'do-it.mjs');
 
 const IMPORT_RE = /^import\s[\s\S]*?\sfrom\s+(['"])([^'"]+)\1;?[ \t]*$/gm;
@@ -18,15 +19,20 @@ const nodeImports = new Set();
 const seen = new Map();
 const bodies = [];
 
-const files = fs.readdirSync(srcDir).filter((f) => f.endsWith('.mjs')).sort();
-for (const file of files) {
-  let text = fs.readFileSync(path.join(srcDir, file), 'utf8');
+// src modules first, then the secrets drivers (core/drivers/secrets), each sorted.
+const sources = [
+  ...fs.readdirSync(srcDir).filter((f) => f.endsWith('.mjs')).sort().map((f) => ({ file: f, full: path.join(srcDir, f) })),
+  ...(fs.existsSync(driversDir) ? fs.readdirSync(driversDir).filter((f) => f.endsWith('.mjs')).sort().map((f) => ({ file: 'drivers/secrets/' + f, full: path.join(driversDir, f) })) : []),
+];
+const files = sources.map((s) => s.file);
+for (const { file, full } of sources) {
+  let text = fs.readFileSync(full, 'utf8');
   text = text.replace(IMPORT_RE, (stmt, _q, spec) => {
     if (spec.startsWith('node:')) {
       nodeImports.add(stmt.replace(/\s+/g, ' ').trim().replace(/;?$/, ';'));
       return '';
     }
-    if (spec.startsWith('./')) return '';
+    if (spec.startsWith('./') || spec.startsWith('../')) return '';
     throw new Error(file + ': only node: and relative imports are allowed, found ' + spec);
   });
   if (/^export\s+(default|\{|\*)/m.test(text)) throw new Error(file + ': only named declaration exports are supported');

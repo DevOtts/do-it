@@ -190,7 +190,18 @@ export function planRecord(ctx, runId, state, result) {
     plan.extra.rows = mockRows;
   }
 
-  plan.events.push({ event: 'result_recorded', slice_id: result.slice_id || null, stage: result.stage, verdict: result.status });
+  const recordedEvent = { event: 'result_recorded', slice_id: result.slice_id || null, stage: result.stage, verdict: result.status };
+  if (result.next && typeof result.next.launch_prompt === 'string' && result.next.launch_prompt) {
+    recordedEvent.detail = { next_stage: result.next.stage || null, launch_prompt: result.next.launch_prompt.slice(0, 300) };
+  }
+  plan.events.push(recordedEvent);
+  if (result.resume && ((Array.isArray(result.resume.state_files) && result.resume.state_files.length) || result.resume.next_action)) {
+    next.handoff_state = {
+      ...(typeof state.handoff_state === 'object' && state.handoff_state ? state.handoff_state : {}),
+      state_files: Array.isArray(result.resume.state_files) ? result.resume.state_files : [],
+      next_action: result.resume.next_action || '',
+    };
+  }
 
   if (isDeploy) {
     const resolveLeg = (leg) => legResolved.get(leg.leg) || null;

@@ -1,0 +1,442 @@
+TAP version 13
+# Subtest: T-S1-01 G-1 tamper between write and read is detected [REAL]
+ok 1 - T-S1-01 G-1 tamper between write and read is detected [REAL]
+  ---
+  duration_ms: 166.005125
+  type: 'test'
+  ...
+# Subtest: T-S1-02 G-1 single writer, schema-valid state
+ok 2 - T-S1-02 G-1 single writer, schema-valid state
+  ---
+  duration_ms: 91.21825
+  type: 'test'
+  ...
+# Subtest: T-S1-03 interrupted write leaves previous state valid [REAL]
+ok 3 - T-S1-03 interrupted write leaves previous state valid [REAL]
+  ---
+  duration_ms: 195.739542
+  type: 'test'
+  ...
+# Subtest: T-S1-04 settings precedence: workspace beats global [REAL]
+ok 4 - T-S1-04 settings precedence: workspace beats global [REAL]
+  ---
+  duration_ms: 142.60125
+  type: 'test'
+  ...
+# Subtest: T-S1-05 settings precedence: run flag beats workspace
+ok 5 - T-S1-05 settings precedence: run flag beats workspace
+  ---
+  duration_ms: 91.087084
+  type: 'test'
+  ...
+# Subtest: T-S1-06 defaults when no files exist
+ok 6 - T-S1-06 defaults when no files exist
+  ---
+  duration_ms: 26.568166
+  type: 'test'
+  ...
+# Subtest: T-S1-07 invalid settings fail loudly
+ok 7 - T-S1-07 invalid settings fail loudly
+  ---
+  duration_ms: 35.839125
+  type: 'test'
+  ...
+# Subtest: T-S1-08 init is idempotent and writes no secrets [REAL]
+ok 8 - T-S1-08 init is idempotent and writes no secrets [REAL]
+  ---
+  duration_ms: 165.174042
+  type: 'test'
+  ...
+# Subtest: T-S1-09 doctor --migrate refuses with a run in flight (ruling D12)
+ok 9 - T-S1-09 doctor --migrate refuses with a run in flight (ruling D12)
+  ---
+  duration_ms: 57.622666
+  type: 'test'
+  ...
+# Subtest: T-S1-10 doctor --migrate copies, never moves [REAL]
+ok 10 - T-S1-10 doctor --migrate copies, never moves [REAL]
+  ---
+  duration_ms: 145.977958
+  type: 'test'
+  ...
+# Subtest: T-S1-11 doctor --install places the single file [REAL]
+ok 11 - T-S1-11 doctor --install places the single file [REAL]
+  ---
+  duration_ms: 334.789459
+  type: 'test'
+  ...
+# Subtest: T-S1-12 events and meter trace fields are frozen (ruling D17)
+ok 12 - T-S1-12 events and meter trace fields are frozen (ruling D17)
+  ---
+  duration_ms: 71.081875
+  type: 'test'
+  ...
+# Subtest: T-S1-13 G-12 core names no harness
+ok 13 - T-S1-13 G-12 core names no harness
+  ---
+  duration_ms: 1.89
+  type: 'test'
+  ...
+# Subtest: T-S1-14 worktree resolves the main checkout (home rule D7) [REAL]
+ok 14 - T-S1-14 worktree resolves the main checkout (home rule D7) [REAL]
+  ---
+  duration_ms: 277.1965
+  type: 'test'
+  ...
+# Subtest: T-S1-15 secret-looking values are rejected in settings (G-7)
+ok 15 - T-S1-15 secret-looking values are rejected in settings (G-7)
+  ---
+  duration_ms: 97.28775
+  type: 'test'
+  ...
+# Subtest: build is deterministic and imports only node: builtins
+ok 16 - build is deterministic and imports only node: builtins
+  ---
+  duration_ms: 59.781625
+  type: 'test'
+  ...
+# Subtest: T-S2-01 route ship request to feature, no model call [REAL]
+ok 17 - T-S2-01 route ship request to feature, no model call [REAL]
+  ---
+  duration_ms: 101.301542
+  type: 'test'
+  ...
+# Subtest: T-S2-02 route Portuguese bug report to investigate-fix
+ok 18 - T-S2-02 route Portuguese bug report to investigate-fix
+  ---
+  duration_ms: 2.129417
+  type: 'test'
+  ...
+# Subtest: T-S2-03 route backlog request to drain with size hint
+ok 19 - T-S2-03 route backlog request to drain with size hint
+  ---
+  duration_ms: 65.439542
+  type: 'test'
+  ...
+# Subtest: T-S2-04 ambiguous request asks the model once, logged
+ok 20 - T-S2-04 ambiguous request asks the model once, logged
+  ---
+  duration_ms: 120.521083
+  type: 'test'
+  ...
+# Subtest: T-S2-05 G-8 build refused without READINESS.json
+ok 21 - T-S2-05 G-8 build refused without READINESS.json
+  ---
+  duration_ms: 92.592208
+  type: 'test'
+  ...
+# Subtest: T-S2-06 G-8 build refused with an unresolved decision
+ok 22 - T-S2-06 G-8 build refused with an unresolved decision
+  ---
+  duration_ms: 119.50225
+  type: 'test'
+  ...
+# Subtest: T-S2-07 G-8 build starts when the verdict is clean [REAL]
+ok 23 - T-S2-07 G-8 build starts when the verdict is clean [REAL]
+  ---
+  duration_ms: 227.228334
+  type: 'test'
+  ...
+# Subtest: T-S2-08 mid-run question is decided by recommendation (G-8)
+ok 24 - T-S2-08 mid-run question is decided by recommendation (G-8)
+  ---
+  duration_ms: 114.354083
+  type: 'test'
+  ...
+# Subtest: T-S2-09 next returns waves in dependency order
+ok 25 - T-S2-09 next returns waves in dependency order
+  ---
+  duration_ms: 90.636334
+  type: 'test'
+  ...
+# Subtest: T-S2-10 board stays small and deterministic
+ok 26 - T-S2-10 board stays small and deterministic
+  ---
+  duration_ms: 72.54275
+  type: 'test'
+  ...
+# Subtest: T-S2-11 G-9 stop-gate refuses with the board, three times
+ok 27 - T-S2-11 G-9 stop-gate refuses with the board, three times
+  ---
+  duration_ms: 174.075959
+  type: 'test'
+  ...
+# Subtest: T-S2-12 G-9 fourth refusal parks and asks [REAL]
+ok 28 - T-S2-12 G-9 fourth refusal parks and asks [REAL]
+  ---
+  duration_ms: 382.195125
+  type: 'test'
+  ...
+# Subtest: T-S2-13 progress resets the stop-gate counter
+ok 29 - T-S2-13 progress resets the stop-gate counter
+  ---
+  duration_ms: 160.334667
+  type: 'test'
+  ...
+# Subtest: T-S2-14 stop is allowed when every row is terminal
+ok 30 - T-S2-14 stop is allowed when every row is terminal
+  ---
+  duration_ms: 112.408583
+  type: 'test'
+  ...
+# Subtest: T-S2-15 BLOCKED outcome parks only its own slice
+ok 31 - T-S2-15 BLOCKED outcome parks only its own slice
+  ---
+  duration_ms: 231.928666
+  type: 'test'
+  ...
+# Subtest: T-S2-16 FAILED then retry one tier up (CONTRACT M1)
+ok 32 - T-S2-16 FAILED then retry one tier up (CONTRACT M1)
+  ---
+  duration_ms: 506.278375
+  type: 'test'
+  ...
+# Subtest: T-S2-17 second failure ends in ESCALATED [REAL]
+ok 33 - T-S2-17 second failure ends in ESCALATED [REAL]
+  ---
+  duration_ms: 415.818792
+  type: 'test'
+  ...
+# Subtest: T-S2-18 readiness re-read catches an edit after the gate (adversarial)
+ok 34 - T-S2-18 readiness re-read catches an edit after the gate (adversarial)
+  ---
+  duration_ms: 97.503625
+  type: 'test'
+  ...
+# Subtest: yaml-lite accepts the subset and rejects the rest
+ok 35 - yaml-lite accepts the subset and rejects the rest
+  ---
+  duration_ms: 0.467667
+  type: 'test'
+  ...
+# Subtest: T-S3-01 G-2 VERIFIED with resolvable evidence is accepted [REAL]
+ok 36 - T-S3-01 G-2 VERIFIED with resolvable evidence is accepted [REAL]
+  ---
+  duration_ms: 193.89375
+  type: 'test'
+  ...
+# Subtest: T-S3-02 G-2 VERIFIED with empty evidence is refused
+ok 37 - T-S3-02 G-2 VERIFIED with empty evidence is refused
+  ---
+  duration_ms: 86.778708
+  type: 'test'
+  ...
+# Subtest: T-S3-03 G-2 VERIFIED with unresolvable evidence is refused
+ok 38 - T-S3-03 G-2 VERIFIED with unresolvable evidence is refused
+  ---
+  duration_ms: 67.367541
+  type: 'test'
+  ...
+# Subtest: T-S3-04 G-3 real row on a mock artifact is refused
+ok 39 - T-S3-04 G-3 real row on a mock artifact is refused
+  ---
+  duration_ms: 174.359959
+  type: 'test'
+  ...
+# Subtest: T-S3-05 G-3 unreachable target is IMPLEMENTED-NOT-VERIFIED
+ok 40 - T-S3-05 G-3 unreachable target is IMPLEMENTED-NOT-VERIFIED
+  ---
+  duration_ms: 145.817583
+  type: 'test'
+  ...
+# Subtest: T-S3-06 it-result/1 schema violations are named
+ok 41 - T-S3-06 it-result/1 schema violations are named
+  ---
+  duration_ms: 72.335584
+  type: 'test'
+  ...
+# Subtest: T-S3-07 exit_code must mirror status
+ok 42 - T-S3-07 exit_code must mirror status
+  ---
+  duration_ms: 56.402417
+  type: 'test'
+  ...
+# Subtest: T-S3-08 all six statuses record with the mirrored code
+ok 43 - T-S3-08 all six statuses record with the mirrored code
+  ---
+  duration_ms: 794.5405
+  type: 'test'
+  ...
+# Subtest: T-S3-09 result for another run is refused
+ok 44 - T-S3-09 result for another run is refused
+  ---
+  duration_ms: 59.2765
+  type: 'test'
+  ...
+# Subtest: T-S3-10 adversarial: evidence tampered between record and gate [REAL]
+ok 45 - T-S3-10 adversarial: evidence tampered between record and gate [REAL]
+  ---
+  duration_ms: 293.087792
+  type: 'test'
+  ...
+# Subtest: T-S3-11 G-13 conclude refuses an unaccounted row [REAL]
+ok 46 - T-S3-11 G-13 conclude refuses an unaccounted row [REAL]
+  ---
+  duration_ms: 257.08525
+  type: 'test'
+  ...
+# Subtest: T-S3-12 G-13 conclude refuses a live worker
+ok 47 - T-S3-12 G-13 conclude refuses a live worker
+  ---
+  duration_ms: 200.701417
+  type: 'test'
+  ...
+# Subtest: T-S3-13 G-13 conclude refuses a pending wake
+ok 48 - T-S3-13 G-13 conclude refuses a pending wake
+  ---
+  duration_ms: 182.2455
+  type: 'test'
+  ...
+# Subtest: T-S3-14 conclude closes when everything is accounted [REAL]
+ok 49 - T-S3-14 conclude closes when everything is accounted [REAL]
+  ---
+  duration_ms: 272.183875
+  type: 'test'
+  ...
+# Subtest: T-S3-15 multi-leg deploy ends in PARTIAL_FAILURE
+ok 50 - T-S3-15 multi-leg deploy ends in PARTIAL_FAILURE
+  ---
+  duration_ms: 122.2995
+  type: 'test'
+  ...
+# Subtest: T-S3-16 compensation ends in ROLLED_BACK
+ok 51 - T-S3-16 compensation ends in ROLLED_BACK
+  ---
+  duration_ms: 192.179709
+  type: 'test'
+  ...
+# Subtest: T-S3-17 failed rollback ends in ESCALATED
+ok 52 - T-S3-17 failed rollback ends in ESCALATED
+  ---
+  duration_ms: 145.913208
+  type: 'test'
+  ...
+# Subtest: T-S3-18 recovery: re-verify after ROLLED_BACK
+ok 53 - T-S3-18 recovery: re-verify after ROLLED_BACK
+  ---
+  duration_ms: 261.980875
+  type: 'test'
+  ...
+# Subtest: T-S3-19 recovery: crash between ledger and state, replay converges [REAL]
+ok 54 - T-S3-19 recovery: crash between ledger and state, replay converges [REAL]
+  ---
+  duration_ms: 252.176875
+  type: 'test'
+  ...
+# Subtest: T-S5-01 warn thresholds, absolute or percent (G-5, ruling D4)
+ok 55 - T-S5-01 warn thresholds, absolute or percent (G-5, ruling D4)
+  ---
+  duration_ms: 129.958125
+  type: 'test'
+  ...
+# Subtest: T-S5-02 block thresholds, whichever fires first
+ok 56 - T-S5-02 block thresholds, whichever fires first
+  ---
+  duration_ms: 322.394541
+  type: 'test'
+  ...
+# Subtest: T-S5-03 G-5 next is blocked until a handoff exists [REAL]
+ok 57 - T-S5-03 G-5 next is blocked until a handoff exists [REAL]
+  ---
+  duration_ms: 536.056583
+  type: 'test'
+  ...
+# Subtest: T-S5-04 handoff.md content and path validation [REAL]
+ok 58 - T-S5-04 handoff.md content and path validation [REAL]
+  ---
+  duration_ms: 915.447708
+  type: 'test'
+  ...
+# Subtest: T-S5-05 auto handoff succeeds through the continue hook
+ok 59 - T-S5-05 auto handoff succeeds through the continue hook
+  ---
+  duration_ms: 287.997208
+  type: 'test'
+  ...
+# Subtest: T-S5-06 HANDOFF_FAILED is an outcome and retry is allowed
+ok 60 - T-S5-06 HANDOFF_FAILED is an outcome and retry is allowed
+  ---
+  duration_ms: 471.177208
+  type: 'test'
+  ...
+# Subtest: T-S5-07 handoff cap of 5 ends in ESCALATED [REAL]
+ok 61 - T-S5-07 handoff cap of 5 ends in ESCALATED [REAL]
+  ---
+  duration_ms: 831.151375
+  type: 'test'
+  ...
+# Subtest: T-S5-08 no continue hook falls back to ask
+ok 62 - T-S5-08 no continue hook falls back to ask
+  ---
+  duration_ms: 142.760917
+  type: 'test'
+  ...
+# Subtest: T-S5-09 park on usage limit schedules a wake [REAL]
+ok 63 - T-S5-09 park on usage limit schedules a wake [REAL]
+  ---
+  duration_ms: 396.936
+  type: 'test'
+  ...
+# Subtest: T-S5-10 park without a wake capability says so
+ok 64 - T-S5-10 park without a wake capability says so
+  ---
+  duration_ms: 198.134292
+  type: 'test'
+  ...
+# Subtest: T-S5-11 resume from state in a fresh process [REAL]
+ok 65 - T-S5-11 resume from state in a fresh process [REAL]
+  ---
+  duration_ms: 424.82775
+  type: 'test'
+  ...
+# Subtest: T-S5-12 resume re-reads evidence (adversarial) [REAL]
+ok 66 - T-S5-12 resume re-reads evidence (adversarial) [REAL]
+  ---
+  duration_ms: 478.905958
+  type: 'test'
+  ...
+# Subtest: T-S5-13 resume before the reset time stays parked
+ok 67 - T-S5-13 resume before the reset time stays parked
+  ---
+  duration_ms: 192.547333
+  type: 'test'
+  ...
+# Subtest: T-S5-14 file and env secret drivers resolve [REAL]
+ok 68 - T-S5-14 file and env secret drivers resolve [REAL]
+  ---
+  duration_ms: 192.611083
+  type: 'test'
+  ...
+# Subtest: T-S5-15 missing credential is a plan-time blocker [REAL]
+ok 69 - T-S5-15 missing credential is a plan-time blocker [REAL]
+  ---
+  duration_ms: 219.684
+  type: 'test'
+  ...
+# Subtest: T-S5-16 aws-secrets-manager driver invokes the user CLI
+ok 70 - T-S5-16 aws-secrets-manager driver invokes the user CLI
+  ---
+  duration_ms: 213.552083
+  type: 'test'
+  ...
+# Subtest: T-S5-17 1password driver invokes the user CLI and never echoes its stderr
+ok 71 - T-S5-17 1password driver invokes the user CLI and never echoes its stderr
+  ---
+  duration_ms: 332.787792
+  type: 'test'
+  ...
+# Subtest: T-S5-18 G-7 values never reach any file or output (proof by grep) [REAL]
+ok 72 - T-S5-18 G-7 values never reach any file or output (proof by grep) [REAL]
+  ---
+  duration_ms: 456.62025
+  type: 'test'
+  ...
+1..72
+# tests 72
+# suites 0
+# pass 72
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 6828.853208

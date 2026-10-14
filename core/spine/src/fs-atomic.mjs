@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fail } from './errors.mjs';
+import { redactText } from './redact.mjs';
 
 export const TMP_PATTERN = /\.tmp-\d+-[0-9a-f]{8}$/;
 
@@ -13,7 +14,7 @@ export function atomicWrite(file, data, opts) {
   const tmp = path.join(dir, '.' + path.basename(file) + '.tmp-' + process.pid + '-' + crypto.randomBytes(4).toString('hex'));
   const fd = fs.openSync(tmp, 'w');
   try {
-    fs.writeSync(fd, data);
+    fs.writeSync(fd, typeof data === 'string' ? redactText(data) : data);
     fs.fsyncSync(fd);
   } finally {
     fs.closeSync(fd);
@@ -34,7 +35,7 @@ export function atomicWriteJson(file, value, opts) {
 
 export function appendLine(file, line) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.appendFileSync(file, line + '\n');
+  fs.appendFileSync(file, redactText(line) + '\n');
 }
 
 export function readJsonIfExists(file) {
