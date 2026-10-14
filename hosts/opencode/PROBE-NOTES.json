@@ -1,0 +1,9 @@
+{
+  "run_json_carries_usage": false,
+  "run_event_types": [
+    "step_start",
+    "text"
+  ],
+  "export_tokens_numeric": true,
+  "version": "2.0.18"
+}

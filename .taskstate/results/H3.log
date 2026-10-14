@@ -1,0 +1,121 @@
+TAP version 13
+# VERDICT T-H3-15 IMPLEMENTED-NOT-VERIFIED model call; set DOIT_REAL_CALLS=1
+# Subtest: T-H3-01 capabilities.json is re-probed against the real binary
+ok 1 - T-H3-01 capabilities.json is re-probed against the real binary
+  ---
+  duration_ms: 452.993958
+  type: 'test'
+  ...
+# Subtest: T-H3-02 the v2 flags the adapter uses exist in the real help
+ok 2 - T-H3-02 the v2 flags the adapter uses exist in the real help
+  ---
+  duration_ms: 360.2055
+  type: 'test'
+  ...
+# Subtest: T-H3-03 real cost listing parses
+ok 3 - T-H3-03 real cost listing parses
+  ---
+  duration_ms: 214.453458
+  type: 'test'
+  ...
+# Subtest: T-H3-04 tier routing is built from the real model list
+ok 4 - T-H3-04 tier routing is built from the real model list
+  ---
+  duration_ms: 248.6795
+  type: 'test'
+  ...
+# Subtest: T-H3-05 spawn builds the exact opencode command
+ok 5 - T-H3-05 spawn builds the exact opencode command
+  ---
+  duration_ms: 10.966708
+  type: 'test'
+  ...
+# Subtest: T-H3-06 DeepSeek routes when listed, fails clearly when not
+ok 6 - T-H3-06 DeepSeek routes when listed, fails clearly when not
+  ---
+  duration_ms: 25.309959
+  type: 'test'
+  ...
+# Subtest: T-H3-07 JS plugin records events and never blocks
+ok 7 - T-H3-07 JS plugin records events and never blocks
+  ---
+  duration_ms: 2.332083
+  type: 'test'
+  ...
+# Subtest: T-H3-08 stop-gate is a conductor checklist
+ok 8 - T-H3-08 stop-gate is a conductor checklist
+  ---
+  duration_ms: 457.035958
+  type: 'test'
+  ...
+# Subtest: T-H3-09 ask is markdown
+ok 9 - T-H3-09 ask is markdown
+  ---
+  duration_ms: 0.587583
+  type: 'test'
+  ...
+# Subtest: T-H3-10 no scheduler: park
+ok 10 - T-H3-10 no scheduler: park
+  ---
+  duration_ms: 0.4865
+  type: 'test'
+  ...
+# Subtest: T-H3-11 meter combines stats cost and exported tokens
+ok 11 - T-H3-11 meter combines stats cost and exported tokens
+  ---
+  duration_ms: 0.2305
+  type: 'test'
+  ...
+# Subtest: T-H3-12 missing usage is unknown, never zero
+ok 12 - T-H3-12 missing usage is unknown, never zero
+  ---
+  duration_ms: 0.122292
+  type: 'test'
+  ...
+# Subtest: T-H3-13 config preflight reports key paths, not values
+ok 13 - T-H3-13 config preflight reports key paths, not values
+  ---
+  duration_ms: 24.977625
+  type: 'test'
+  ...
+# Subtest: T-H3-14 headless start fails on the real binary: HANDOFF_FAILED
+ok 14 - T-H3-14 headless start fails on the real binary: HANDOFF_FAILED
+  ---
+  duration_ms: 1219.830333
+  type: 'test'
+  ...
+# Subtest: T-H3-15 real spawn of a trivial prompt
+ok 15 - T-H3-15 real spawn of a trivial prompt
+  ---
+  duration_ms: 0.446625
+  type: 'test'
+  ...
+# Subtest: T-H3-16 recovery after the opencode child dies mid-spawn
+ok 16 - T-H3-16 recovery after the opencode child dies mid-spawn
+  ---
+  duration_ms: 191.42475
+  type: 'test'
+  ...
+# Subtest: T-H3-17 cap reached: ESCALATED
+ok 17 - T-H3-17 cap reached: ESCALATED
+  ---
+  duration_ms: 311.500958
+  type: 'test'
+  ...
+# Subtest: T-H3-18 conformance suite on the opencode adapter
+ok 18 - T-H3-18 conformance suite on the opencode adapter
+  ---
+  duration_ms: 446.280167
+  type: 'test'
+  ...
+1..18
+# tests 18
+# suites 0
+# pass 18
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4013.566959
+---- real model call (DOIT_REAL_CALLS=1, T-H3-15 only)
+VERDICT T-H3-15 VERIFIED session ses_ec3b01285ffeQJq5WWFvXvRhSd; run json carries usage: false; export tokens_in 26113

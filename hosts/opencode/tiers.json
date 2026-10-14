@@ -1,0 +1,13 @@
+{
+  "schema": "do-it-tiers/1",
+  "host": "opencode",
+  "source": "generated",
+  "generated_from": "opencode models",
+  "asked_at_init": false,
+  "tiers": {
+    "T1": "openrouter/~anthropic/claude-opus-latest",
+    "T2": "openrouter/~anthropic/claude-sonnet-latest",
+    "T3": "openrouter/~anthropic/claude-haiku-latest"
+  },
+  "unknown": []
+}
