@@ -7,3 +7,4 @@
 2026-10-14T21:16:51Z H1 merged @9cde3d7: hosts/claude-code 29/29, all other suites green (spine35 h0 18 plugin 15+1skip routing 18)
 2026-10-14T21:21:32Z S2+S5 merged (conflict resolved by coordinator, spine rebuilt): spine 72/72, h0 18, h1 29, plugin 15+1skip, routing 18, r4 13 pass/2 FAIL (T-R4-04,06 -> fix-w1)
 2026-10-14T21:23:08Z fix-w1 merged @641aa37: r4 15 pass 0 fail 11 skip; spine 72
+2026-10-14T21:23:59Z N2 merged @944191e 18/18 (T-N2-04 INV-NOT-VERIFIED: no Engine staging probed; retry in W3 with .secrets access, user authorized)
