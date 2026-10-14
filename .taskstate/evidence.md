@@ -4,3 +4,4 @@
 2026-10-14T21:09:03Z W0 integration @fcba7a2 merged: spine 35, hosts/_interface 18, plugin 16 all pass 0 fail 0 skip
 2026-10-14T21:10:12Z P2 merged @77b1f07: core/routing tests run on main
 2026-10-14T21:15:46Z R4 skeleton merged @61c6dc8
+2026-10-14T21:16:51Z H1 merged @9cde3d7: hosts/claude-code 29/29, all other suites green (spine35 h0 18 plugin 15+1skip routing 18)
