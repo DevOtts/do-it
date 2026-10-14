@@ -1,0 +1,47 @@
+{
+  "$id": "do-it-state/1",
+  "title": "do-it run state (written only by the spine)",
+  "type": "object",
+  "required": ["schema", "run_id", "preset", "request", "status", "size", "host", "stage", "slices", "gates", "handoffs", "stop_refusals", "review", "created_at", "updated_at"],
+  "properties": {
+    "schema": { "const": "do-it-state/1" },
+    "run_id": { "type": "string", "minLength": 1 },
+    "preset": { "type": ["string", "null"] },
+    "request": { "type": "string" },
+    "status": { "enum": ["INTAKE", "PLANNING", "AWAIT_RATIFY", "BUILDING", "VERIFYING", "REVIEWING", "FIXING", "DEPLOYING", "PROVING", "CONCLUDING", "DONE", "NEEDS_HUMAN", "PARKED", "BLOCKED", "FAILED", "PARTIAL_FAILURE", "ROLLED_BACK", "ESCALATED"] },
+    "size": { "type": ["integer", "string", "null"] },
+    "host": { "type": ["string", "null"] },
+    "stage": { "type": ["string", "null"] },
+    "slices": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "status"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "lane": { "type": ["string", "null"] },
+          "tier": { "type": ["string", "null"] },
+          "status": { "type": "string" },
+          "attempts": { "type": "integer", "minimum": 0 },
+          "escalations": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "gates": { "type": "object" },
+    "handoffs": { "type": "integer", "minimum": 0 },
+    "stop_refusals": { "type": "integer", "minimum": 0 },
+    "review": {
+      "type": "object",
+      "required": ["round", "exit"],
+      "properties": { "round": { "type": "integer", "minimum": 0 }, "exit": { "type": ["string", "null"] } }
+    },
+    "created_at": { "type": "string", "minLength": 1 },
+    "updated_at": { "type": "string", "minLength": 1 },
+    "ceiling": { "type": ["string", "object", "null"] },
+    "park": { "type": ["object", "null"] },
+    "handoff_state": { "type": ["string", "object", "null"] },
+    "run_verdict": { "enum": ["DONE_ALL_VERIFIED", "DONE_WITH_RESIDUALS", "BLOCKED", "NEEDS_RESET", "USAGE_LIMIT", null] },
+    "deploy": { "type": ["object", "null"] },
+    "last_journal": { "type": ["string", "null"] }
+  }
+}

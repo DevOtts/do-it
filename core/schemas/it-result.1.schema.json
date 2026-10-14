@@ -1,0 +1,60 @@
+{
+  "$id": "it-result/1",
+  "title": "Result file every stage writes as its last act",
+  "type": "object",
+  "required": ["schema", "stage", "run_id", "status", "exit_code"],
+  "properties": {
+    "schema": { "const": "it-result/1" },
+    "stage": { "enum": ["prompt-it", "plan-it", "build-it", "review-it", "deploy-it", "conclude-it", "reconcile-it"] },
+    "run_id": { "type": "string", "minLength": 1 },
+    "slice_id": { "type": ["string", "null"] },
+    "version": { "type": ["string", "null"] },
+    "head_sha": { "type": ["string", "null"] },
+    "status": { "enum": ["ok", "needs_human", "blocked", "failed", "context_reset", "usage_limit"] },
+    "exit_code": { "type": "integer", "minimum": 0, "maximum": 3 },
+    "verdicts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["row", "verdict"],
+        "properties": {
+          "row": { "type": "string", "minLength": 1 },
+          "verdict": { "enum": ["VERIFIED", "IMPLEMENTED-NOT-VERIFIED", "BLOCKED"] },
+          "evidence": { "type": ["string", "null"] },
+          "real": { "type": "boolean" }
+        }
+      }
+    },
+    "run_verdict": { "enum": ["DONE_ALL_VERIFIED", "DONE_WITH_RESIDUALS", "BLOCKED", "NEEDS_RESET", "USAGE_LIMIT", null] },
+    "next": { "type": ["object", "null"] },
+    "pending_human": { "type": ["object", "null"] },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path"],
+        "properties": {
+          "path": { "type": "string" },
+          "kind": { "type": ["string", "null"] },
+          "sha256": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "resume": { "type": ["object", "null"] },
+    "tokens": { "type": ["object", "null"] },
+    "rollback": { "type": "boolean" },
+    "legs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["leg", "state"],
+        "properties": {
+          "leg": { "type": "string", "minLength": 1 },
+          "state": { "enum": ["DEPLOYED_VERIFIED", "DEPLOYED_UNVERIFIED", "HELD", "FAILED", "NEEDS_HUMAN", "ROLLED_BACK", "ROLLBACK_FAILED"] },
+          "evidence": { "type": ["string", "null"] },
+          "compensate": { "type": ["string", "object", "array", "null"] }
+        }
+      }
+    }
+  }
+}

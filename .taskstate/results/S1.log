@@ -1,0 +1,106 @@
+TAP version 13
+# Subtest: T-S1-01 G-1 tamper between write and read is detected [REAL]
+ok 1 - T-S1-01 G-1 tamper between write and read is detected [REAL]
+  ---
+  duration_ms: 137.548917
+  type: 'test'
+  ...
+# Subtest: T-S1-02 G-1 single writer, schema-valid state
+ok 2 - T-S1-02 G-1 single writer, schema-valid state
+  ---
+  duration_ms: 45.789333
+  type: 'test'
+  ...
+# Subtest: T-S1-03 interrupted write leaves previous state valid [REAL]
+ok 3 - T-S1-03 interrupted write leaves previous state valid [REAL]
+  ---
+  duration_ms: 140.709916
+  type: 'test'
+  ...
+# Subtest: T-S1-04 settings precedence: workspace beats global [REAL]
+ok 4 - T-S1-04 settings precedence: workspace beats global [REAL]
+  ---
+  duration_ms: 87.249375
+  type: 'test'
+  ...
+# Subtest: T-S1-05 settings precedence: run flag beats workspace
+ok 5 - T-S1-05 settings precedence: run flag beats workspace
+  ---
+  duration_ms: 36.05225
+  type: 'test'
+  ...
+# Subtest: T-S1-06 defaults when no files exist
+ok 6 - T-S1-06 defaults when no files exist
+  ---
+  duration_ms: 22.928625
+  type: 'test'
+  ...
+# Subtest: T-S1-07 invalid settings fail loudly
+ok 7 - T-S1-07 invalid settings fail loudly
+  ---
+  duration_ms: 24.169291
+  type: 'test'
+  ...
+# Subtest: T-S1-08 init is idempotent and writes no secrets [REAL]
+ok 8 - T-S1-08 init is idempotent and writes no secrets [REAL]
+  ---
+  duration_ms: 121.112209
+  type: 'test'
+  ...
+# Subtest: T-S1-09 doctor --migrate refuses with a run in flight (ruling D12)
+ok 9 - T-S1-09 doctor --migrate refuses with a run in flight (ruling D12)
+  ---
+  duration_ms: 44.053667
+  type: 'test'
+  ...
+# Subtest: T-S1-10 doctor --migrate copies, never moves [REAL]
+ok 10 - T-S1-10 doctor --migrate copies, never moves [REAL]
+  ---
+  duration_ms: 114.257583
+  type: 'test'
+  ...
+# Subtest: T-S1-11 doctor --install places the single file [REAL]
+ok 11 - T-S1-11 doctor --install places the single file [REAL]
+  ---
+  duration_ms: 234.6855
+  type: 'test'
+  ...
+# Subtest: T-S1-12 events and meter trace fields are frozen (ruling D17)
+ok 12 - T-S1-12 events and meter trace fields are frozen (ruling D17)
+  ---
+  duration_ms: 51.07425
+  type: 'test'
+  ...
+# Subtest: T-S1-13 G-12 core names no harness
+ok 13 - T-S1-13 G-12 core names no harness
+  ---
+  duration_ms: 1.093416
+  type: 'test'
+  ...
+# Subtest: T-S1-14 worktree resolves the main checkout (home rule D7) [REAL]
+ok 14 - T-S1-14 worktree resolves the main checkout (home rule D7) [REAL]
+  ---
+  duration_ms: 170.891792
+  type: 'test'
+  ...
+# Subtest: T-S1-15 secret-looking values are rejected in settings (G-7)
+ok 15 - T-S1-15 secret-looking values are rejected in settings (G-7)
+  ---
+  duration_ms: 46.432667
+  type: 'test'
+  ...
+# Subtest: build is deterministic and imports only node: builtins
+ok 16 - build is deterministic and imports only node: builtins
+  ---
+  duration_ms: 56.608
+  type: 'test'
+  ...
+1..16
+# tests 16
+# suites 0
+# pass 16
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1408.943833

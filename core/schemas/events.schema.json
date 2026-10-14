@@ -1,0 +1,21 @@
+{
+  "$id": "do-it-event/1",
+  "title": "events.jsonl row (trace fields frozen for v2 exporters)",
+  "type": "object",
+  "required": ["ts", "run_id", "slice_id", "stage", "persona", "tier", "model", "host", "event", "parent_id", "verdict"],
+  "properties": {
+    "ts": { "type": "string", "minLength": 1 },
+    "run_id": { "type": "string", "minLength": 1 },
+    "slice_id": { "type": ["string", "null"] },
+    "stage": { "type": ["string", "null"] },
+    "persona": { "type": ["string", "null"] },
+    "tier": { "type": ["string", "null"] },
+    "model": { "type": ["string", "null"] },
+    "host": { "type": ["string", "null"] },
+    "event": { "type": "string", "minLength": 1 },
+    "parent_id": { "type": ["string", "null"] },
+    "verdict": { "type": ["string", "null"] },
+    "detail": { "type": ["object", "string", "null"] }
+  },
+  "additionalProperties": false
+}
