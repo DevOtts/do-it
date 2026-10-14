@@ -1,0 +1,6 @@
+{
+  "id": "schema-caps-valid",
+  "title": "Capabilities file validates against the schema",
+  "needs": null,
+  "handler": "schema-caps-valid"
+}

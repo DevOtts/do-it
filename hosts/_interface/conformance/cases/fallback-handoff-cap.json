@@ -1,0 +1,6 @@
+{
+  "id": "fallback-handoff-cap",
+  "title": "Headless start fails: HANDOFF_FAILED x4, ESCALATED at 5",
+  "needs": null,
+  "handler": "fallback-handoff-cap"
+}

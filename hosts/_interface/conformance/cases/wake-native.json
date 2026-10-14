@@ -1,0 +1,6 @@
+{
+  "id": "wake-native",
+  "title": "Native wake writes a timer",
+  "needs": "wake.native",
+  "handler": "wake-native"
+}

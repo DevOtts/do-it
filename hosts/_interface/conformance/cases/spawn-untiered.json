@@ -1,0 +1,6 @@
+{
+  "id": "spawn-untiered",
+  "title": "Spawn with no tier is refused (G-4)",
+  "needs": null,
+  "handler": "spawn-untiered"
+}

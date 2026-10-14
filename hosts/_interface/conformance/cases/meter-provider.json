@@ -1,0 +1,6 @@
+{
+  "id": "meter-provider",
+  "title": "Provider usage is passed through",
+  "needs": "meter.provider_usage",
+  "handler": "meter-provider"
+}

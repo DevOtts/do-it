@@ -1,0 +1,6 @@
+{
+  "id": "continue-headless",
+  "title": "Headless continue succeeds",
+  "needs": "continue.headless",
+  "handler": "continue-headless"
+}

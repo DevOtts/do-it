@@ -1,0 +1,6 @@
+{
+  "id": "schema-adapter-valid",
+  "title": "Adapter manifest validates against the schema",
+  "needs": null,
+  "handler": "schema-adapter-valid"
+}

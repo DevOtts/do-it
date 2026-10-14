@@ -1,0 +1,12 @@
+{
+  "host": "fake",
+  "version_probed": "1.0.0",
+  "spawn": { "native": true, "per_spawn_model": true, "max_parallel": 3 },
+  "ask": { "native": true, "max_questions": 4 },
+  "continue": { "headless": true },
+  "wake": { "native": true },
+  "meter": { "provider_usage": true, "cache_fields": true },
+  "hooks": { "stop_gate": true },
+  "isolation": ["worktree"],
+  "unknown": []
+}

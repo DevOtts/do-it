@@ -1,0 +1,6 @@
+{
+  "id": "fallback-continue",
+  "title": "Without headless start: handoff.mode ask plus one-line command",
+  "needs": null,
+  "handler": "fallback-continue"
+}

@@ -1,0 +1,6 @@
+{
+  "id": "ask-native",
+  "title": "Native question call answers a small pack",
+  "needs": "ask.native",
+  "handler": "ask-native"
+}

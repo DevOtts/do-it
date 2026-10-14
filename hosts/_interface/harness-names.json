@@ -1,0 +1,14 @@
+{
+  "names": ["claude", "codex", "opencode", "hermes", "openclaw"],
+  "allow_in_core": ["anthropic", "openai", "deepseek"],
+  "exclude_dirs": ["node_modules", ".git", "test", "tests", "__tests__"],
+  "scan_extensions": [".mjs", ".js", ".cjs", ".ts", ".json", ".yaml", ".yml", ".sh", ".md"],
+  "g14": {
+    "names": ["hermes", "openclaw"],
+    "content_scan_dirs": ["hosts", "core", "tests", "scripts", "plugins", ".claude-plugin"],
+    "content_scan_extensions": [".mjs", ".js", ".cjs", ".ts", ".json", ".yaml", ".yml", ".sh"],
+    "path_skip_dirs": ["node_modules", ".git", ".worktrees"],
+    "exclude_files": ["hosts/_interface/harness-names.json"],
+    "exclude_dirs": ["hosts/_interface/checks"]
+  }
+}

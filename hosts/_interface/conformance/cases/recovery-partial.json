@@ -1,0 +1,6 @@
+{
+  "id": "recovery-partial",
+  "title": "Process killed mid-spawn: partial listed, resume re-runs once",
+  "needs": null,
+  "handler": "recovery-partial"
+}

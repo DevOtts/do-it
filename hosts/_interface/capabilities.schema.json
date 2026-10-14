@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "do-it host capabilities",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["host", "version_probed", "spawn", "ask", "continue", "wake", "meter", "hooks", "isolation", "unknown"],
+  "properties": {
+    "host": { "type": "string", "minLength": 1 },
+    "version_probed": { "type": "string", "minLength": 1 },
+    "spawn": {
+      "type": "object", "additionalProperties": false,
+      "required": ["native", "per_spawn_model", "max_parallel"],
+      "properties": {
+        "native": { "type": "boolean" },
+        "per_spawn_model": { "type": "boolean" },
+        "max_parallel": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "ask": {
+      "type": "object", "additionalProperties": false,
+      "required": ["native", "max_questions"],
+      "properties": {
+        "native": { "type": "boolean" },
+        "max_questions": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "continue": {
+      "type": "object", "additionalProperties": false,
+      "required": ["headless"],
+      "properties": { "headless": { "type": "boolean" } }
+    },
+    "wake": {
+      "type": "object", "additionalProperties": false,
+      "required": ["native"],
+      "properties": { "native": { "type": "boolean" } }
+    },
+    "meter": {
+      "type": "object", "additionalProperties": false,
+      "required": ["provider_usage", "cache_fields"],
+      "properties": {
+        "provider_usage": { "type": "boolean" },
+        "cache_fields": { "type": "boolean" }
+      }
+    },
+    "hooks": {
+      "type": "object", "additionalProperties": false,
+      "required": ["stop_gate"],
+      "properties": { "stop_gate": { "type": "boolean" } }
+    },
+    "isolation": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "unknown": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+  }
+}
