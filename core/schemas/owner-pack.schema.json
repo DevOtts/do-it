@@ -1,0 +1,29 @@
+{
+  "$id": "do-it-owner-pack/1",
+  "title": "owner-pack.json: the single set of questions for the human",
+  "type": "object",
+  "required": ["pack_id", "run_id", "questions", "created_at"],
+  "properties": {
+    "pack_id": { "type": ["string", "null"] },
+    "run_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "minLength": 1 },
+    "questions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["n", "kind", "text", "options", "recommendation", "default", "reversible"],
+        "properties": {
+          "n": { "type": "integer", "minimum": 1 },
+          "kind": { "type": "string", "minLength": 1 },
+          "text": { "type": "string", "minLength": 1 },
+          "options": { "type": "array", "items": { "type": "string" } },
+          "recommendation": { "type": ["string", "null"] },
+          "default": { "type": ["string", "null"] },
+          "reversible": { "type": "boolean" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -7,7 +7,177 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const EMBEDDED_SCHEMAS = {"do-it-state.1.schema.json":{"$id":"do-it-state/1","title":"do-it run state (written only by the spine)","type":"object","required":["schema","run_id","preset","request","status","size","host","stage","slices","gates","handoffs","stop_refusals","review","created_at","updated_at"],"properties":{"schema":{"const":"do-it-state/1"},"run_id":{"type":"string","minLength":1},"preset":{"type":["string","null"]},"request":{"type":"string"},"status":{"enum":["INTAKE","PLANNING","AWAIT_RATIFY","BUILDING","VERIFYING","REVIEWING","FIXING","DEPLOYING","PROVING","CONCLUDING","DONE","NEEDS_HUMAN","PARKED","BLOCKED","FAILED","PARTIAL_FAILURE","ROLLED_BACK","ESCALATED"]},"size":{"type":["integer","string","null"]},"host":{"type":["string","null"]},"stage":{"type":["string","null"]},"slices":{"type":"array","items":{"type":"object","required":["id","status"],"properties":{"id":{"type":"string","minLength":1},"lane":{"type":["string","null"]},"tier":{"type":["string","null"]},"status":{"type":"string"},"attempts":{"type":"integer","minimum":0},"escalations":{"type":"integer","minimum":0}}}},"gates":{"type":"object"},"handoffs":{"type":"integer","minimum":0},"stop_refusals":{"type":"integer","minimum":0},"review":{"type":"object","required":["round","exit"],"properties":{"round":{"type":"integer","minimum":0},"exit":{"type":["string","null"]}}},"created_at":{"type":"string","minLength":1},"updated_at":{"type":"string","minLength":1},"ceiling":{"type":["string","object","null"]},"park":{"type":["object","null"]},"handoff_state":{"type":["string","object","null"]},"run_verdict":{"enum":["DONE_ALL_VERIFIED","DONE_WITH_RESIDUALS","BLOCKED","NEEDS_RESET","USAGE_LIMIT",null]},"deploy":{"type":["object","null"]},"last_journal":{"type":["string","null"]}}},"events.schema.json":{"$id":"do-it-event/1","title":"events.jsonl row (trace fields frozen for v2 exporters)","type":"object","required":["ts","run_id","slice_id","stage","persona","tier","model","host","event","parent_id","verdict"],"properties":{"ts":{"type":"string","minLength":1},"run_id":{"type":"string","minLength":1},"slice_id":{"type":["string","null"]},"stage":{"type":["string","null"]},"persona":{"type":["string","null"]},"tier":{"type":["string","null"]},"model":{"type":["string","null"]},"host":{"type":["string","null"]},"event":{"type":"string","minLength":1},"parent_id":{"type":["string","null"]},"verdict":{"type":["string","null"]},"detail":{"type":["object","string","null"]}},"additionalProperties":false},"finish-line.schema.json":{"$id":"do-it-finish-line/1","title":"finish-line.json: rows that must all become terminal","type":"object","required":["rows"],"properties":{"rows":{"type":"array","items":{"type":"object","required":["id","kind","state"],"properties":{"id":{"type":"string","minLength":1},"kind":{"enum":["wave","package","dod"]},"state":{"enum":["OPEN","DONE","PARKED","BLOCKED"]},"evidence":{"type":["string","null"]},"owner_question":{"type":["string","null"]},"reason":{"type":["string","null"]},"archived_to":{"type":["string","null"]}}}}}},"it-result.1.schema.json":{"$id":"it-result/1","title":"Result file every stage writes as its last act","type":"object","required":["schema","stage","run_id","status","exit_code"],"properties":{"schema":{"const":"it-result/1"},"stage":{"enum":["prompt-it","plan-it","build-it","review-it","deploy-it","conclude-it","reconcile-it"]},"run_id":{"type":"string","minLength":1},"slice_id":{"type":["string","null"]},"version":{"type":["string","null"]},"head_sha":{"type":["string","null"]},"status":{"enum":["ok","needs_human","blocked","failed","context_reset","usage_limit"]},"exit_code":{"type":"integer","minimum":0,"maximum":3},"verdicts":{"type":"array","items":{"type":"object","required":["row","verdict"],"properties":{"row":{"type":"string","minLength":1},"verdict":{"enum":["VERIFIED","IMPLEMENTED-NOT-VERIFIED","BLOCKED"]},"evidence":{"type":["string","null"]},"real":{"type":"boolean"}}}},"reason":{"type":["string","null"]},"run_verdict":{"enum":["DONE_ALL_VERIFIED","DONE_WITH_RESIDUALS","BLOCKED","NEEDS_RESET","USAGE_LIMIT",null]},"next":{"type":["object","null"]},"pending_human":{"type":["object","null"]},"artifacts":{"type":"array","items":{"type":"object","required":["path"],"properties":{"path":{"type":"string"},"kind":{"type":["string","null"]},"sha256":{"type":["string","null"]}}}},"resume":{"type":["object","null"]},"tokens":{"type":["object","null"]},"rollback":{"type":"boolean"},"legs":{"type":"array","items":{"type":"object","required":["leg","state"],"properties":{"leg":{"type":"string","minLength":1},"state":{"enum":["DEPLOYED_VERIFIED","DEPLOYED_UNVERIFIED","HELD","FAILED","NEEDS_HUMAN","ROLLED_BACK","ROLLBACK_FAILED"]},"evidence":{"type":["string","null"]},"compensate":{"type":["string","object","array","null"]}}}}}},"ledger.schema.json":{"$id":"do-it-ledger/1","title":"ledger.json: latest verdict and evidence per DoD row","type":"object","required":["schema","run_id","rows"],"properties":{"schema":{"const":"do-it-ledger/1"},"run_id":{"type":"string","minLength":1},"rows":{"type":"array","items":{"type":"object","required":["row","verdict","evidence","evidence_sha256","real","recorded_at","updated_at"],"properties":{"row":{"type":"string","minLength":1},"verdict":{"enum":["VERIFIED","IMPLEMENTED-NOT-VERIFIED","BLOCKED"]},"evidence":{"type":["string","null"]},"evidence_path":{"type":["string","null"]},"evidence_sha256":{"type":["string","null"]},"real":{"type":"boolean"},"reason":{"type":["string","null"]},"recorded_at":{"type":"string","minLength":1},"updated_at":{"type":"string","minLength":1}}}}}},"readiness.schema.json":{"$id":"do-it-readiness/1","title":"plan/READINESS.json: the verdict that lets a build start (G-8)","type":"object","required":["decisions","preflight"],"properties":{"decisions":{"type":["array","object"]},"preflight":{"type":"object","required":["passed"],"properties":{"passed":{"type":"boolean"}}},"credentials":{"type":"array","items":{"type":"string","minLength":1}},"owner_dependent_slices":{"type":"integer","minimum":0},"slices":{"type":"array","items":{"type":"object","required":["id"],"properties":{"id":{"type":"string","minLength":1},"lane":{"type":["string","null"]},"tier":{"type":["string","null"]},"class":{"enum":["deterministic","gather","implementation","hard",null]},"depends_on":{"type":"array","items":{"type":"string"}},"depends_on_owner_answer":{"type":"boolean"}}}}}},"settings.schema.json":{"$id":"do-it-settings/1","title":"do-it settings (workspace, global or merged)","type":"object","additionalProperties":false,"properties":{"version":{"const":1},"interaction":{"type":"object","additionalProperties":false,"properties":{"owner_pack":{"enum":["auto","native","html","markdown"]},"fallback":{"type":"array","items":{"enum":["native","html","markdown"]}}}},"host":{"type":"object","additionalProperties":false,"properties":{"driver":{"type":"string","minLength":1},"alias":{"type":["string","null"]}}},"isolation":{"type":"object","additionalProperties":false,"properties":{"driver":{"type":"string","minLength":1}}},"state":{"type":"object","additionalProperties":false,"properties":{"backend":{"type":"string","minLength":1},"engine":{"type":"object","additionalProperties":false,"properties":{"blobs":{"enum":["rows","r2","fs-mirror"]}}}}},"secrets":{"type":"object","additionalProperties":false,"properties":{"provider":{"enum":["file","env","aws-secrets-manager","onepassword","1password"]},"ref":{"type":"string"}}},"handoff":{"type":"object","additionalProperties":false,"properties":{"mode":{"enum":["auto","ask"]},"max_per_run":{"type":"integer","minimum":1}}},"review":{"type":"object","additionalProperties":false,"properties":{"max_rounds":{"type":"integer","minimum":1},"cost_cap_tokens":{"type":"integer","minimum":1}}},"tiers":{"type":"object","additionalProperties":false,"properties":{"T1":{"type":"string"},"T2":{"type":"string"},"T3":{"type":"string"}}},"ceilings":{"type":"object","additionalProperties":false,"properties":{"warn_tokens":{"type":"integer","minimum":0},"warn_pct":{"type":"number","minimum":0,"maximum":100},"block_tokens":{"type":"integer","minimum":0},"block_pct":{"type":"number","minimum":0,"maximum":100}}},"stop_gate":{"type":"object","additionalProperties":false,"properties":{"patience":{"type":"integer","minimum":0}}},"observability":{"type":"object","additionalProperties":false,"properties":{"provider":{"type":"string","minLength":1}}}}},"token-meter.schema.json":{"$id":"do-it-token-meter/1","title":"token-meter.jsonl row: the event fields plus usage fields","type":"object","required":["ts","run_id","slice_id","stage","persona","tier","model","host","event","parent_id","verdict","tokens_in","tokens_out","cache_read","cache_write","estimated","source"],"properties":{"ts":{"type":"string","minLength":1},"run_id":{"type":"string","minLength":1},"slice_id":{"type":["string","null"]},"stage":{"type":["string","null"]},"persona":{"type":["string","null"]},"tier":{"type":["string","null"]},"model":{"type":["string","null"]},"host":{"type":["string","null"]},"event":{"type":"string","minLength":1},"parent_id":{"type":["string","null"]},"verdict":{"type":["string","null"]},"tokens_in":{"type":"integer","minimum":0},"tokens_out":{"type":"integer","minimum":0},"cache_read":{"type":"integer","minimum":0},"cache_write":{"type":"integer","minimum":0},"estimated":{"type":"boolean"},"source":{"enum":["provider","estimate","unknown"]},"extra":{"type":["object","null"]}},"additionalProperties":false}};
+const EMBEDDED_SCHEMAS = {"answers.schema.json":{"$id":"do-it-answers/1","title":"answers.json: the parsed owner reply, deterministic (no timestamps)","type":"object","required":["pack_id","answers","pending","complete"],"properties":{"pack_id":{"type":"string","minLength":1},"complete":{"type":"boolean"},"pending":{"type":"array","items":{"type":"integer","minimum":1}},"answers":{"type":"array","items":{"type":"object","required":["n","answer","source","free_text"],"properties":{"n":{"type":"integer","minimum":1},"answer":{"type":"string"},"source":{"enum":["reply","recommendation","default"]},"free_text":{"type":"boolean"}},"additionalProperties":false}}},"additionalProperties":false},"do-it-state.1.schema.json":{"$id":"do-it-state/1","title":"do-it run state (written only by the spine)","type":"object","required":["schema","run_id","preset","request","status","size","host","stage","slices","gates","handoffs","stop_refusals","review","created_at","updated_at"],"properties":{"schema":{"const":"do-it-state/1"},"run_id":{"type":"string","minLength":1},"preset":{"type":["string","null"]},"request":{"type":"string"},"status":{"enum":["INTAKE","PLANNING","AWAIT_RATIFY","BUILDING","VERIFYING","REVIEWING","FIXING","DEPLOYING","PROVING","CONCLUDING","DONE","NEEDS_HUMAN","PARKED","BLOCKED","FAILED","PARTIAL_FAILURE","ROLLED_BACK","ESCALATED"]},"size":{"type":["integer","string","null"]},"host":{"type":["string","null"]},"stage":{"type":["string","null"]},"slices":{"type":"array","items":{"type":"object","required":["id","status"],"properties":{"id":{"type":"string","minLength":1},"lane":{"type":["string","null"]},"tier":{"type":["string","null"]},"status":{"type":"string"},"attempts":{"type":"integer","minimum":0},"escalations":{"type":"integer","minimum":0}}}},"gates":{"type":"object"},"handoffs":{"type":"integer","minimum":0},"stop_refusals":{"type":"integer","minimum":0},"review":{"type":"object","required":["round","exit"],"properties":{"round":{"type":"integer","minimum":0},"exit":{"type":["string","null"]}}},"created_at":{"type":"string","minLength":1},"updated_at":{"type":"string","minLength":1},"ceiling":{"type":["string","object","null"]},"park":{"type":["object","null"]},"handoff_state":{"type":["string","object","null"]},"run_verdict":{"enum":["DONE_ALL_VERIFIED","DONE_WITH_RESIDUALS","BLOCKED","NEEDS_RESET","USAGE_LIMIT",null]},"deploy":{"type":["object","null"]},"last_journal":{"type":["string","null"]}}},"events.schema.json":{"$id":"do-it-event/1","title":"events.jsonl row (trace fields frozen for v2 exporters)","type":"object","required":["ts","run_id","slice_id","stage","persona","tier","model","host","event","parent_id","verdict"],"properties":{"ts":{"type":"string","minLength":1},"run_id":{"type":"string","minLength":1},"slice_id":{"type":["string","null"]},"stage":{"type":["string","null"]},"persona":{"type":["string","null"]},"tier":{"type":["string","null"]},"model":{"type":["string","null"]},"host":{"type":["string","null"]},"event":{"type":"string","minLength":1},"parent_id":{"type":["string","null"]},"verdict":{"type":["string","null"]},"detail":{"type":["object","string","null"]}},"additionalProperties":false},"finish-line.schema.json":{"$id":"do-it-finish-line/1","title":"finish-line.json: rows that must all become terminal","type":"object","required":["rows"],"properties":{"rows":{"type":"array","items":{"type":"object","required":["id","kind","state"],"properties":{"id":{"type":"string","minLength":1},"kind":{"enum":["wave","package","dod"]},"state":{"enum":["OPEN","DONE","PARKED","BLOCKED"]},"evidence":{"type":["string","null"]},"owner_question":{"type":["string","null"]},"reason":{"type":["string","null"]},"archived_to":{"type":["string","null"]}}}}}},"it-result.1.schema.json":{"$id":"it-result/1","title":"Result file every stage writes as its last act","type":"object","required":["schema","stage","run_id","status","exit_code"],"properties":{"schema":{"const":"it-result/1"},"stage":{"enum":["prompt-it","plan-it","build-it","review-it","deploy-it","conclude-it","reconcile-it"]},"run_id":{"type":"string","minLength":1},"slice_id":{"type":["string","null"]},"version":{"type":["string","null"]},"head_sha":{"type":["string","null"]},"status":{"enum":["ok","needs_human","blocked","failed","context_reset","usage_limit"]},"exit_code":{"type":"integer","minimum":0,"maximum":3},"verdicts":{"type":"array","items":{"type":"object","required":["row","verdict"],"properties":{"row":{"type":"string","minLength":1},"verdict":{"enum":["VERIFIED","IMPLEMENTED-NOT-VERIFIED","BLOCKED"]},"evidence":{"type":["string","null"]},"real":{"type":"boolean"}}}},"reason":{"type":["string","null"]},"run_verdict":{"enum":["DONE_ALL_VERIFIED","DONE_WITH_RESIDUALS","BLOCKED","NEEDS_RESET","USAGE_LIMIT",null]},"next":{"type":["object","null"]},"pending_human":{"type":["object","null"]},"artifacts":{"type":"array","items":{"type":"object","required":["path"],"properties":{"path":{"type":"string"},"kind":{"type":["string","null"]},"sha256":{"type":["string","null"]}}}},"resume":{"type":["object","null"]},"tokens":{"type":["object","null"]},"rollback":{"type":"boolean"},"legs":{"type":"array","items":{"type":"object","required":["leg","state"],"properties":{"leg":{"type":"string","minLength":1},"state":{"enum":["DEPLOYED_VERIFIED","DEPLOYED_UNVERIFIED","HELD","FAILED","NEEDS_HUMAN","ROLLED_BACK","ROLLBACK_FAILED"]},"evidence":{"type":["string","null"]},"compensate":{"type":["string","object","array","null"]}}}}}},"ledger.schema.json":{"$id":"do-it-ledger/1","title":"ledger.json: latest verdict and evidence per DoD row","type":"object","required":["schema","run_id","rows"],"properties":{"schema":{"const":"do-it-ledger/1"},"run_id":{"type":"string","minLength":1},"rows":{"type":"array","items":{"type":"object","required":["row","verdict","evidence","evidence_sha256","real","recorded_at","updated_at"],"properties":{"row":{"type":"string","minLength":1},"verdict":{"enum":["VERIFIED","IMPLEMENTED-NOT-VERIFIED","BLOCKED"]},"evidence":{"type":["string","null"]},"evidence_path":{"type":["string","null"]},"evidence_sha256":{"type":["string","null"]},"real":{"type":"boolean"},"reason":{"type":["string","null"]},"recorded_at":{"type":"string","minLength":1},"updated_at":{"type":"string","minLength":1}}}}}},"owner-pack.schema.json":{"$id":"do-it-owner-pack/1","title":"owner-pack.json: the single set of questions for the human","type":"object","required":["pack_id","run_id","questions","created_at"],"properties":{"pack_id":{"type":["string","null"]},"run_id":{"type":"string","minLength":1},"created_at":{"type":"string","minLength":1},"questions":{"type":"array","items":{"type":"object","required":["n","kind","text","options","recommendation","default","reversible"],"properties":{"n":{"type":"integer","minimum":1},"kind":{"type":"string","minLength":1},"text":{"type":"string","minLength":1},"options":{"type":"array","items":{"type":"string"}},"recommendation":{"type":["string","null"]},"default":{"type":["string","null"]},"reversible":{"type":"boolean"}},"additionalProperties":false}}},"additionalProperties":false},"readiness.schema.json":{"$id":"do-it-readiness/1","title":"plan/READINESS.json: the verdict that lets a build start (G-8)","type":"object","required":["decisions","preflight"],"properties":{"decisions":{"type":["array","object"]},"preflight":{"type":"object","required":["passed"],"properties":{"passed":{"type":"boolean"}}},"credentials":{"type":"array","items":{"type":"string","minLength":1}},"owner_dependent_slices":{"type":"integer","minimum":0},"slices":{"type":"array","items":{"type":"object","required":["id"],"properties":{"id":{"type":"string","minLength":1},"lane":{"type":["string","null"]},"tier":{"type":["string","null"]},"class":{"enum":["deterministic","gather","implementation","hard",null]},"depends_on":{"type":"array","items":{"type":"string"}},"depends_on_owner_answer":{"type":"boolean"}}}}}},"settings.schema.json":{"$id":"do-it-settings/1","title":"do-it settings (workspace, global or merged)","type":"object","additionalProperties":false,"properties":{"version":{"const":1},"interaction":{"type":"object","additionalProperties":false,"properties":{"owner_pack":{"enum":["auto","native","html","markdown"]},"fallback":{"type":"array","items":{"enum":["native","html","markdown"]}}}},"host":{"type":"object","additionalProperties":false,"properties":{"driver":{"type":"string","minLength":1},"alias":{"type":["string","null"]}}},"isolation":{"type":"object","additionalProperties":false,"properties":{"driver":{"type":"string","minLength":1}}},"state":{"type":"object","additionalProperties":false,"properties":{"backend":{"type":"string","minLength":1},"engine":{"type":"object","additionalProperties":false,"properties":{"blobs":{"enum":["rows","r2","fs-mirror"]}}}}},"secrets":{"type":"object","additionalProperties":false,"properties":{"provider":{"enum":["file","env","aws-secrets-manager","onepassword","1password"]},"ref":{"type":"string"}}},"handoff":{"type":"object","additionalProperties":false,"properties":{"mode":{"enum":["auto","ask"]},"max_per_run":{"type":"integer","minimum":1}}},"review":{"type":"object","additionalProperties":false,"properties":{"max_rounds":{"type":"integer","minimum":1},"cost_cap_tokens":{"type":"integer","minimum":1}}},"tiers":{"type":"object","additionalProperties":false,"properties":{"T1":{"type":"string"},"T2":{"type":"string"},"T3":{"type":"string"}}},"ceilings":{"type":"object","additionalProperties":false,"properties":{"warn_tokens":{"type":"integer","minimum":0},"warn_pct":{"type":"number","minimum":0,"maximum":100},"block_tokens":{"type":"integer","minimum":0},"block_pct":{"type":"number","minimum":0,"maximum":100}}},"stop_gate":{"type":"object","additionalProperties":false,"properties":{"patience":{"type":"integer","minimum":0}}},"observability":{"type":"object","additionalProperties":false,"properties":{"provider":{"type":"string","minLength":1}}}}},"token-meter.schema.json":{"$id":"do-it-token-meter/1","title":"token-meter.jsonl row: the event fields plus usage fields","type":"object","required":["ts","run_id","slice_id","stage","persona","tier","model","host","event","parent_id","verdict","tokens_in","tokens_out","cache_read","cache_write","estimated","source"],"properties":{"ts":{"type":"string","minLength":1},"run_id":{"type":"string","minLength":1},"slice_id":{"type":["string","null"]},"stage":{"type":["string","null"]},"persona":{"type":["string","null"]},"tier":{"type":["string","null"]},"model":{"type":["string","null"]},"host":{"type":["string","null"]},"event":{"type":"string","minLength":1},"parent_id":{"type":["string","null"]},"verdict":{"type":["string","null"]},"tokens_in":{"type":["integer","null"],"minimum":0},"tokens_out":{"type":["integer","null"],"minimum":0},"cache_read":{"type":["integer","null"],"minimum":0},"cache_write":{"type":["integer","null"],"minimum":0},"estimated":{"type":"boolean"},"source":{"enum":["provider","estimate","unknown"]},"extra":{"type":["object","null"]}},"additionalProperties":false}};
+
+// ---- answer.mjs ----
+function answersPath(ctx, runId) { return path.join(runDir(ctx, runId), 'answers.json'); }
+function renderRecordPath(ctx, runId) { return path.join(runDir(ctx, runId), 'owner-pack.render.json'); }
+
+function loadPackChecked(ctx, runId) {
+  const pack = readJsonIfExists(packPath(ctx, runId));
+  if (!pack) throw fail('NO_PACK', 1, { run_id: runId, message: 'no owner-pack.json for this run' });
+  const errors = validateSchema(loadSchemaFile('owner-pack.schema.json'), pack);
+  if (errors.length) throw fail('PACK_INVALID', 1, { errors });
+  return pack;
+}
+
+// Adversarial guard: the pack on disk must still be the one the owner was shown.
+function packGuard(ctx, runId, pack) {
+  const current = packIdOf(pack.questions);
+  const rec = readJsonIfExists(renderRecordPath(ctx, runId));
+  let shown = rec ? rec.pack_id : null;
+  if (rec && rec.file && fs.existsSync(rec.file) && fs.statSync(rec.file).isFile()) {
+    const text = fs.readFileSync(rec.file, 'utf8');
+    const m = /name="pack-id" content="([0-9a-f]+)"/.exec(text) || /<!-- pack-id: ([0-9a-f]+) -->/.exec(text);
+    if (m) shown = m[1];
+  }
+  if (pack.pack_id !== current || (shown !== null && shown !== current)) {
+    throw fail('PACK_CHANGED', 1, { run_id: runId, pack_id: current, shown_pack_id: shown, message: 'owner-pack.json changed after it was rendered; render it again' });
+  }
+  return current;
+}
+
+function emit(ctx, runId, state, event, verdict, detail) {
+  appendEvent(ctx, runId, { event, stage: state.stage, host: state.host, verdict, detail });
+}
+
+function readAnswers(ctx, runId) {
+  const doc = readJsonIfExists(answersPath(ctx, runId));
+  return doc && Array.isArray(doc.answers) ? doc.answers : [];
+}
+
+function cmdAnswer(ctx, args) {
+  const f = args.flags;
+  const hasReply = typeof f.reply === 'string';
+  const hasRender = f.render !== undefined && f.render !== false;
+  if (!hasReply && !hasRender && !f.finalize) throw fail('USAGE', 1, { message: 'answer needs --reply "<text>", --render MODE or --finalize' });
+  const runId = selectRunId(ctx, f);
+  const state = loadState(ctx, runId);
+  const pack = loadPackChecked(ctx, runId);
+  if (!pack.questions.length) return { outcome: 'NO_QUESTIONS', exit: 0, run_id: runId };
+  if (hasReply || f.finalize) return answerApply(ctx, runId, state, pack, f, hasReply);
+  return answerRender(ctx, runId, state, pack, f);
+}
+
+function answerApply(ctx, runId, state, pack, f, hasReply) {
+  const packId = packGuard(ctx, runId, pack);
+  const byN = new Map(pack.questions.map((q) => [q.n, q]));
+  const existing = readAnswers(ctx, runId).filter((a) => byN.has(a.n));
+  const have = new Map(existing.map((a) => [a.n, a]));
+  const added = [];
+  const ignored = [];
+  const defaultsApplied = [];
+
+  if (hasReply) {
+    const parsed = parseReply(f.reply, pack.questions);
+    const unparsed = parsed.errors[0];
+    if (unparsed) throw fail('ANSWER_INVALID', 1, { message: 'cannot parse reply token ' + JSON.stringify(unparsed.token), token: unparsed.token });
+    for (const it of parsed.items) {
+      if (!byN.has(it.n)) throw fail('ANSWER_UNKNOWN_QUESTION', 1, { n: it.n, message: 'no question ' + it.n + ' in this pack', known: pack.questions.map((q) => q.n) });
+    }
+    for (const n of (parsed.except ? parsed.except.numbers : [])) {
+      if (!byN.has(n)) throw fail('ANSWER_UNKNOWN_QUESTION', 1, { n, message: 'no question ' + n + ' in this pack', known: pack.questions.map((q) => q.n) });
+    }
+    const fresh = [];
+    for (const it of parsed.items) {
+      const q = byN.get(it.n);
+      if (it.free_text) { fresh.push({ n: it.n, answer: it.answer, source: 'reply', free_text: true }); continue; }
+      if (q.options.length && !q.options.includes(it.answer)) {
+        throw fail('ANSWER_INVALID', 1, { n: it.n, given: it.answer, allowed: q.options, message: 'question ' + it.n + ' accepts: ' + q.options.join(', ') });
+      }
+      fresh.push({ n: it.n, answer: it.answer, source: 'reply', free_text: false });
+    }
+    if (parsed.except) {
+      const skip = new Set(parsed.except.numbers);
+      const explicit = new Set(fresh.map((r) => r.n));
+      for (const q of pack.questions) {
+        if (skip.has(q.n) || explicit.has(q.n)) continue;
+        if (q.recommendation === null || q.recommendation === undefined) continue;
+        fresh.push({ n: q.n, answer: q.recommendation, source: 'recommendation', free_text: false });
+      }
+    }
+    // first valid reply per question wins (A5)
+    for (const r of fresh) {
+      if (have.has(r.n)) { if (have.get(r.n).answer !== r.answer) ignored.push(r.n); continue; }
+      have.set(r.n, r);
+      added.push(r.n);
+    }
+  }
+
+  if (f.finalize) {
+    for (const q of pack.questions) {
+      if (have.has(q.n)) continue;
+      if (!q.reversible || q.kind === 'owner-gate' || q.default === null || q.default === undefined) continue;
+      have.set(q.n, { n: q.n, answer: q.default, source: 'default', free_text: false });
+      defaultsApplied.push(q.n);
+      added.push(q.n);
+    }
+  }
+
+  const answers = Array.from(have.values()).sort((a, b) => a.n - b.n);
+  const pending = pack.questions.map((q) => q.n).filter((n) => !have.has(n));
+  const complete = pending.length === 0;
+  const doc = { pack_id: packId, answers, pending, complete };
+  const errors = validateSchema(loadSchemaFile('answers.schema.json'), doc);
+  if (errors.length) throw fail('ANSWER_INVALID', 1, { errors });
+  const text = JSON.stringify(doc, null, 2) + '\n';
+  const file = answersPath(ctx, runId);
+  const before = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null;
+  if (before !== text) atomicWrite(file, text);
+  for (const n of added) {
+    const a = have.get(n);
+    emit(ctx, runId, state, a.source === 'default' ? 'default_applied' : 'answer_recorded', a.source, { n, answer: a.answer, source: a.source });
+  }
+  const base = { run_id: runId, answers, pending, answers_file: file };
+  if (ignored.length) base.ignored = ignored;
+  if (!complete) return { outcome: 'PENDING', exit: 2, ...base };
+  if (!added.length && before !== null) return { outcome: 'ANSWER_NOOP', exit: 0, status: state.status, ...base };
+  let status = state.status;
+  if (status === 'NEEDS_HUMAN') status = advanceRunStatus(ctx, state, 'BUILDING').to;
+  return { outcome: 'ANSWERED', exit: 0, status, ...base };
+}
+
+function renderTo(ctx, runId, mode, file, content) {
+  if (fs.existsSync(file) && fs.statSync(file).isDirectory()) throw new Error('target is a directory: ' + path.basename(file));
+  atomicWrite(file, content);
+  return file;
+}
+
+function answerRender(ctx, runId, state, pack, f) {
+  const settings = loadSettings(ctx, []).values;
+  const nativeMax = f['native-max'] === undefined ? 4 : Number(f['native-max']);
+  if (!Number.isInteger(nativeMax) || nativeMax < 0) throw fail('USAGE', 1, { message: '--native-max must be a non-negative integer' });
+  const requested = f.render === true ? settings.interaction.owner_pack : String(f.render);
+  if (!['auto', 'native', 'html', 'markdown'].includes(requested)) throw fail('USAGE', 1, { message: 'unknown render mode', allowed: ['auto', 'native', 'html', 'markdown'] });
+  const fallback = settings.interaction.fallback;
+  let chain;
+  if (requested === 'auto') chain = fallback.slice();
+  else chain = [requested, ...fallback.filter((m) => m !== requested && m !== 'native')];
+  if (!chain.includes('markdown')) chain.push('markdown');
+  const packId = packIdOf(pack.questions);
+  const dir = runDir(ctx, runId);
+  for (const mode of chain) {
+    if (mode === 'native') {
+      if (!nativeEligible(pack, nativeMax)) continue;
+      const payload = renderNative(pack);
+      atomicWriteJson(renderRecordPath(ctx, runId), { mode, file: null, pack_id: packId });
+      emit(ctx, runId, state, 'pack_rendered', mode, { mode, pack_id: packId, questions: pack.questions.length });
+      return { outcome: 'AWAITING_REPLY', exit: 2, run_id: runId, mode, pack_id: packId, payload };
+    }
+    const file = path.join(dir, mode === 'html' ? 'owner-pack.html' : 'owner-pack.md');
+    const content = mode === 'html' ? renderHtml({ ...pack, pack_id: packId }) : renderMarkdown({ ...pack, pack_id: packId });
+    try {
+      renderTo(ctx, runId, mode, file, content);
+    } catch (e) {
+      emit(ctx, runId, state, 'render_failed', mode, { mode, error: String(e && e.message ? e.message : e) });
+      continue;
+    }
+    atomicWriteJson(renderRecordPath(ctx, runId), { mode, file, pack_id: packId });
+    emit(ctx, runId, state, 'pack_rendered', mode, { mode, file, pack_id: packId, questions: pack.questions.length });
+    return { outcome: 'AWAITING_REPLY', exit: 2, run_id: runId, mode, file, pack_id: packId };
+  }
+  throw fail('RENDER_FAILED', 1, { run_id: runId, message: 'no renderer could write the owner pack' });
+}
 
 // ---- ceiling.mjs ----
 // G-5, ruling D4: absolute tokens or window percent, whichever fires first.
@@ -122,7 +292,7 @@ function dispatch(ctx, args) {
     case 'record': return cmdRecord(ctx, args);
     case 'gate': return cmdGate(ctx, args);
     case 'next': return cmdNext(ctx, args);
-    case 'answer': return notImplemented('S4', 'answer');
+    case 'answer': return cmdAnswer(ctx, args);
     case 'handoff': return cmdHandoff(ctx, args);
     case 'resume': return cmdResume(ctx, args);
     case 'park': return cmdPark(ctx, args);
@@ -1329,6 +1499,10 @@ function packPath(ctx, runId) {
   return path.join(ctx.home, 'runs', runId, 'owner-pack.json');
 }
 
+function packIdOf(questions) {
+  return sha256Bytes(canonicalJson(questions));
+}
+
 // Stages only append questions; numbering is stable and duplicates by text are ignored (ruling D7).
 function packAppend(ctx, runId, questions) {
   const file = packPath(ctx, runId);
@@ -1351,7 +1525,7 @@ function packAppend(ctx, runId, questions) {
     added.push(row);
   }
   if (added.length || !fs.existsSync(file)) {
-    pack.pack_id = sha256Bytes(canonicalJson(pack.questions));
+    pack.pack_id = packIdOf(pack.questions);
     atomicWriteJson(file, pack);
   }
   return added;
@@ -1934,6 +2108,87 @@ function redactInit(ctx) {
     }
   } catch { /* no .secrets */ }
   for (const n of redactDeclaredNames(ctx)) redactAdd(n, ctx.env[n]);
+}
+
+// ---- reply.mjs ----
+// G-16: deterministic owner-reply parser. No locale-dependent calls: only
+// toLowerCase (never toLocaleLowerCase), NFKC and fixed regexes, so the same
+// text yields the same answers on every host, locale and time zone.
+function normalizeReply(text) {
+  return String(text)
+    .normalize('NFKC')
+    .replace(/\r\n?/g, '\n')
+    .replace(/[  -​  　﻿]/g, ' ')
+    .replace(/[ \t]+/g, ' ');
+}
+
+function replyMatchOption(rest, options) {
+  const lowRest = rest.toLowerCase();
+  const sameLen = lowRest.length === rest.length;
+  const sorted = options.slice().sort((a, b) => b.length - a.length);
+  for (const opt of sorted) {
+    if (!opt) continue;
+    let hit = rest.startsWith(opt);
+    if (!hit && sameLen) hit = lowRest.startsWith(opt.toLowerCase()) && opt.toLowerCase().length === opt.length;
+    if (hit && (rest.length === opt.length || rest[opt.length] === ' ')) return { option: opt, length: opt.length };
+  }
+  return null;
+}
+
+// Returns { items:[{n,answer,free_text}], except:null|{all:true,numbers:[]}, errors:[{kind,n?,...}] }.
+function parseReply(text, questions) {
+  const byN = new Map(questions.map((q) => [q.n, q]));
+  const out = { items: [], except: null, errors: [] };
+  const segments = normalizeReply(text).split(/[;\n]/).map((s) => s.trim()).filter(Boolean);
+  for (const seg of segments) {
+    let rest = seg;
+    while (rest) {
+      let m;
+      if ((m = /^(?:(?:approve|accept)\s+)?all(?:\s+except\b)?\s*/i.exec(rest))) {
+        const isExcept = /except/i.test(m[0]);
+        rest = rest.slice(m[0].length);
+        const numbers = [];
+        if (isExcept) {
+          let nm;
+          while ((nm = /^(\d+)\s*(?:,\s*|and\b\s*|&\s*)?/i.exec(rest))) {
+            numbers.push(Number(nm[1]));
+            rest = rest.slice(nm[0].length);
+          }
+        }
+        out.except = { numbers: ((out.except && out.except.numbers) || []).concat(numbers) };
+        continue;
+      }
+      if ((m = /^(\d+)\s*:\s*(.*)$/.exec(rest))) {
+        out.items.push({ n: Number(m[1]), answer: m[2].trim(), free_text: true });
+        rest = '';
+        continue;
+      }
+      if ((m = /^(\d+)\s+(.+)$/.exec(rest))) {
+        const n = Number(m[1]);
+        const body = m[2];
+        const q = byN.get(n);
+        if (!q) {
+          const tok = /^\S+/.exec(body)[0];
+          out.items.push({ n, answer: tok, free_text: false });
+          rest = body.slice(tok.length).trim();
+          continue;
+        }
+        const hit = q.options.length ? replyMatchOption(body, q.options) : null;
+        if (hit) {
+          out.items.push({ n, answer: hit.option, free_text: false });
+          rest = body.slice(hit.length).trim();
+          continue;
+        }
+        const tok = /^\S+/.exec(body)[0];
+        out.items.push({ n, answer: tok, free_text: false });
+        rest = body.slice(tok.length).trim();
+        continue;
+      }
+      out.errors.push({ kind: 'unparseable', token: rest.split(' ')[0] });
+      rest = '';
+    }
+  }
+  return out;
 }
 
 // ---- resume.mjs ----
@@ -2780,6 +3035,102 @@ function parseYamlLite(text) {
   const value = yamlParseNode(lines, pos, lines[0].indent);
   if (pos.i < lines.length) throw yamlUnsupported(lines[pos.i].n, 'unexpected content');
   return value;
+}
+
+// ---- renderers/html.mjs ----
+// Pure renderer: owner pack -> one self-contained HTML string. No script, no
+// external resource; every dynamic value is escaped.
+function escapeHtml(s) {
+  return String(s === null || s === undefined ? '' : s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function replyExample(questions) {
+  const parts = [];
+  for (const q of questions) {
+    if (q.recommendation === null || q.recommendation === undefined || q.recommendation === '') continue;
+    parts.push(q.options.includes(q.recommendation) ? q.n + ' ' + q.recommendation : q.n + ': ' + q.recommendation);
+  }
+  return parts.join(' ');
+}
+
+function renderHtml(pack) {
+  const out = [];
+  out.push('<!doctype html>');
+  out.push('<html lang="en">');
+  out.push('<head>');
+  out.push('<meta charset="utf-8" />');
+  out.push('<meta name="pack-id" content="' + escapeHtml(pack.pack_id) + '" />');
+  out.push('<title>do-it owner pack</title>');
+  out.push('<style>body{font-family:system-ui,sans-serif;max-width:46rem;margin:2rem auto;padding:0 1rem;line-height:1.5}li{margin:1rem 0}code{background:#eee;padding:0 .25rem}.meta{color:#555}</style>');
+  out.push('</head>');
+  out.push('<body>');
+  out.push('<h1>Owner pack</h1>');
+  out.push('<p class="meta">Run ' + escapeHtml(pack.run_id) + ' / pack ' + escapeHtml(String(pack.pack_id).slice(0, 12)) + '</p>');
+  out.push('<ol>');
+  for (const q of pack.questions) {
+    const rec = q.recommendation === null || q.recommendation === undefined ? 'none' : q.recommendation;
+    const def = q.default === null || q.default === undefined ? 'none' : q.default;
+    out.push('<li id="q' + q.n + '" value="' + q.n + '">');
+    out.push('<p><strong>' + escapeHtml(q.text) + '</strong> <span class="meta">(' + escapeHtml(q.kind) + (q.reversible ? '' : ', irreversible') + ')</span></p>');
+    out.push('<p>Options: ' + (q.options.length ? q.options.map((o) => '<code>' + escapeHtml(o) + '</code>').join(' ') : 'free text') + '</p>');
+    out.push('<p>Recommendation: ' + escapeHtml(rec) + '</p>');
+    out.push('<p>Default: ' + escapeHtml(def) + '</p>');
+    out.push('</li>');
+  }
+  out.push('</ol>');
+  const ex = replyExample(pack.questions);
+  out.push('<p>Reply tersely, for example <code>' + escapeHtml(ex || '1 yes') + '</code>. Use <code>all except N N</code> to accept every recommendation but the named ones, or <code>N: free text</code>.</p>');
+  out.push('</body>');
+  out.push('</html>');
+  return out.join('\n') + '\n';
+}
+
+// ---- renderers/markdown.mjs ----
+// Pure renderer: owner pack -> markdown. Last line is an example reply.
+
+
+function renderMarkdown(pack) {
+  const out = [];
+  out.push('<!-- pack-id: ' + pack.pack_id + ' -->');
+  out.push('# Owner pack');
+  out.push('');
+  for (const q of pack.questions) {
+    const rec = q.recommendation === null || q.recommendation === undefined ? 'none' : q.recommendation;
+    const def = q.default === null || q.default === undefined ? 'none' : q.default;
+    out.push(q.n + '. ' + q.text);
+    out.push('   Options: ' + (q.options.length ? q.options.join(' | ') : 'free text'));
+    out.push('   Recommendation: ' + rec);
+    out.push('   Default: ' + def);
+    out.push('');
+  }
+  out.push('Example reply: `' + (replyExample(pack.questions) || '1 yes') + '`');
+  return out.join('\n') + '\n';
+}
+
+// ---- renderers/native.mjs ----
+// Pure renderer: owner pack -> payload for a host's native question tool.
+function nativeEligible(pack, max) {
+  const qs = pack.questions;
+  if (!(max > 0) || !qs.length || qs.length > max) return false;
+  return qs.every((q) => q.options.length >= 2 && q.options.length <= 4);
+}
+
+function renderNative(pack) {
+  return {
+    pack_id: pack.pack_id,
+    questions: pack.questions.map((q) => ({
+      n: q.n,
+      header: 'Q' + q.n,
+      question: q.text,
+      multiSelect: false,
+      options: q.options.map((o) => ({ label: o, description: o === q.recommendation ? 'Recommended' : '' })),
+    })),
+  };
 }
 
 // ---- drivers/secrets/aws-secrets-manager.mjs ----

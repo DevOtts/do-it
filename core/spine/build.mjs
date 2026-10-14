@@ -10,6 +10,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const srcDir = path.join(here, 'src');
 const schemaDir = path.join(here, '..', 'schemas');
 const driversDir = path.join(here, '..', 'drivers', 'secrets');
+const renderersDir = path.join(here, '..', 'renderers');
 const outFile = process.argv[2] ? path.resolve(process.argv[2]) : path.join(here, 'do-it.mjs');
 
 const IMPORT_RE = /^import\s[\s\S]*?\sfrom\s+(['"])([^'"]+)\1;?[ \t]*$/gm;
@@ -22,6 +23,7 @@ const bodies = [];
 // src modules first, then the secrets drivers (core/drivers/secrets), each sorted.
 const sources = [
   ...fs.readdirSync(srcDir).filter((f) => f.endsWith('.mjs')).sort().map((f) => ({ file: f, full: path.join(srcDir, f) })),
+  ...(fs.existsSync(renderersDir) ? fs.readdirSync(renderersDir).filter((f) => f.endsWith('.mjs')).sort().map((f) => ({ file: 'renderers/' + f, full: path.join(renderersDir, f) })) : []),
   ...(fs.existsSync(driversDir) ? fs.readdirSync(driversDir).filter((f) => f.endsWith('.mjs')).sort().map((f) => ({ file: 'drivers/secrets/' + f, full: path.join(driversDir, f) })) : []),
 ];
 const files = sources.map((s) => s.file);

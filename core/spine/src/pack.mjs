@@ -7,6 +7,10 @@ export function packPath(ctx, runId) {
   return path.join(ctx.home, 'runs', runId, 'owner-pack.json');
 }
 
+export function packIdOf(questions) {
+  return sha256Bytes(canonicalJson(questions));
+}
+
 // Stages only append questions; numbering is stable and duplicates by text are ignored (ruling D7).
 export function packAppend(ctx, runId, questions) {
   const file = packPath(ctx, runId);
@@ -29,7 +33,7 @@ export function packAppend(ctx, runId, questions) {
     added.push(row);
   }
   if (added.length || !fs.existsSync(file)) {
-    pack.pack_id = sha256Bytes(canonicalJson(pack.questions));
+    pack.pack_id = packIdOf(pack.questions);
     atomicWriteJson(file, pack);
   }
   return added;

@@ -1,0 +1,36 @@
+{
+  "questions": [
+    { "n": 1, "options": ["yes", "no"] },
+    { "n": 2, "options": ["yes", "no"] },
+    { "n": 3, "options": ["A", "B"] },
+    { "n": 4, "options": [] },
+    { "n": 5, "options": ["resume run", "close with residuals"] }
+  ],
+  "cases": [
+    { "reply": "1 yes 2 no 3 B", "expected": { "items": [{ "n": 1, "answer": "yes", "free_text": false }, { "n": 2, "answer": "no", "free_text": false }, { "n": 3, "answer": "B", "free_text": false }], "except": null, "errors": [] } },
+    { "reply": "1 YES 2 No", "expected": { "items": [{ "n": 1, "answer": "yes", "free_text": false }, { "n": 2, "answer": "no", "free_text": false }], "except": null, "errors": [] } },
+    { "reply": "  1   yes   2   no  ", "expected": { "items": [{ "n": 1, "answer": "yes", "free_text": false }, { "n": 2, "answer": "no", "free_text": false }], "except": null, "errors": [] } },
+    { "reply": "1 yes\r\n2 no\r\n3 A", "expected": { "items": [{ "n": 1, "answer": "yes", "free_text": false }, { "n": 2, "answer": "no", "free_text": false }, { "n": 3, "answer": "A", "free_text": false }], "except": null, "errors": [] } },
+    { "reply": "1 yes 2 no", "expected": { "items": [{ "n": 1, "answer": "yes", "free_text": false }, { "n": 2, "answer": "no", "free_text": false }], "except": null, "errors": [] } },
+    { "reply": "all except 4", "expected": { "items": [], "except": { "numbers": [4] }, "errors": [] } },
+    { "reply": "ALL EXCEPT 2", "expected": { "items": [], "except": { "numbers": [2] }, "errors": [] } },
+    { "reply": "All Except 1 3", "expected": { "items": [], "except": { "numbers": [1, 3] }, "errors": [] } },
+    { "reply": "approve all except 4 and 5", "expected": { "items": [], "except": { "numbers": [4, 5] }, "errors": [] } },
+    { "reply": "approve all except 2, 4", "expected": { "items": [], "except": { "numbers": [2, 4] }, "errors": [] } },
+    { "reply": "all", "expected": { "items": [], "except": { "numbers": [] }, "errors": [] } },
+    { "reply": "approve all", "expected": { "items": [], "except": { "numbers": [] }, "errors": [] } },
+    { "reply": "4: use 2 workers", "expected": { "items": [{ "n": 4, "answer": "use 2 workers", "free_text": true }], "except": null, "errors": [] } },
+    { "reply": "4: use 2 workers; 1 yes", "expected": { "items": [{ "n": 4, "answer": "use 2 workers", "free_text": true }, { "n": 1, "answer": "yes", "free_text": false }], "except": null, "errors": [] } },
+    { "reply": "4: use 2 workers\n1 yes", "expected": { "items": [{ "n": 4, "answer": "use 2 workers", "free_text": true }, { "n": 1, "answer": "yes", "free_text": false }], "except": null, "errors": [] } },
+    { "reply": "3: B", "expected": { "items": [{ "n": 3, "answer": "B", "free_text": true }], "except": null, "errors": [] } },
+    { "reply": "3 : keep it", "expected": { "items": [{ "n": 3, "answer": "keep it", "free_text": true }], "except": null, "errors": [] } },
+    { "reply": "5 resume run", "expected": { "items": [{ "n": 5, "answer": "resume run", "free_text": false }], "except": null, "errors": [] } },
+    { "reply": "5 CLOSE WITH RESIDUALS 1 no", "expected": { "items": [{ "n": 5, "answer": "close with residuals", "free_text": false }, { "n": 1, "answer": "no", "free_text": false }], "except": null, "errors": [] } },
+    { "reply": "1 yes; 2 no; all except 4", "expected": { "items": [{ "n": 1, "answer": "yes", "free_text": false }, { "n": 2, "answer": "no", "free_text": false }], "except": { "numbers": [4] }, "errors": [] } },
+    { "reply": "4 later", "expected": { "items": [{ "n": 4, "answer": "later", "free_text": false }], "except": null, "errors": [] } },
+    { "reply": "9 yes", "expected": { "items": [{ "n": 9, "answer": "yes", "free_text": false }], "except": null, "errors": [] } },
+    { "reply": "1 maybe", "expected": { "items": [{ "n": 1, "answer": "maybe", "free_text": false }], "except": null, "errors": [] } },
+    { "reply": "hello there", "expected": { "items": [], "except": null, "errors": [{ "kind": "unparseable", "token": "hello" }] } },
+    { "reply": "", "expected": { "items": [], "except": null, "errors": [] } }
+  ]
+}
