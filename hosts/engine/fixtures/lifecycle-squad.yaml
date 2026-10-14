@@ -1,0 +1,64 @@
+squad: lifecycle
+version: 1
+conductor: manager
+steps:
+  - id: intake
+    type: persona
+    persona: intake
+    tier: T3
+  - id: plan
+    type: persona
+    persona: planner
+    skill: plan-it
+    tier: T1
+    ask: one batched readiness gate, planning ends only with READINESS.json
+  - id: ratify
+    type: decision
+    gate: owner-gate
+    ask: approve the plan and its recorded defaults
+    needs: [plan]
+  - id: build
+    type: persona
+    persona: builder
+    skill: build-it
+    tier: T2
+    needs: [ratify]
+    deny: [web_search]
+  - id: verify
+    type: persona
+    persona: verifier
+    consumes_previous: true
+    eval_veto: true
+    eval_max_retries: 2
+  - id: review
+    type: persona
+    persona: reviewer
+    skill: review-it
+    loop_to: build
+    max_rounds: 3
+    on_limit: review-cap
+  - id: checkpoint-merge
+    type: checkpoint
+    label: Merge checkpoint
+    needs: [review]
+  - id: render-report
+    type: code
+    persona: runner
+    capability: render
+    needs: [checkpoint-merge]
+  - id: deploy
+    type: code
+    persona: deployer
+    capability: publish
+    adapter: deploy-it
+    needs: [render-report]
+  - id: conclude
+    type: persona
+    persona: concluder
+    skill: conclude-it
+    tier: T3
+routes:
+  - work_type: lp_content
+    steps: [intake, plan, ratify, build, verify, review, checkpoint-merge, conclude]
+  - work_type: feature
+    steps: [intake, plan, ratify, build, verify, review, checkpoint-merge, render-report, deploy, conclude]

@@ -1,0 +1,7 @@
+{
+  "schema": "do-it-tiers/1",
+  "host": "engine",
+  "source": "spec-point-4",
+  "asked_at_init": false,
+  "tiers": { "T1": "powerful", "T2": "balanced", "T3": "cheap" }
+}

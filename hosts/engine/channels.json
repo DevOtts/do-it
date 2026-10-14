@@ -1,0 +1,6 @@
+{
+  "host": "engine",
+  "note": "Ask channels linked to an Engine org (D5). capabilities.schema.json has no slot for a channel list (proposed amendment A5), so the list lives here.",
+  "channels": ["controlTower", "chatP2p", "whatsapp"],
+  "reply_grammar": "CONTRACT section 3: N answer, all except N N, N: free text"
+}

@@ -1,0 +1,172 @@
+{
+  "conductor": "manager",
+  "name": "lifecycle",
+  "router": {
+    "min_confidence": 0.7,
+    "work_types": [
+      {
+        "steps": [
+          "intake",
+          "plan",
+          "ratify",
+          "build",
+          "verify",
+          "review",
+          "checkpoint-merge",
+          "conclude"
+        ],
+        "work_type": "lp_content"
+      },
+      {
+        "steps": [
+          "intake",
+          "plan",
+          "ratify",
+          "build",
+          "verify",
+          "review",
+          "checkpoint-merge",
+          "render-report",
+          "deploy",
+          "conclude"
+        ],
+        "work_type": "feature"
+      }
+    ]
+  },
+  "schema": "engine.pipeline_definition/1",
+  "steps": [
+    {
+      "deny": [
+        "deploy",
+        "spawn_squad"
+      ],
+      "id": "intake",
+      "model_tier": "cheap",
+      "persona": "intake",
+      "type": "persona"
+    },
+    {
+      "deny": [
+        "deploy",
+        "spawn_squad"
+      ],
+      "id": "plan",
+      "model_tier": "powerful",
+      "persona": "planner",
+      "type": "persona",
+      "x_do_it": {
+        "ask": "one batched readiness gate, planning ends only with READINESS.json",
+        "skill": "plan-it"
+      }
+    },
+    {
+      "id": "ratify",
+      "needs": [
+        "plan"
+      ],
+      "type": "decision",
+      "x_do_it": {
+        "ask": "approve the plan and its recorded defaults",
+        "gate": "owner-gate"
+      }
+    },
+    {
+      "deny": [
+        "deploy",
+        "spawn_squad",
+        "web_search"
+      ],
+      "id": "build",
+      "model_tier": "balanced",
+      "needs": [
+        "ratify"
+      ],
+      "persona": "builder",
+      "type": "persona",
+      "x_do_it": {
+        "deny": [
+          "web_search"
+        ],
+        "skill": "build-it"
+      }
+    },
+    {
+      "consumes_previous": true,
+      "deny": [
+        "deploy",
+        "spawn_squad"
+      ],
+      "eval": {
+        "max_retries": 2,
+        "veto": true
+      },
+      "id": "verify",
+      "persona": "verifier",
+      "type": "persona"
+    },
+    {
+      "deny": [
+        "deploy",
+        "spawn_squad"
+      ],
+      "id": "review",
+      "persona": "reviewer",
+      "type": "persona",
+      "x_do_it": {
+        "loop_to": "build",
+        "max_rounds": 3,
+        "on_limit": "review-cap",
+        "skill": "review-it"
+      }
+    },
+    {
+      "id": "checkpoint-merge",
+      "needs": [
+        "review"
+      ],
+      "surface": "mission_control_card",
+      "type": "checkpoint",
+      "x_do_it": {
+        "label": "Merge checkpoint"
+      }
+    },
+    {
+      "id": "render-report",
+      "needs": [
+        "checkpoint-merge"
+      ],
+      "persona": "runner",
+      "type": "render",
+      "x_do_it": {
+        "capability": "render"
+      }
+    },
+    {
+      "id": "deploy",
+      "needs": [
+        "render-report"
+      ],
+      "persona": "deployer",
+      "type": "publish",
+      "x_do_it": {
+        "adapter": "deploy-it",
+        "capability": "publish"
+      }
+    },
+    {
+      "deny": [
+        "deploy",
+        "spawn_squad"
+      ],
+      "id": "conclude",
+      "model_tier": "cheap",
+      "persona": "concluder",
+      "type": "persona",
+      "x_do_it": {
+        "skill": "conclude-it"
+      }
+    }
+  ],
+  "version": 1
+}

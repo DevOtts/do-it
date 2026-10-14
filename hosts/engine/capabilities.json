@@ -1,0 +1,20 @@
+{
+  "host": "engine",
+  "version_probed": "unprobed",
+  "spawn": { "native": true, "per_spawn_model": true, "max_parallel": 3 },
+  "ask": { "native": true, "max_questions": 12 },
+  "continue": { "headless": true },
+  "wake": { "native": false },
+  "meter": { "provider_usage": false, "cache_fields": false },
+  "hooks": { "stop_gate": false },
+  "isolation": ["k8s-job"],
+  "unknown": [
+    "engine-api-routes",
+    "x_do_it-accepted-by-engine",
+    "job-start-and-clone-latency",
+    "r2-used-by-engine",
+    "which-channel-answers-first",
+    "max-parallel-jobs",
+    "usage-metering-fields"
+  ]
+}
