@@ -80,7 +80,7 @@ export const ROTEIROS = {
     const cards = fs.readdirSync(path.join(ctx.workdir, 'backlog')).filter((f) => f.endsWith('.md')).sort()
       .map((f) => ({ file: f, ...parseFrontmatter(fs.readFileSync(path.join(ctx.workdir, 'backlog', f), 'utf8')) }));
     startRun(ctx, 'drain', 'Drain the weekly backlog');
-    seedFinishLine(ctx, cards.map((c) => ({ id: c.id, kind: 'card', text: c.file })));
+    seedFinishLine(ctx, cards.map((c) => ({ id: c.id, kind: 'dod', text: c.file })));
     advance(ctx, 'BUILDING');
     const leaveOpen = variant && variant.startsWith('leave-open:') ? variant.slice('leave-open:'.length) : null;
     ctx.cards = cards;
