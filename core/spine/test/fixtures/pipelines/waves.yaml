@@ -1,0 +1,15 @@
+# minimal fixture until the L2 presets exist
+name: waves
+steps:
+  - id: w1
+    type: persona
+    persona: builder
+    tier: T2
+  - id: w2
+    type: persona
+    persona: verifier
+    needs: [w1]
+  - id: w3
+    type: code
+    needs:
+      - w1

@@ -7,10 +7,14 @@ import { CliError, fail } from './errors.mjs';
 import { appendEvent } from './events.mjs';
 import { cleanStaleTmp } from './fs-atomic.mjs';
 import { cmdInit } from './init.mjs';
+import { renderBoard, readFinishLine } from './finish-line.mjs';
 import { cmdMeter } from './meter.mjs';
-import { cmdNext } from './next.mjs';
+import { cmdNext, gateRoute } from './next.mjs';
+import { gateBuild } from './readiness.mjs';
 import { cmdRecord } from './record.mjs';
+import { route } from './router.mjs';
 import { loadSettings } from './settings.mjs';
+import { gateStop } from './stopgate.mjs';
 import { advanceRunStatus, loadState, newRunId, newState, runDir, selectRunId, writeState } from './state.mjs';
 import { gateVerify } from './verify.mjs';
 import { DO_IT_VERSION } from './version.mjs';
@@ -123,9 +127,17 @@ export function cmdStart(ctx, args) {
     size,
     host: typeof f.host === 'string' ? f.host : settings.values.host.driver,
   });
+  const routed = state.preset ? null : route(f.request);
+  if (routed && routed.preset) {
+    state.preset = routed.preset;
+    if (state.size === null && routed.size !== null) state.size = routed.size;
+  }
   fs.mkdirSync(path.join(runDir(ctx, runId), 'results'), { recursive: true });
   writeState(ctx, state);
   appendEvent(ctx, runId, { event: 'run_started', stage: state.stage, host: state.host, verdict: null });
+  if (routed && routed.preset) {
+    appendEvent(ctx, runId, { event: 'route', stage: state.stage, host: state.host, verdict: routed.preset, detail: { rule: routed.rule, model_call: false } });
+  }
   return { outcome: 'STARTED', exit: 0, run_id: runId, status: state.status, preset: state.preset, root: ctx.root, home: ctx.home };
 }
 
@@ -147,6 +159,7 @@ export function cmdStatus(ctx, args) {
     handoffs: state.handoffs,
     stop_refusals: state.stop_refusals,
     run_verdict: state.run_verdict === undefined ? null : state.run_verdict,
+    board: renderBoard(readFinishLine(ctx)),
     stale_tmp_removed: removed,
   };
 }
@@ -157,12 +170,13 @@ export function cmdGate(ctx, args) {
     case 'verify': return gateVerify(ctx, args);
     case 'conclude': return gateConclude(ctx, args);
     case 'advance': return gateAdvance(ctx, args);
-    case 'build':
-    case 'stop':
+    case 'build': return gateBuild(ctx, args);
+    case 'stop': return gateStop(ctx, args);
+    case 'route': return gateRoute(ctx, args);
     case 'ceiling':
-      return notImplemented('S2/S5', 'gate ' + sub);
+      return notImplemented('S5', 'gate ' + sub);
     default:
-      throw fail('USAGE', 1, { message: 'gate needs a subcommand', subcommands: ['verify', 'conclude', 'advance', 'build', 'stop', 'ceiling'] });
+      throw fail('USAGE', 1, { message: 'gate needs a subcommand', subcommands: ['verify', 'conclude', 'advance', 'build', 'stop', 'route', 'ceiling'] });
   }
 }
 

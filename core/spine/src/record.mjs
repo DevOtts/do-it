@@ -7,6 +7,7 @@ import { resolveEvidence } from './evidence.mjs';
 import { finishLineUpsert, readFinishLine, writeFinishLine } from './finish-line.mjs';
 import { atomicWrite, atomicWriteJson, readJsonIfExists } from './fs-atomic.mjs';
 import { sha256Bytes } from './hash.mjs';
+import { escalationQuestion, ladderEscalated } from './ladder.mjs';
 import { ledgerUpsert, readLedger, writeLedger } from './ledger.mjs';
 import { legsLookRolledBack, planDeploy, staleLegsAfterRollback } from './legs.mjs';
 import { packAppend } from './pack.mjs';
@@ -207,19 +208,79 @@ export function planRecord(ctx, runId, state, result) {
     if (d.outcome !== 'RECORDED' || outcome === 'RECORDED') { outcome = d.outcome; exit = d.exit; }
     if (d.questions.length) plan.extra.question = d.questions[0].text;
   } else {
+    const slice = result.slice_id ? next.slices.find((x) => x.id === result.slice_id) : null;
+    let reason = null;
+    if (slice && result.status === 'blocked') {
+      reason = blockReason(result);
+      if (!reason) throw fail('BLOCK_REASON_REQUIRED', 1, { slice_id: slice.id, message: 'a BLOCKED slice needs a reason' });
+    }
     applyStatusToState(next, result);
     next.stage = result.stage;
+    if (slice && outcome === 'RECORDED') {
+      const sl = planSliceOutcome(plan, next, result, slice, reason);
+      if (sl) { outcome = sl.outcome; exit = sl.exit; }
+    }
   }
 
   if (result.status === 'needs_human' && result.pending_human && result.pending_human.questions_path) {
     const qs = readQuestionsFile(ctx, result.pending_human.questions_path);
-    plan.questions.push(...qs);
+    const midrun = !isDeploy && state.status === 'BUILDING' ? qs.filter((q) => q && q.kind !== 'owner-gate') : [];
+    if (midrun.length) {
+      // G-8: no question to the owner mid-run; the recommendation decides and the end report shows it.
+      for (const q of midrun) {
+        const answer = q.recommendation !== undefined && q.recommendation !== null ? q.recommendation : (q.default === undefined ? null : q.default);
+        plan.events.push({ event: 'default_applied', slice_id: result.slice_id || null, stage: result.stage, verdict: 'MIDRUN_QUESTION_REFUSED', detail: { answer, text: q.text, kind: q.kind || null } });
+        plan.questions.push({ ...q, kind: 'default', recommendation: answer, default: answer });
+      }
+      plan.questions.push(...qs.filter((q) => !midrun.includes(q)));
+      next.status = state.status;
+      next.slices = JSON.parse(JSON.stringify(state.slices));
+      outcome = 'MIDRUN_QUESTION_REFUSED';
+      exit = 1;
+    } else {
+      plan.questions.push(...qs);
+    }
   }
   if (result.run_verdict !== undefined && result.run_verdict !== null) plan.extra.reported_run_verdict = result.run_verdict;
   plan.outcome = outcome;
   plan.exit = exit;
   plan.nextState = next;
   return plan;
+}
+
+export function blockReason(result) {
+  if (typeof result.reason === 'string' && result.reason.trim()) return result.reason.trim();
+  const v = (result.verdicts || []).find((x) => x.verdict === 'BLOCKED' && typeof x.evidence === 'string' && x.evidence.trim());
+  return v ? v.evidence.trim() : null;
+}
+
+// Slice-attached results (D14, CONTRACT M1): FAILED, ESCALATED, BLOCKED and the
+// run settling to BLOCKED once only blocked slices are left.
+export function planSliceOutcome(plan, next, result, slice, reason) {
+  let out = null;
+  if (result.status === 'failed') {
+    if (ladderEscalated(slice)) {
+      slice.status = 'ESCALATED';
+      next.status = 'ESCALATED';
+      plan.questions.push(escalationQuestion(slice));
+      plan.events.push({ event: 'escalated', slice_id: slice.id, stage: result.stage, tier: slice.tier || null, verdict: 'ESCALATED', detail: { attempts: slice.attempts } });
+      out = { outcome: 'ESCALATED', exit: 2 };
+    } else {
+      plan.events.push({ event: 'slice_failed', slice_id: slice.id, stage: result.stage, tier: slice.tier || null, verdict: 'FAILED', detail: { attempts: slice.attempts } });
+      out = { outcome: 'FAILED', exit: 1 };
+    }
+  } else if (result.status === 'blocked') {
+    plan.flOps.push({ id: slice.id, patch: { state: 'BLOCKED', reason } });
+    plan.events.push({ event: 'slice_blocked', slice_id: slice.id, stage: result.stage, verdict: 'BLOCKED', detail: { reason } });
+    out = { outcome: 'BLOCKED', exit: 3 };
+  }
+  const terminal = ['DONE', 'BLOCKED', 'ESCALATED'];
+  if (next.status === 'BUILDING' && next.slices.length && next.slices.every((x) => terminal.includes(x.status)) && next.slices.some((x) => x.status === 'BLOCKED')) {
+    next.status = 'BLOCKED';
+    plan.events.push({ event: 'run_blocked', stage: result.stage, verdict: 'BLOCKED', detail: { slices: next.slices.filter((x) => x.status === 'BLOCKED').map((x) => x.id) } });
+    out = { outcome: 'BLOCKED', exit: 3 };
+  }
+  return out;
 }
 
 export function readQuestionsFile(ctx, file) {
