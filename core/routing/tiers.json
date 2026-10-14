@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "tiers": ["T3", "T2", "T1"],
+  "classes": {
+    "deterministic": { "tier": "code", "model_tokens": 0 },
+    "gather": { "tier": "T3" },
+    "implementation": { "tier": "T2" },
+    "hard": { "tier": "T1", "needs_reason": true }
+  },
+  "conductor_default": "T2",
+  "spawn_cost_tokens": 2000,
+  "spawn_cost_note": "default to calibrate with R4 fixtures; no savings claim rests on it (G-15)",
+  "escalation_order": ["T3", "T2", "T1"],
+  "downgrade_after_first_try_passes": 3,
+  "brief_limit_tokens": 8000
+}
