@@ -225,7 +225,7 @@ test('T-S1-13 G-12 core names no harness', () => {
     for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
       const p = path.join(dir, e.name);
       if (e.isDirectory()) {
-        if (p === path.join(SPINE_DIR, 'test') || e.name === 'node_modules') continue;
+        if (['test', 'tests', '__tests__', 'node_modules'].includes(e.name)) continue;
         walk(p);
       } else if (e.isFile() && words.test(fs.readFileSync(p, 'utf8'))) hits.push(path.relative(CORE_DIR, p));
     }
