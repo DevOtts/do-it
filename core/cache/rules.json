@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "scope_note": "When the host owns the cache (a harness), do-it cannot touch the prefix (research/09 section 7 item 1); these rules then govern only brief layout, spawn grouping, tier and model change timing, and telemetry.",
+  "rules": [
+    { "id": "stable-prefix", "statement": "Static instructions and tools first, volatile content last; no timestamps, ids or git status in the system block or early blocks.", "source": "research/09-cache-prior-art.md section 5 R1" },
+    { "id": "append-only", "statement": "History is append-only; never edit, reorder or summarise earlier messages in place; compact only as a fork that reuses the parent prefix.", "source": "research/09-cache-prior-art.md section 5 R2" },
+    { "id": "deterministic-serialization", "statement": "Sort tools by name and keep JSON key order stable in every request.", "source": "research/09-cache-prior-art.md section 5 R3" },
+    { "id": "no-tool-change", "statement": "Never add or remove tools mid-session; mask through tool_choice, allowed tools or state messages.", "source": "research/09-cache-prior-art.md section 5 R4" },
+    { "id": "no-model-change", "statement": "Never switch model mid-session; hand off through a fresh session with a written brief at a spawn boundary.", "source": "research/09-cache-prior-art.md section 5 R5" },
+    { "id": "updates-in-messages", "statement": "Updates (time, changed files, orchestrator state) go in the next user message or tool result, not the system prompt.", "source": "research/09-cache-prior-art.md section 5 R6" },
+    { "id": "no-effort-change", "statement": "Do not change thinking, effort, tool_choice, images or speed settings mid-thread.", "source": "research/09-cache-prior-art.md section 5 R7" },
+    { "id": "warm-then-fan-out", "statement": "Issue one warming request per provider, model and prefix, wait for its first response, then parallelise sibling workers.", "source": "research/09-cache-prior-art.md section 5 R9" },
+    { "id": "ttl-by-gap", "statement": "Use the 1 hour TTL when the expected gap exceeds 5 minutes and at least two reuses are expected; lifetime counts from request start.", "source": "research/09-cache-prior-art.md section 5 R10" },
+    { "id": "min-prefix", "statement": "Place no cache markers below the model's minimum prefix; sub-minimum prefixes do not cache and the write premium is wasted.", "source": "research/09-cache-prior-art.md section 5 R11" }
+  ],
+  "always": { "id": "measure-always", "statement": "Log read, write and uncached tokens per call; hit rate is read over read plus write plus uncached; ignore sessions under 20 requests.", "source": "research/09-cache-prior-art.md section 5 R12" }
+}
