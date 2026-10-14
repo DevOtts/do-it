@@ -1,0 +1,391 @@
+{
+  "schema": "do-it-catalog/1",
+  "sections": [
+    {
+      "name": "all companions",
+      "owner_repo": "each plugin repo (DevOtts/prompt-it, plan-it, build-it, review-it, conclude-it, parallel-lifecycle, plus the two proposed new repos deploy-it and reconcile-it).",
+      "size": "M",
+      "verification_cases": [
+        "T-R3-03",
+        "T-R3-04",
+        "T-R3-05"
+      ],
+      "citations": [
+        {
+          "path": "review-it/SKILL.md",
+          "line": 109,
+          "text": "IMPLEMENTED-NOT-VERIFIED"
+        },
+        {
+          "path": "build-it/SKILL.md",
+          "line": 46,
+          "text": ".build-it-reports/lessons.md"
+        }
+      ]
+    },
+    {
+      "name": "prompt-it",
+      "owner_repo": "DevOtts/prompt-it",
+      "size": "S",
+      "verification_cases": [
+        "T-R3-06",
+        "T-R3-11"
+      ],
+      "citations": [
+        {
+          "path": "prompt-it/SKILL.md",
+          "line": 41,
+          "text": "tiering"
+        },
+        {
+          "path": "prompt-it/SKILL.md",
+          "line": 59,
+          "text": "tiers"
+        },
+        {
+          "path": "prompt-it/SKILL.md",
+          "line": 59,
+          "text": "NEVER emit delegation/tiering/economics notes"
+        },
+        {
+          "path": "prompt-it/.claude-plugin/marketplace.json",
+          "line": 13,
+          "text": "\"version\": \"0.3.0\""
+        },
+        {
+          "path": "build-it/.claude-plugin/marketplace.json",
+          "line": 18,
+          "text": "\"version\": \"0.2.1\""
+        },
+        {
+          "path": "plan-it/.claude-plugin/marketplace.json",
+          "line": 16,
+          "text": "\"version\": \"0.2.1\""
+        },
+        {
+          "path": "review-it/.claude-plugin/marketplace.json",
+          "line": 16,
+          "text": "\"version\": \"0.2.1\""
+        }
+      ]
+    },
+    {
+      "name": "plan-it",
+      "owner_repo": "DevOtts/plan-it",
+      "size": "M",
+      "verification_cases": [
+        "T-R3-12"
+      ],
+      "citations": [
+        {
+          "path": "plan-it/references/formats.md",
+          "line": 67,
+          "text": "Test Contract — <feature>"
+        },
+        {
+          "path": "plan-it/SKILL.md",
+          "line": 129,
+          "text": "The Test Contract"
+        },
+        {
+          "path": "plan-it/SKILL.md",
+          "line": 651,
+          "text": "tier"
+        }
+      ]
+    },
+    {
+      "name": "build-it",
+      "owner_repo": "DevOtts/build-it",
+      "size": "S",
+      "verification_cases": [
+        "T-R3-11",
+        "T-R3-14"
+      ],
+      "citations": [
+        {
+          "path": "build-it/SKILL.md",
+          "line": 46,
+          "text": ".build-it-reports/lessons.md"
+        },
+        {
+          "path": "build-it/SKILL.md",
+          "line": 3,
+          "text": "Sonnet"
+        },
+        {
+          "path": "build-it/SKILL.md",
+          "line": 3,
+          "text": "Opus"
+        },
+        {
+          "path": "build-it/SKILL.md",
+          "line": 55,
+          "text": "tiers"
+        },
+        {
+          "path": "build-it/SKILL.md",
+          "line": 55,
+          "text": "tier"
+        }
+      ]
+    },
+    {
+      "name": "review-it",
+      "owner_repo": "DevOtts/review-it",
+      "size": "M",
+      "verification_cases": [
+        "T-R3-13"
+      ],
+      "citations": [
+        {
+          "path": "review-it/SKILL.md",
+          "line": 109,
+          "text": "IMPLEMENTED-NOT-VERIFIED"
+        },
+        {
+          "path": "review-it/SKILL.md",
+          "line": 80,
+          "text": "Consume the plan-it Test Contract"
+        },
+        {
+          "path": "review-it/SKILL.md",
+          "line": 39,
+          "text": "tiers"
+        },
+        {
+          "path": "review-it/SKILL.md",
+          "line": 80,
+          "text": "tier"
+        }
+      ]
+    },
+    {
+      "name": "conclude-it",
+      "owner_repo": "DevOtts/conclude-it",
+      "size": "S",
+      "verification_cases": [
+        "T-R3-14"
+      ],
+      "citations": [
+        {
+          "path": "conclude-it/SKILL.md",
+          "line": 13,
+          "text": "safe-to-exit verdict"
+        },
+        {
+          "path": "conclude-it/SKILL.md",
+          "line": 12,
+          "text": "idle-subagent reaping"
+        }
+      ]
+    },
+    {
+      "name": "parallel-lifecycle",
+      "owner_repo": "DevOtts/parallel-lifecycle",
+      "size": "S",
+      "verification_cases": [
+        "T-R3-14"
+      ],
+      "citations": [
+        {
+          "path": "parallel-lifecycle/SKILL.md",
+          "line": 17,
+          "text": "isolated"
+        },
+        {
+          "path": "parallel-lifecycle/SKILL.md",
+          "line": 30,
+          "text": "--git-common-dir"
+        },
+        {
+          "path": "parallel-lifecycle/SKILL.md",
+          "line": 72,
+          "text": "git worktree remove"
+        }
+      ]
+    },
+    {
+      "name": "deploy-it",
+      "owner_repo": "proposed new repo DevOtts/deploy-it (built from the user-level skills engine-deploy and deploy-router, which live outside the read-only sibling set).",
+      "size": "L",
+      "verification_cases": [
+        "T-R3-07",
+        "T-R3-08",
+        "T-R3-09",
+        "T-R3-10"
+      ],
+      "citations": []
+    },
+    {
+      "name": "reconcile-it",
+      "owner_repo": "proposed new repo DevOtts/reconcile-it (packaging of the user-level reconcile-it skill, which lives outside the read-only sibling set).",
+      "size": "M",
+      "verification_cases": [
+        "T-R3-15",
+        "T-R4-10",
+        "T-R4-11"
+      ],
+      "citations": []
+    }
+  ],
+  "fenced": {
+    "readiness-schema": {
+      "type": "object",
+      "required": [
+        "schema",
+        "decisions",
+        "preflight",
+        "owner_dependent_slices"
+      ],
+      "properties": {
+        "schema": {
+          "const": "do-it-readiness/1"
+        },
+        "decisions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "status"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "status": {
+                "enum": [
+                  "RESOLVED",
+                  "DEFAULTED"
+                ]
+              }
+            }
+          }
+        },
+        "preflight": {
+          "type": "object",
+          "required": [
+            "passed"
+          ],
+          "properties": {
+            "passed": {
+              "const": true
+            }
+          }
+        },
+        "owner_dependent_slices": {
+          "const": 0
+        }
+      }
+    },
+    "readiness-example": {
+      "schema": "do-it-readiness/1",
+      "decisions": [
+        {
+          "id": "D1",
+          "status": "RESOLVED"
+        },
+        {
+          "id": "D2",
+          "status": "DEFAULTED"
+        }
+      ],
+      "preflight": {
+        "passed": true
+      },
+      "owner_dependent_slices": 0
+    },
+    "adapter-schema": {
+      "type": "object",
+      "required": [
+        "schema",
+        "legs"
+      ],
+      "properties": {
+        "schema": {
+          "const": "deploy-it-adapter/1"
+        },
+        "legs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "command",
+              "verify",
+              "rollback",
+              "risk"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "command": {
+                "type": "string",
+                "minLength": 1
+              },
+              "verify": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "rollback": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "risk": {
+                "enum": [
+                  "low",
+                  "medium",
+                  "high"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "adapter-example": {
+      "schema": "deploy-it-adapter/1",
+      "legs": [
+        {
+          "name": "web-canary",
+          "command": "./deploy.sh canary",
+          "verify": "./verify.sh canary",
+          "rollback": "./rollback.sh canary",
+          "risk": "low"
+        },
+        {
+          "name": "web-prod",
+          "command": "./deploy.sh prod",
+          "verify": "./verify.sh prod",
+          "rollback": "./rollback.sh prod",
+          "risk": "high"
+        }
+      ]
+    },
+    "reconcile-state-example": {
+      "phase": "await_approval",
+      "inventory": [
+        {
+          "ref": "epic/R9-old",
+          "kind": "branch"
+        }
+      ],
+      "dispositions": [
+        {
+          "ref": "epic/R9-old",
+          "action": "delete-landed"
+        }
+      ],
+      "approved_at": null
+    }
+  }
+}
