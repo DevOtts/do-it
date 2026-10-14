@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "do-it",
+  "version": "0.1.0",
+  "description": "One conductor for the whole *-it lifecycle: prompt-it, plan-it, build-it, review-it, deploy-it, conclude-it, reconcile-it. A thin spine owns run state; stages are personas.",
+  "author": { "name": "DevOtts", "url": "https://github.com/DevOtts" },
+  "homepage": "https://github.com/DevOtts/do-it",
+  "repository": "https://github.com/DevOtts/do-it",
+  "license": "MIT",
+  "keywords": ["orchestration", "lifecycle", "conductor", "agentic", "claude-code"],
+  "dependencies": ["prompt-it", "plan-it", "build-it", "review-it", "conclude-it"]
+}

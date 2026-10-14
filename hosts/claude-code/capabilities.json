@@ -1,0 +1,16 @@
+{
+  "host": "claude-code",
+  "version_probed": "2.1.300",
+  "spawn": { "native": true, "per_spawn_model": true, "max_parallel": 3 },
+  "ask": { "native": true, "max_questions": 4 },
+  "continue": { "headless": true },
+  "wake": { "native": true },
+  "meter": { "provider_usage": true, "cache_fields": true },
+  "hooks": { "stop_gate": true },
+  "isolation": ["worktree"],
+  "unknown": [
+    "hook-block-semantics",
+    "askuserquestion-in-print-mode",
+    "schedulewakeup-in-print-or-bg"
+  ]
+}

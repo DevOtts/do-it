@@ -1,0 +1,191 @@
+TAP version 13
+# Subtest: H1 conformance suite passes on the claude-code adapter
+ok 1 - H1 conformance suite passes on the claude-code adapter
+  ---
+  duration_ms: 331.216333
+  type: 'test'
+  ...
+# Subtest: H1 conformance with wake.native switched off passes (skips carry a reason)
+ok 2 - H1 conformance with wake.native switched off passes (skips carry a reason)
+  ---
+  duration_ms: 336.352083
+  type: 'test'
+  ...
+# Subtest: H1 conformance with hooks.stop_gate switched off passes (skips carry a reason)
+ok 3 - H1 conformance with hooks.stop_gate switched off passes (skips carry a reason)
+  ---
+  duration_ms: 337.714084
+  type: 'test'
+  ...
+# Subtest: H1 conformance with ask.native switched off passes (skips carry a reason)
+ok 4 - H1 conformance with ask.native switched off passes (skips carry a reason)
+  ---
+  duration_ms: 333.069083
+  type: 'test'
+  ...
+# Subtest: H1 conformance with spawn.native switched off passes (skips carry a reason)
+ok 5 - H1 conformance with spawn.native switched off passes (skips carry a reason)
+  ---
+  duration_ms: 347.049167
+  type: 'test'
+  ...
+# Subtest: H1 conformance with meter.provider_usage switched off passes (skips carry a reason)
+ok 6 - H1 conformance with meter.provider_usage switched off passes (skips carry a reason)
+  ---
+  duration_ms: 341.310083
+  type: 'test'
+  ...
+# Subtest: H1 schemas: adapter manifest and capabilities validate
+ok 7 - H1 schemas: adapter manifest and capabilities validate
+  ---
+  duration_ms: 49.864458
+  type: 'test'
+  ...
+# Subtest: H1 plugin manifest equals the L5 manifest (B8) and carries the four named companions
+ok 8 - H1 plugin manifest equals the L5 manifest (B8) and carries the four named companions
+  ---
+  duration_ms: 0.183667
+  type: 'test'
+  ...
+# Subtest: H1 forbidden-names check (G-14) is clean on hosts/claude-code
+ok 9 - H1 forbidden-names check (G-14) is clean on hosts/claude-code
+  ---
+  duration_ms: 26.763083
+  type: 'test'
+  ...
+# VERDICT T-H1-01 VERIFIED claude plugin validate exit 0, deps=prompt-it,plan-it,build-it,review-it,conclude-it
+# VERDICT T-H1-02 VERIFIED path "dependencies" is a JSON field (text mode prints "dependencies: ...")
+# VERDICT T-H1-03 VERIFIED Installing plugin "do-it@devotts"...✔ Successfully installed plugin: do-it@devotts (scope: user) (+ 5 dependencies: prompt-it, plan-it, build-it, review-it, con
+# VERDICT T-H1-11 VERIFIED alias=anm; tried [{"alias":"8fai","outcome":"HANDOFF_FAILED","reason":"exit 1: Failed to authenticate: OAuth session expired and could not be refreshed"},{"alias":"8ftools","outcome":"HANDOFF_FAILED","reason":"exit 1: Failed to authenticate: OAuth session expired and could not be refreshed"},{"alias":"anm","outcome":"ok"}]
+# VERDICT T-H1-12 VERIFIED real binary: exit 1: Not logged in · Please run /login
+# VERDICT T-H1-17 VERIFIED tokens_in=2 tokens_out=4 cache_read=11316 cache_write=29752
+# VERDICT T-H1-20 VERIFIED real=2.1.300 declared=2.1.300
+# Subtest: T-H1-01 plugin manifest validates with the real validator
+ok 10 - T-H1-01 plugin manifest validates with the real validator
+  ---
+  duration_ms: 633.844875
+  type: 'test'
+  ...
+# Subtest: T-H1-02 a non-array dependencies field is rejected
+ok 11 - T-H1-02 a non-array dependencies field is rejected
+  ---
+  duration_ms: 1239.486375
+  type: 'test'
+  ...
+# Subtest: T-H1-03 install-time dependency resolution is observed, not assumed
+ok 12 - T-H1-03 install-time dependency resolution is observed, not assumed
+  ---
+  duration_ms: 8198.688208
+  type: 'test'
+  ...
+# Subtest: T-H1-04 hooks.json registers the stop-gate and the ceiling block
+ok 13 - T-H1-04 hooks.json registers the stop-gate and the ceiling block
+  ---
+  duration_ms: 0.411625
+  type: 'test'
+  ...
+# Subtest: T-H1-05 stop-gate refuses three times then parks
+ok 14 - T-H1-05 stop-gate refuses three times then parks
+  ---
+  duration_ms: 223.132959
+  type: 'test'
+  ...
+# Subtest: T-H1-06 stop-gate allows a finished run
+ok 15 - T-H1-06 stop-gate allows a finished run
+  ---
+  duration_ms: 50.704292
+  type: 'test'
+  ...
+# Subtest: T-H1-07 ceiling blocks a spawn but not the handoff write
+ok 16 - T-H1-07 ceiling blocks a spawn but not the handoff write
+  ---
+  duration_ms: 75.696458
+  type: 'test'
+  ...
+# Subtest: T-H1-08 spawn sets a per-spawn model from the tier map; untiered is refused
+ok 17 - T-H1-08 spawn sets a per-spawn model from the tier map; untiered is refused
+  ---
+  duration_ms: 50.565125
+  type: 'test'
+  ...
+# Subtest: T-H1-09 T1 without a written reason is downgraded
+ok 18 - T-H1-09 T1 without a written reason is downgraded
+  ---
+  duration_ms: 0.437834
+  type: 'test'
+  ...
+# Subtest: T-H1-10 continue builds the exact headless command
+ok 19 - T-H1-10 continue builds the exact headless command
+  ---
+  duration_ms: 37.646875
+  type: 'test'
+  ...
+# Subtest: T-H1-11 headless start under a real subscription alias
+ok 20 - T-H1-11 headless start under a real subscription alias
+  ---
+  duration_ms: 9117.141125
+  type: 'test'
+  ...
+# Subtest: T-H1-12 headless start fails: HANDOFF_FAILED
+ok 21 - T-H1-12 headless start fails: HANDOFF_FAILED
+  ---
+  duration_ms: 552.665833
+  type: 'test'
+  ...
+# Subtest: T-H1-13 cap reached: ESCALATED
+ok 22 - T-H1-13 cap reached: ESCALATED
+  ---
+  duration_ms: 249.483708
+  type: 'test'
+  ...
+# Subtest: T-H1-14 three questions map to one native call
+ok 23 - T-H1-14 three questions map to one native call
+  ---
+  duration_ms: 0.4305
+  type: 'test'
+  ...
+# Subtest: T-H1-15 over the cap falls back
+ok 24 - T-H1-15 over the cap falls back
+  ---
+  duration_ms: 0.857625
+  type: 'test'
+  ...
+# Subtest: T-H1-16 meter parses usage from the json result
+ok 25 - T-H1-16 meter parses usage from the json result
+  ---
+  duration_ms: 0.166458
+  type: 'test'
+  ...
+# Subtest: T-H1-17 meter against a real json result
+ok 26 - T-H1-17 meter against a real json result
+  ---
+  duration_ms: 8073.429917
+  type: 'test'
+  ...
+# Subtest: T-H1-18 wake uses ScheduleWakeup interactively and parks otherwise
+ok 27 - T-H1-18 wake uses ScheduleWakeup interactively and parks otherwise
+  ---
+  duration_ms: 0.8505
+  type: 'test'
+  ...
+# Subtest: T-H1-19 recovery after the claude child dies mid-spawn
+ok 28 - T-H1-19 recovery after the claude child dies mid-spawn
+  ---
+  duration_ms: 196.955542
+  type: 'test'
+  ...
+# Subtest: T-H1-20 adversarial verify: capabilities.json is re-probed against the real binary
+ok 29 - T-H1-20 adversarial verify: capabilities.json is re-probed against the real binary
+  ---
+  duration_ms: 310.939417
+  type: 'test'
+  ...
+1..29
+# tests 29
+# suites 0
+# pass 29
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 29060.558041
