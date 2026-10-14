@@ -1,7 +1,7 @@
 # STATUS: do-it v1 board
 
 Legend: NOT-STARTED · IN-PROGRESS · IMPLEMENTED-NOT-VERIFIED · VERIFIED
-Program totals: 22 epics · 0 shipped (cases computed after squads finish)
+Program totals: 20 epics · 14 VERIFIED · 6 IMPLEMENTED-NOT-VERIFIED · 352 cases: 344 verified, 8 not (see Residuals) · report: .build-it-reports/REPORT.md
 
 | EID | Epic | Squad | Wave | Status | Tests (green/total) | Branch | Disposition |
 |---|---|---|---|---|---|---|---|
@@ -29,6 +29,11 @@ Program totals: 22 epics · 0 shipped (cases computed after squads finish)
 ## Residuals
 | Item | Disposition | Reason / exit criterion | Evidence |
 |---|---|---|---|
+| T-S5-16, T-S5-17 | IMPLEMENTED-NOT-VERIFIED | live aws/op not run, no access; exit: owner supplies access | run: .taskstate/results/S5.md |
+| T-N1-17, T-N1-18 | IMPLEMENTED-NOT-VERIFIED | Engine lacks ask-cards route and step metadata field | run: .taskstate/results/live-w4.md, exit 3 |
+| T-N2-04, T-N3-14, T-R4-05 | IMPLEMENTED-NOT-VERIFIED | Engine lacks generic row store, card inject endpoint, drain driver | run: .taskstate/results/live-w4.md |
+| T-R1-15 | IMPLEMENTED-NOT-VERIFIED | morning report matched to stub-host run only | run: .taskstate/results/R1.md |
+| T-N1-16 | VERIFIED live | local brain-api-core checkpoint card | run: .taskstate/results/live-w4.log exit 0 |
 
 ## Log
 - 2026-10-14: waves zero to two merged; suites green on main (see .taskstate/evidence.md). W3 in flight (P3,N1,N3,R3). R4 skeleton merged (15 pass, 11 deferred to W4).
