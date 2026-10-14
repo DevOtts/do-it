@@ -9,10 +9,10 @@ Program totals: 22 epics · 0 shipped (cases computed after squads finish)
 | S2 | router, next, finish-line, stop-gate | spine | W1 | VERIFIED | 18/18 | epic/S2-router | run: node --test "core/spine/test/**/*.test.mjs" exit 0; log .taskstate/evidence.md |
 | S3 | record, gate, evidence, conclude | spine | W0 | VERIFIED | 19/19 | epic/S3-evidence | run: node --test "core/spine/test/**/*.test.mjs" exit 0; log .taskstate/evidence.md |
 | S4 | owner pack, answer, renderers | spine | W2 | VERIFIED | 16/16 | epic/S4-ownerpack | run: node --test "core/spine/test/**/*.test.mjs" exit 0; log .taskstate/evidence.md |
-| S5 | handoff, park, resume, ceilings, secrets | spine | W1 | IMPLEMENTED-NOT-VERIFIED | 17/18 (2 live cases need aws/op access) | epic/S5-handoff | run: node --test "core/spine/test/**/*.test.mjs" exit 0; log .taskstate/evidence.md |
+| S5 | handoff, park, resume, ceilings, secrets | spine | W1 | IMPLEMENTED-NOT-VERIFIED | 16/18 (T-S5-16,17 live aws/op not run; stub CLI contract only) | epic/S5-handoff | run: node --test "core/spine/test/**/*.test.mjs" exit 0; log .taskstate/evidence.md |
 | P1 | pipelines and personas | economy | W2 | VERIFIED | 19/19 | epic/P1-pipelines | run: node --test "core/pipelines/tests/*.test.mjs" exit 0; log .taskstate/evidence.md |
 | P2 | tier policy, briefs, meter | economy | W1 | VERIFIED | 18/18 | epic/P2-tokens | run: node --test "core/routing/tests/*.test.mjs" exit 0; log .taskstate/evidence.md |
-| P3 | cache | economy | W3 | NOT-STARTED | 0/0 | epic/P3-cache | run: node --test "core/cache/tests/**/*.test.mjs" exit 0; log .taskstate/evidence.md |
+| P3 | cache | economy | W3 | VERIFIED | 18/18 | epic/P3-cache | run: node --test "core/cache/tests/**/*.test.mjs" exit 0; log .taskstate/evidence.md |
 | P4 | review-loop convergence | economy | W2 | VERIFIED | 20/20 | epic/P4-review | run: node --test "core/pipelines/review-loop/tests/*.test.mjs" exit 0; log .taskstate/evidence.md |
 | H0 | host interface and conformance | hosts-a | W0 | VERIFIED | 18/18 | epic/H0-interface | run: node --test "hosts/_interface/tests/*.test.mjs" exit 0; log .taskstate/evidence.md |
 | H1 | claude-code adapter | hosts-a | W1 | VERIFIED | 20/20 | epic/H1-claude | run: node --test "hosts/claude-code/tests/*.test.mjs" exit 0; log .taskstate/evidence.md |
@@ -23,7 +23,7 @@ Program totals: 22 epics · 0 shipped (cases computed after squads finish)
 | N3 | Engine-layer handoff and replay | engine | W3 | IMPLEMENTED-NOT-VERIFIED | 13/14 (T-N3-14 needs Engine card inject) | epic/N3-handoff | run: node --test "hosts/engine/tests/*.test.mjs" exit 0; log .taskstate/evidence.md |
 | R1 | README and assets | ship | W4 | IMPLEMENTED-NOT-VERIFIED | 15/16 (T-R1-15 compared to stub-host report only) | epic/R1-readme | run: node --test "tests/readme/*.test.mjs" exit 0 |
 | R2 | plugin shell, marketplace, companions | ship | W0 | VERIFIED | 16/16 with DO_IT_SIBLINGS set | epic/R2-shell | run: node --test "tests/plugin/*.test.mjs" exit 0; log .taskstate/evidence.md |
-| R3 | companion-change catalog | ship | W3 | NOT-STARTED | 0/0 | epic/R3-companions | run: node --test "tests/catalog/*.test.mjs" exit 0; log .taskstate/evidence.md |
+| R3 | companion-change catalog | ship | W3 | VERIFIED | 16/16 | epic/R3-companions | run: node --test "tests/catalog/*.test.mjs" exit 0; log .taskstate/evidence.md |
 | R4 | fixtures and e2e | ship | W1 | IMPLEMENTED-NOT-VERIFIED | 19/20 (T-R4-05 no live Engine) | epic/R4-fixtures | run: node --test "tests/e2e/r4.test.mjs" exit 0; log .taskstate/evidence.md |
 
 ## Residuals
