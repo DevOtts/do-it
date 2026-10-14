@@ -1,0 +1,98 @@
+TAP version 13
+# VERDICT T-N3-11 VERIFIED clean
+# VERDICT T-N3-12 VERIFIED
+# VERDICT T-N3-13 VERIFIED
+# VERDICT T-N3-14 IMPLEMENTED-NOT-VERIFIED probe: env DO_IT_ENGINE_URL: unset; docker ps: Cannot connect to the Docker daemon at unix:///Users/macbook/.docker/run/docker.sock. Is the docker daemon running?; http reach: no candidate URL (env unset, no engine containers)
+# Subtest: T-N3-01 spec has 15 points
+ok 1 - T-N3-01 spec has 15 points
+  ---
+  duration_ms: 25.317625
+  type: 'test'
+  ...
+# Subtest: T-N3-02 adjustments file has 12 items
+ok 2 - T-N3-02 adjustments file has 12 items
+  ---
+  duration_ms: 26.369833
+  type: 'test'
+  ...
+# Subtest: T-N3-03 hygiene fixes applied
+ok 3 - T-N3-03 hygiene fixes applied
+  ---
+  duration_ms: 51.045959
+  type: 'test'
+  ...
+# Subtest: T-N3-04 replay happy path: lp_content card
+ok 4 - T-N3-04 replay happy path: lp_content card
+  ---
+  duration_ms: 37.388125
+  type: 'test'
+  ...
+# Subtest: T-N3-05 replay: stale head
+ok 5 - T-N3-05 replay: stale head
+  ---
+  duration_ms: 2.936375
+  type: 'test'
+  ...
+# Subtest: T-N3-06 replay: budget denied
+ok 6 - T-N3-06 replay: budget denied
+  ---
+  duration_ms: 0.866625
+  type: 'test'
+  ...
+# Subtest: T-N3-07 replay: loop cap
+ok 7 - T-N3-07 replay: loop cap
+  ---
+  duration_ms: 1.92075
+  type: 'test'
+  ...
+# Subtest: T-N3-08 replay: prompt injection in the card body
+ok 8 - T-N3-08 replay: prompt injection in the card body
+  ---
+  duration_ms: 2.786042
+  type: 'test'
+  ...
+# Subtest: T-N3-09 partial replay failure is reported, interrupted replay resumes
+ok 9 - T-N3-09 partial replay failure is reported, interrupted replay resumes
+  ---
+  duration_ms: 69.935334
+  type: 'test'
+  ...
+# Subtest: T-N3-10 low-confidence route asks the owner
+ok 10 - T-N3-10 low-confidence route asks the owner
+  ---
+  duration_ms: 2.267375
+  type: 'test'
+  ...
+# Subtest: T-N3-11 [REAL] scope check on the real Engine-Core repo
+ok 11 - T-N3-11 [REAL] scope check on the real Engine-Core repo
+  ---
+  duration_ms: 69.686041
+  type: 'test'
+  ...
+# Subtest: T-N3-12 [REAL] scope check catches a stray edit
+ok 12 - T-N3-12 [REAL] scope check catches a stray edit
+  ---
+  duration_ms: 3005.778375
+  type: 'test'
+  ...
+# Subtest: T-N3-13 [REAL] manifest tamper detection
+ok 13 - T-N3-13 [REAL] manifest tamper detection
+  ---
+  duration_ms: 53.877333
+  type: 'test'
+  ...
+# Subtest: T-N3-14 [REAL] live replay against Engine
+ok 14 - T-N3-14 [REAL] live replay against Engine
+  ---
+  duration_ms: 0.087
+  type: 'test'
+  ...
+1..14
+# tests 14
+# suites 0
+# pass 14
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3511.587208

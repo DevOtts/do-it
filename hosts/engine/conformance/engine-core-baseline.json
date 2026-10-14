@@ -1,0 +1,11 @@
+{
+  "schema": "do-it-engine-core-baseline/1",
+  "note": "Engine-Core is a shared repo. Paths below were changed or untracked by other sessions when N3 started; none was touched by do-it. A path not listed here makes scope-check return NEEDS_HUMAN (exit 2).",
+  "head": "e6668ef17bded508a078634c09c9ac3a6279e766",
+  "recorded": "2026-10-14",
+  "other_programs": [
+    { "path": ".claude/skills/new-persona-agent/", "owner": "other session: new-persona-agent skill (not do-it)" },
+    { "path": "docs/implementation/1-backlog/2026-10-12/", "owner": "other session: backlog kickoff docs (not do-it)" },
+    { "path": "docs/qa-roteiros/praxya-apps-ROTEIRO-TESTE.html", "owner": "other session: praxya apps QA roteiro (not do-it)" }
+  ]
+}

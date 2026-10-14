@@ -1,0 +1,10 @@
+{
+  "schema": "do-it-engine-layer-manifest/1",
+  "dir": "docs/implementation/do-it-engine-layer",
+  "files": {
+    "README.md": "feb6f608b502355a58e1992fb97286d3c94cb71832b7651309ee5104684db6da",
+    "01-ADJUSTMENTS-TO-ENGINE-DEV-SQUAD.md": "136c96c071f08d6fb6d5b7e6ca59ee3c30c0ec9f386caf90774351e5a5c4123c",
+    "02-ENGINE-LAYER-SPEC.md": "f395e0a6a89009a2ab6df1459eea8a1a35f808b6c87d3c2f9ae07058e3df5749",
+    "03-OPEN-QUESTIONS.md": "c35ac311046343ff9b57c5d8ef239e1988813e4167dc823cd7ab3c3b880b29f3"
+  }
+}

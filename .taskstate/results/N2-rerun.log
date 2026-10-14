@@ -1,0 +1,119 @@
+TAP version 13
+# Subtest: T-N2-01 [REAL] shared conformance suite on local-fs
+ok 1 - T-N2-01 [REAL] shared conformance suite on local-fs
+  ---
+  duration_ms: 120.732667
+  type: 'test'
+  ...
+# Subtest: T-N2-02 [REAL] shared conformance suite on git-branch, one commit per write batch
+ok 2 - T-N2-02 [REAL] shared conformance suite on git-branch, one commit per write batch
+  ---
+  duration_ms: 816.752958
+  type: 'test'
+  ...
+# Subtest: T-N2-03 shared conformance suite on the engine backend with the in-memory driver
+ok 3 - T-N2-03 shared conformance suite on the engine backend with the in-memory driver
+  ---
+  duration_ms: 34.269583
+  type: 'test'
+  ...
+# Subtest: T-N2-04 [REAL] engine backend on a real Engine environment: IMPLEMENTED-NOT-VERIFIED when unreachable
+ok 4 - T-N2-04 [REAL] engine backend on a real Engine environment: IMPLEMENTED-NOT-VERIFIED when unreachable
+  ---
+  duration_ms: 31.568334
+  type: 'test'
+  ...
+# Subtest: T-N2-05 interface semantics on every backend
+ok 5 - T-N2-05 interface semantics on every backend
+  ---
+  duration_ms: 147.875833
+  type: 'test'
+  ...
+# Subtest: T-N2-06 path guard rejects traversal and creates nothing
+ok 6 - T-N2-06 path guard rejects traversal and creates nothing
+  ---
+  duration_ms: 48.0655
+  type: 'test'
+  ...
+# Subtest: T-N2-07 blob addressing is content addressed and deduplicated
+ok 7 - T-N2-07 blob addressing is content addressed and deduplicated
+  ---
+  duration_ms: 136.895458
+  type: 'test'
+  ...
+# Subtest: T-N2-08 [REAL] adversarial verify on local-fs: tampered blob is refused
+ok 8 - T-N2-08 [REAL] adversarial verify on local-fs: tampered blob is refused
+  ---
+  duration_ms: 42.339958
+  type: 'test'
+  ...
+# Subtest: T-N2-09 [REAL] adversarial verify on git-branch: blob rewritten and committed under the same path
+ok 9 - T-N2-09 [REAL] adversarial verify on git-branch: blob rewritten and committed under the same path
+  ---
+  duration_ms: 145.408041
+  type: 'test'
+  ...
+# Subtest: T-N2-10 adversarial verify on engine backend: rows, fs-mirror and r2 (stub transport)
+ok 10 - T-N2-10 adversarial verify on engine backend: rows, fs-mirror and r2 (stub transport)
+  ---
+  duration_ms: 1.880333
+  type: 'test'
+  ...
+# Subtest: T-N2-11 [REAL] kill -9 between blob write and reference rename, then recovery
+ok 11 - T-N2-11 [REAL] kill -9 between blob write and reference rename, then recovery
+  ---
+  duration_ms: 88.18525
+  type: 'test'
+  ...
+# Subtest: T-N2-12 torn append line is quarantined, not dropped
+ok 12 - T-N2-12 torn append line is quarantined, not dropped
+  ---
+  duration_ms: 282.188833
+  type: 'test'
+  ...
+# Subtest: T-N2-13 [REAL] cold-start resume in an empty directory from a git ref and the result file
+ok 13 - T-N2-13 [REAL] cold-start resume in an empty directory from a git ref and the result file
+  ---
+  duration_ms: 203.669
+  type: 'test'
+  ...
+# Subtest: T-N2-14 resume without the previous result file is BLOCKED, nothing written
+ok 14 - T-N2-14 resume without the previous result file is BLOCKED, nothing written
+  ---
+  duration_ms: 145.160667
+  type: 'test'
+  ...
+# Subtest: T-N2-15 blob driver selection
+ok 15 - T-N2-15 blob driver selection
+  ---
+  duration_ms: 119.541292
+  type: 'test'
+  ...
+# Subtest: T-N2-16 failed recovery retries once then escalates with an owner-pack question
+ok 16 - T-N2-16 failed recovery retries once then escalates with an owner-pack question
+  ---
+  duration_ms: 119.714666
+  type: 'test'
+  ...
+# Subtest: T-N2-17 secrets are references only and never echoed
+ok 17 - T-N2-17 secrets are references only and never echoed
+  ---
+  duration_ms: 58.80225
+  type: 'test'
+  ...
+# Subtest: T-N2-18 core/state-stores names no harness (G-12)
+ok 18 - T-N2-18 core/state-stores names no harness (G-12)
+  ---
+  duration_ms: 4.426917
+  type: 'test'
+  ...
+1..18
+# tests 18
+# suites 0
+# pass 18
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2593.668666
+IMPLEMENTED-NOT-VERIFIED backend: engine, driver: rows, real: true, probe: DO_IT_ENGINE_URL is unset: no reachable Engine staging with a card

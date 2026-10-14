@@ -1,0 +1,121 @@
+TAP version 13
+# VERDICT T-N1-16 IMPLEMENTED-NOT-VERIFIED probe: env DO_IT_ENGINE_URL: unset; docker ps: Cannot connect to the Docker daemon at unix:///Users/macbook/.docker/run/docker.sock. Is the docker daemon running?; http reach: no candidate URL (env unset, no engine containers)
+# VERDICT T-N1-17 IMPLEMENTED-NOT-VERIFIED probe: env DO_IT_ENGINE_URL: unset; docker ps: Cannot connect to the Docker daemon at unix:///Users/macbook/.docker/run/docker.sock. Is the docker daemon running?; http reach: no candidate URL (env unset, no engine containers)
+# VERDICT T-N1-18 IMPLEMENTED-NOT-VERIFIED probe: env DO_IT_ENGINE_URL: unset; docker ps: Cannot connect to the Docker daemon at unix:///Users/macbook/.docker/run/docker.sock. Is the docker daemon running?; http reach: no candidate URL (env unset, no engine containers)
+# Subtest: T-N1-01 round trip of the lifecycle squad is lossless
+ok 1 - T-N1-01 round trip of the lifecycle squad is lossless
+  ---
+  duration_ms: 53.747833
+  type: 'test'
+  ...
+# Subtest: T-N1-02 roster is derived from steps
+ok 2 - T-N1-02 roster is derived from steps
+  ---
+  duration_ms: 0.867625
+  type: 'test'
+  ...
+# Subtest: T-N1-03 stored roster that drifts from steps is rejected
+ok 3 - T-N1-03 stored roster that drifts from steps is rejected
+  ---
+  duration_ms: 27.733833
+  type: 'test'
+  ...
+# Subtest: T-N1-04 step mapping
+ok 4 - T-N1-04 step mapping
+  ---
+  duration_ms: 0.35525
+  type: 'test'
+  ...
+# Subtest: T-N1-05 unknown step type fails the compile
+ok 5 - T-N1-05 unknown step type fails the compile
+  ---
+  duration_ms: 27.71675
+  type: 'test'
+  ...
+# Subtest: T-N1-06 ask fans out to all three channels with one pack
+ok 6 - T-N1-06 ask fans out to all three channels with one pack
+  ---
+  duration_ms: 0.613833
+  type: 'test'
+  ...
+# Subtest: T-N1-07 reply parsing by ID, same result on every channel
+ok 7 - T-N1-07 reply parsing by ID, same result on every channel
+  ---
+  duration_ms: 1.024083
+  type: 'test'
+  ...
+# Subtest: T-N1-08 first valid reply per ID wins
+ok 8 - T-N1-08 first valid reply per ID wins
+  ---
+  duration_ms: 0.2155
+  type: 'test'
+  ...
+# Subtest: T-N1-09 default-accept-by-ID and irreversible questions
+ok 9 - T-N1-09 default-accept-by-ID and irreversible questions
+  ---
+  duration_ms: 0.314
+  type: 'test'
+  ...
+# Subtest: T-N1-10 one channel down is a warning, zero channels is BLOCKED
+ok 10 - T-N1-10 one channel down is a warning, zero channels is BLOCKED
+  ---
+  duration_ms: 1.470958
+  type: 'test'
+  ...
+# Subtest: T-N1-11 untrusted card text never selects tools, repos or hosts
+ok 11 - T-N1-11 untrusted card text never selects tools, repos or hosts
+  ---
+  duration_ms: 1.055542
+  type: 'test'
+  ...
+# Subtest: T-N1-12 only code publishes
+ok 12 - T-N1-12 only code publishes
+  ---
+  duration_ms: 28.969083
+  type: 'test'
+  ...
+# Subtest: T-N1-13 review cap is 3
+ok 13 - T-N1-13 review cap is 3
+  ---
+  duration_ms: 0.214542
+  type: 'test'
+  ...
+# Subtest: T-N1-14 flat pipeline, one router level
+ok 14 - T-N1-14 flat pipeline, one router level
+  ---
+  duration_ms: 27.055
+  type: 'test'
+  ...
+# Subtest: T-N1-15 drain shape
+ok 15 - T-N1-15 drain shape
+  ---
+  duration_ms: 0.532459
+  type: 'test'
+  ...
+# Subtest: T-N1-16 [REAL] live Control Tower checkpoint card
+ok 16 - T-N1-16 [REAL] live Control Tower checkpoint card
+  ---
+  duration_ms: 0.345
+  type: 'test'
+  ...
+# Subtest: T-N1-17 [REAL] live ask on real channels and reply by ID
+ok 17 - T-N1-17 [REAL] live ask on real channels and reply by ID
+  ---
+  duration_ms: 0.058208
+  type: 'test'
+  ...
+# Subtest: T-N1-18 [REAL] definition read-back is lossless on Engine
+ok 18 - T-N1-18 [REAL] definition read-back is lossless on Engine
+  ---
+  duration_ms: 0.046292
+  type: 'test'
+  ...
+1..18
+# tests 18
+# suites 0
+# pass 18
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 331.392792

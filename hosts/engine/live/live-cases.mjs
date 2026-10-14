@@ -41,3 +41,15 @@ export async function liveReadBack(client, squadPath) {
   if (steps.some((s, i) => JSON.stringify(s.x_do_it) !== JSON.stringify(def.steps[i].x_do_it))) fallback = true; // X_DO_IT_REJECTED
   return { equal: canonicalHash(decompileDefinition(back)) === canonicalHash(squad), x_do_it_rejected: fallback };
 }
+
+// T-N3-14: replay the lp_content card and the four negatives against a live Engine with the W3 pipeline
+// installed, then compare card states read back with conformance/expected.json. Routes ASSUMED.
+export async function liveReplay(client, expected, loadCard) {
+  const out = {};
+  for (const [name, fixture] of [['happy', 'lp_content-card'], ['stale-head', 'stale-head'], ['budget-denied', 'budget-denied'], ['loop-cap', 'loop-cap'], ['injection', 'injection']]) {
+    const { card_id } = await client.post('/api/mission-control/cards', loadCard(fixture));
+    const state = await client.get(`/api/mission-control/cards/${card_id}/state`);
+    out[name] = { ok: state?.status === expected[name].status && state?.exit_code === expected[name].exit_code, state };
+  }
+  return out;
+}

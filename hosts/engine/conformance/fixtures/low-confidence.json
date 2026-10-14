@@ -1,0 +1,5 @@
+{
+  "extends": "lp_content-card",
+  "id": "card-low-confidence",
+  "work_type_scores": { "lp_content": 0.55, "feature": 0.4 }
+}
