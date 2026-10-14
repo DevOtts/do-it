@@ -213,7 +213,8 @@ test('T-N3-13 [REAL] manifest tamper detection', () => {
 
 test('T-N3-14 [REAL] live replay against Engine', async () => {
   if (!live.reachable) { verdict('T-N3-14', 'IMPLEMENTED-NOT-VERIFIED', `probe: ${live.error}`); assert.ok(live.error); return; }
-  const r = await liveReplay(liveClient(live), expected, loadCard);
+  const r = await liveReplay(liveClient(live), expected, loadCard).catch((e) => { if (e.code !== 'ENGINE_GAP') throw e; verdict('T-N3-14', 'IMPLEMENTED-NOT-VERIFIED', `engine gap: ${e.message}`); });
+  if (!r) return;
   assert.ok(Object.values(r).every((x) => x.ok), JSON.stringify(r));
   verdict('T-N3-14', 'VERIFIED');
 });

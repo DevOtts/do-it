@@ -43,10 +43,10 @@ export function engineTransports(client, linked = CHANNELS) {
 
 // Minimal Engine HTTP client. Base URL from DO_IT_ENGINE_URL; token resolved from a reference at use (G-7).
 export function createEngineClient({ baseUrl, token, fetchImpl = globalThis.fetch }) {
-  const h = () => ({ 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) });
+  const h = () => ({ 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}`, 'x-service-api-key': token } : {}) }); // Engine DualAuthGuard reads x-service-api-key (verified live 2026-10-14)
   const call = async (method, route, body) => {
     const res = await fetchImpl(new URL(route, baseUrl), { method, headers: h(), body: body === undefined ? undefined : JSON.stringify(body) });
-    if (!res.ok) throw new Error(`engine ${method} ${route} -> ${res.status}`);
+    if (!res.ok) { const e = new Error(`engine ${method} ${route} -> ${res.status}`); e.status = res.status; throw e; }
     return res.status === 204 ? null : res.json();
   };
   return { post: (r, b) => call('POST', r, b), get: (r) => call('GET', r), put: (r, b) => call('PUT', r, b) };

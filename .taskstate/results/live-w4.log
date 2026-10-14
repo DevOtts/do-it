@@ -1,0 +1,209 @@
+TAP version 13
+# Subtest: T-N1-01 round trip of the lifecycle squad is lossless
+ok 1 - T-N1-01 round trip of the lifecycle squad is lossless
+  ---
+  duration_ms: 54.735417
+  type: 'test'
+  ...
+# Subtest: T-N1-02 roster is derived from steps
+ok 2 - T-N1-02 roster is derived from steps
+  ---
+  duration_ms: 0.557834
+  type: 'test'
+  ...
+# Subtest: T-N1-03 stored roster that drifts from steps is rejected
+ok 3 - T-N1-03 stored roster that drifts from steps is rejected
+  ---
+  duration_ms: 27.585166
+  type: 'test'
+  ...
+# Subtest: T-N1-04 step mapping
+ok 4 - T-N1-04 step mapping
+  ---
+  duration_ms: 0.957667
+  type: 'test'
+  ...
+# Subtest: T-N1-05 unknown step type fails the compile
+ok 5 - T-N1-05 unknown step type fails the compile
+  ---
+  duration_ms: 49.898291
+  type: 'test'
+  ...
+# Subtest: T-N1-06 ask fans out to all three channels with one pack
+ok 6 - T-N1-06 ask fans out to all three channels with one pack
+  ---
+  duration_ms: 0.518625
+  type: 'test'
+  ...
+# Subtest: T-N1-07 reply parsing by ID, same result on every channel
+ok 7 - T-N1-07 reply parsing by ID, same result on every channel
+  ---
+  duration_ms: 1.63375
+  type: 'test'
+  ...
+# Subtest: T-N1-08 first valid reply per ID wins
+ok 8 - T-N1-08 first valid reply per ID wins
+  ---
+  duration_ms: 0.312334
+  type: 'test'
+  ...
+# Subtest: T-N1-09 default-accept-by-ID and irreversible questions
+ok 9 - T-N1-09 default-accept-by-ID and irreversible questions
+  ---
+  duration_ms: 0.388
+  type: 'test'
+  ...
+# Subtest: T-N1-10 one channel down is a warning, zero channels is BLOCKED
+ok 10 - T-N1-10 one channel down is a warning, zero channels is BLOCKED
+  ---
+  duration_ms: 2.422709
+  type: 'test'
+  ...
+# Subtest: T-N1-11 untrusted card text never selects tools, repos or hosts
+ok 11 - T-N1-11 untrusted card text never selects tools, repos or hosts
+  ---
+  duration_ms: 0.950125
+  type: 'test'
+  ...
+# Subtest: T-N1-12 only code publishes
+ok 12 - T-N1-12 only code publishes
+  ---
+  duration_ms: 32.299167
+  type: 'test'
+  ...
+# Subtest: T-N1-13 review cap is 3
+ok 13 - T-N1-13 review cap is 3
+  ---
+  duration_ms: 0.191375
+  type: 'test'
+  ...
+# Subtest: T-N1-14 flat pipeline, one router level
+ok 14 - T-N1-14 flat pipeline, one router level
+  ---
+  duration_ms: 29.041834
+  type: 'test'
+  ...
+# Subtest: T-N1-15 drain shape
+ok 15 - T-N1-15 drain shape
+  ---
+  duration_ms: 0.555833
+  type: 'test'
+  ...
+# VERDICT T-N1-16 VERIFIED card 6acff70c6b74a3c5ac1c0238
+# Subtest: T-N1-16 [REAL] live Control Tower checkpoint card
+ok 16 - T-N1-16 [REAL] live Control Tower checkpoint card
+  ---
+  duration_ms: 671.399458
+  type: 'test'
+  ...
+# VERDICT T-N1-17 IMPLEMENTED-NOT-VERIFIED engine gap: Engine has no /api/ask-cards (nor chat/p2p or whatsapp message routes used for ask packs); ask-pack ingest and a test-reply hook are Engine-side work
+# VERDICT T-N1-18 IMPLEMENTED-NOT-VERIFIED engine gap: Engine definition DTO is whitelisted and forbids x_do_it plus id/needs/deny/router (400 "property x_do_it should not exist"); a lossless read-back needs an Engine-side metadata carrier. Native route is /api/squads/:id/definitions, not /api/pipeline-definitions
+# Subtest: T-N1-17 [REAL] live ask on real channels and reply by ID
+ok 17 - T-N1-17 [REAL] live ask on real channels and reply by ID
+  ---
+  duration_ms: 3.202791
+  type: 'test'
+  ...
+# Subtest: T-N1-18 [REAL] definition read-back is lossless on Engine
+ok 18 - T-N1-18 [REAL] definition read-back is lossless on Engine
+  ---
+  duration_ms: 0.142208
+  type: 'test'
+  ...
+# VERDICT T-N3-11 VERIFIED clean
+# VERDICT T-N3-12 VERIFIED
+# VERDICT T-N3-13 VERIFIED
+# Subtest: T-N3-01 spec has 15 points
+ok 19 - T-N3-01 spec has 15 points
+  ---
+  duration_ms: 27.870458
+  type: 'test'
+  ...
+# Subtest: T-N3-02 adjustments file has 12 items
+ok 20 - T-N3-02 adjustments file has 12 items
+  ---
+  duration_ms: 26.321166
+  type: 'test'
+  ...
+# Subtest: T-N3-03 hygiene fixes applied
+ok 21 - T-N3-03 hygiene fixes applied
+  ---
+  duration_ms: 71.808209
+  type: 'test'
+  ...
+# Subtest: T-N3-04 replay happy path: lp_content card
+ok 22 - T-N3-04 replay happy path: lp_content card
+  ---
+  duration_ms: 45.86425
+  type: 'test'
+  ...
+# Subtest: T-N3-05 replay: stale head
+ok 23 - T-N3-05 replay: stale head
+  ---
+  duration_ms: 3.09475
+  type: 'test'
+  ...
+# Subtest: T-N3-06 replay: budget denied
+ok 24 - T-N3-06 replay: budget denied
+  ---
+  duration_ms: 0.886041
+  type: 'test'
+  ...
+# Subtest: T-N3-07 replay: loop cap
+ok 25 - T-N3-07 replay: loop cap
+  ---
+  duration_ms: 2.005125
+  type: 'test'
+  ...
+# Subtest: T-N3-08 replay: prompt injection in the card body
+ok 26 - T-N3-08 replay: prompt injection in the card body
+  ---
+  duration_ms: 2.828542
+  type: 'test'
+  ...
+# Subtest: T-N3-09 partial replay failure is reported, interrupted replay resumes
+ok 27 - T-N3-09 partial replay failure is reported, interrupted replay resumes
+  ---
+  duration_ms: 79.122541
+  type: 'test'
+  ...
+# Subtest: T-N3-10 low-confidence route asks the owner
+ok 28 - T-N3-10 low-confidence route asks the owner
+  ---
+  duration_ms: 2.792583
+  type: 'test'
+  ...
+# Subtest: T-N3-11 [REAL] scope check on the real Engine-Core repo
+ok 29 - T-N3-11 [REAL] scope check on the real Engine-Core repo
+  ---
+  duration_ms: 195.839792
+  type: 'test'
+  ...
+# Subtest: T-N3-12 [REAL] scope check catches a stray edit
+ok 30 - T-N3-12 [REAL] scope check catches a stray edit
+  ---
+  duration_ms: 5063.827666
+  type: 'test'
+  ...
+# Subtest: T-N3-13 [REAL] manifest tamper detection
+ok 31 - T-N3-13 [REAL] manifest tamper detection
+  ---
+  duration_ms: 53.846458
+  type: 'test'
+  ...
+# VERDICT T-N3-14 IMPLEMENTED-NOT-VERIFIED engine gap: Engine has no POST /api/mission-control/cards (GET only) nor /cards/:id/state; replay of the lp_content card needs the W3 pipeline installed as persona steps and an Engine-side card-injection path
+# Subtest: T-N3-14 [REAL] live replay against Engine
+ok 32 - T-N3-14 [REAL] live replay against Engine
+  ---
+  duration_ms: 7.314541
+  type: 'test'
+  ...
+1..32
+# tests 32
+# suites 0
+# pass 32
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 5720.61175

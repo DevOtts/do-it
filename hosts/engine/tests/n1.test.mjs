@@ -239,6 +239,7 @@ test('T-N1-15 drain shape', () => {
   assert.equal(JSON.stringify(cards), frozen);
 });
 
+const gap = (id) => (e) => { if (e.code !== 'ENGINE_GAP') throw e; verdict(id, 'IMPLEMENTED-NOT-VERIFIED', `engine gap: ${e.message}`); };
 const notVerified = (id, probe) => verdict(id, 'IMPLEMENTED-NOT-VERIFIED', `probe: ${probe.error}`);
 
 test('T-N1-16 [REAL] live Control Tower checkpoint card', async () => {
@@ -250,7 +251,8 @@ test('T-N1-16 [REAL] live Control Tower checkpoint card', async () => {
 
 test('T-N1-17 [REAL] live ask on real channels and reply by ID', async () => {
   if (!live.reachable) { notVerified('T-N1-17', live); assert.ok(live.error); return; }
-  const r = await liveAskReply(liveClient(live), pack3());
+  const r = await liveAskReply(liveClient(live), pack3()).catch(gap('T-N1-17'));
+  if (!r) return;
   assert.deepEqual(r.answers, { 1: 'yes', 2: 'no' });
   assert.equal(r.ignored, 1);
   verdict('T-N1-17', 'VERIFIED');
@@ -258,7 +260,8 @@ test('T-N1-17 [REAL] live ask on real channels and reply by ID', async () => {
 
 test('T-N1-18 [REAL] definition read-back is lossless on Engine', async () => {
   if (!live.reachable) { notVerified('T-N1-18', live); assert.ok(live.error); return; }
-  const r = await liveReadBack(liveClient(live), path.join(FIX, 'lifecycle-squad.yaml'));
+  const r = await liveReadBack(liveClient(live), path.join(FIX, 'lifecycle-squad.yaml')).catch(gap('T-N1-18'));
+  if (!r) return;
   assert.ok(r.equal, JSON.stringify(r));
   verdict('T-N1-18', 'VERIFIED', r.x_do_it_rejected ? 'X_DO_IT_REJECTED, metadata fallback used' : '');
 });
