@@ -1,0 +1,106 @@
+{
+  "name": "devotts",
+  "owner": {
+    "name": "DevOtts",
+    "url": "https://github.com/DevOtts"
+  },
+  "description": "DevOtts marketplace for Claude Code plugins. Install do-it and it brings the *-it family.",
+  "plugins": [
+    {
+      "name": "do-it",
+      "source": "./plugins/do-it",
+      "version": "0.1.0",
+      "description": "One conductor for the whole *-it lifecycle.",
+      "author": {
+        "name": "DevOtts",
+        "url": "https://github.com/DevOtts"
+      },
+      "homepage": "https://github.com/DevOtts/do-it",
+      "license": "MIT"
+    },
+    {
+      "name": "prompt-it",
+      "source": {
+        "source": "github",
+        "repo": "DevOtts/prompt-it"
+      },
+      "version": "0.3.0",
+      "author": {
+        "name": "DevOtts",
+        "url": "https://github.com/DevOtts"
+      },
+      "homepage": "https://github.com/DevOtts/prompt-it",
+      "license": "MIT"
+    },
+    {
+      "name": "plan-it",
+      "source": {
+        "source": "github",
+        "repo": "DevOtts/plan-it"
+      },
+      "version": "4.0.0",
+      "author": {
+        "name": "DevOtts",
+        "url": "https://github.com/DevOtts"
+      },
+      "homepage": "https://github.com/DevOtts/plan-it",
+      "license": "MIT"
+    },
+    {
+      "name": "build-it",
+      "source": {
+        "source": "github",
+        "repo": "DevOtts/build-it"
+      },
+      "version": "3.1.1",
+      "author": {
+        "name": "DevOtts",
+        "url": "https://github.com/DevOtts"
+      },
+      "homepage": "https://github.com/DevOtts/build-it",
+      "license": "MIT"
+    },
+    {
+      "name": "review-it",
+      "source": {
+        "source": "github",
+        "repo": "DevOtts/review-it"
+      },
+      "version": "1.0.0",
+      "author": {
+        "name": "DevOtts",
+        "url": "https://github.com/DevOtts"
+      },
+      "homepage": "https://github.com/DevOtts/review-it",
+      "license": "MIT"
+    },
+    {
+      "name": "conclude-it",
+      "source": {
+        "source": "github",
+        "repo": "DevOtts/conclude-it"
+      },
+      "version": "1.1.0",
+      "author": {
+        "name": "DevOtts",
+        "url": "https://github.com/DevOtts"
+      },
+      "homepage": "https://github.com/DevOtts/conclude-it",
+      "license": "MIT"
+    },
+    {
+      "name": "parallel-lifecycle",
+      "source": {
+        "source": "github",
+        "repo": "DevOtts/parallel-lifecycle"
+      },
+      "version": "0.1.0",
+      "author": {
+        "name": "DevOtts",
+        "url": "https://github.com/DevOtts"
+      },
+      "homepage": "https://github.com/DevOtts/parallel-lifecycle",
+      "license": "MIT"
+    }
+  ]
+}

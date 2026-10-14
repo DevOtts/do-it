@@ -1,0 +1,13 @@
+{
+  "case": "T-R2-11",
+  "outcome": "resolved",
+  "host_version": "2.1.300 (Claude Code)",
+  "companions_listed": [
+    "prompt-it",
+    "plan-it",
+    "build-it",
+    "review-it",
+    "conclude-it"
+  ],
+  "install_stdout": "Installing plugin \"do-it@devotts\"...✔ Successfully installed plugin: do-it@devotts (scope: user) (+ 5 dependencies: prompt-it, plan-it, build-it, review-it, conclude-it)"
+}

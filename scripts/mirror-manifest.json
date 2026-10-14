@@ -1,0 +1,11 @@
+{
+  "schema": "do-it-mirror/1",
+  "pairs": [
+    { "src": "SKILL.md", "dst": "plugins/do-it/skills/do-it/SKILL.md", "kind": "file" },
+    { "src": "hosts/claude-code/plugin/.claude-plugin/plugin.json", "dst": "plugins/do-it/.claude-plugin/plugin.json", "kind": "file" },
+    { "src": "core/spine/do-it.mjs", "dst": "plugins/do-it/scripts/do-it.mjs", "kind": "file" },
+    { "src": "core/personas", "dst": "plugins/do-it/personas", "kind": "dir" },
+    { "src": "core/pipelines", "dst": "plugins/do-it/pipelines", "kind": "dir" },
+    { "src": "hosts/claude-code/hooks", "dst": "plugins/do-it/hooks", "kind": "dir" }
+  ]
+}

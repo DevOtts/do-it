@@ -1,0 +1,8 @@
+{
+  "case": "T-R2-10",
+  "agents_checked": {
+    "codex": "listed",
+    "opencode": "listed"
+  },
+  "valid_agent_count": 79
+}

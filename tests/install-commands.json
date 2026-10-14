@@ -1,0 +1,10 @@
+{
+  "schema": "do-it-install-commands/1",
+  "hosts": {
+    "claude-code": { "commands": ["/plugin marketplace add DevOtts/do-it", "/plugin install do-it@devotts"], "validated_by": "T-R2-11", "agent_id": null },
+    "codex": { "commands": ["npx skills add DevOtts/do-it -a codex"], "validated_by": "T-R2-10", "agent_id": "codex", "agent_id_form": "listed" },
+    "opencode": { "commands": ["npx skills add DevOtts/do-it -a opencode"], "validated_by": "T-R2-10", "agent_id": "opencode", "agent_id_form": "listed" },
+    "universal": { "commands": ["npx skills add DevOtts/do-it -a {agent}", "gh skill install DevOtts/do-it"], "validated_by": "T-R2-10" }
+  },
+  "fallback": "do-it doctor --install"
+}

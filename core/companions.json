@@ -1,0 +1,74 @@
+{
+  "schema": "do-it-companions/1",
+  "marketplace": "devotts",
+  "self": {
+    "name": "do-it",
+    "version": "0.1.0"
+  },
+  "companions": [
+    {
+      "name": "prompt-it",
+      "repo": "DevOtts/prompt-it",
+      "version": "0.3.0",
+      "required": true,
+      "status": "published",
+      "skill_dir": "plugins/prompt-it"
+    },
+    {
+      "name": "plan-it",
+      "repo": "DevOtts/plan-it",
+      "version": "4.0.0",
+      "required": true,
+      "status": "published",
+      "skill_dir": "plugins/plan-it"
+    },
+    {
+      "name": "build-it",
+      "repo": "DevOtts/build-it",
+      "version": "3.1.1",
+      "required": true,
+      "status": "published",
+      "skill_dir": "plugins/build-it"
+    },
+    {
+      "name": "review-it",
+      "repo": "DevOtts/review-it",
+      "version": "1.0.0",
+      "required": true,
+      "status": "published",
+      "skill_dir": "plugins/review-it"
+    },
+    {
+      "name": "conclude-it",
+      "repo": "DevOtts/conclude-it",
+      "version": "1.1.0",
+      "required": true,
+      "status": "published",
+      "skill_dir": "plugins/conclude-it"
+    },
+    {
+      "name": "parallel-lifecycle",
+      "repo": "DevOtts/parallel-lifecycle",
+      "version": "0.1.0",
+      "required": false,
+      "status": "published",
+      "skill_dir": "plugins/parallel-lifecycle"
+    },
+    {
+      "name": "deploy-it",
+      "repo": "DevOtts/deploy-it",
+      "version": null,
+      "required": false,
+      "status": "planned",
+      "skill_dir": null
+    },
+    {
+      "name": "reconcile-it",
+      "repo": "DevOtts/reconcile-it",
+      "version": null,
+      "required": false,
+      "status": "planned",
+      "skill_dir": null
+    }
+  ]
+}
