@@ -1,0 +1,10 @@
+# WORKER-BRIEF (all build workers)
+You are a build squad for do-it v1. Repo root = your worktree (a git worktree of /Users/macbook/Workspace/Devotts/do-it). Build REAL code + tests.
+Read first: delivery/CONTRACT.md (law), delivery/GLOSSARY.md, delivery/DECISIONS.md, docs/03-data-model-and-contract.md, docs/05-components.md, your PRD (delivery/prds/) and ONLY your epics' sections in delivery/epics/. Host facts: docs/research/11-host-cli-probe.md.
+Rules:
+- Write only inside your lane paths (CONTRACT s5 + A2). One writer per path. core/ names no harness (G-12). Node 22, ESM, no network deps unless the epic demands; use node:test for tests, runnable via `node --test <lane test dir>`.
+- Implement every task in each epic checklist, then EVERY case in its Test Contract as an executable test (test name contains the case ID, e.g. T-S1-01). [REAL] cases run against the real target (real fs, real git, real installed CLI binary). If the live target is unreachable, mark the case IMPLEMENTED-NOT-VERIFIED with the reason; never VERIFIED on a mock (G-3).
+- Run the tests; tee output to .taskstate/results/{EID}.log. Write .taskstate/results/{EID}.md: table of every case ID | verdict (VERIFIED / IMPLEMENTED-NOT-VERIFIED / FAILED) | command | last lines of quoted output. Iterate until all pass or you are truly blocked.
+- Never read ~/.config/opencode/opencode.jsonc; never print secrets. Don't edit Engine-Core outside docs/implementation/do-it-engine-layer/, no sibling repos. Don't edit delivery/CONTRACT.md (propose amendments in final message). Wrap bare `claude-` words in backticks in docs; no literal model IDs, use T1/T2/T3.
+- Commit on your branch (git add -A; git commit) with message ending in two lines: "Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>" and "Claude-Session: https://claude.ai/code/session_01JhADsahZNhpKAkY6yL6bug". Do NOT merge, checkout other branches, or push.
+- Final message (<=2K tokens): branch, commit sha, per-epic pass/total, list of IMPLEMENTED-NOT-VERIFIED with reasons, proposed amendments, open issues. Idle without files = not delivered.
