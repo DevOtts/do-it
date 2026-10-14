@@ -1,0 +1,6 @@
+{
+  "id": "skip-needs-reason",
+  "title": "Every declared skip has a reason that matches a false capability",
+  "needs": null,
+  "handler": "skip-needs-reason"
+}

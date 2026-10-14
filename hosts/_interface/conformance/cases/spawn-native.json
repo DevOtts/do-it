@@ -1,0 +1,6 @@
+{
+  "id": "spawn-native",
+  "title": "Native spawn returns a result path",
+  "needs": "spawn.native",
+  "handler": "spawn-native"
+}

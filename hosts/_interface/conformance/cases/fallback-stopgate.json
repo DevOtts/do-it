@@ -1,0 +1,6 @@
+{
+  "id": "fallback-stopgate",
+  "title": "Without a stop hook: conductor checklist (R5)",
+  "needs": null,
+  "handler": "fallback-stopgate"
+}

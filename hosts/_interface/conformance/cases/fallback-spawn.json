@@ -1,0 +1,6 @@
+{
+  "id": "fallback-spawn",
+  "title": "Roles run as sequential passes without native spawn",
+  "needs": null,
+  "handler": "fallback-spawn"
+}

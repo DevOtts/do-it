@@ -1,0 +1,118 @@
+TAP version 13
+# Subtest: T-H0-01 G-12 on the real tree: core/ names no harness [REAL]
+ok 1 - T-H0-01 G-12 on the real tree: core/ names no harness [REAL] # SKIP IMPLEMENTED-NOT-VERIFIED: core/ does not exist in this lane worktree (L1/L2 own it); run after merge
+  ---
+  duration_ms: 0.561625
+  type: 'test'
+  ...
+# Subtest: T-H0-02 G-14 on the real tree: no removed-host folders or adapters [REAL]
+ok 2 - T-H0-02 G-14 on the real tree: no removed-host folders or adapters [REAL]
+  ---
+  duration_ms: 28.821459
+  type: 'test'
+  ...
+# Subtest: T-H0-03 planted G-12 violation is caught
+ok 3 - T-H0-03 planted G-12 violation is caught
+  ---
+  duration_ms: 71.672375
+  type: 'test'
+  ...
+# Subtest: T-H0-04 schemas accept the fake adapter
+ok 4 - T-H0-04 schemas accept the fake adapter
+  ---
+  duration_ms: 51.622584
+  type: 'test'
+  ...
+# Subtest: T-H0-05 adapter schema rejects a manifest with no wake call
+ok 5 - T-H0-05 adapter schema rejects a manifest with no wake call
+  ---
+  duration_ms: 26.950209
+  type: 'test'
+  ...
+# Subtest: T-H0-06 capabilities schema rejects a wrong type
+ok 6 - T-H0-06 capabilities schema rejects a wrong type
+  ---
+  duration_ms: 25.780583
+  type: 'test'
+  ...
+# Subtest: T-H0-07 conformance suite on the full fake adapter
+ok 7 - T-H0-07 conformance suite on the full fake adapter
+  ---
+  duration_ms: 212.859
+  type: 'test'
+  ...
+# Subtest: T-H0-08 an adapter passes or lists exactly what it skips and why
+ok 8 - T-H0-08 an adapter passes or lists exactly what it skips and why
+  ---
+  duration_ms: 899.403875
+  type: 'test'
+  ...
+# Subtest: T-H0-09 no subagents: roles run as sequential passes
+ok 9 - T-H0-09 no subagents: roles run as sequential passes
+  ---
+  duration_ms: 37.573667
+  type: 'test'
+  ...
+# Subtest: T-H0-10 more than 4 questions falls to html
+ok 10 - T-H0-10 more than 4 questions falls to html
+  ---
+  duration_ms: 29.877708
+  type: 'test'
+  ...
+# Subtest: T-H0-11 no native questions and html unavailable falls to markdown
+ok 11 - T-H0-11 no native questions and html unavailable falls to markdown
+  ---
+  duration_ms: 31.159291
+  type: 'test'
+  ...
+# Subtest: T-H0-12 no headless start sets handoff.mode ask
+ok 12 - T-H0-12 no headless start sets handoff.mode ask
+  ---
+  duration_ms: 28.277958
+  type: 'test'
+  ...
+# Subtest: T-H0-13 headless start fails five times: HANDOFF_FAILED then ESCALATED
+ok 13 - T-H0-13 headless start fails five times: HANDOFF_FAILED then ESCALATED
+  ---
+  duration_ms: 133.355084
+  type: 'test'
+  ...
+# Subtest: T-H0-14 no wake: park and say so
+ok 14 - T-H0-14 no wake: park and say so
+  ---
+  duration_ms: 30.417125
+  type: 'test'
+  ...
+# Subtest: T-H0-15 no provider usage: estimate and flag
+ok 15 - T-H0-15 no provider usage: estimate and flag
+  ---
+  duration_ms: 28.678958
+  type: 'test'
+  ...
+# Subtest: T-H0-16 recovery after a host process dies mid-spawn
+ok 16 - T-H0-16 recovery after a host process dies mid-spawn
+  ---
+  duration_ms: 70.203
+  type: 'test'
+  ...
+# Subtest: T-H0-17 adversarial: a stale capabilities file is reported
+ok 17 - T-H0-17 adversarial: a stale capabilities file is reported
+  ---
+  duration_ms: 144.400834
+  type: 'test'
+  ...
+# Subtest: T-H0-18 adversarial: secrets driver never leaks a value
+ok 18 - T-H0-18 adversarial: secrets driver never leaks a value
+  ---
+  duration_ms: 224.118417
+  type: 'test'
+  ...
+1..18
+# tests 18
+# suites 0
+# pass 17
+# fail 0
+# cancelled 0
+# skipped 1
+# todo 0
+# duration_ms 2118.099958

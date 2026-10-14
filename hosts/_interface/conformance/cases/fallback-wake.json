@@ -1,0 +1,6 @@
+{
+  "id": "fallback-wake",
+  "title": "Without wake: PARKED with reason",
+  "needs": null,
+  "handler": "fallback-wake"
+}

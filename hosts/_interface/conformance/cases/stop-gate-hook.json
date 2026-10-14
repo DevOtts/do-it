@@ -1,0 +1,6 @@
+{
+  "id": "stop-gate-hook",
+  "title": "Stop hook registered",
+  "needs": "hooks.stop_gate",
+  "handler": "stop-gate-hook"
+}
