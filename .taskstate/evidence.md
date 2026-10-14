@@ -17,3 +17,4 @@
 2026-10-14T21:42:22Z live-w4 merged @c6d3db6: LIVE local Engine (brain-api-core :3001): T-N1-16 VERIFIED live; T-N1-17/18, T-N3-14, T-N2-04 stay INV-NOT-VERIFIED (Engine lacks ask-cards route, x_do_it metadata, card inject, generic row store). engine suite 32/32. Dev Mongo holds test squads do-it-live-*.
 2026-10-14T21:48:52Z R4 complete merged @b76d0b9: e2e 25 pass/2 skip (T-R4-02 gated DOIT_REAL_CALLS, T-R4-05 no live Engine); spine 89; cross-lane spine edits (record.mjs blocked->pack, state.mjs NEEDS_HUMAN->ESCALATED); mirror synced, claims regenerated
 2026-10-14T21:49:27Z with DO_IT_SIBLINGS set: tests/plugin 16/16 pass 0 skip; tests/catalog 16/16
+2026-10-14T21:56:46Z FINAL suites on main (see .taskstate/final-suites.txt; after G-14 scan fixes re-ran h0 18/18, plugin 16/16, readme 17/17): all 0 fail. skips: r4 2 (T-R4-02 gated paid, T-R4-05 Engine). R1 merged @f1ba9c4

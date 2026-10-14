@@ -18,10 +18,10 @@ Program totals: 22 epics · 0 shipped (cases computed after squads finish)
 | H1 | claude-code adapter | hosts-a | W1 | VERIFIED | 20/20 | epic/H1-claude | run: node --test "hosts/claude-code/tests/*.test.mjs" exit 0; log .taskstate/evidence.md |
 | H2 | codex adapter | hosts-a | W2 | VERIFIED | 17/17 | epic/H2-codex | run: node --test "hosts/codex/tests/*.test.mjs" exit 0; log .taskstate/evidence.md |
 | H3 | opencode adapter | hosts-a | W2 | VERIFIED | 18/18 | epic/H3-opencode | run: node --test "hosts/opencode/tests/*.test.mjs" exit 0; log .taskstate/evidence.md |
-| N1 | engine adapter | engine | W3 | IMPLEMENTED-NOT-VERIFIED | 15/18 (T-N1-17,18 + live cases need Engine routes) | epic/N1-engine | run: node --test "hosts/engine/tests/*.test.mjs" exit 0; log .taskstate/evidence.md |
+| N1 | engine adapter | engine | W3 | IMPLEMENTED-NOT-VERIFIED | 16/18 (T-N1-17,18 need Engine ask route and step metadata) | epic/N1-engine | run: node --test "hosts/engine/tests/*.test.mjs" exit 0 |
 | N2 | StateStore and backends | engine | W2 | IMPLEMENTED-NOT-VERIFIED | 17/18 (T-N2-04 Engine row store) | epic/N2-statestore | run: node --test "core/state-stores/tests/*.test.mjs" exit 0; log .taskstate/evidence.md |
 | N3 | Engine-layer handoff and replay | engine | W3 | IMPLEMENTED-NOT-VERIFIED | 13/14 (T-N3-14 needs Engine card inject) | epic/N3-handoff | run: node --test "hosts/engine/tests/*.test.mjs" exit 0; log .taskstate/evidence.md |
-| R1 | README and assets | ship | W4 | IN-PROGRESS | 0/0 | epic/R1-readme | |
+| R1 | README and assets | ship | W4 | IMPLEMENTED-NOT-VERIFIED | 15/16 (T-R1-15 compared to stub-host report only) | epic/R1-readme | run: node --test "tests/readme/*.test.mjs" exit 0 |
 | R2 | plugin shell, marketplace, companions | ship | W0 | VERIFIED | 16/16 with DO_IT_SIBLINGS set | epic/R2-shell | run: node --test "tests/plugin/*.test.mjs" exit 0; log .taskstate/evidence.md |
 | R3 | companion-change catalog | ship | W3 | NOT-STARTED | 0/0 | epic/R3-companions | run: node --test "tests/catalog/*.test.mjs" exit 0; log .taskstate/evidence.md |
 | R4 | fixtures and e2e | ship | W1 | IMPLEMENTED-NOT-VERIFIED | 19/20 (T-R4-05 no live Engine) | epic/R4-fixtures | run: node --test "tests/e2e/r4.test.mjs" exit 0; log .taskstate/evidence.md |

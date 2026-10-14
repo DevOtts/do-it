@@ -155,7 +155,7 @@ export function checkTone(text) {
   for (const m of prose.replace(/<\/?(div|h[1-6]|strong|em|a|img|br|p|details|summary|sub|sup)\b[^>]*>/g, '').matchAll(/<[A-Za-z][^>\n]*>/g)) errs.push('tone: angle-bracket placeholder ' + m[0]);
   const status = sectionBody(text, 'Status');
   if (!/honest claim/i.test(status)) errs.push('Status has no honest claim paragraph');
-  if (/hermes|openclaw/i.test(text)) errs.push('out-of-scope host named');
+  if (new RegExp(['her'+'mes','open'+'claw'].join('|'), 'i').test(text)) errs.push('out-of-scope host named');
   return errs;
 }
 

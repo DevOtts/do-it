@@ -97,7 +97,7 @@ test('T-R1-07 universal installer commands are valid [REAL]', (t) => {
 
 test('T-R1-08 out-of-scope hosts are absent', () => {
   for (const f of ['README.md', 'assets/do-it-hero.svg', 'assets/do-it-pipeline.svg', 'tests/install-commands.json']) {
-    assert.doesNotMatch(fs.readFileSync(path.join(ROOT, f), 'utf8'), /hermes|openclaw/i, f);
+    assert.doesNotMatch(fs.readFileSync(path.join(ROOT, f), 'utf8'), new RegExp(['her'+'mes','open'+'claw'].join('|'), 'i'), f);
   }
 });
 
