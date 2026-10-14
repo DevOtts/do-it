@@ -1,0 +1,166 @@
+TAP version 13
+# Subtest: T-R4-01 feature fixture reaches the final status on the stub host
+ok 1 - T-R4-01 feature fixture reaches the final status on the stub host
+  ---
+  duration_ms: 748.932709
+  type: 'test'
+  ...
+# Subtest: T-R4-03 investigate-fix closes red to green
+ok 2 - T-R4-03 investigate-fix closes red to green
+  ---
+  duration_ms: 588.784
+  type: 'test'
+  ...
+# Subtest: T-R4-04 weekly drain ends with zero unaccounted rows
+ok 3 - T-R4-04 weekly drain ends with zero unaccounted rows
+  ---
+  duration_ms: 447.912666
+  type: 'test'
+  ...
+# Subtest: T-R4-06 conclude refuses an unaccounted row (G-13)
+ok 4 - T-R4-06 conclude refuses an unaccounted row (G-13)
+  ---
+  duration_ms: 587.767416
+  type: 'test'
+  ...
+# Subtest: T-R4-12 tokens per VERIFIED row
+ok 5 - T-R4-12 tokens per VERIFIED row
+  ---
+  duration_ms: 432.55675
+  type: 'test'
+  ...
+# Subtest: T-R4-13 deploy partial failure then rollback
+ok 6 - T-R4-13 deploy partial failure then rollback
+  ---
+  duration_ms: 738.04225
+  type: 'test'
+  ...
+# Subtest: T-R4-14 rollback fails and the run escalates
+ok 7 - T-R4-14 rollback fails and the run escalates
+  ---
+  duration_ms: 802.445583
+  type: 'test'
+  ...
+# Subtest: T-R4-15 recovery by re-verify
+ok 8 - T-R4-15 recovery by re-verify
+  ---
+  duration_ms: 1166.928209
+  type: 'test'
+  ...
+# Subtest: T-R4-16 adversarial verify: tamper between write and verify
+ok 9 - T-R4-16 adversarial verify: tamper between write and verify
+  ---
+  duration_ms: 488.457583
+  type: 'test'
+  ...
+# Subtest: T-R4-02 feature fixture on the real Claude Code host (G-3) [REAL]
+ok 10 - T-R4-02 feature fixture on the real Claude Code host (G-3) [REAL] # SKIP DEFERRED to W4: needs H1 host driver, the build-it pipeline and a live `claude -p` run; IMPLEMENTED-NOT-VERIFIED until S and H1 ship
+  ---
+  duration_ms: 0.2875
+  type: 'test'
+  ...
+# Subtest: T-R4-05 sandboxes equal slices needing a build (D16) [REAL]
+ok 11 - T-R4-05 sandboxes equal slices needing a build (D16) [REAL] # SKIP DEFERRED to W4: sandbox creation belongs to the engine and the drain preset (S2 scheduler, P pipelines); the stub must not play the engine for a [REAL] case. Sampler is ready: tests/e2e/lib/worktrees.mjs
+  ---
+  duration_ms: 0.092417
+  type: 'test'
+  ...
+# Subtest: T-R4-07 review loop converges
+ok 12 - T-R4-07 review loop converges # SKIP DEFERRED to W4: needs the review-it pipeline (P4) and its round driver; fixture sequences ready in tests/fixtures/review-loop
+  ---
+  duration_ms: 0.028
+  type: 'test'
+  ...
+# Subtest: T-R4-08 review loop stalls
+ok 13 - T-R4-08 review loop stalls # SKIP DEFERRED to W4: needs the review-it pipeline (P4), tier raise logging and gate ceiling (S2/S5)
+  ---
+  duration_ms: 0.021333
+  type: 'test'
+  ...
+# Subtest: T-R4-09 review loop exceeds budget
+ok 14 - T-R4-09 review loop exceeds budget # SKIP DEFERRED to W4: needs gate ceiling and park/resume (S5) and the review-it pipeline (P4)
+  ---
+  duration_ms: 0.020541
+  type: 'test'
+  ...
+# Subtest: T-R4-10 reconcile refuses to delete without approval [REAL]
+ok 15 - T-R4-10 reconcile refuses to delete without approval [REAL] # SKIP DEFERRED to W4: needs the reconcile-it pipeline (scan/plan/apply); workspace builder ready in tests/fixtures/reconcile/build.mjs
+  ---
+  duration_ms: 0.018292
+  type: 'test'
+  ...
+# Subtest: T-R4-11 reconcile re-verifies at execution time [REAL]
+ok 16 - T-R4-11 reconcile re-verifies at execution time [REAL] # SKIP DEFERRED to W4: needs the reconcile-it pipeline (apply --approved)
+  ---
+  duration_ms: 0.018375
+  type: 'test'
+  ...
+# Subtest: T-R4-17 usage limit parks and resume skips finished slices
+ok 17 - T-R4-17 usage limit parks and resume skips finished slices # SKIP DEFERRED to W4: spine resume and park are NOT_IMPLEMENTED (S5); slices come from the S2 scheduler
+  ---
+  duration_ms: 0.017458
+  type: 'test'
+  ...
+# Subtest: T-R4-18 failed slice retries one tier up then escalates
+ok 18 - T-R4-18 failed slice retries one tier up then escalates # SKIP DEFERRED to W4: needs the S2 scheduler (tier-up retry, attempts cap) and a builder stub driven by it
+  ---
+  duration_ms: 0.021709
+  type: 'test'
+  ...
+# Subtest: T-R4-19 owner gate blocks only its slice
+ok 19 - T-R4-19 owner gate blocks only its slice # SKIP DEFERRED to W4: spine record adds owner-pack questions only for needs_human; the BLOCKED owner-gate question path is S2/S4
+  ---
+  duration_ms: 0.018459
+  type: 'test'
+  ...
+# Subtest: T-R4-20 handoff failure retries then escalates (G-5)
+ok 20 - T-R4-20 handoff failure retries then escalates (G-5) # SKIP DEFERRED to W4: spine handoff and gate ceiling are NOT_IMPLEMENTED (S5)
+  ---
+  duration_ms: 0.017625
+  type: 'test'
+  ...
+# Subtest: R4-FIX expected.json is current for every fixture
+ok 21 - R4-FIX expected.json is current for every fixture
+  ---
+  duration_ms: 530.04525
+  type: 'test'
+  ...
+# Subtest: R4-FIX claims.json is current and marks host-dependent claims unmeasured
+ok 22 - R4-FIX claims.json is current and marks host-dependent claims unmeasured
+  ---
+  duration_ms: 385.809666
+  type: 'test'
+  ...
+# Subtest: R4-FIX review-loop variants measure to the Test Contract numbers
+ok 23 - R4-FIX review-loop variants measure to the Test Contract numbers
+  ---
+  duration_ms: 0.106125
+  type: 'test'
+  ...
+# Subtest: R4-FIX reconcile builder makes 2 repos, 5 branches, 2 worktrees with real git
+ok 24 - R4-FIX reconcile builder makes 2 repos, 5 branches, 2 worktrees with real git
+  ---
+  duration_ms: 279.035792
+  type: 'test'
+  ...
+# Subtest: R4-LIB a real host is never replaced by the stub (T-R4-02 honesty rule)
+ok 25 - R4-LIB a real host is never replaced by the stub (T-R4-02 honesty rule)
+  ---
+  duration_ms: 9.685875
+  type: 'test'
+  ...
+# Subtest: R4-LIB stub meter rows are never labelled provider (G-6)
+ok 26 - R4-LIB stub meter rows are never labelled provider (G-6)
+  ---
+  duration_ms: 682.424
+  type: 'test'
+  ...
+1..26
+# tests 26
+# suites 0
+# pass 15
+# fail 0
+# cancelled 0
+# skipped 11
+# todo 0
+# duration_ms 7937.692417

@@ -1,0 +1,1 @@
+{ "defect_file": "src/clamp.mjs", "failing_check": "checks/clamp.check.mjs", "regression_row": "REG-1" }

@@ -1,0 +1,8 @@
+{
+  "rows": [
+    { "id": "DOD-1", "text": "slugify lowercases and trims a title", "check": "node checks/dod-1.mjs" },
+    { "id": "DOD-2", "text": "punctuation is dropped", "check": "node checks/dod-2.mjs" },
+    { "id": "DOD-3", "text": "runs of spaces and dashes collapse to one dash", "check": "node checks/dod-3.mjs" },
+    { "id": "DOD-4", "text": "empty and non-string input give an empty slug", "check": "node checks/dod-4.mjs" }
+  ]
+}

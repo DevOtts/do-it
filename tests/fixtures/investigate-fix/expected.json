@@ -1,0 +1,9 @@
+{
+  "defect_file": "src/clamp.mjs",
+  "defect_marked": true,
+  "failing_check": "checks/clamp.check.mjs",
+  "failing_checks": 1,
+  "fixture": "investigate-fix",
+  "red_before": true,
+  "regression_row": "REG-1"
+}

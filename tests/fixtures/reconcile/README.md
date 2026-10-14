@@ -1,0 +1,1 @@
+Builder for the reconcile scratch workspace. Import `buildReconcileWorkspace(dir)`; it creates repo-a and repo-b with five side branches (two landed, one superseded, one in flight, one dirty) and two linked worktrees (in-flight, dirty).

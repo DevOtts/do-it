@@ -1,0 +1,4 @@
+import assert from 'node:assert/strict';
+import { slugify } from '../src/index.mjs';
+assert.equal(slugify("Hi, there!"), "hi-there");
+console.log('DOD-2 ok');

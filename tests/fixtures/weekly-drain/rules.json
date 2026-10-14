@@ -1,0 +1,9 @@
+{
+  "reference_date": "2026-10-12",
+  "order": [
+    { "when": "needs_decision", "disposition": "PARKED" },
+    { "when": "needs_build", "disposition": "BUILT" },
+    { "when": "kind=idea", "disposition": "DEFERRED" },
+    { "when": "otherwise", "disposition": "CLOSED" }
+  ]
+}

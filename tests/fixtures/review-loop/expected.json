@@ -1,0 +1,63 @@
+{
+  "fixture": "review-loop",
+  "variants": {
+    "converge": {
+      "blocking_per_round": [
+        3,
+        1,
+        0
+      ],
+      "exit": "CONVERGED_WITH_MINORS",
+      "minors_per_round": [
+        0,
+        1,
+        2
+      ],
+      "minors_written": 2,
+      "rounds_used": 3
+    },
+    "converge-clean": {
+      "blocking_per_round": [
+        3,
+        1,
+        0
+      ],
+      "exit": "CONVERGED",
+      "minors_per_round": [
+        0,
+        0,
+        0
+      ],
+      "minors_written": 0,
+      "rounds_used": 3
+    },
+    "over-budget": {
+      "blocking_per_round": [
+        2,
+        1,
+        0
+      ],
+      "exit": "OVER_BUDGET",
+      "minors_per_round": [
+        0,
+        0,
+        0
+      ],
+      "minors_written": 0,
+      "rounds_used": 2
+    },
+    "stall": {
+      "blocking_per_round": [
+        1,
+        1
+      ],
+      "exit": "STALLED",
+      "minors_per_round": [
+        0,
+        0
+      ],
+      "minors_written": 0,
+      "rounds_used": 2
+    }
+  }
+}
