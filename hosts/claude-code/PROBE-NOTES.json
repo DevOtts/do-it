@@ -1,0 +1,73 @@
+{
+  "exit_code": 0,
+  "message": "Installing plugin \"do-it@devotts\"...✔ Successfully installed plugin: do-it@devotts (scope: user) (+ 5 dependencies: prompt-it, plan-it, build-it, review-it, conclude-it)",
+  "plugin_dependency_resolution": {
+    "resolved": true,
+    "claude_version": "2.1.300 (Claude Code)",
+    "config_dir": "scratch (empty CLAUDE_CONFIG_DIR)"
+  },
+  "headless_alias_start": {
+    "started_with": "anm",
+    "tried": [
+      {
+        "alias": "8fai",
+        "outcome": "HANDOFF_FAILED",
+        "reason": "exit 1: Failed to authenticate: OAuth session expired and could not be refreshed"
+      },
+      {
+        "alias": "8ftools",
+        "outcome": "HANDOFF_FAILED",
+        "reason": "exit 1: Failed to authenticate: OAuth session expired and could not be refreshed"
+      },
+      {
+        "alias": "anm",
+        "outcome": "ok"
+      }
+    ]
+  },
+  "meter_real_result": {
+    "fixture_vs_real_field_mismatch": [],
+    "real_top_level_keys": [
+      "api_error_status",
+      "duration_api_ms",
+      "duration_ms",
+      "fast_mode_disabled_reason",
+      "fast_mode_state",
+      "first_content_frame_ms",
+      "is_error",
+      "modelUsage",
+      "num_turns",
+      "permission_denials",
+      "queued_turn_count",
+      "result",
+      "result_index",
+      "safety_stops",
+      "session_id",
+      "stop_reason",
+      "subagent_stats",
+      "subtype",
+      "terminal_reason",
+      "time_to_request_ms",
+      "total_cost_usd",
+      "ttft_ms",
+      "ttft_stream_ms",
+      "type",
+      "usage",
+      "uuid"
+    ],
+    "real_usage_keys": [
+      "cache_creation",
+      "cache_creation_input_tokens",
+      "cache_read_input_tokens",
+      "fallback_credit",
+      "inference_geo",
+      "input_tokens",
+      "iterations",
+      "output_tokens",
+      "output_tokens_details",
+      "server_tool_use",
+      "service_tier",
+      "speed"
+    ]
+  }
+}

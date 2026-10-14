@@ -1,0 +1,7 @@
+{
+  "schema": "do-it-tiers/1",
+  "host": "claude-code",
+  "source": "default-R8",
+  "asked_at_init": false,
+  "tiers": { "T1": "opus", "T2": "sonnet", "T3": "haiku" }
+}
