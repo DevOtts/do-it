@@ -13,3 +13,4 @@
 2026-10-14T21:29:51Z H2+H3 merged @a42ebdf: codex 17, opencode 18 (paid-call cases gated DOIT_REAL_CALLS=1, verified once by worker; log has VERIFIED lines), schema enum + ESCALATED,TIER_UNROUTED; hosts all green
 2026-10-14T21:31:39Z P3 merged @2ed8c6d 18/18; routing, spine green
 2026-10-14T21:34:12Z R3 merged @df235b3: catalog 16/16; siblings clean except prompt-it 1 pre-existing dirty line (not ours; R3 worker touched none)
+2026-10-14T21:37:45Z N1+N3 merged @433cffd: engine 32/32 (N1 18 incl 3 INV-NOT-VERIFIED live; N3 14 incl T-N3-14 INV-NOT-VERIFIED); no live Engine (docker daemon down, DO_IT_ENGINE_URL unset); state-stores 18, spine 89, plugin 15+1skip
