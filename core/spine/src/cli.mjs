@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { cmdAnswer } from './answer.mjs';
 import { gateCeiling } from './ceiling.mjs';
 import { gateConclude } from './conclude.mjs';
 import { makeCtx } from './ctx.mjs';
@@ -80,7 +81,7 @@ export function dispatch(ctx, args) {
     case 'record': return cmdRecord(ctx, args);
     case 'gate': return cmdGate(ctx, args);
     case 'next': return cmdNext(ctx, args);
-    case 'answer': return notImplemented('S4', 'answer');
+    case 'answer': return cmdAnswer(ctx, args);
     case 'handoff': return cmdHandoff(ctx, args);
     case 'resume': return cmdResume(ctx, args);
     case 'park': return cmdPark(ctx, args);

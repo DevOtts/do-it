@@ -1,0 +1,26 @@
+{
+  "$id": "do-it-answers/1",
+  "title": "answers.json: the parsed owner reply, deterministic (no timestamps)",
+  "type": "object",
+  "required": ["pack_id", "answers", "pending", "complete"],
+  "properties": {
+    "pack_id": { "type": "string", "minLength": 1 },
+    "complete": { "type": "boolean" },
+    "pending": { "type": "array", "items": { "type": "integer", "minimum": 1 } },
+    "answers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["n", "answer", "source", "free_text"],
+        "properties": {
+          "n": { "type": "integer", "minimum": 1 },
+          "answer": { "type": "string" },
+          "source": { "enum": ["reply", "recommendation", "default"] },
+          "free_text": { "type": "boolean" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

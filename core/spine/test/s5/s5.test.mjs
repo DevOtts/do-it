@@ -423,7 +423,12 @@ test('T-S5-18 G-7 values never reach any file or output (proof by grep) [REAL]',
   assert.equal(rec.code, 0, rec.stdout);
   run(['handoff']);
   run(['park', '--reason', 'usage_limit']);
-  run(['answer', '--render', 'html']);
+  writeJson(path.join(repo.dir, 'results', 'leak-questions.json'), { questions: [{ kind: 'ratify', text: 'Rotate ' + SENTINEL + ' now?', options: ['yes', 'no'], recommendation: 'yes', default: 'yes', reversible: true }] });
+  const asked = record(real, repo, result(id, { status: 'needs_human', pending_human: { questions_path: 'results/leak-questions.json' } }), 'leak-q', env);
+  captured.push(asked.stdout, asked.stderr);
+  const rendered = run(['answer', '--render', 'html']);
+  assert.equal(rendered.out.outcome, 'AWAITING_REPLY', rendered.stdout);
+  assert.ok(fs.existsSync(path.join(runDirOf(repo, id), 'owner-pack.html')));
   run(['doctor', '--secrets']);
   for (const text of captured) assert.ok(!String(text).includes(SENTINEL), 'sentinel in captured output');
   const files = walk(repo.doIt, []);
