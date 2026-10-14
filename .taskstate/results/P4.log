@@ -1,0 +1,148 @@
+TAP version 13
+# Subtest: T-P4-01 only four exits exist
+ok 1 - T-P4-01 only four exits exist
+  ---
+  duration_ms: 163.264334
+  type: 'test'
+  ...
+# Subtest: T-P4-05 minors only ends the loop
+ok 2 - T-P4-05 minors only ends the loop
+  ---
+  duration_ms: 0.119959
+  type: 'test'
+  ...
+# Subtest: T-P4-06 clean round
+ok 3 - T-P4-06 clean round
+  ---
+  duration_ms: 0.056333
+  type: 'test'
+  ...
+# Subtest: T-P4-07 counts must fall
+ok 4 - T-P4-07 counts must fall
+  ---
+  duration_ms: 0.155042
+  type: 'test'
+  ...
+# Subtest: T-P4-08 counts falling to zero
+ok 5 - T-P4-08 counts falling to zero
+  ---
+  duration_ms: 0.073583
+  type: 'test'
+  ...
+# Subtest: T-P4-09 same fingerprint twice raises the tier once
+ok 6 - T-P4-09 same fingerprint twice raises the tier once
+  ---
+  duration_ms: 0.174916
+  type: 'test'
+  ...
+# Subtest: T-P4-10 same fingerprint after the raise stalls
+ok 7 - T-P4-10 same fingerprint after the raise stalls
+  ---
+  duration_ms: 0.152416
+  type: 'test'
+  ...
+# Subtest: T-P4-10 a tier already at T1 cannot be raised and stalls at the first recurrence
+ok 8 - T-P4-10 a tier already at T1 cannot be raised and stalls at the first recurrence
+  ---
+  duration_ms: 0.21
+  type: 'test'
+  ...
+# Subtest: T-P4-11 round budget exhausted parks with a resume note
+ok 9 - T-P4-11 round budget exhausted parks with a resume note
+  ---
+  duration_ms: 0.392875
+  type: 'test'
+  ...
+# Subtest: T-P4-12 cost cap
+ok 10 - T-P4-12 cost cap
+  ---
+  duration_ms: 0.320709
+  type: 'test'
+  ...
+# Subtest: T-P4-13 a clean round beats the cap
+ok 11 - T-P4-13 a clean round beats the cap
+  ---
+  duration_ms: 0.376958
+  type: 'test'
+  ...
+# Subtest: rule order edge: a recurrence in the last round spends no raise and falls to the budget rule
+ok 12 - rule order edge: a recurrence in the last round spends no raise and falls to the budget rule
+  ---
+  duration_ms: 0.104
+  type: 'test'
+  ...
+# Subtest: rounds recorded after an exit are flagged
+ok 13 - rounds recorded after an exit are flagged
+  ---
+  duration_ms: 0.0425
+  type: 'test'
+  ...
+# Subtest: T-P4-15 ratchet stays open without a test or a reason
+ok 14 - T-P4-15 ratchet stays open without a test or a reason
+  ---
+  duration_ms: 27.069209
+  type: 'test'
+  ...
+# Subtest: T-P4-16 [REAL] ratchet closes with a real test or a reason
+ok 15 - T-P4-16 [REAL] ratchet closes with a real test or a reason
+  ---
+  duration_ms: 25.577541
+  type: 'test'
+  ...
+# Subtest: T-P4-17 [REAL] ATTENDED-GATE.html is tickable and tagged
+ok 16 - T-P4-17 [REAL] ATTENDED-GATE.html is tickable and tagged
+  ---
+  duration_ms: 1.794083
+  type: 'test'
+  ...
+# Subtest: T-P4-02 roteiro is frozen at round 1
+ok 17 - T-P4-02 roteiro is frozen at round 1
+  ---
+  duration_ms: 1.655375
+  type: 'test'
+  ...
+# Subtest: T-P4-03 [REAL] a check changed on disk invalidates its mark
+ok 18 - T-P4-03 [REAL] a check changed on disk invalidates its mark
+  ---
+  duration_ms: 1.847875
+  type: 'test'
+  ...
+# Subtest: T-P4-04 severity classes route correctly
+ok 19 - T-P4-04 severity classes route correctly
+  ---
+  duration_ms: 0.84175
+  type: 'test'
+  ...
+# Subtest: T-P4-14 author, runner and builder are separate
+ok 20 - T-P4-14 author, runner and builder are separate
+  ---
+  duration_ms: 0.435917
+  type: 'test'
+  ...
+# Subtest: T-P4-18 amendments do not touch the frozen fingerprint
+ok 21 - T-P4-18 amendments do not touch the frozen fingerprint
+  ---
+  duration_ms: 0.582792
+  type: 'test'
+  ...
+# Subtest: T-P4-19 [REAL] round result tampered after the runner wrote it
+ok 22 - T-P4-19 [REAL] round result tampered after the runner wrote it
+  ---
+  duration_ms: 1.508083
+  type: 'test'
+  ...
+# Subtest: T-P4-20 resume gives the same decision and no duplicate cards
+ok 23 - T-P4-20 resume gives the same decision and no duplicate cards
+  ---
+  duration_ms: 2.981833
+  type: 'test'
+  ...
+1..23
+# tests 23
+# suites 0
+# pass 23
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 217.219792

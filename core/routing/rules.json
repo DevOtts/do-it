@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "presets": ["feature", "investigate-fix", "drain", "review-loop", "reconcile"],
+  "rules": [
+    { "id": "r-drain", "kind": "keyword", "preset": "drain", "pattern": "\\b(drain|backlog)\\b" },
+    { "id": "r-reconcile", "kind": "keyword", "preset": "reconcile", "pattern": "\\b(reconcile|worktrees?|stray branches)\\b" },
+    { "id": "r-review-loop", "kind": "keyword", "preset": "review-loop", "pattern": "(review[- ]loop|until it converges|converge)" },
+    { "id": "r-investigate-fix", "kind": "keyword", "preset": "investigate-fix", "pattern": "(\\bn[aã]o (recebe|funciona|abre|carrega|envia)|\\b(bug|broken|crash(es|ed)?|errors?|fails|failing|regression)\\b|not working|doesn'?t work)" },
+    { "id": "r-feature", "kind": "keyword", "preset": "feature", "pattern": "\\b(ship|implement|build|add (a |the )?feature|new feature)\\b" }
+  ]
+}

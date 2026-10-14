@@ -1,0 +1,12 @@
+{
+  "samples": [
+    { "message": "ship W0-W2", "preset": "feature" },
+    { "message": "O Secretario nao recebe mensagens completas", "preset": "investigate-fix" },
+    { "message": "drain the 107 backlog cards", "preset": "drain" },
+    { "message": "run the review loop on this diff until it converges", "preset": "review-loop" },
+    { "message": "reconcile my branches and worktrees", "preset": "reconcile" }
+  ],
+  "ambiguous": [
+    { "message": "look at the checkout flow" }
+  ]
+}
