@@ -1,0 +1,19 @@
+{
+  "host": "codex",
+  "version_probed": "0.156.1",
+  "spawn": { "native": false, "per_spawn_model": true, "max_parallel": 1 },
+  "ask": { "native": false, "max_questions": 4 },
+  "continue": { "headless": true },
+  "wake": { "native": false },
+  "meter": { "provider_usage": true, "cache_fields": true },
+  "hooks": { "stop_gate": false },
+  "isolation": ["worktree"],
+  "unknown": [
+    "custom-agent-file-format",
+    "per-agent-model",
+    "hooks-config-file",
+    "request-user-input-in-exec",
+    "wake-goals-queue",
+    "reasoning-included-in-output"
+  ]
+}

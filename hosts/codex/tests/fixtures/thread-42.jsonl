@@ -1,0 +1,2 @@
+{"_label":"shape-unverified","type":"thread.started","thread_id":"thr-42"}
+{"type":"turn.completed","usage":{"input_tokens":1,"cached_input_tokens":0,"output_tokens":1,"reasoning_output_tokens":0}}

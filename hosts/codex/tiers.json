@@ -1,0 +1,7 @@
+{
+  "schema": "do-it-tiers/1",
+  "host": "codex",
+  "source": "default-R8",
+  "asked_at_init": false,
+  "tiers": { "T1": "gpt-5.6-sol", "T2": "gpt-5.6-terra", "T3": "gpt-5.6-luna" }
+}
