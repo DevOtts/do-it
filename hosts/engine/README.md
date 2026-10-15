@@ -39,21 +39,14 @@ The suite runs offline against fixtures and stubs. The `[REAL]` cases (T-N1-16/1
 
 ## Status
 
-Verified live against a local Engine-Core on 2026-10-14 (`live-w4`):
+Verified live on 2026-10-14 against a local `brain-api-core` running Engine PR #727 (not merged, not deployed; needs `HOST_ADAPTER_API_ENABLED=true` and `CT_TASKS_ENABLED=true`). Evidence: `.taskstate/results/engine-adapter-live.md`.
 
 | Case | Verdict | Finding |
 |---|---|---|
 | T-N1-16 checkpoint card | VERIFIED | Pending `change_proposal` card returned by Mission Control |
-| T-N1-17 ask reply by ID | not verified | Engine has no ask-cards route (`GET /api/ask-cards` returns 404) |
-| T-N1-18 definition read-back | not verified | Engine rejects `x_do_it` on steps (whitelist DTO) |
-| T-N3-14 live replay | not verified | Engine has no card inject or card state endpoint |
-| T-N2-04 `engine` store | not verified | Engine has no generic row store |
+| T-N1-17 ask reply by ID | VERIFIED | `/api/ask-cards`: first valid answer per id wins, later channel's answer is ignored, same `reply_id` replays |
+| T-N1-18 definition read-back | VERIFIED | Step props id/needs/deny/surface/eval ride in `x_do_it`; read-back equals the source squad by canonical hash |
+| T-N2-04 `engine` store | VERIFIED | Shared conformance 12/12 over `/api/run-rows` (3 MiB write cap; larger blobs use r2 or fs-mirror) |
+| T-N3-14 live replay | not verified | Card inject and state read-back work (5 cards, idempotent), but no do-it W3 pipeline is installed, so cards never run |
 
-One of five live cases is verified. Engine-side work still needed:
-
-1. A metadata field on definition steps so `x_do_it` round-trips.
-2. An ask-pack route and a reply path on Control Tower, chat and WhatsApp.
-3. A card injection endpoint and a card state read.
-4. A generic keyed row store for the `engine` StateStore.
-
-Until those land, the adapter's Engine path works for the checkpoint card and the compile and fixture behaviour, and nothing else should be called live.
+Still open: install the W3 pipeline (and an Engine drain, for T-R4-05) on an Engine that carries PR #727. Configure the adapter with `DO_IT_ENGINE_URL`, `DO_IT_ENGINE_TOKEN` (service key, read from the environment) and `DO_IT_ENGINE_ORG_SLUG`.

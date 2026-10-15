@@ -3,7 +3,7 @@ import { StoreError, ERR } from '../interface.mjs';
 
 export const ROWS_BLOB_CAP = 8 * 1024 * 1024;
 
-export function createRowsDriver({ transport, cap = ROWS_BLOB_CAP }) {
+export function createRowsDriver({ transport, cap = transport?.maxWriteBytes ?? ROWS_BLOB_CAP }) {
   return {
     id: 'rows',
     async put(key, bytes) {
