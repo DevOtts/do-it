@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 520" width="1200" height="520" role="img" aria-labelledby="t d">
+  <title id="t">do-it pipeline with failure loops and the spine underneath</title>
+  <desc id="d">The lifecycle runs prompt-it, plan-it, build-it, review-it, deploy-it and conclude-it left to right. Dashed arrows show the failure loops: review back to build, deploy rolled back to build. The owner pack collects every question at the ratify gate. The spine bar underneath owns run state. The finish line closes the run when every row is terminal.</desc>
+  <rect x="1" y="1" width="1198" height="518" rx="18" fill="#0b1220" stroke="#1e2d44" stroke-width="2"/>
+  <text x="50" y="58" font-family="Helvetica, Arial, sans-serif" font-size="28" font-weight="700" fill="#e8eefc">the pipeline</text>
+  <g font-family="Menlo, Consolas, monospace" font-size="15" fill="#e8eefc" text-anchor="middle">
+    <rect x="50" y="130" width="130" height="50" rx="10" fill="#10203a" stroke="#1e2d44"/><text x="115" y="161">prompt-it</text>
+    <rect x="220" y="130" width="130" height="50" rx="10" fill="#10203a" stroke="#1e2d44"/><text x="285" y="161">plan-it</text>
+    <rect x="390" y="130" width="130" height="50" rx="10" fill="#10203a" stroke="#1e2d44"/><text x="455" y="161">build-it</text>
+    <rect x="560" y="130" width="130" height="50" rx="10" fill="#10203a" stroke="#1e2d44"/><text x="625" y="161">review-it</text>
+    <rect x="730" y="130" width="130" height="50" rx="10" fill="#10203a" stroke="#1e2d44"/><text x="795" y="161">deploy-it</text>
+    <rect x="900" y="130" width="130" height="50" rx="10" fill="#10203a" stroke="#1e2d44"/><text x="965" y="161">conclude-it</text>
+  </g>
+  <path d="M180 155 H220 M350 155 H390 M520 155 H560 M690 155 H730 M860 155 H900" stroke="#38bdf8" stroke-width="3" fill="none"/>
+  <!-- failure loops -->
+  <path d="M625 180 V230 H455 V180" stroke="#f59e0b" stroke-width="2" stroke-dasharray="7 5" fill="none"/>
+  <text x="540" y="250" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="12" fill="#f59e0b">blockers and majors loop</text>
+  <path d="M795 180 V280 H455 V180" stroke="#f87171" stroke-width="2" stroke-dasharray="7 5" fill="none"/>
+  <text x="640" y="300" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="12" fill="#f87171">rollback, fix, re-verify</text>
+  <!-- owner pack at ratify -->
+  <rect x="200" y="60" width="170" height="40" rx="8" fill="#2a2208" stroke="#fbbf24" stroke-width="2"/>
+  <text x="285" y="85" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="14" fill="#fbbf24">owner pack</text>
+  <path d="M285 100 V130" stroke="#fbbf24" stroke-width="2" stroke-dasharray="4 4" fill="none"/>
+  <text x="400" y="85" font-family="Menlo, Consolas, monospace" font-size="12" fill="#5b6b85">every question, once, at the ratify gate</text>
+  <!-- finish line -->
+  <path d="M1065 110 V200" stroke="#34d399" stroke-width="3" fill="none"/>
+  <path d="M1065 110 H1115 V140 H1065 M1065 140 H1115 V170 H1065 M1065 170 H1115 V200 H1065" stroke="#34d399" stroke-width="2" fill="none"/>
+  <text x="1090" y="228" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="14" fill="#34d399">finish line</text>
+  <path d="M1030 155 H1065" stroke="#38bdf8" stroke-width="3" fill="none"/>
+  <!-- spine -->
+  <rect x="50" y="360" width="1000" height="56" rx="10" fill="#0b3a52" stroke="#38bdf8" stroke-width="2"/>
+  <text x="550" y="386" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="18" font-weight="700" fill="#e8eefc">the spine</text>
+  <text x="550" y="406" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="12" fill="#7dd3fc">run state, evidence ledger, stop-gate, token meter, handoff: plain files under .do-it/</text>
+  <g stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="2 4"><path d="M115 180 V360"/><path d="M285 180 V360"/><path d="M455 180 V360"/><path d="M625 180 V360"/><path d="M795 180 V360"/><path d="M965 180 V360"/></g>
+  <text x="50" y="470" font-family="Menlo, Consolas, monospace" font-size="12" fill="#5b6b85">dashed amber and red: failure loops. Dotted blue: every stage reports to the spine and never writes run state itself.</text>
+</svg>

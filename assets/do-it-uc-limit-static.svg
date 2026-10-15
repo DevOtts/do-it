@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 496" width="1200" height="496" role="img" aria-labelledby="t d">
+  <title id="t">Use case: the usage limit hits mid-build</title>
+  <desc id="d">An animation of a run that reaches the build slice and hits a usage limit. The build result reports usage_limit with exit code 3, the spine parks the run and writes park.json, the status in state.json becomes PARKED, time passes until the reset, then do-it resume lets a fresh conductor continue the same slice, through verify to conclude and DONE.</desc>
+  <rect x="1" y="1" width="1198" height="494" rx="18" fill="#0b1220" stroke="#1e2d44" stroke-width="2"/>
+  <text x="50" y="50" font-family="Helvetica, Arial, sans-serif" font-size="26" font-weight="700" fill="#e8eefc">Use case 2: the usage limit hits mid-build</text>
+  <text x="50" y="74" font-family="Menlo, Consolas, monospace" font-size="13" fill="#7dd3fc">park, wake, resume: the run continues from files, not from memory</text>
+  <path d="M120 108 H1080" stroke="#1e2d44" stroke-width="2" fill="none"/>
+  <path d="M120 108 V130" stroke="#1e2d44" stroke-width="2" fill="none"/>
+  <rect class="nd lit_n0" x="50" y="130" width="140" height="54" rx="10" fill="#10203a" stroke="#1e2d44" stroke-width="2"/>
+  <text x="120" y="154" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="15" font-weight="700" fill="#e8eefc">plan</text>
+  <text x="120" y="172" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="11" fill="#7dd3fc">T1</text>
+  <path d="M196 157 H280" stroke="#38bdf8" stroke-width="2" fill="none"/><path d="M278 152 L286 157 L278 162 Z" fill="#38bdf8"/>
+  <path d="M360 108 V130" stroke="#1e2d44" stroke-width="2" fill="none"/>
+  <rect class="nd lit_n1" x="290" y="130" width="140" height="54" rx="10" fill="#2a2208" stroke="#fbbf24" stroke-width="2"/>
+  <text x="360" y="154" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="15" font-weight="700" fill="#e8eefc">ratify</text>
+  <text x="360" y="172" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="11" fill="#fbbf24">owner gate</text>
+  <path d="M436 157 H520" stroke="#38bdf8" stroke-width="2" fill="none"/><path d="M518 152 L526 157 L518 162 Z" fill="#38bdf8"/>
+  <path d="M600 108 V130" stroke="#1e2d44" stroke-width="2" fill="none"/>
+  <rect class="nd lit_n2" x="530" y="130" width="140" height="54" rx="10" fill="#10203a" stroke="#1e2d44" stroke-width="2"/>
+  <text x="600" y="154" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="15" font-weight="700" fill="#e8eefc">build slice</text>
+  <text x="600" y="172" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="11" fill="#7dd3fc">T2</text>
+  <path d="M676 157 H760" stroke="#38bdf8" stroke-width="2" fill="none"/><path d="M758 152 L766 157 L758 162 Z" fill="#38bdf8"/>
+  <path d="M840 108 V130" stroke="#1e2d44" stroke-width="2" fill="none"/>
+  <rect class="nd lit_n3" x="770" y="130" width="140" height="54" rx="10" fill="#10203a" stroke="#1e2d44" stroke-width="2"/>
+  <text x="840" y="154" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="15" font-weight="700" fill="#e8eefc">verify</text>
+  <text x="840" y="172" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="11" fill="#7dd3fc">T2</text>
+  <path d="M916 157 H1000" stroke="#38bdf8" stroke-width="2" fill="none"/><path d="M998 152 L1006 157 L998 162 Z" fill="#38bdf8"/>
+  <path d="M1080 108 V130" stroke="#1e2d44" stroke-width="2" fill="none"/>
+  <rect class="nd lit_n4" x="1010" y="130" width="140" height="54" rx="10" fill="#06352b" stroke="#34d399" stroke-width="2"/>
+  <text x="1080" y="154" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="15" font-weight="700" fill="#e8eefc">conclude</text>
+  <text x="1080" y="172" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="11" fill="#7dd3fc">T2</text>
+  <text x="50" y="240" font-family="Menlo, Consolas, monospace" font-size="12" fill="#5b6b85">plain files under .do-it/runs/&lt;run-id&gt;/</text>
+  <g class="fc f0"><rect x="50" y="248" width="99" height="28" rx="14" fill="#0b1a2e" stroke="#38bdf8"/><text x="99.5" y="267" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="12" fill="#e8eefc">state.json</text></g>
+  <g class="fc f1"><rect x="161" y="248" width="150.1" height="28" rx="14" fill="#0b1a2e" stroke="#38bdf8"/><text x="236.05" y="267" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="12" fill="#e8eefc">token-meter.jsonl</text></g>
+  <g class="fc f2"><rect x="323.1" y="248" width="186.6" height="28" rx="14" fill="#0b1a2e" stroke="#f87171"/><text x="416.40000000000003" y="267" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="12" fill="#e8eefc">results/ (it-result/1)</text></g>
+  <g class="fc f3"><rect x="521.7" y="248" width="91.7" height="28" rx="14" fill="#0b1a2e" stroke="#f87171"/><text x="567.5500000000001" y="267" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="12" fill="#e8eefc">park.json</text></g>
+  <rect x="50" y="298" width="710" height="166" rx="10" fill="#0a1626" stroke="#1e2d44"/>
+  <text x="66" y="318" font-family="Menlo, Consolas, monospace" font-size="11" fill="#5b6b85">what happens, in order</text>
+  <text class="lg g0" x="66" y="344" font-family="Menlo, Consolas, monospace" font-size="13" fill="#e8eefc">builder T2 starts the build slice</text>
+  <text class="lg g1" x="66" y="365" font-family="Menlo, Consolas, monospace" font-size="13" fill="#f87171">result file says: status usage_limit, exit_code 3</text>
+  <text class="lg g2" x="66" y="386" font-family="Menlo, Consolas, monospace" font-size="13" fill="#f87171">do-it park --reason usage_limit --reset-at &lt;ISO time&gt;</text>
+  <text class="lg g3" x="66" y="407" font-family="Menlo, Consolas, monospace" font-size="13" fill="#e8eefc">state PARKED; park.json holds the state files and next action</text>
+  <text class="lg g4" x="66" y="428" font-family="Menlo, Consolas, monospace" font-size="13" fill="#7dd3fc">reset time passes; the wake hook (if the host has one) runs do-it resume</text>
+  <text class="lg g5" x="66" y="449" font-family="Menlo, Consolas, monospace" font-size="13" fill="#34d399">a fresh conductor reads the files and picks up the same slice</text>
+  <rect x="790" y="298" width="360" height="46" rx="10" fill="#0a1626" stroke="#1e2d44"/>
+  <text x="804" y="326" font-family="Menlo, Consolas, monospace" font-size="12" fill="#5b6b85">state.json status</text>
+  <text class="st0" x="1136" y="327" text-anchor="end" font-family="Menlo, Consolas, monospace" font-size="14" font-weight="700" fill="#e8eefc" opacity="0">PLANNING</text>
+  <text class="st1" x="1136" y="327" text-anchor="end" font-family="Menlo, Consolas, monospace" font-size="14" font-weight="700" fill="#fbbf24" opacity="0">AWAIT_RATIFY</text>
+  <text class="st2" x="1136" y="327" text-anchor="end" font-family="Menlo, Consolas, monospace" font-size="14" font-weight="700" fill="#e8eefc" opacity="0">BUILDING</text>
+  <text class="st3" x="1136" y="327" text-anchor="end" font-family="Menlo, Consolas, monospace" font-size="14" font-weight="700" fill="#f87171" opacity="0">PARKED</text>
+  <text class="st4" x="1136" y="327" text-anchor="end" font-family="Menlo, Consolas, monospace" font-size="14" font-weight="700" fill="#e8eefc" opacity="0">BUILDING</text>
+  <text class="st5" x="1136" y="327" text-anchor="end" font-family="Menlo, Consolas, monospace" font-size="14" font-weight="700" fill="#e8eefc" opacity="0">VERIFYING</text>
+  <text class="st6" x="1136" y="327" text-anchor="end" font-family="Menlo, Consolas, monospace" font-size="14" font-weight="700" fill="#e8eefc" opacity="0">CONCLUDING</text>
+  <text class="st7" x="1136" y="327" text-anchor="end" font-family="Menlo, Consolas, monospace" font-size="14" font-weight="700" fill="#34d399">DONE</text>
+  <text x="790" y="368" font-family="Menlo, Consolas, monospace" font-size="12" fill="#5b6b85">token-meter.jsonl (one row per event)</text>
+  <rect x="790" y="378" width="360" height="12" rx="6" fill="#10203a" stroke="#1e2d44"/>
+  <rect class="mt" x="790" y="378" width="360" height="12" rx="6" fill="#38bdf8" style="transform-box:fill-box;transform-origin:left center"/>
+  <text x="790" y="408" font-family="Menlo, Consolas, monospace" font-size="11" fill="#5b6b85">the meter keeps counting across the park</text>
+  <g class="ex0" opacity="0"><rect x="790" y="422" width="215.79999999999998" height="28" rx="14" fill="#0b1a2e" stroke="#f87171"/><text x="897.9" y="441" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="12" fill="#f87171">waiting for the reset time</text></g>
+  <text x="50" y="486" font-family="Menlo, Consolas, monospace" font-size="11" fill="#5b6b85">a host with no wake hook stays PARKED until you run do-it resume; nothing is lost either way</text>
+  </svg>

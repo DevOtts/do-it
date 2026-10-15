@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 496" width="1200" height="496" role="img" aria-labelledby="t d">
+  <title id="t">Use case: a review loop that converges, then a deploy</title>
+  <desc id="d">An animation of build, verify and review repeating as findings above minor loop back to build. The state.json status alternates between VERIFYING, REVIEWING and FIXING until round 3, where the review converges with two minors that become backlog cards. The run then reaches the deploy gate, the owner approves, and the run concludes with status DONE.</desc>
+  <rect x="1" y="1" width="1198" height="494" rx="18" fill="#0b1220" stroke="#1e2d44" stroke-width="2"/>
+  <text x="50" y="50" font-family="Helvetica, Arial, sans-serif" font-size="26" font-weight="700" fill="#e8eefc">Use case 4: a review loop that converges, then deploy</text>
+  <text x="50" y="74" font-family="Menlo, Consolas, monospace" font-size="13" fill="#7dd3fc">preset feature  /  review loops back to build, with a hard round limit</text>
+  <path d="M120 108 H1080" stroke="#1e2d44" stroke-width="2" fill="none"/>
+  <path d="M120 108 V130" stroke="#1e2d44" stroke-width="2" fill="none"/>
+  <rect class="nd lit_n0" x="50" y="130" width="140" height="54" rx="10" fill="#10203a" stroke="#1e2d44" stroke-width="2"/>
+  <text x="120" y="154" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="15" font-weight="700" fill="#e8eefc">build slice</text>
+  <text x="120" y="172" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="11" fill="#7dd3fc">T2</text>
+  <path d="M196 157 H280" stroke="#38bdf8" stroke-width="2" fill="none"/><path d="M278 152 L286 157 L278 162 Z" fill="#38bdf8"/>
+  <path d="M360 108 V130" stroke="#1e2d44" stroke-width="2" fill="none"/>
+  <rect class="nd lit_n1" x="290" y="130" width="140" height="54" rx="10" fill="#10203a" stroke="#1e2d44" stroke-width="2"/>
+  <text x="360" y="154" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="15" font-weight="700" fill="#e8eefc">verify</text>
+  <text x="360" y="172" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="11" fill="#7dd3fc">T2</text>
+  <path d="M436 157 H520" stroke="#38bdf8" stroke-width="2" fill="none"/><path d="M518 152 L526 157 L518 162 Z" fill="#38bdf8"/>
+  <path d="M600 108 V130" stroke="#1e2d44" stroke-width="2" fill="none"/>
+  <rect class="nd lit_n2" x="530" y="130" width="140" height="54" rx="10" fill="#10203a" stroke="#1e2d44" stroke-width="2"/>
+  <text x="600" y="154" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="15" font-weight="700" fill="#e8eefc">review</text>
+  <text x="600" y="172" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="11" fill="#7dd3fc">T2 / max 3 rounds</text>
+  <path d="M676 157 H760" stroke="#38bdf8" stroke-width="2" fill="none"/><path d="M758 152 L766 157 L758 162 Z" fill="#38bdf8"/>
+  <path d="M840 108 V130" stroke="#1e2d44" stroke-width="2" fill="none"/>
+  <rect class="nd lit_n3" x="770" y="130" width="140" height="54" rx="10" fill="#2a2208" stroke="#fbbf24" stroke-width="2"/>
+  <text x="840" y="154" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="15" font-weight="700" fill="#e8eefc">deploy</text>
+  <text x="840" y="172" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="11" fill="#fbbf24">owner gate</text>
+  <path d="M916 157 H1000" stroke="#38bdf8" stroke-width="2" fill="none"/><path d="M998 152 L1006 157 L998 162 Z" fill="#38bdf8"/>
+  <path d="M1080 108 V130" stroke="#1e2d44" stroke-width="2" fill="none"/>
+  <rect class="nd lit_n4" x="1010" y="130" width="140" height="54" rx="10" fill="#06352b" stroke="#34d399" stroke-width="2"/>
+  <text x="1080" y="154" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="15" font-weight="700" fill="#e8eefc">conclude</text>
+  <text x="1080" y="172" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="11" fill="#7dd3fc">T2</text>
+  <path class="loop l0" d="M600 184 V206 H120 V189" stroke="#f59e0b" stroke-width="2" stroke-dasharray="7 5" fill="none"/><path d="M115 193 L120 185 L125 193 Z" fill="#f59e0b"/>
+  <text x="360" y="221" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="11" fill="#f59e0b">findings above minor loop back to build</text>
+  <text x="50" y="240" font-family="Menlo, Consolas, monospace" font-size="12" fill="#5b6b85">plain files under .do-it/runs/&lt;run-id&gt;/</text>
+  <g class="fc f0"><rect x="50" y="248" width="208.5" height="28" rx="14" fill="#0b1a2e" stroke="#38bdf8"/><text x="154.25" y="267" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="12" fill="#e8eefc">state.json (review.round)</text></g>
+  <g class="fc f1"><rect x="270.5" y="248" width="150.1" height="28" rx="14" fill="#0b1a2e" stroke="#38bdf8"/><text x="345.55" y="267" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="12" fill="#e8eefc">token-meter.jsonl</text></g>
+  <g class="fc f2"><rect x="432.6" y="248" width="186.6" height="28" rx="14" fill="#0b1a2e" stroke="#38bdf8"/><text x="525.9" y="267" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="12" fill="#e8eefc">results/ (it-result/1)</text></g>
+  <g class="fc f3"><rect x="631.2" y="248" width="106.3" height="28" rx="14" fill="#0b1a2e" stroke="#34d399"/><text x="684.35" y="267" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="12" fill="#e8eefc">ledger.json</text></g>
+  <rect x="50" y="298" width="710" height="166" rx="10" fill="#0a1626" stroke="#1e2d44"/>
+  <text x="66" y="318" font-family="Menlo, Consolas, monospace" font-size="11" fill="#5b6b85">what happens, in order</text>
+  <text class="lg g0" x="66" y="344" font-family="Menlo, Consolas, monospace" font-size="13" fill="#f59e0b">round 1: reviewer finds issues above minor, loop to build</text>
+  <text class="lg g1" x="66" y="365" font-family="Menlo, Consolas, monospace" font-size="13" fill="#f59e0b">round 2: loop to build again, within the 3-round cap</text>
+  <text class="lg g2" x="66" y="386" font-family="Menlo, Consolas, monospace" font-size="13" fill="#34d399">round 3: converged with minors; exit by rule, not by mood</text>
+  <text class="lg g3" x="66" y="407" font-family="Menlo, Consolas, monospace" font-size="13" fill="#e8eefc">the 2 minors become backlog cards, they do not block</text>
+  <text class="lg g4" x="66" y="428" font-family="Menlo, Consolas, monospace" font-size="13" fill="#fbbf24">deploy gate: you approve; legs are verified one by one</text>
+  <text class="lg g5" x="66" y="449" font-family="Menlo, Consolas, monospace" font-size="13" fill="#e8eefc">conclude: the run closes when every finish-line row is terminal</text>
+  <rect x="790" y="298" width="360" height="46" rx="10" fill="#0a1626" stroke="#1e2d44"/>
+  <text x="804" y="326" font-family="Menlo, Consolas, monospace" font-size="12" fill="#5b6b85">state.json status</text>
+  <text class="st0" x="1136" y="327" text-anchor="end" font-family="Menlo, Consolas, monospace" font-size="14" font-weight="700" fill="#e8eefc" opacity="0">BUILDING</text>
+  <text class="st1" x="1136" y="327" text-anchor="end" font-family="Menlo, Consolas, monospace" font-size="14" font-weight="700" fill="#e8eefc" opacity="0">VERIFYING</text>
+  <text class="st2" x="1136" y="327" text-anchor="end" font-family="Menlo, Consolas, monospace" font-size="14" font-weight="700" fill="#e8eefc" opacity="0">REVIEWING</text>
+  <text class="st3" x="1136" y="327" text-anchor="end" font-family="Menlo, Consolas, monospace" font-size="14" font-weight="700" fill="#f59e0b" opacity="0">FIXING</text>
+  <text class="st4" x="1136" y="327" text-anchor="end" font-family="Menlo, Consolas, monospace" font-size="14" font-weight="700" fill="#e8eefc" opacity="0">VERIFYING</text>
+  <text class="st5" x="1136" y="327" text-anchor="end" font-family="Menlo, Consolas, monospace" font-size="14" font-weight="700" fill="#e8eefc" opacity="0">REVIEWING</text>
+  <text class="st6" x="1136" y="327" text-anchor="end" font-family="Menlo, Consolas, monospace" font-size="14" font-weight="700" fill="#f59e0b" opacity="0">FIXING</text>
+  <text class="st7" x="1136" y="327" text-anchor="end" font-family="Menlo, Consolas, monospace" font-size="14" font-weight="700" fill="#e8eefc" opacity="0">VERIFYING</text>
+  <text class="st8" x="1136" y="327" text-anchor="end" font-family="Menlo, Consolas, monospace" font-size="14" font-weight="700" fill="#e8eefc" opacity="0">REVIEWING</text>
+  <text class="st9" x="1136" y="327" text-anchor="end" font-family="Menlo, Consolas, monospace" font-size="14" font-weight="700" fill="#fbbf24" opacity="0">DEPLOYING</text>
+  <text class="st10" x="1136" y="327" text-anchor="end" font-family="Menlo, Consolas, monospace" font-size="14" font-weight="700" fill="#e8eefc" opacity="0">CONCLUDING</text>
+  <text class="st11" x="1136" y="327" text-anchor="end" font-family="Menlo, Consolas, monospace" font-size="14" font-weight="700" fill="#34d399">DONE</text>
+  <text x="790" y="368" font-family="Menlo, Consolas, monospace" font-size="12" fill="#5b6b85">token-meter.jsonl (one row per event)</text>
+  <rect x="790" y="378" width="360" height="12" rx="6" fill="#10203a" stroke="#1e2d44"/>
+  <rect class="mt" x="790" y="378" width="360" height="12" rx="6" fill="#38bdf8" style="transform-box:fill-box;transform-origin:left center"/>
+  <text x="790" y="408" font-family="Menlo, Consolas, monospace" font-size="11" fill="#5b6b85">each round appends rows; the round cap bounds the cost</text>
+  <g class="ex0"><rect x="790" y="422" width="230.4" height="28" rx="14" fill="#0b1a2e" stroke="#34d399"/><text x="905.2" y="441" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="12" fill="#34d399">backlog cards from minors: 2</text></g>
+  <text x="50" y="486" font-family="Menlo, Consolas, monospace" font-size="11" fill="#5b6b85">measured on the review-loop fixture (converge variant): ends in round 3 with 2 minors; deploy legs are exercised against fixtures only</text>
+  </svg>

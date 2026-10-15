@@ -156,6 +156,26 @@ That is one tiny fixture on one host. It says the meter works; it is not a savin
 
 All of these start from `/do-it` followed by the request.
 
+## Use cases
+
+Four runs, drawn as the work travels through the harness. Each picture loops: a packet moves from intake to the finish line while plain files appear under `.do-it/runs/<run-id>/`, `state.json` changes status and the token meter fills. They are animated SVGs, so they move on GitHub with no script; with reduced motion set they show the finished frame, and every one has a static twin (`assets/*-static.svg`).
+
+**1. A small feature, overnight.** You say "add slugify, tests must pass" before bed. The `feature` preset plans, asks you to ratify once, builds, and records each definition-of-done row as VERIFIED with evidence before the stop-gate lets it end. This is the overnight feature fixture: 4 of 4 rows VERIFIED, on a real Claude Code host. <!-- claim:run.feature.rows_verified -->
+
+<img src="assets/do-it-uc-feature.svg" width="100%" alt="Animation: one message travels intake, plan, ratify, build slice, verify, conclude; files and four DoD rows turn to VERIFIED, status ends DONE">
+
+**2. The usage limit hits mid-build.** The build result says `usage_limit` (exit code 3). The spine parks the run (`do-it park --reason usage_limit --reset-at <ISO time>`), writes `park.json`, and a wake hook runs `do-it resume` after the reset where the host has one. A fresh conductor continues from the files. This is the same host after the reset; handing a run to a different host mid-way is not part of this release.
+
+<img src="assets/do-it-uc-limit.svg" width="100%" alt="Animation: the build slice hits a usage limit, the run is parked with park.json, waits for the reset, resumes and finishes DONE">
+
+**3. One question pack, then it resumes.** Planning ends at the ratify gate with every question you must answer in one numbered pack. You reply `1 yes 2 no 3: B`; `do-it answer` writes `answers.json` and the build starts from it. While it waits nothing is running, so the meter stays flat.
+
+<img src="assets/do-it-uc-ownerpack.svg" width="100%" alt="Animation: the run stops at the ratify gate with an owner pack, the owner replies in one line, answers.json is written and the run finishes DONE">
+
+**4. A review loop that converges, then deploy.** Review loops back to build while findings above minor remain, under a round cap of 3. The converge variant of the review-loop fixture ends in round 3 with 2 minors, which become backlog cards. Then you approve the deploy and the run concludes.
+
+<img src="assets/do-it-uc-review.svg" width="100%" alt="Animation: build, verify and review repeat for three rounds until review converges with two minors, then the deploy gate and conclude, status DONE">
+
 ## What the morning report looks like
 
 This is real output. The block below is what `scripts/morning-report.mjs` prints for a run of the overnight feature fixture:

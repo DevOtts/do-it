@@ -1,6 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="1200" height="600" role="img" aria-labelledby="t d">
   <title id="t">do-it: one message in, a verified delivery out</title>
   <desc id="d">A single message enters a router and a deterministic spine, then flows through the family lifecycle prompt-it, plan-it, build-it, review-it, deploy-it and conclude-it, with three human gates. Four host chips sit underneath: Claude Code, Codex, OpenCode and Engine.</desc>
+  <style>@keyframes pk{0%{transform:translate(250px,285px);opacity:0}4.286%{transform:translate(250px,285px);opacity:0}5.714%{transform:translate(250px,285px);opacity:1}13.19%{transform:translate(407px,285px);opacity:1}14.619%{transform:translate(407px,285px);opacity:1}25.279%{transform:translate(624px,230px);opacity:1}26.351%{transform:translate(624px,230px);opacity:1}32.827%{transform:translate(760px,230px);opacity:1}34.97%{transform:translate(760px,230px);opacity:1}41.446%{transform:translate(896px,230px);opacity:1}42.874%{transform:translate(896px,230px);opacity:1}45.732%{transform:translate(896px,290px);opacity:1}58.684%{transform:translate(624px,290px);opacity:1}61.541%{transform:translate(624px,350px);opacity:1}62.612%{transform:translate(624px,350px);opacity:1}69.089%{transform:translate(760px,350px);opacity:1}71.232%{transform:translate(760px,350px);opacity:1}77.708%{transform:translate(896px,350px);opacity:1}79.851%{transform:translate(896px,350px);opacity:1}84.921%{transform:translate(990px,300px);opacity:1}89.206%{transform:translate(990px,300px);opacity:0}100%{transform:translate(990px,300px);opacity:0}}.pk{animation:pk 14s linear infinite}@keyframes lit_box_msg{0%{fill:#10203a;stroke:#1e2d44}5%{fill:#10203a;stroke:#1e2d44}5.357%{fill:#0b3a52;stroke:#38bdf8}11.786%{fill:#0b3a52;stroke:#38bdf8}17.5%{fill:#10203a;stroke:#1e2d44}100%{fill:#10203a;stroke:#1e2d44}}.lit_box_msg{animation:lit_box_msg 14s linear infinite}@keyframes lit_box_router{0%{fill:#10203a;stroke:#1e2d44}12.476%{fill:#10203a;stroke:#1e2d44}12.833%{fill:#0b3a52;stroke:#38bdf8}19.262%{fill:#0b3a52;stroke:#38bdf8}24.976%{fill:#10203a;stroke:#1e2d44}100%{fill:#10203a;stroke:#1e2d44}}.lit_box_router{animation:lit_box_router 14s linear infinite}@keyframes lit_n_prompt{0%{fill:#10203a;stroke:#1e2d44}24.565%{fill:#10203a;stroke:#1e2d44}24.922%{fill:#0b3a52;stroke:#38bdf8}31.351%{fill:#0b3a52;stroke:#38bdf8}37.065%{fill:#10203a;stroke:#1e2d44}100%{fill:#10203a;stroke:#1e2d44}}.lit_n_prompt{animation:lit_n_prompt 14s linear infinite}@keyframes lit_n_plan{0%{fill:#10203a;stroke:#1e2d44}32.112%{fill:#10203a;stroke:#1e2d44}32.47%{fill:#0b3a52;stroke:#38bdf8}38.898%{fill:#0b3a52;stroke:#38bdf8}44.612%{fill:#10203a;stroke:#1e2d44}100%{fill:#10203a;stroke:#1e2d44}}.lit_n_plan{animation:lit_n_plan 14s linear infinite}@keyframes lit_n_build{0%{fill:#10203a;stroke:#1e2d44}40.732%{fill:#10203a;stroke:#1e2d44}41.089%{fill:#0b3a52;stroke:#38bdf8}47.517%{fill:#0b3a52;stroke:#38bdf8}53.232%{fill:#10203a;stroke:#1e2d44}100%{fill:#10203a;stroke:#1e2d44}}.lit_n_build{animation:lit_n_build 14s linear infinite}@keyframes lit_n_review{0%{fill:#10203a;stroke:#1e2d44}60.827%{fill:#10203a;stroke:#1e2d44}61.184%{fill:#0b3a52;stroke:#38bdf8}67.612%{fill:#0b3a52;stroke:#38bdf8}73.327%{fill:#10203a;stroke:#1e2d44}100%{fill:#10203a;stroke:#1e2d44}}.lit_n_review{animation:lit_n_review 14s linear infinite}@keyframes lit_n_deploy{0%{fill:#10203a;stroke:#1e2d44}68.374%{fill:#10203a;stroke:#1e2d44}68.732%{fill:#0b3a52;stroke:#38bdf8}75.16%{fill:#0b3a52;stroke:#38bdf8}80.874%{fill:#10203a;stroke:#1e2d44}100%{fill:#10203a;stroke:#1e2d44}}.lit_n_deploy{animation:lit_n_deploy 14s linear infinite}@keyframes lit_n_conclude{0%{fill:#10203a;stroke:#1e2d44}76.993%{fill:#10203a;stroke:#1e2d44}77.351%{fill:#0b3a52;stroke:#38bdf8}83.779%{fill:#0b3a52;stroke:#38bdf8}89.493%{fill:#10203a;stroke:#1e2d44}100%{fill:#10203a;stroke:#1e2d44}}.lit_n_conclude{animation:lit_n_conclude 14s linear infinite}@keyframes lit_spine{0%{fill:#0b3a52}13.19%{fill:#0b3a52}13.905%{fill:#38bdf8}18.19%{fill:#0b3a52}100%{fill:#0b3a52}}.lit_spine{animation:lit_spine 14s linear infinite}@keyframes g_ratify{0%{fill:none}32.47%{fill:none}32.827%{fill:#fbbf24}40.684%{fill:none}100%{fill:none}}.g_ratify{animation:g_ratify 14s linear infinite}@keyframes g_deploy{0%{fill:none}68.732%{fill:none}69.089%{fill:#fbbf24}76.946%{fill:none}100%{fill:none}}.g_deploy{animation:g_deploy 14s linear infinite}@keyframes g_accept{0%{fill:none}77.351%{fill:none}77.708%{fill:#fbbf24}85.565%{fill:none}100%{fill:none}}.g_accept{animation:g_accept 14s linear infinite}@keyframes deliv{0%{fill:#7dd3fc}84.563%{fill:#7dd3fc}84.921%{fill:#34d399}100%{fill:#7dd3fc}100%{fill:#34d399}100%{fill:#7dd3fc}}.deliv{animation:deliv 14s linear infinite}@keyframes host0{0%{fill:#0b3a52;stroke:#38bdf8}0%{fill:#0b3a52;stroke:#38bdf8}23.571%{fill:#0b3a52;stroke:#38bdf8}25%{fill:#10203a;stroke:#1e2d44}100%{fill:#10203a;stroke:#1e2d44}}.host0{animation:host0 14s linear infinite}@keyframes host1{0%{fill:#10203a;stroke:#1e2d44}24.643%{fill:#0b3a52;stroke:#38bdf8}48.571%{fill:#0b3a52;stroke:#38bdf8}50%{fill:#10203a;stroke:#1e2d44}100%{fill:#10203a;stroke:#1e2d44}}.host1{animation:host1 14s linear infinite}@keyframes host2{0%{fill:#10203a;stroke:#1e2d44}49.643%{fill:#0b3a52;stroke:#38bdf8}73.571%{fill:#0b3a52;stroke:#38bdf8}75%{fill:#10203a;stroke:#1e2d44}100%{fill:#10203a;stroke:#1e2d44}}.host2{animation:host2 14s linear infinite}@keyframes host3{0%{fill:#10203a;stroke:#1e2d44}74.643%{fill:#0b3a52;stroke:#38bdf8}98.571%{fill:#0b3a52;stroke:#38bdf8}100%{fill:#0b3a52;stroke:#38bdf8}100%{fill:#0b3a52;stroke:#38bdf8}}.host3{animation:host3 14s linear infinite}@media (prefers-reduced-motion:reduce){*{animation:none!important}.pk{display:none}}</style>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#0b1220"/>
@@ -13,7 +14,7 @@
   <text x="60" y="152" font-family="Menlo, Consolas, monospace" font-size="14" fill="#5b6b85">code decides, models work, every row needs evidence</text>
 
   <!-- left: one message -->
-  <rect x="60" y="230" width="190" height="110" rx="12" fill="#10203a" stroke="#38bdf8" stroke-width="2"/>
+  <rect class="lit_box_msg" x="60" y="230" width="190" height="110" rx="12" fill="#10203a" stroke="#38bdf8" stroke-width="2"/>
   <text x="155" y="272" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="18" font-weight="700" fill="#e8eefc">one message</text>
   <text x="155" y="300" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="13" fill="#7dd3fc">"ship W0-W2"</text>
   <text x="155" y="322" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="13" fill="#7dd3fc">"drain the backlog"</text>
@@ -21,43 +22,44 @@
   <path d="M302 277 L312 285 L302 293 Z" fill="#38bdf8"/>
 
   <!-- middle: router and spine -->
-  <rect x="312" y="200" width="190" height="170" rx="12" fill="#10203a" stroke="#1e2d44" stroke-width="2"/>
+  <rect class="lit_box_router" x="312" y="200" width="190" height="170" rx="12" fill="#10203a" stroke="#1e2d44" stroke-width="2"/>
   <text x="407" y="236" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="18" font-weight="700" fill="#e8eefc">router</text>
   <text x="407" y="262" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="13" fill="#7dd3fc">picks a preset</text>
   <text x="407" y="284" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="13" fill="#5b6b85">rules first</text>
   <text x="407" y="306" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="13" fill="#5b6b85">model if ambiguous</text>
-  <rect x="332" y="326" width="150" height="30" rx="6" fill="#0b3a52" stroke="#38bdf8"/>
+  <rect class="lit_spine" x="332" y="326" width="150" height="30" rx="6" fill="#0b3a52" stroke="#38bdf8"/>
   <text x="407" y="346" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="13" fill="#e8eefc">spine</text>
   <path d="M502 285 H560" stroke="#38bdf8" stroke-width="3" fill="none"/>
   <path d="M552 277 L562 285 L552 293 Z" fill="#38bdf8"/>
 
   <!-- right: lifecycle nodes -->
   <g font-family="Menlo, Consolas, monospace" font-size="14" fill="#e8eefc" text-anchor="middle">
-    <rect x="564" y="210" width="120" height="40" rx="8" fill="#10203a" stroke="#1e2d44"/><text x="624" y="235">prompt-it</text>
-    <rect x="700" y="210" width="120" height="40" rx="8" fill="#10203a" stroke="#1e2d44"/><text x="760" y="235">plan-it</text>
-    <rect x="836" y="210" width="120" height="40" rx="8" fill="#10203a" stroke="#1e2d44"/><text x="896" y="235">build-it</text>
-    <rect x="564" y="330" width="120" height="40" rx="8" fill="#10203a" stroke="#1e2d44"/><text x="624" y="355">review-it</text>
-    <rect x="700" y="330" width="120" height="40" rx="8" fill="#10203a" stroke="#1e2d44"/><text x="760" y="355">deploy-it</text>
-    <rect x="836" y="330" width="120" height="40" rx="8" fill="#10203a" stroke="#1e2d44"/><text x="896" y="355">conclude-it</text>
+    <rect class="lit_n_prompt" x="564" y="210" width="120" height="40" rx="8" fill="#10203a" stroke="#1e2d44"/><text x="624" y="235">prompt-it</text>
+    <rect class="lit_n_plan" x="700" y="210" width="120" height="40" rx="8" fill="#10203a" stroke="#1e2d44"/><text x="760" y="235">plan-it</text>
+    <rect class="lit_n_build" x="836" y="210" width="120" height="40" rx="8" fill="#10203a" stroke="#1e2d44"/><text x="896" y="235">build-it</text>
+    <rect class="lit_n_review" x="564" y="330" width="120" height="40" rx="8" fill="#10203a" stroke="#1e2d44"/><text x="624" y="355">review-it</text>
+    <rect class="lit_n_deploy" x="700" y="330" width="120" height="40" rx="8" fill="#10203a" stroke="#1e2d44"/><text x="760" y="355">deploy-it</text>
+    <rect class="lit_n_conclude" x="836" y="330" width="120" height="40" rx="8" fill="#10203a" stroke="#1e2d44"/><text x="896" y="355">conclude-it</text>
   </g>
   <path d="M684 230 H700 M820 230 H836 M896 250 V290 H624 V330 M684 350 H700 M820 350 H836" stroke="#5b6b85" stroke-width="2" fill="none"/>
   <path d="M624 330 V300 H896 V250" stroke="#f59e0b" stroke-width="2" stroke-dasharray="6 5" fill="none"/>
 
   <!-- human gates -->
   <g font-family="Menlo, Consolas, monospace" font-size="12" fill="#fbbf24" text-anchor="middle">
-    <circle cx="760" cy="196" r="9" fill="none" stroke="#fbbf24" stroke-width="2"/><text x="760" y="180">ratify</text>
-    <circle cx="760" cy="384" r="9" fill="none" stroke="#fbbf24" stroke-width="2"/><text x="760" y="412">deploy</text>
-    <circle cx="896" cy="384" r="9" fill="none" stroke="#fbbf24" stroke-width="2"/><text x="896" y="412">accept</text>
+    <circle class="g_ratify" cx="760" cy="196" r="9" fill="none" stroke="#fbbf24" stroke-width="2"/><text x="760" y="180">ratify</text>
+    <circle class="g_deploy" cx="760" cy="384" r="9" fill="none" stroke="#fbbf24" stroke-width="2"/><text x="760" y="412">deploy</text>
+    <circle class="g_accept" cx="896" cy="384" r="9" fill="none" stroke="#fbbf24" stroke-width="2"/><text x="896" y="412">accept</text>
   </g>
-  <text x="1010" y="292" font-family="Helvetica, Arial, sans-serif" font-size="16" fill="#7dd3fc">verified delivery</text>
+  <text class="deliv" x="1010" y="292" font-family="Helvetica, Arial, sans-serif" font-size="16" fill="#7dd3fc">verified delivery</text>
   <text x="1010" y="314" font-family="Menlo, Consolas, monospace" font-size="13" fill="#5b6b85">one owner pack</text>
 
   <!-- bottom: hosts -->
   <text x="60" y="478" font-family="Menlo, Consolas, monospace" font-size="13" fill="#5b6b85">runs on</text>
   <g font-family="Helvetica, Arial, sans-serif" font-size="16" fill="#e8eefc" text-anchor="middle">
-    <rect x="60" y="492" width="200" height="44" rx="22" fill="#10203a" stroke="#38bdf8"/><text x="160" y="520">Claude Code</text>
-    <rect x="280" y="492" width="200" height="44" rx="22" fill="#10203a" stroke="#1e2d44"/><text x="380" y="520">Codex</text>
-    <rect x="500" y="492" width="200" height="44" rx="22" fill="#10203a" stroke="#1e2d44"/><text x="600" y="520">OpenCode</text>
-    <rect x="720" y="492" width="200" height="44" rx="22" fill="#10203a" stroke="#1e2d44"/><text x="820" y="520">Engine</text>
+    <rect class="host0" x="60" y="492" width="200" height="44" rx="22" fill="#10203a" stroke="#38bdf8"/><text x="160" y="520">Claude Code</text>
+    <rect class="host1" x="280" y="492" width="200" height="44" rx="22" fill="#10203a" stroke="#1e2d44"/><text x="380" y="520">Codex</text>
+    <rect class="host2" x="500" y="492" width="200" height="44" rx="22" fill="#10203a" stroke="#1e2d44"/><text x="600" y="520">OpenCode</text>
+    <rect class="host3" x="720" y="492" width="200" height="44" rx="22" fill="#10203a" stroke="#1e2d44"/><text x="820" y="520">Engine</text>
   </g>
+  <g class="pk"><circle r="9" fill="#38bdf8" opacity="0.25"/><circle r="5" fill="#e8eefc"/></g>
 </svg>
