@@ -1,0 +1,2 @@
+# heavy keyed PNG sequences: local masters only, regenerate with `npm run frames` in ../source
+_masters/
