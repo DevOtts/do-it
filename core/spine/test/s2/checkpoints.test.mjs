@@ -138,3 +138,82 @@ test('T-CP-07 an unknown gate or a malformed covers is READINESS_INVALID', () =>
     assert.equal(g.out.outcome, 'READINESS_INVALID');
   }
 });
+
+// Audit (verdict-reader loophole): a checkpoint row used to close on any
+// VERIFIED verdict whose evidence file merely existed. It now closes only on
+// the checkpoint's own verdict file passing the reader rule.
+function recordCheckpoint(repo, row, evidence) {
+  writeJson(path.join(repo.dir, 'results', 'cp.json'), {
+    schema: 'it-result/1', stage: 'review-it', run_id: repo.runId, slice_id: null, version: '0.1.0', head_sha: null,
+    status: 'ok', exit_code: 0, verdicts: [{ row, verdict: 'VERIFIED', evidence }], run_verdict: null, next: null, pending_human: null, artifacts: [],
+  });
+  return unit(repo, ['record', '--result', 'results/cp.json']);
+}
+
+function builtRepo() {
+  const repo = mkRepo();
+  repo.runId = startRun(repo, unit);
+  writeJson(path.join(repo.doIt, 'plan', 'READINESS.json'), threeWaves());
+  assert.equal(unit(repo, ['gate', 'build']).code, 0);
+  return repo;
+}
+const cpRow = (repo, id) => rows(repo).find((r) => r.id === 'checkpoint:' + id);
+const FENCE = '`'.repeat(3);
+
+test('T-CP-08 a checkpoint row closes only on its own verdict file saying PASS by the reader rule', () => {
+  const bad = [
+    ['PASS then FAIL', 'checkpoint: CP-01\nverdict: PASS\nverdict: FAIL\n', /contradictory/],
+    ['FAIL then PASS', 'checkpoint: CP-01\nverdict: FAIL\nverdict: PASS\n', /contradictory/],
+    ['PASS in a fence, FAIL outside', 'checkpoint: CP-01\n' + FENCE + '\nverdict: PASS\n' + FENCE + '\nverdict: FAIL\n', /fail/],
+    ['PASS in an HTML comment', 'checkpoint: CP-01\n<!-- verdict: PASS -->\n', /invalid/],
+    ['lowercase pass', 'checkpoint: CP-01\nverdict: pass\n', /invalid/],
+    ['value GO', 'checkpoint: CP-01\nverdict: GO\n', /invalid/],
+    ['names another checkpoint', 'checkpoint: CP-02\nverdict: PASS\n', /does not name checkpoint CP-01/],
+  ];
+  for (const [name, body, re] of bad) {
+    const repo = builtRepo();
+    const ev = 'plan/reviews/CP-01-wave-w0.md';
+    fs.mkdirSync(path.join(repo.doIt, 'plan', 'reviews'), { recursive: true });
+    fs.writeFileSync(path.join(repo.doIt, ev), body);
+    const r = recordCheckpoint(repo, 'checkpoint:CP-01', '.do-it/' + ev);
+    assert.equal(r.code, 1, name + ': ' + r.stdout);
+    assert.equal(r.out.outcome, 'CHECKPOINT_NOT_PASS', name);
+    assert.match(r.out.checkpoints[0].reason, re, name);
+    assert.equal(cpRow(repo, 'CP-01').state, 'OPEN', name);
+  }
+});
+
+test('T-CP-09 two identical PASS lines close the row; any other file than the checkpoint verdict file does not', () => {
+  const repo = builtRepo();
+  fs.mkdirSync(path.join(repo.doIt, 'plan', 'reviews'), { recursive: true });
+  fs.writeFileSync(path.join(repo.doIt, 'plan', 'reviews', 'other.md'), 'checkpoint: CP-01\nverdict: PASS\n');
+  let r = recordCheckpoint(repo, 'checkpoint:CP-01', '.do-it/plan/reviews/other.md');
+  assert.equal(r.code, 1, r.stdout);
+  assert.match(r.out.checkpoints[0].reason, /must be the checkpoint verdict file/);
+  assert.equal(cpRow(repo, 'CP-01').state, 'OPEN');
+  fs.writeFileSync(path.join(repo.doIt, 'plan', 'reviews', 'CP-01-wave-w0.md'), 'checkpoint: CP-01\nverdict: PASS\n\nverdict: PASS\n');
+  r = recordCheckpoint(repo, 'checkpoint:CP-01', '.do-it/plan/reviews/CP-01-wave-w0.md');
+  assert.equal(r.code, 0, r.stdout);
+  assert.equal(cpRow(repo, 'CP-01').state, 'DONE');
+});
+
+test('T-CP-10 a depends_on that is not a list of strings, or a cycle, is READINESS_INVALID', () => {
+  const cases = [
+    [(d) => { d.slices[3].depends_on = 'A0'; }, null],
+    [(d) => { d.slices[3].depends_on = 7; }, null],
+    [(d) => { d.slices[3].depends_on = ['A0', null]; }, null],
+    [(d) => { d.slices[0].depends_on = ['B1']; }, /cycle: A0 -> B1 -> A0/],
+    [(d) => { d.slices[0].depends_on = ['A2']; }, /cycle: A0 -> A2 -> B1 -> A0/],
+  ];
+  for (const [mutate, re] of cases) {
+    const repo = mkRepo();
+    startRun(repo, unit);
+    const doc = threeWaves();
+    mutate(doc);
+    writeJson(path.join(repo.doIt, 'plan', 'READINESS.json'), doc);
+    const g = unit(repo, ['gate', 'build']);
+    assert.equal(g.code, 1, g.stdout);
+    assert.equal(g.out.outcome, 'READINESS_INVALID');
+    if (re) assert.match(JSON.stringify(g.out.errors), re);
+  }
+});

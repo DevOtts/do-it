@@ -101,13 +101,15 @@ verdict: PASS            (or FAIL)
 
 It should also carry `cases: <passed>/<total>` and the `head_sha` that was reviewed.
 
+Reading rule (the same in build-it's reader and the do-it spine, and as strict as review-it's status-sync): only report prose counts. Lines inside fenced code (``` and ~~~), indented code and HTML comments are ignored. There must be exactly one checkpoint id, and it must be this checkpoint. Every overall `verdict:` line (outside a `task:` block) must say the same value, exactly `PASS` or `FAIL`; a repeated identical line is fine. PASS and FAIL together, an overall PASS with a task block that is not PASS, no verdict line, or another value (`pass`, `GO`) is contradictory or invalid, and never a pass.
+
 | Reader result | Meaning | build-it does |
 |---|---|---|
 | exit 0, PASS | Verdict file present, names this checkpoint, says PASS | Releases what the checkpoint held |
-| exit 1, FAIL or invalid | FAIL, empty file, wrong checkpoint id, or no verdict line | Sends the failing cases back to the fix cycle, then re-runs the same checkpoint. What it holds stays held; independent work goes on |
+| exit 1, FAIL, contradictory or invalid | FAIL, empty or unreadable file, wrong or second checkpoint id, no verdict line, conflicting verdict lines, or a value other than PASS/FAIL | Sends the failing cases back to the fix cycle, then re-runs the same checkpoint. What it holds stays held; independent work goes on |
 | exit 2, missing | No verdict file | Keeps holding its gates (section 3a); independent work goes on. `gate` answers per slice and action |
 
-In a do-it run, `do-it gate build` turns each checkpoint into a finish-line row `checkpoint:CP-NN` and stores its `gates`, `covers` and `blocks` on the run (old blocks get the gates from section 3a; slices keep their `wave`). The row closes only when review-it records a VERIFIED verdict whose evidence is that file. So a run cannot close with a checkpoint skipped.
+In a do-it run, `do-it gate build` turns each checkpoint into a finish-line row `checkpoint:CP-NN` and stores its `gates`, `covers` and `blocks` on the run (old blocks get the gates from section 3a; slices keep their `wave`). The row closes only when review-it records a VERIFIED verdict whose evidence is that checkpoint's own verdict file and the file passes the reading rule above; otherwise `record` keeps the row OPEN and answers `CHECKPOINT_NOT_PASS` (exit 1) with the reason. (Before this, the spine closed the row on any existing file named as evidence; it never read the verdict.) So a run cannot close with a checkpoint skipped or failed.
 
 ## 5. Edge cases (all have tests)
 
@@ -124,6 +126,9 @@ In a do-it run, `do-it gate build` turns each checkpoint into a finish-line row 
 | Older block with no `gates`/`covers` (`blocks: start of W2`) | Read with the corrected meaning (section 3a): an independent next-wave slice is allowed |
 | A wave id in `covers`, slices with no `wave` | `gate` exits 1 and says plan-it must tag slices; it does not guess |
 | A slice that depends on a covered slice, directly or through others | `gate --action start` exits 2 naming the checkpoint |
+| `depends_on`, `covers` or `gates` that is not a list (of strings) | A plan error: `gate` exits 1 naming the slice or checkpoint; do-it says READINESS_INVALID |
+| A cycle in `depends_on` | A plan error: `gate --action start` exits 1 and prints it (`A -> C -> A`); do-it says READINESS_INVALID with the cycle |
+| A verdict file with PASS and FAIL lines, or PASS only inside code or a comment | Not a pass: `gate` exits 2, `check` exits 1, the do-it row stays OPEN |
 | Tampered `count`, or ids out of sequence | plan-it `check`, build-it and do-it all refuse (READINESS_INVALID in do-it) |
 | Flag `true` with no reason, or an unknown flag | Refused, exit 1 |
 

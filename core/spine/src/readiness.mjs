@@ -42,6 +42,8 @@ export function checkReadiness(ctx) {
   }
   const errors = validateSchema(loadSchemaFile('readiness.schema.json'), data);
   if (errors.length) return { ok: false, outcome: 'READINESS_INVALID', extra: { file, errors } };
+  const graphErrors = sliceCycleErrors(data.slices);
+  if (graphErrors.length) return { ok: false, outcome: 'READINESS_INVALID', extra: { file, errors: graphErrors } };
   const cpErrors = checkpointErrors(data.review_checkpoints);
   if (cpErrors.length) return { ok: false, outcome: 'READINESS_INVALID', extra: { file, errors: cpErrors } };
   const unresolved = decisionList(data.decisions).filter((d) => d.state !== 'RESOLVED' && d.state !== 'DEFAULTED').map((d) => d.id);
@@ -52,6 +54,33 @@ export function checkReadiness(ctx) {
     return { ok: false, outcome: 'READINESS_OWNER_DEPENDENT', extra: { slices: dependent, owner_dependent_slices: data.owner_dependent_slices || dependent.length } };
   }
   return { ok: true, outcome: 'READINESS_OK', extra: {}, data, sha256: sha256Bytes(bytes) };
+}
+
+// A cycle in depends_on would leave its slices never runnable, so the run would
+// idle without saying why. It is a plan error, printed as the cycle.
+export function sliceCycleErrors(slices) {
+  if (!Array.isArray(slices)) return [];
+  const byId = new Map(slices.map((s) => [s.id, s]));
+  const done = new Set();
+  const errors = [];
+  const visit = (id, trail) => {
+    const at = trail.indexOf(id);
+    if (at >= 0) return [...trail.slice(at), id];
+    if (done.has(id) || !byId.has(id)) return null;
+    trail.push(id);
+    for (const d of byId.get(id).depends_on || []) {
+      const c = visit(d, trail);
+      if (c) return c;
+    }
+    trail.pop();
+    done.add(id);
+    return null;
+  };
+  for (const s of slices) {
+    const c = visit(s.id, []);
+    if (c) { errors.push({ pointer: '/slices', message: 'depends_on has a cycle: ' + c.join(' -> ') }); break; }
+  }
+  return errors;
 }
 
 // `next` calls this for a run whose build gate was approved: an edit after the

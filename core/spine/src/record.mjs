@@ -13,6 +13,8 @@ import { legsLookRolledBack, planDeploy, staleLegsAfterRollback } from './legs.m
 import { packAppend } from './pack.mjs';
 import { loadSchemaFile, validateSchema } from './schema.mjs';
 import { loadState, selectRunId, writeState } from './state.mjs';
+import { CHECKPOINT_ROW_PREFIX } from './readiness.mjs';
+import { parseVerdict } from './verdict-file.mjs';
 
 export const EXIT_FOR_STATUS = { ok: 0, failed: 1, needs_human: 2, blocked: 3, usage_limit: 3, context_reset: 3 };
 
@@ -107,6 +109,26 @@ export function applyJournal(ctx, j, allowFault) {
   return j.response;
 }
 
+// A `checkpoint:CP-NN` row closes only on that checkpoint's own verdict file
+// saying PASS by the reader rule (verdict-file.mjs), not on any file that
+// exists. Returns null when it may close, else the reason it may not.
+// The checkpoint's evidence path may be written relative to the repo or to the
+// do-it home (where plan/ lives); either names the same file.
+export function checkpointVerdictProblem(ctx, state, row, r) {
+  const id = row.slice(CHECKPOINT_ROW_PREFIX.length);
+  const cps = state.review_checkpoints && Array.isArray(state.review_checkpoints.checkpoints) ? state.review_checkpoints.checkpoints : [];
+  const cp = cps.find((c) => c.id === id);
+  if (cp) {
+    const real = (p) => { try { return fs.realpathSync(p); } catch { return null; } };
+    const want = [path.resolve(ctx.repo, cp.evidence), path.resolve(ctx.home, cp.evidence)].map(real).filter(Boolean);
+    if (!want.includes(r.abs)) return 'evidence must be the checkpoint verdict file ' + cp.evidence + ', got ' + r.path;
+  }
+  let text;
+  try { text = fs.readFileSync(r.abs, 'utf8'); } catch (e) { return 'cannot read ' + r.path + ': ' + (e.code || e.message); }
+  const v = parseVerdict(text, id);
+  return v.state === 'pass' ? null : v.state + ': ' + v.reason;
+}
+
 export function isMockKind(kind) {
   return kind === 'mock' || kind === 'fixture';
 }
@@ -154,6 +176,7 @@ export function planRecord(ctx, runId, state, result) {
   let outcome = 'RECORDED';
   let exit = EXIT_FOR_STATUS[result.status];
   const mockRows = [];
+  const checkpointRows = [];
 
   for (const v of verdicts) {
     const r = resolved.get(v.row) || null;
@@ -164,6 +187,14 @@ export function planRecord(ctx, runId, state, result) {
       verdict = 'IMPLEMENTED-NOT-VERIFIED';
       reason = 'real_on_mock';
       mockRows.push(v.row);
+    }
+    if (verdict === 'VERIFIED' && r && String(v.row).startsWith(CHECKPOINT_ROW_PREFIX)) {
+      const why = checkpointVerdictProblem(ctx, state, v.row, r);
+      if (why) {
+        verdict = 'IMPLEMENTED-NOT-VERIFIED';
+        reason = 'checkpoint_not_pass: ' + why;
+        checkpointRows.push({ row: v.row, reason: why });
+      }
     }
     plan.ledgerRows.push({
       row: v.row,
@@ -188,6 +219,11 @@ export function planRecord(ctx, runId, state, result) {
     outcome = 'REAL_ON_MOCK';
     exit = 1;
     plan.extra.rows = mockRows;
+  }
+  if (checkpointRows.length) {
+    outcome = 'CHECKPOINT_NOT_PASS';
+    exit = 1;
+    plan.extra.checkpoints = checkpointRows;
   }
 
   const recordedEvent = { event: 'result_recorded', slice_id: result.slice_id || null, stage: result.stage, verdict: result.status };

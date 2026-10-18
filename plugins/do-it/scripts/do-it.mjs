@@ -1648,6 +1648,8 @@ function checkReadiness(ctx) {
   }
   const errors = validateSchema(loadSchemaFile('readiness.schema.json'), data);
   if (errors.length) return { ok: false, outcome: 'READINESS_INVALID', extra: { file, errors } };
+  const graphErrors = sliceCycleErrors(data.slices);
+  if (graphErrors.length) return { ok: false, outcome: 'READINESS_INVALID', extra: { file, errors: graphErrors } };
   const cpErrors = checkpointErrors(data.review_checkpoints);
   if (cpErrors.length) return { ok: false, outcome: 'READINESS_INVALID', extra: { file, errors: cpErrors } };
   const unresolved = decisionList(data.decisions).filter((d) => d.state !== 'RESOLVED' && d.state !== 'DEFAULTED').map((d) => d.id);
@@ -1658,6 +1660,33 @@ function checkReadiness(ctx) {
     return { ok: false, outcome: 'READINESS_OWNER_DEPENDENT', extra: { slices: dependent, owner_dependent_slices: data.owner_dependent_slices || dependent.length } };
   }
   return { ok: true, outcome: 'READINESS_OK', extra: {}, data, sha256: sha256Bytes(bytes) };
+}
+
+// A cycle in depends_on would leave its slices never runnable, so the run would
+// idle without saying why. It is a plan error, printed as the cycle.
+function sliceCycleErrors(slices) {
+  if (!Array.isArray(slices)) return [];
+  const byId = new Map(slices.map((s) => [s.id, s]));
+  const done = new Set();
+  const errors = [];
+  const visit = (id, trail) => {
+    const at = trail.indexOf(id);
+    if (at >= 0) return [...trail.slice(at), id];
+    if (done.has(id) || !byId.has(id)) return null;
+    trail.push(id);
+    for (const d of byId.get(id).depends_on || []) {
+      const c = visit(d, trail);
+      if (c) return c;
+    }
+    trail.pop();
+    done.add(id);
+    return null;
+  };
+  for (const s of slices) {
+    const c = visit(s.id, []);
+    if (c) { errors.push({ pointer: '/slices', message: 'depends_on has a cycle: ' + c.join(' -> ') }); break; }
+  }
+  return errors;
 }
 
 // `next` calls this for a run whose build gate was approved: an edit after the
@@ -1880,6 +1909,26 @@ function applyJournal(ctx, j, allowFault) {
   return j.response;
 }
 
+// A `checkpoint:CP-NN` row closes only on that checkpoint's own verdict file
+// saying PASS by the reader rule (verdict-file.mjs), not on any file that
+// exists. Returns null when it may close, else the reason it may not.
+// The checkpoint's evidence path may be written relative to the repo or to the
+// do-it home (where plan/ lives); either names the same file.
+function checkpointVerdictProblem(ctx, state, row, r) {
+  const id = row.slice(CHECKPOINT_ROW_PREFIX.length);
+  const cps = state.review_checkpoints && Array.isArray(state.review_checkpoints.checkpoints) ? state.review_checkpoints.checkpoints : [];
+  const cp = cps.find((c) => c.id === id);
+  if (cp) {
+    const real = (p) => { try { return fs.realpathSync(p); } catch { return null; } };
+    const want = [path.resolve(ctx.repo, cp.evidence), path.resolve(ctx.home, cp.evidence)].map(real).filter(Boolean);
+    if (!want.includes(r.abs)) return 'evidence must be the checkpoint verdict file ' + cp.evidence + ', got ' + r.path;
+  }
+  let text;
+  try { text = fs.readFileSync(r.abs, 'utf8'); } catch (e) { return 'cannot read ' + r.path + ': ' + (e.code || e.message); }
+  const v = parseVerdict(text, id);
+  return v.state === 'pass' ? null : v.state + ': ' + v.reason;
+}
+
 function isMockKind(kind) {
   return kind === 'mock' || kind === 'fixture';
 }
@@ -1927,6 +1976,7 @@ function planRecord(ctx, runId, state, result) {
   let outcome = 'RECORDED';
   let exit = EXIT_FOR_STATUS[result.status];
   const mockRows = [];
+  const checkpointRows = [];
 
   for (const v of verdicts) {
     const r = resolved.get(v.row) || null;
@@ -1937,6 +1987,14 @@ function planRecord(ctx, runId, state, result) {
       verdict = 'IMPLEMENTED-NOT-VERIFIED';
       reason = 'real_on_mock';
       mockRows.push(v.row);
+    }
+    if (verdict === 'VERIFIED' && r && String(v.row).startsWith(CHECKPOINT_ROW_PREFIX)) {
+      const why = checkpointVerdictProblem(ctx, state, v.row, r);
+      if (why) {
+        verdict = 'IMPLEMENTED-NOT-VERIFIED';
+        reason = 'checkpoint_not_pass: ' + why;
+        checkpointRows.push({ row: v.row, reason: why });
+      }
     }
     plan.ledgerRows.push({
       row: v.row,
@@ -1961,6 +2019,11 @@ function planRecord(ctx, runId, state, result) {
     outcome = 'REAL_ON_MOCK';
     exit = 1;
     plan.extra.rows = mockRows;
+  }
+  if (checkpointRows.length) {
+    outcome = 'CHECKPOINT_NOT_PASS';
+    exit = 1;
+    plan.extra.checkpoints = checkpointRows;
   }
 
   const recordedEvent = { event: 'result_recorded', slice_id: result.slice_id || null, stage: result.stage, verdict: result.status };
@@ -2845,6 +2908,61 @@ function gateStop(ctx, args) {
   writeState(ctx, state);
   appendEvent(ctx, runId, { event: 'stop_refused', stage: state.stage, host: state.host, verdict: 'STOP_REFUSED', detail: { refusals: state.stop_refusals, open: open.map((r) => r.id) } });
   throw fail('STOP_REFUSED', 1, { run_id: runId, stop_refusals: state.stop_refusals, patience, open: open.map((r) => r.id), board });
+}
+
+// ---- verdict-file.mjs ----
+// A review-it checkpoint verdict file, judged the way build-it's checkpoints
+// reader and review-it's status-sync judge it: only report prose counts
+// (fenced ``` and ~~~ code, indented code and HTML comments are ignored), one
+// checkpoint id, and every overall `verdict:` line says the same value,
+// exactly PASS or FAIL. Anything ambiguous is not a pass.
+
+function proseLines(text) {
+  const out = [];
+  let fence = null;
+  let comment = false;
+  for (const raw of text.split(/\r?\n/)) {
+    if (fence) {
+      const close = raw.match(/^ {0,3}(`{3,}|~{3,})\s*$/);
+      if (close && close[1][0] === fence[0] && close[1].length >= fence.length) fence = null;
+      out.push('');
+      continue;
+    }
+    if (comment) { if (raw.includes('-->')) comment = false; out.push(''); continue; }
+    const open = raw.match(/^ {0,3}(`{3,}|~{3,})/);
+    if (open) { fence = open[1]; out.push(''); continue; }
+    if (/^\s*<!--/.test(raw)) { if (!raw.includes('-->')) comment = true; out.push(''); continue; }
+    if (/^( {4,}|\t)/.test(raw)) { out.push(''); continue; }
+    out.push(raw.trim());
+  }
+  return out;
+}
+
+// Returns { state: pass|fail|invalid|contradictory, reason }.
+function parseVerdict(text, id) {
+  if (!text.trim()) return { state: 'invalid', reason: 'the file is empty' };
+  const cps = new Set();
+  const overall = [];
+  const tasks = [];
+  let inTask = false;
+  for (const line of proseLines(text)) {
+    if (line === '') { inTask = false; continue; }
+    let m = /^checkpoint\s*:\s*(.*)$/i.exec(line);
+    if (m) { cps.add(m[1].trim()); continue; }
+    if (/^task\s*:/i.test(line)) { inTask = true; continue; }
+    m = /^verdict\s*:\s*(.*)$/i.exec(line);
+    if (m) (inTask ? tasks : overall).push(m[1].trim().split(/\s+/)[0].replace(/^[`*]+|[`*.,;]+$/g, ''));
+  }
+  if (cps.size === 0) return { state: 'invalid', reason: 'no "checkpoint: ' + id + '" line outside code and comments' };
+  if (cps.size > 1) return { state: 'invalid', reason: 'names more than one checkpoint (' + [...cps].join(', ') + ')' };
+  if (!cps.has(id)) return { state: 'invalid', reason: 'does not name checkpoint ' + id + ' (names ' + [...cps][0] + ')' };
+  if (!overall.length) return { state: 'invalid', reason: 'no "verdict: PASS|FAIL" line outside code and comments' };
+  const odd = [...new Set([...overall, ...tasks])].filter((v) => v !== 'PASS' && v !== 'FAIL');
+  if (odd.length) return { state: 'invalid', reason: 'verdict value ' + odd.map((v) => JSON.stringify(v)).join(', ') + ' is not PASS or FAIL' };
+  if (new Set(overall).size > 1) return { state: 'contradictory', reason: 'the overall verdict lines say both PASS and FAIL' };
+  const v = overall[0];
+  if (v === 'PASS' && tasks.some((t) => t !== 'PASS')) return { state: 'contradictory', reason: 'overall PASS but a task block is not PASS' };
+  return { state: v === 'PASS' ? 'pass' : 'fail', reason: v === 'PASS' ? null : 'review-it verdict is FAIL' };
 }
 
 // ---- verify.mjs ----

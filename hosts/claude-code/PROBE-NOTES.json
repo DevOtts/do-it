@@ -3,7 +3,7 @@
   "message": "Installing plugin \"do-it@devotts\"...✔ Successfully installed plugin: do-it@devotts (scope: user) (+ 5 dependencies: prompt-it, plan-it, build-it, review-it, conclude-it)",
   "plugin_dependency_resolution": {
     "resolved": true,
-    "claude_version": "2.1.300 (Claude Code)",
+    "claude_version": "2.1.302 (Claude Code)",
     "config_dir": "scratch (empty CLAUDE_CONFIG_DIR)"
   },
   "headless_alias_start": {
