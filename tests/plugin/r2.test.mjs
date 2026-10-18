@@ -240,6 +240,20 @@ test('T-R2-15 version consistency', () => {
   assert.match(r.stdout, /marketplace\.json|companions\.json|plugin\.json/);
 });
 
+test('T-R2-17 marketplace version labels equal the companion pins', () => {
+  assert.equal(node(['scripts/check-pins.mjs', '--marketplace']).status, 0);
+  const d = scratchRoot();
+  const mj = join(d, '.claude-plugin/marketplace.json');
+  const m = JSON.parse(readFileSync(mj, 'utf8'));
+  const sib = m.plugins.find((p) => p.name === 'plan-it');
+  assert.ok(sib, 'plan-it is listed in the marketplace');
+  sib.version = '4.0.0';
+  writeFileSync(mj, JSON.stringify(m));
+  const r = node(['scripts/check-pins.mjs', '--marketplace', '--root', d]);
+  assert.equal(r.status, 1);
+  assert.match(r.stdout, /marketplace: .*lists plan-it 4\.0\.0, expected \d+\.\d+\.\d+/);
+});
+
 test('T-R2-16 out-of-scope hosts and secrets', () => {
   const targets = ['plugins', '.claude-plugin', 'scripts', 'core/companions.json'].map((p) => join(ROOT, p));
   const hosts = new RegExp(['her' + 'mes', 'open' + 'claw'].join('|'), 'i');

@@ -2,6 +2,7 @@
 // Pin ledger checks. Read-only on siblings.
 //   --siblings <dir>  compare sibling marketplace pins to core/companions.json (exit 1 on drift)
 //   --self            do-it version equal across plugin.json, marketplace entry, companions.json
+//   --marketplace     sibling version labels in this repo's marketplace.json equal companions.json (exit 1 on drift)
 //   --lint            companions.json pins are exact semver (planned entries have null)
 //   --root <dir>      repo root (default: this repo)
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
@@ -37,6 +38,17 @@ if (flag('--self')) {
   ];
   const want = seen[0][1];
   for (const [f, v] of seen) if (v !== want) { out.push(`self: ${f} has ${v}, expected ${want}`); drift++; }
+}
+
+if (flag('--marketplace')) {
+  // The do-it marketplace lists each sibling with a version label. The host shows that label, so it must
+  // equal the pin in companions.json. (A drifted label once made installs look like old versions.)
+  const mj = join(root, '.claude-plugin/marketplace.json');
+  const pins = new Map(ledger.companions.filter((c) => c.status === 'published').map((c) => [c.name, c.version]));
+  for (const p of JSON.parse(readFileSync(mj, 'utf8')).plugins ?? []) {
+    if (p.name === 'do-it' || !pins.has(p.name)) continue;
+    if (p.version !== pins.get(p.name)) { out.push(`marketplace: ${mj} lists ${p.name} ${p.version}, expected ${pins.get(p.name)}`); drift++; }
+  }
 }
 
 const sib = val('--siblings');
