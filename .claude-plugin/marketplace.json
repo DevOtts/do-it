@@ -24,7 +24,7 @@
         "source": "github",
         "repo": "DevOtts/prompt-it"
       },
-      "version": "0.3.0",
+      "version": "1.0.0",
       "author": {
         "name": "DevOtts",
         "url": "https://github.com/DevOtts"
@@ -38,7 +38,7 @@
         "source": "github",
         "repo": "DevOtts/plan-it"
       },
-      "version": "4.0.0",
+      "version": "5.1.0",
       "author": {
         "name": "DevOtts",
         "url": "https://github.com/DevOtts"
@@ -52,7 +52,7 @@
         "source": "github",
         "repo": "DevOtts/build-it"
       },
-      "version": "3.1.1",
+      "version": "4.1.0",
       "author": {
         "name": "DevOtts",
         "url": "https://github.com/DevOtts"
@@ -66,7 +66,7 @@
         "source": "github",
         "repo": "DevOtts/review-it"
       },
-      "version": "1.0.0",
+      "version": "2.1.0",
       "author": {
         "name": "DevOtts",
         "url": "https://github.com/DevOtts"
@@ -80,7 +80,7 @@
         "source": "github",
         "repo": "DevOtts/conclude-it"
       },
-      "version": "1.1.0",
+      "version": "2.1.0",
       "author": {
         "name": "DevOtts",
         "url": "https://github.com/DevOtts"
@@ -94,7 +94,7 @@
         "source": "github",
         "repo": "DevOtts/parallel-lifecycle"
       },
-      "version": "0.1.0",
+      "version": "1.0.0",
       "author": {
         "name": "DevOtts",
         "url": "https://github.com/DevOtts"
