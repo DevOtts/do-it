@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.4
+- Merge model (H-22). A program whose slices merge to main one by one could never merge, because the adversarial and pre-merge reviews cover every wave and can only run after the last. Policy section 3b and decision D20: plan-it 5.2.0 takes `merge_model: incremental`, writes no `pre-merge`, and the closing reviews gate `release`. The spine already read gates from each checkpoint, so a block without `pre-merge` is accepted as is.
+- `due --at merge` and `due --at release` list every checkpoint that gates that action (build-it 4.1.3, H-27).
+- Companion pins: plan-it 5.2.0, build-it 4.1.3. review-it 2.1.1, conclude-it 2.1.1, prompt-it 1.0.0, parallel-lifecycle 1.0.0, deploy-it unchanged.
+
 ## 1.0.3
 - Checkpoints, second fix from the first real run. A checkpoint no longer holds the start of the work it covers (H-21): with W0 covered, a W0 slice that needs another W0 slice waited on a review that only runs after W0 ends, so the wave could never finish. It holds the slices outside the covered work that depend on it, and the promotion of that work. `due --at merge` and `due --at release` returned the wrong checkpoint or none (H-22); they are now aliases of the `pre-merge` and `pre-release` kinds. Both fixes are in build-it 4.1.2; the policy states the rule, with decision D19.
 - plan-it 5.1.2 (H-23): the glossary check no longer reads a `STATUS.md` generated from `status.json` as prose (47 false unknown ids on the real package).

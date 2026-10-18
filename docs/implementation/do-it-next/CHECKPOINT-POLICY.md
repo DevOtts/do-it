@@ -22,6 +22,7 @@ A checkpoint is one review-it run at a named boundary. It produces a verdict fil
 | `prod_facing` | Importance. Ships to production, to users, or as a tagged release | Planner, with a reason |
 | `adversarial_wave` | Optional. The wave that is already an adversarial review (the ST-08 convention) | Plan |
 | `interface_lock_after` | Optional. In a single-wave plan, the task the rest builds on | Plan |
+| `merge_model` | Optional. `single` (default): the build merges to main once. `incremental`: slices merge to main one by one (a worker merges its own PR). See section 3b | Plan |
 
 A flag is either a one-line reason or `null`. Setting a flag to `true` with no reason is refused (exit 1). The reasons show at the plan review gate (G4), where the owner can contradict them.
 
@@ -54,6 +55,21 @@ Each rule adds checkpoints. The count is the number of checkpoints added.
 | R5. `prod_facing` | `pre-release` | after merge, before tag, publish or deploy | deploy-verify plus the `[REAL]` cases on the released artifact | tag, publish, deploy (`release`) |
 
 Checkpoints are numbered `CP-01`, `CP-02` and so on, in run order: wave and phase checkpoints by wave, then adversarial, pre-merge and pre-release.
+
+## 3b. Merge model (H-22)
+
+R1, R4 and R5 assume one merge of the whole build, so the closing reviews sit before it. A program whose
+slices merge to main one by one (each epic's worker merges its own PR) can never meet that: the reviews
+cover every wave and can only run after the last one, and the first merge is already waiting for them.
+With `merge_model: incremental`:
+
+- there is no `pre-merge` checkpoint, and nothing gates `merge`; each slice is judged by its own
+  verdicts and the wave checkpoints that gate its dependents and promotion;
+- `adversarial` (when R4 adds it) gates `release`, not `merge`;
+- a `pre-release` checkpoint is always written, after the last merge to main and before any tag,
+  publish or deploy, and runs the whole Test Contract on main plus deploy-verify when prod-facing;
+- `inputs.merge_model` is recorded only when it is not `single`; a plan without the input produces the
+  block it always did.
 
 ## 3a. What a checkpoint holds
 
@@ -129,7 +145,7 @@ In a do-it run, `do-it gate build` turns each checkpoint into a finish-line row 
 | A wave id in `covers`, slices with no `wave` | `gate` exits 1 and says plan-it must tag slices; it does not guess |
 | A slice that depends on a covered slice, directly or through others | `gate --action start` exits 2 naming the checkpoint |
 | A slice inside the covered wave that depends on another slice of that wave (H-21) | Not held by that wave's checkpoint: it waits on its own dependencies. `gate --action start` exits 0 with no verdict |
-| `due --at merge` and `due --at release` (H-22) | Aliases of the `pre-merge` and `pre-release` kinds. They used to match the `at` text by prefix, which returned the pre-release checkpoint for `merge` and nothing for `release` |
+| `due --at merge` and `due --at release` (H-25, H-27) | Every checkpoint whose gates the matching `gate --action` checks (`release` includes the promotion ones). They used to match the `at` text by prefix, which returned the pre-release checkpoint for `merge` and nothing for `release`, and later only the pre-merge kind while the adversarial one also gated the merge |
 | `depends_on`, `covers` or `gates` that is not a list (of strings) | A plan error: `gate` exits 1 naming the slice or checkpoint; do-it says READINESS_INVALID |
 | A cycle in `depends_on` | A plan error: `gate --action start` exits 1 and prints it (`A -> C -> A`); do-it says READINESS_INVALID with the cycle |
 | A verdict file with PASS and FAIL lines, or PASS only inside code or a comment | Not a pass: `gate` exits 2, `check` exits 1, the do-it row stays OPEN |
@@ -212,6 +228,8 @@ Format: the default that is applied, the alternatives, and the recommendation. "
 | D17 | Blocked and unknown at once | (a) Exit 2, listing the unknowns too. Recommended: the block is certain either way | (b) exit 1 | pre-approved |
 | D18 | Old `phase` checkpoint | (a) Coverage unknown, so a dependent start is exit 1 until plan-it is re-run. Recommended: its `at` names only the lock task, and guessing the rest is what fail-loud forbids | (b) treat the slices before the lock in list order as covered | pre-approved |
 | D19 | A checkpoint and the work it covers (H-21) | (a) A checkpoint never holds the start of the work it covers; it holds slices outside it that depend on it, and the promotion of the covered work. Recommended: the review runs after the covered work ends, so holding that work's own slices is a deadlock | (b) hold covered slices that depend on other covered slices until a partial review; rejected, there is no partial review to wait for | pre-approved |
+
+| D20 | Merge model (H-22) | (a) A `merge_model` input; `incremental` writes no `pre-merge` and moves the closing reviews to `release`. Recommended: the real run merges per slice, and holding every merge for a review that needs all waves stalls the run, while a pre-approved bypass would teach the owner to ignore the gate | (b) override the gate by hand on the run | (c) one merge at the end of the build, rejected by the program's own topology | pre-approved |
 
 ## 9. Not done here
 
