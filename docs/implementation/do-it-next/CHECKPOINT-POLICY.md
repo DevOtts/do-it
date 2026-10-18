@@ -4,7 +4,7 @@ Status: built on feature branches, not merged, 2026-10-18. Part of do-it 1.0.1 s
 
 Binding decision (approved by Fernando): plan-it and do-it decide how many review-it checkpoints an implementation gets, from its size, complexity and importance. The count is not fixed per wave.
 
-A checkpoint is one review-it run at a named boundary. It produces a verdict file. Work may not cross the boundary until that file says PASS.
+A checkpoint is one review-it run at a named boundary. It produces a verdict file. Until that file says PASS, the checkpoint holds the work that depends on what it reviewed, and the promotion, merge or release of that work. It never holds independent work: a run must not idle because one wave waits for its review (section 3a).
 
 ## 1. Inputs
 
@@ -47,13 +47,46 @@ Each rule adds checkpoints. The count is the number of checkpoints added.
 | Rule | Adds | Sits at | review-it runs | Blocks |
 |---|---|---|---|---|
 | R0. Zero tasks | nothing (count 0, level `none`) | none | none | none |
-| R1. At least one task | `pre-merge` (always) | before merge to main | the whole Test Contract on the integrated branch | merge |
-| R2. Score 2 or more, or size 3 | `wave` after W1 only (2 or more waves), or one `phase` checkpoint (one wave and 4 or more tasks) | wave boundary, or after `interface_lock_after` (else the halfway task) | the contract cases of the finished waves, on the merged tree | the next wave |
-| R3. Score 4 or more, or size 3 | `wave` at every wave boundary (waves minus 1) | each wave boundary | same as R2 | the next wave |
-| R4. `security` or `money`, or `data` and `cross_cutting` together, or score 6 or more | `adversarial` | after the last wave, before pre-merge. If the plan has an `adversarial_wave`, that wave's boundary becomes this checkpoint (one review, not two) | try to get a false pass through every gate and writer | pre-merge (or the next wave) |
-| R5. `prod_facing` | `pre-release` | after merge, before tag, publish or deploy | deploy-verify plus the `[REAL]` cases on the released artifact | tag, publish, deploy |
+| R1. At least one task | `pre-merge` (always) | before merge to main | the whole Test Contract on the integrated branch | merge to main (`merge`) |
+| R2. Score 2 or more, or size 3 | `wave` after W1 only (2 or more waves), or one `phase` checkpoint (one wave and 4 or more tasks) | wave boundary, or after `interface_lock_after` (else the halfway task) | the contract cases of the finished waves, on the merged tree | the start of slices that depend on the covered wave (or tasks), and the promotion of that work (`dependents`, `promotion`) |
+| R3. Score 4 or more, or size 3 | `wave` at every wave boundary (waves minus 1) | each wave boundary | same as R2 | same as R2, for the wave it sits after |
+| R4. `security` or `money`, or `data` and `cross_cutting` together, or score 6 or more | `adversarial` | after the last wave, before pre-merge. If the plan has an `adversarial_wave`, that wave's boundary becomes this checkpoint (one review, not two) | try to get a false pass through every gate and writer | merge to main (`merge`); at a mid-plan `adversarial_wave` boundary, the slices that depend on that wave (`dependents`) |
+| R5. `prod_facing` | `pre-release` | after merge, before tag, publish or deploy | deploy-verify plus the `[REAL]` cases on the released artifact | tag, publish, deploy (`release`) |
 
 Checkpoints are numbered `CP-01`, `CP-02` and so on, in run order: wave and phase checkpoints by wave, then adversarial, pre-merge and pre-release.
+
+## 3a. What a checkpoint holds
+
+Finding H-10 (first real run, 23 epics, 5 waves): writing `blocks: start of W<n+1>` and reading it as "do not cross" stopped the whole next wave, including epics that depended on nothing in the finished wave. That is the wave lock again. The rule now: a checkpoint may hold the promotion of the work it reviewed and the work that depends on it, never independent work.
+
+Each checkpoint carries two optional fields (schema stays `review-checkpoints/1`; the fields are additive):
+
+- `gates`: what it holds until its verdict is PASS, a subset of `dependents`, `promotion`, `merge`, `release`.
+- `covers`: the ids it reviews, a wave id (`W1`) or slice/task ids.
+
+| Gate | Holds until PASS | Never holds |
+|---|---|---|
+| `dependents` | The start of any slice that depends, directly or through other slices (`depends_on`), on covered work | A slice that depends on nothing covered |
+| `promotion` | Promoting covered work beyond the integration environment: deploy, cut over, publish | Work in the integration environment |
+| `merge` | Merge to the main branch | Starting or building anything |
+| `release` | Tag, publish or deploy of the release (a release also needs every `promotion` gate, since it publishes all the work) | Starting or building anything |
+
+| Kind | `gates` | `covers` |
+|---|---|---|
+| `wave`, `phase` | `dependents`, `promotion` | the wave it sits after; for a phase, the tasks up to the lock (left out when only a task count is known) |
+| `adversarial` | `merge`; `dependents` when it replaced a mid-plan wave boundary | every wave; or that wave |
+| `pre-merge` | `merge` | every wave |
+| `pre-release` | `release` | every wave |
+
+`blocks` stays as text for people, and now says what is held, for example "slices that depend on W0 work, and promotion of W0 work".
+
+To resolve a wave id in `covers`, a slice needs its wave. plan-it's `decide --write` tags each READINESS slice with `wave` from the wave task lists (`waves: [{id, tasks: [ids]}]`, or `--status`), and names any slice it cannot place.
+
+build-it asks before it acts: `checkpoints.mjs gate --readiness <file> --action start|promote|merge|release [--slice <id>]`. Exit 0 allowed; exit 2 blocked, naming every unmet checkpoint, its verdict state and why; exit 1 cannot evaluate, saying exactly what is missing (for example a wave id in `covers` while the slices carry no `wave`). It never guesses: an unknown answer is exit 1, not 0 and not 2. A checkpoint with a PASS verdict holds nothing.
+
+Older plans (no `gates`/`covers`, for example plan-it 5.1.0 output) get the corrected meaning, not the old text: `wave`/`phase` hold `dependents` and `promotion` for the wave in `at`; `adversarial` holds `merge` (`dependents` if its old `blocks` began with "start of"); `pre-merge` holds `merge`; `pre-release` holds `release`. An old `phase` checkpoint names only its lock task, so a dependent start under it is exit 1 until plan-it is re-run.
+
+Unchanged: the run closes only when every checkpoint is PASS (`checkpoints.mjs status` exit 0, and every `checkpoint:CP-NN` finish-line row closed). Only what is held, and when, changed.
 
 ## 4. What a checkpoint must produce
 
@@ -70,11 +103,11 @@ It should also carry `cases: <passed>/<total>` and the `head_sha` that was revie
 
 | Reader result | Meaning | build-it does |
 |---|---|---|
-| exit 0, PASS | Verdict file present, names this checkpoint, says PASS | Crosses the boundary |
-| exit 1, FAIL or invalid | FAIL, empty file, wrong checkpoint id, or no verdict line | Sends the failing cases back to the fix cycle, then re-runs the same checkpoint |
-| exit 2, missing | No verdict file | May not cross |
+| exit 0, PASS | Verdict file present, names this checkpoint, says PASS | Releases what the checkpoint held |
+| exit 1, FAIL or invalid | FAIL, empty file, wrong checkpoint id, or no verdict line | Sends the failing cases back to the fix cycle, then re-runs the same checkpoint. What it holds stays held; independent work goes on |
+| exit 2, missing | No verdict file | Keeps holding its gates (section 3a); independent work goes on. `gate` answers per slice and action |
 
-In a do-it run, `do-it gate build` turns each checkpoint into a finish-line row `checkpoint:CP-NN`. The row closes only when review-it records a VERIFIED verdict whose evidence is that file. So a run cannot close with a checkpoint skipped.
+In a do-it run, `do-it gate build` turns each checkpoint into a finish-line row `checkpoint:CP-NN` and stores its `gates`, `covers` and `blocks` on the run (old blocks get the gates from section 3a; slices keep their `wave`). The row closes only when review-it records a VERIFIED verdict whose evidence is that file. So a run cannot close with a checkpoint skipped.
 
 ## 5. Edge cases (all have tests)
 
@@ -87,7 +120,10 @@ In a do-it run, `do-it gate build` turns each checkpoint into a finish-line row 
 | 6 tasks, 2 waves, no flags | 1: pre-merge (score 1) |
 | 30 tasks, 5 waves, no flags | 5: four wave checkpoints, pre-merge (size 3) |
 | Single wave, 6 tasks, one flag | 2: phase checkpoint after task 3 (or after `interface_lock_after`), pre-merge |
-| Older plan with no `review_checkpoints` block | build-it exits 2 and names the fallback: one pre-merge checkpoint. do-it seeds no rows |
+| Older plan with no `review_checkpoints` block | build-it exits 2 and names the fallback: one pre-merge checkpoint. do-it seeds no rows. `gate` exits 1 |
+| Older block with no `gates`/`covers` (`blocks: start of W2`) | Read with the corrected meaning (section 3a): an independent next-wave slice is allowed |
+| A wave id in `covers`, slices with no `wave` | `gate` exits 1 and says plan-it must tag slices; it does not guess |
+| A slice that depends on a covered slice, directly or through others | `gate --action start` exits 2 naming the checkpoint |
 | Tampered `count`, or ids out of sequence | plan-it `check`, build-it and do-it all refuse (READINESS_INVALID in do-it) |
 | Flag `true` with no reason, or an unknown flag | Refused, exit 1 |
 
@@ -98,7 +134,7 @@ In a do-it run, `do-it gate build` turns each checkpoint into a finish-line row 
 | plan-it `feat/review-checkpoints` | `plugins/plan-it/scripts/review-checkpoints.mjs` | `decide` (writes `review_checkpoints` into `plan/READINESS.json`), `check` |
 | plan-it | `SKILL.md`, `plugins/plan-it/skills/plan-it/SKILL.md` | One Phase 10 bullet, kept identical in both copies |
 | plan-it | `tests/review-checkpoints/decide.test.mjs` | 23 table-driven tests |
-| build-it `feat/review-checkpoints` | `plugins/build-it/scripts/checkpoints/checkpoints.mjs` | `plan`, `due --at`, `check --id`, `status` |
+| build-it `feat/review-checkpoints` | `plugins/build-it/scripts/checkpoints/checkpoints.mjs` | `plan`, `due --at`, `check --id`, `status`, `gate --action` (branch `fix/checkpoint-gates`) |
 | build-it | `plugins/build-it/skills/build-it/SKILL.md` | One Step 5 paragraph |
 | build-it | `tests/checkpoints/checkpoints.test.mjs`, `tests/checkpoints/fixtures/READINESS.json` | 10 tests |
 | do-it `feat/review-checkpoints` | `core/schemas/readiness.schema.json`, `core/spine/src/readiness.mjs` (rebuilt into `do-it.mjs` and mirrored) | Validate the block, store it on the run, seed `checkpoint:CP-NN` rows |
@@ -116,15 +152,15 @@ Inputs: 9 tasks (the task as given; `status.json` lists 8, ST-01 to ST-08, which
 
 Score: size 1 + complexity 2 + importance 2 = 5, level heightened. Five checkpoints:
 
-| Id | Kind | Sits at | Blocks |
+| Id | Kind | Sits at | Holds (`gates`) |
 |---|---|---|---|
-| CP-01 | wave | after W1 (ST-01, ST-06, ST-07, ST-02) | start of W2 |
-| CP-02 | wave | after W2 (ST-03, ST-04, ST-05) | start of W3 |
-| CP-03 | adversarial | after W3 (ST-08), before pre-merge | pre-merge |
+| CP-01 | wave | after W1 (ST-01, ST-06, ST-07, ST-02) | W2 slices that depend on W1 work, and promotion of W1 work |
+| CP-02 | wave | after W2 (ST-03, ST-04, ST-05) | W3 slices that depend on W2 work, and promotion of W2 work |
+| CP-03 | adversarial | after W3 (ST-08), before pre-merge | merge |
 | CP-04 | pre-merge | before plan-it and build-it merge to main | merge |
 | CP-05 | pre-release | before the plugin versions are tagged | tag |
 
-Finding: on today's board W1 is done and W2 is in progress, and no W1 review-it verdict exists. Under this policy, CP-01 is due now, before any W2 task is marked done.
+Finding: on today's board W1 is done and W2 is in progress, and no W1 review-it verdict exists. CP-01 is due now. It holds the W2 tasks that depend on W1 work from being started and W1 work from being promoted; a W2 task that depends on nothing in W1 goes on.
 
 ### do-it 1.0.1 package
 
@@ -132,11 +168,11 @@ Inputs (assumed package shape, change it if the scope differs): 16 tasks in 3 ep
 
 Score: size 2 + complexity 3 + importance 2 = 7, level full. Five checkpoints (six if W3 were not already the adversarial wave):
 
-| Id | Kind | Sits at | Blocks |
+| Id | Kind | Sits at | Holds (`gates`) |
 |---|---|---|---|
-| CP-01 | wave | after W1 | start of W2 |
-| CP-02 | wave | after W2 | start of W3 |
-| CP-03 | adversarial | after W3 | start of W4 |
+| CP-01 | wave | after W1 | slices that depend on W1 work, and promotion of W1 work |
+| CP-02 | wave | after W2 | slices that depend on W2 work, and promotion of W2 work |
+| CP-03 | adversarial | after W3 | slices that depend on W3 work |
 | CP-04 | pre-merge | before the do-it, plan-it and build-it branches merge | merge |
 | CP-05 | pre-release | before the 1.0.1 tag and the companion releases | tag |
 
@@ -160,6 +196,12 @@ Format: the default that is applied, the alternatives, and the recommendation. "
 | D10 | Cap on wave checkpoints | (a) No cap beyond waves minus 1. Recommended: cost tracks the work | (b) at most 4 | pre-approved |
 | D11 | gate-check | (a) `gate-check readiness` is not changed; `review-checkpoints.mjs check` validates the block. Recommended: it avoids editing the 133 KB mirrored gate-check | (b) add the block check to `gate-check readiness` now | pre-approved |
 | D12 | Versions | (a) No version bump on any repo in this change. Recommended: plan-it 5.1.0, build-it 4.1.0 and do-it 1.0.1 are bumped together at release | (b) bump each repo now | **needs-override** (release is owner-gated) |
+| D13 | What a wave checkpoint covers (H-10) | (a) Only the wave it sits after. Recommended: a later wave checkpoint re-reviews earlier waves, but holding their dependents twice would rebuild the lock | (b) every finished wave | pre-approved |
+| D14 | `covers` form | (a) The wave id, plus a `wave` tag on each READINESS slice written by `decide --write`. Recommended: wave task ids are not always slice ids, and the tag fails loud when missing | (b) list slice ids in `covers` directly | pre-approved |
+| D15 | Release and promotion | (a) `gate --action release` also needs every `promotion` gate. Recommended: a release publishes all the work | (b) release checks only `release` gates | pre-approved |
+| D16 | Merge and wave verdicts | (a) Wave checkpoints do not hold the merge; pre-merge does. Recommended: follows the contract; the run still closes only on all PASS | (b) merge needs every checkpoint | pre-approved |
+| D17 | Blocked and unknown at once | (a) Exit 2, listing the unknowns too. Recommended: the block is certain either way | (b) exit 1 | pre-approved |
+| D18 | Old `phase` checkpoint | (a) Coverage unknown, so a dependent start is exit 1 until plan-it is re-run. Recommended: its `at` names only the lock task, and guessing the rest is what fail-loud forbids | (b) treat the slices before the lock in list order as covered | pre-approved |
 
 ## 9. Not done here
 

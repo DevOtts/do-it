@@ -82,10 +82,34 @@ export function checkpointErrors(block) {
   return errors;
 }
 
+// What a checkpoint holds until PASS. It holds the start of slices that depend on
+// covered work, the promotion of covered work, the merge or the release, never
+// independent work (finding H-10). Plans written before `gates` existed get the
+// same corrected meaning, read from the kind.
+export function checkpointGates(c) {
+  if (Array.isArray(c.gates)) return c.gates;
+  if (c.kind === 'wave' || c.kind === 'phase') return ['dependents', 'promotion'];
+  if (c.kind === 'adversarial') return /^\s*start of\b/i.test(String(c.blocks || '')) ? ['dependents'] : ['merge'];
+  if (c.kind === 'pre-merge') return ['merge'];
+  return ['release'];
+}
+
 export function seedCheckpoints(state, fl, data) {
   const block = data.review_checkpoints;
   if (!block) return 0;
-  state.review_checkpoints = { count: block.count, level: block.level || null, checkpoints: block.checkpoints.map((c) => ({ id: c.id, kind: c.kind, at: c.at || null, evidence: c.evidence })) };
+  state.review_checkpoints = {
+    count: block.count,
+    level: block.level || null,
+    checkpoints: block.checkpoints.map((c) => ({
+      id: c.id,
+      kind: c.kind,
+      at: c.at || null,
+      gates: checkpointGates(c),
+      covers: Array.isArray(c.covers) ? c.covers : null,
+      blocks: c.blocks || null,
+      evidence: c.evidence,
+    })),
+  };
   for (const c of block.checkpoints) {
     const id = CHECKPOINT_ROW_PREFIX + c.id;
     if (!fl.rows.some((r) => r.id === id)) finishLineUpsert(fl, id, { kind: 'package' });
@@ -103,6 +127,7 @@ export function seedSlices(state, data) {
       tier: s.tier || CLASS_TIER[klass] || 'T2',
       class: klass,
       depends_on: Array.isArray(s.depends_on) ? s.depends_on : [],
+      wave: typeof s.wave === 'string' ? s.wave : null,
       status: 'READY',
       attempts: 0,
       escalations: 0,

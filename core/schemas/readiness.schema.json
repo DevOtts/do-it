@@ -29,7 +29,12 @@
             "properties": {
               "id": { "type": "string", "pattern": "^CP-\\d{2}$" },
               "kind": { "enum": ["phase", "wave", "adversarial", "pre-merge", "pre-release"] },
-              "evidence": { "type": "string", "minLength": 1 }
+              "evidence": { "type": "string", "minLength": 1 },
+              "at": { "type": "string" },
+              "review": { "type": "string" },
+              "blocks": { "type": "string" },
+              "gates": { "type": "array", "minItems": 1, "items": { "enum": ["dependents", "promotion", "merge", "release"] } },
+              "covers": { "type": "array", "items": { "type": "string", "minLength": 1 } }
             }
           }
         }
@@ -46,6 +51,7 @@
           "tier": { "type": ["string", "null"] },
           "class": { "enum": ["deterministic", "gather", "implementation", "hard", null] },
           "depends_on": { "type": "array", "items": { "type": "string" } },
+          "wave": { "type": ["string", "null"] },
           "depends_on_owner_answer": { "type": "boolean" }
         }
       }
