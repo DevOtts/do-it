@@ -1,0 +1,73 @@
+{
+  "schema": "review-checkpoints/1",
+  "policy": "CHECKPOINT-POLICY v1",
+  "inputs": {
+    "tasks": 16,
+    "epics": 3,
+    "waves": [
+      "W1",
+      "W2",
+      "W3",
+      "W4"
+    ],
+    "flags": {
+      "cross_cutting": "status-write and review_checkpoints are read by four plugins and the do-it spine; build-it run loop changes",
+      "owner_gated": "the version bump, the release tag and repo visibility need Fernando's yes",
+      "new_surface": "status.json schema 1, status-write CLI, /doit-status mod, review_checkpoints block in READINESS.json",
+      "data": "status.json and finish-line rows are persisted run state the owner reads as truth",
+      "money": null,
+      "security": null,
+      "prod_facing": "a tagged release of do-it plus companion plugin releases installed by every session"
+    }
+  },
+  "score": {
+    "size": 2,
+    "complexity": 3,
+    "importance": 2,
+    "total": 7
+  },
+  "level": "full",
+  "count": 5,
+  "checkpoints": [
+    {
+      "id": "CP-01",
+      "kind": "wave",
+      "at": "after W1",
+      "review": "contract cases of the finished waves, on the merged tree",
+      "blocks": "start of W2",
+      "evidence": "docs/implementation/do-it-next/reviews/CP-01-wave-w1.md"
+    },
+    {
+      "id": "CP-02",
+      "kind": "wave",
+      "at": "after W2",
+      "review": "contract cases of the finished waves, on the merged tree",
+      "blocks": "start of W3",
+      "evidence": "docs/implementation/do-it-next/reviews/CP-02-wave-w2.md"
+    },
+    {
+      "id": "CP-03",
+      "kind": "adversarial",
+      "at": "after W3",
+      "review": "adversarial: try to get a false pass through every gate and writer",
+      "blocks": "start of W4",
+      "evidence": "docs/implementation/do-it-next/reviews/CP-03-adversarial-w3.md"
+    },
+    {
+      "id": "CP-04",
+      "kind": "pre-merge",
+      "at": "before merge to main",
+      "review": "the whole Test Contract on the integrated branch",
+      "blocks": "merge to main",
+      "evidence": "docs/implementation/do-it-next/reviews/CP-04-pre-merge.md"
+    },
+    {
+      "id": "CP-05",
+      "kind": "pre-release",
+      "at": "after merge, before tag, publish or deploy",
+      "review": "deploy-verify plus the [REAL] cases on the released artifact",
+      "blocks": "tag, publish or deploy",
+      "evidence": "docs/implementation/do-it-next/reviews/CP-05-pre-release.md"
+    }
+  ]
+}

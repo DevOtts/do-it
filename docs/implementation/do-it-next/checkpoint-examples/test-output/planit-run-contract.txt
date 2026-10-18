@@ -1,0 +1,146 @@
+PASS  T-E1-01  machine.json parses as JSON
+PASS  T-E1-02  all 15 pipeline states present; done is final (exact on the byte-pinned v2 baseline; live machine.json an additive superset per AMD-1)
+PASS  T-E1-03  every guard maps to an existing gate-check subcommand
+PASS  T-E1-04  no dangling transition targets; initial state exists
+PASS  T-E1-05  exactly 3 human gate states on the v2 baseline (G1, G2, G3); every live meta.gate state is human (AMD-4)
+PASS  T-E2-01  valid state.json passes; prints state + next events
+PASS  T-E2-02  unknown state value fails and is named
+PASS  T-E2-03  missing required key (gates) fails and is named
+PASS  T-E3-01  verify passes on existing non-empty files
+PASS  T-E3-02  verify fails on a missing path and names it
+PASS  T-E3-03  verify fails on an empty file and names it
+PASS  T-E3-04  freeze passes on a well-formed frozen CONTRACT
+PASS  T-E3-05  freeze fails when the vN.N version header is missing
+PASS  T-E3-06  freeze fails on a TBD placeholder and names it
+PASS  T-E3-07  handoff passes on a coherent delivery fixture
+PASS  T-E3-08  handoff catches declared-vs-counted case mismatch
+PASS  T-E3-09  handoff catches an epic with no Test Contract block
+PASS  T-E3-11  gate-check.mjs imports node: builtins only (zero npm deps)
+PASS  T-E6-01  guard denies PRD write while contract unfrozen, reason names freeze
+PASS  T-E6-02  guard allows PRD write once contract is frozen (v1.0)
+PASS  T-E6-03  guard allows non-deliverable writes with contract unfrozen
+PASS  T-E6-04  guard fails open when no .plan-it/state.json exists
+PASS  T-E6-05  guard fails open on malformed state.json
+PASS  T-E7-01  gate-check dispatches (and fails closed) when invoked through a symlinked directory
+PASS  T-L2-02  state rejects planReview claimed without render in history / HTML twins on disk; a genuine render+twin run still passes
+PASS  T-L2-03  handoff ignores the T-<EID>-NN legend and counts [REAL] rows package-wide across epics/prds
+PASS  T-E4-01  SKILL.md wires the deterministic core + keeps attribution
+PASS  T-E5-01  plugin.json version is 5.0.0 and hooks.json is valid
+PASS  T-E5-02  root and plugin copies are byte-identical (11 pairs, AMD-5)
+PASS  T-V3-A2-01  contract passes on the real frozen CONTRACT.md (positional form; W5 computed-tally smoke)
+PASS  T-V3-A2-02  contract names C-W1-05 + the row ID on a missing run: cell
+PASS  T-V3-A2-03  contract --override-manual accepts a >30% manual share deliberately
+PASS  T-V3-A2-04  contract tally-drift failure names both numbers (hand-typed 5 vs computed 2)
+PASS  T-A3-A1  testconv exits 0 on a repo whose CLAUDE.md already has the block (receipt in state.json)
+PASS  T-A3-A2  testconv exits 2 (needs-human-input) with the research→ask→REGISTER instruction when no block exists
+PASS  T-A3-A3  state flags a stale test-conventions receipt (registered:true but block deleted)
+PASS  T-A3-A4  testconv exits 0 on a declined-by-user receipt (FD-1 registers either way)
+PASS  T-A4-01  freeze --dir fails while casesReviewed !== true (C-W1-03)
+PASS  T-A4-02  reconcile flags an orphan PRD requirement and only the orphan (C-W5-02)
+PASS  T-A4-03  reconcile flags an epic with zero contract cases (C-W5-03)
+PASS  T-A4-B1  state rejects G2 approved without TEST-CONTRACT-REVIEW.md on disk
+PASS  T-A4-B2  state rejects a review file lacking the Reviewed-by user-ack line
+PASS  T-A4-B3  reconcile flags a draft case bound nowhere and not dropped (B3), not the bound ones
+PASS  T-A4-04  reconcile passes on a repo with nothing to flag (positive path)
+PASS  T-W31-1a  freeze strips a line-wrapped inline code span (E2) — wrapped <id> no longer false-fails
+PASS  T-W31-1b  freeze still catches a bare-prose placeholder (E2 fail-closed preserved)
+PASS  T-W31-2a  positional freeze of a real-project delivery/CONTRACT.md now reaches the RUN-POLICY check (E1)
+PASS  T-W31-2b  freeze --dir finds delivery/CONTRACT.md (not just the delivery/v3/ dogfood path)
+PASS  T-W31-2c  positional freeze does NOT over-block a valid real-project contract (RUN-POLICY + casesReviewed)
+PASS  T-W31-2d  v2 byte-identical: a freestanding contract with no run-state is never held to v3 RUN-POLICY
+PASS  T-ADV-01  adversary PASSES a deep machine: every failure state asserted, all 5 cascade classes covered
+PASS  T-ADV-02  adversary FAILS a thin v3-arm-like machine, naming exactly the three missing cascade classes
+PASS  T-ADV-03  adversary is N/A (PASS) on a genuinely linear/CRUD contract — no over-reach
+PASS  T-ADV-04  adversary PASSES via explicit waivers (v2 CB-1 pattern) recorded in decisions.md
+
+54/54 passed
+
+-- v3 (Wave 0+, from delivery/v3/CONTRACT.md's Cases table) --
+PASS    C-W1-01
+PASS    C-W1-02
+PASS    C-W1-03
+PASS    C-W1-04
+PASS    C-W1-05
+PASS    C-W1-06
+PASS    C-W2-01
+PASS    C-W2-02
+PASS    C-W2-03
+PASS    C-W2-04
+PASS    C-W3-01
+PASS    C-W3-02
+PASS    C-W3-03
+PASS    C-W4-01
+PASS    C-W4-02
+PASS    C-W4-03
+PASS    C-W5-01
+PASS    C-W5-02
+PASS    C-W5-03
+PASS    C-W5-04
+PASS    C-W6-01
+PASS    C-W6-02
+PASS    C-W6-03
+PASS    C-W6-04
+PASS    C-W6-05
+25/25 mechanism-ready cases correct; 0 pending mechanism(s); 0 manual (not silently passed)
+
+-- v4 (from delivery/v4/CONTRACT.md's Cases table) --
+MANUAL  C-E11-07  manual: Fernando confirms O-1 in GATE.md before the 4.0.0 tag
+PASS    C-E1-01
+PASS    C-E1-02
+PASS    C-E1-03
+PASS    C-E1-04
+PASS    C-E2-01
+PASS    C-E2-02
+PASS    C-E2-03
+PASS    C-E2-04
+PASS    C-E2-05
+PASS    C-E2-06
+PASS    C-E2-07
+PASS    C-E2-08
+PASS    C-E2-09
+PASS    C-E2-10
+PASS    C-E2-11
+PASS    C-E2-12
+PASS    C-E2-13
+PASS    C-E2-14
+PASS    C-E3-01
+PASS    C-E3-02
+PASS    C-E3-03
+PASS    C-E4-01
+PASS    C-E4-02
+PASS    C-E5-01
+PASS    C-E5-02
+PASS    C-E5-03
+PASS    C-E6-01
+PASS    C-E6-02
+PASS    C-E6-03
+PASS    C-E7-01
+PASS    C-E7-02
+PASS    C-E7-03
+PASS    C-E7-04
+PASS    C-E7-05
+PASS    C-E7-06
+PASS    C-E7-07
+PASS    C-E8-01
+PASS    C-E8-02
+PASS    C-E8-03
+PASS    C-E9-01
+PASS    C-E9-02
+PASS    C-E9-03
+PASS    C-E9-04
+PASS    C-E9-05
+PASS    C-E9-06
+PASS    C-E9-07
+PASS    C-E9-08
+PASS    C-E9-09
+PASS    C-E10-01
+PASS    C-E10-02
+PASS    C-E10-03
+PASS    C-E10-04
+PASS    C-E11-01
+PASS    C-E11-02
+PASS    C-E11-03
+PASS    C-E11-04
+PASS    C-E11-05
+PASS    C-E11-06
+58/58 mechanism-ready cases correct; 0 pending mechanism(s); 1 manual (not silently passed)

@@ -1,0 +1,20 @@
+{
+  "implementation": "harness-status-tracking",
+  "tasks": 9,
+  "epics": 1,
+  "adversarial_wave": "W3",
+  "waves": [
+    { "id": "W1", "tasks": ["ST-01", "ST-06", "ST-07", "ST-02"] },
+    { "id": "W2", "tasks": ["ST-03", "ST-04", "ST-05"] },
+    { "id": "W3", "tasks": ["ST-08"] }
+  ],
+  "flags": {
+    "cross_cutting": "one shared writer (status-write) called by plan-it, build-it, review-it and conclude-it; ST-03 touches the build-it run loop",
+    "owner_gated": null,
+    "new_surface": "new status.json schema 1, the status-write CLI and the /doit-status mod",
+    "data": "status.json is the persisted source of truth for progress; a bad write shows a fake percent to the owner",
+    "money": null,
+    "security": null,
+    "prod_facing": "ships inside the plan-it and build-it plugins that every session loads"
+  }
+}

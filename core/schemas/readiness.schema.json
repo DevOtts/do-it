@@ -14,6 +14,27 @@
     },
     "credentials": { "type": "array", "items": { "type": "string", "minLength": 1 } },
     "owner_dependent_slices": { "type": "integer", "minimum": 0 },
+    "review_checkpoints": {
+      "type": "object",
+      "required": ["schema", "count", "checkpoints"],
+      "properties": {
+        "schema": { "const": "review-checkpoints/1" },
+        "count": { "type": "integer", "minimum": 0 },
+        "level": { "enum": ["none", "light", "standard", "heightened", "full"] },
+        "checkpoints": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "kind", "evidence"],
+            "properties": {
+              "id": { "type": "string", "pattern": "^CP-\\d{2}$" },
+              "kind": { "enum": ["phase", "wave", "adversarial", "pre-merge", "pre-release"] },
+              "evidence": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    },
     "slices": {
       "type": "array",
       "items": {
