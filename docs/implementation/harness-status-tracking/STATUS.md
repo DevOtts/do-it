@@ -2,17 +2,13 @@
 
 # Harness status tracking — status
 
-Progress: 65%
-Tasks: 8 · verified 1 (claims) · done 7 · in-progress 0 · blocked 0 · not-started 0
-Updated: 2026-10-18T17:22:44Z
+Progress: 60%
+Tasks: 8 · verified 0 · done 8 · in-progress 0 · blocked 0 · not-started 0
+Updated: 2026-10-18T14:47:48Z
 
 ## Blocked
 
 None
-
-## Verified claims
-
-- ST-06 claimed by review-it · verdict `docs/implementation/harness-status-tracking/evidence/real-verify/review-it/ST-06-review-it-report.md` · at 2026-10-18T17:22:44Z · sha cdfd9761edc3
 
 ## Pieces
 
@@ -31,7 +27,7 @@ None
 | Task | Title | Status | Evidence | Owner | Updated |
 | --- | --- | --- | --- | --- | --- |
 | ST-01 | Schema v1, shared writer and validator | done | `docs/implementation/harness-status-tracking/evidence/ST-01.md` | build-it:sonnet | 2026-10-18T14:24:33Z |
-| ST-06 | Render STATUS.md from status.json | verified | `docs/implementation/harness-status-tracking/evidence/real-verify/review-it/ST-06-review-it-report.md` | build-it:haiku | 2026-10-18T17:22:44Z |
+| ST-06 | Render STATUS.md from status.json | done | `docs/implementation/harness-status-tracking/evidence/ST-06.md` | build-it:haiku | 2026-10-18T14:24:33Z |
 | ST-07 | Migration script, run on do-it and one ANM package | done | `docs/implementation/harness-status-tracking/evidence/ST-07.md` | build-it:sonnet | 2026-10-18T14:24:33Z |
 | ST-02 | plan-it creates status.json from epics and Test Contract | done | `docs/implementation/harness-status-tracking/evidence/ST-02.md` | build-it:sonnet | 2026-10-18T14:24:33Z |
 
@@ -55,7 +51,6 @@ None
 
 ## History (latest 20)
 
-- 2026-10-18T17:22:44Z ST-06: done → verified by review-it
 - 2026-10-18T14:47:48Z ST-08: in-progress → done by build-it
 - 2026-10-18T14:30:38Z ST-08: not-started → in-progress by build-it
 - 2026-10-18T14:30:38Z ST-05: in-progress → done by build-it
