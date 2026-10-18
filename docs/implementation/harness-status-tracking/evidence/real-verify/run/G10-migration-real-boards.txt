@@ -1,0 +1,57 @@
+# G10-migration-real-boards
+cases: AT-20, T-B-19, AT-21
+real artifact: do-it delivery/STATUS.md (real, in the clone with its tracked .taskstate) and ANM lens-data-honesty delivery/STATUS.md (real, read only)
+clone of /Users/macbook/Workspace/Devotts/do-it/.claude/worktrees/agent-a3be7e62651731553 at 9a253febda6b202b3d1e522e401eff278254e192; writer plugins/build-it/scripts/status/status-write.mjs
+started 2026-10-18T17:21:46.012Z
+
+$ status-migrate --from delivery/STATUS.md --out delivery/status.json --impl delivery
+  exit 0
+  status-migrate report (<clone-root>/do-it/delivery/STATUS.md)
+  tasks found: 20
+  pre-downgrade counts: verified=16 done=4
+  final counts: verified=16 done=3 in-progress=1
+  downgrades: 1
+    R1: done -> in-progress
+  unparsed rows: 0
+  wrote: <clone-root>/do-it/delivery/status.json (approximate: true)
+  
+$ (again) -> exit 2 status.json already exists; migration never overwrites
+$ status-write validate --file <clone-root>/do-it/delivery/status.json
+  exit 0
+  stdout: valid
+  tasks 20; VERIFIED rows in the source 16; statuses {"not-started":0,"in-progress":1,"blocked":0,"done":3,"verified":16}; migration history entries 21
+  S5 -> done evidence=.taskstate/evidence.md
+  R4 -> done evidence=.taskstate/evidence.md
+  N3 -> done evidence=.taskstate/evidence.md
+  R1 -> in-progress evidence=null
+  ok   20 tasks
+  ok   approximate: true
+  ok   downgrades reported
+  ok   second run refuses, file byte-identical
+  ok   migrated file validates
+  ok   CARD-B AC 8: 16 verified before the evidence downgrade
+  unevidenced VERIFIED rows in the real board: 0 (none: every VERIFIED row cites a tracked file that exists)
+  unevidenced rows downgraded by the real run: R1 (done -> in-progress)
+  ok   no unevidenced row stays verified
+  ok   every row still verified has a real resolvable evidence file in the repo
+  ok   the real unevidenced row was downgraded
+$ status-migrate --from ANM lens-data-honesty/delivery/STATUS.md -> exit 0
+  status-migrate report (/Users/macbook/Workspace/ANM/docs/implementations/lens-data-honesty/delivery/STATUS.md)
+  tasks found: 21
+  pre-downgrade counts: blocked=4 not-started=17
+  final counts: blocked=4 not-started=17
+  downgrades: 0
+  unparsed rows: 0
+  wrote: <clone-root>/lens2/docs/implementations/lens-data-honesty/status.json (approximate: true)
+  LDH-01 blocked_on: owner-gated: Fernando (Duo, CloudShell)
+  LDH-02 blocked_on: owner-gated: Fernando names the project (D-e)
+  LDH-03 blocked_on: owner-gated: Fernando confirms R3 (D5)
+  LDH-21 blocked_on: owner-gated: Fernando for the live cases and the prod deploy
+  rows with "owner-gated" in the source: LDH-01, LDH-02, LDH-03, LDH-21
+  ok   21 tasks
+  ok   every owner-gated row is blocked
+  ok   ANM source untouched (sha unchanged)
+
+AT-20: PASS
+T-B-19: PASS
+AT-21: PASS

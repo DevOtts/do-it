@@ -1,0 +1,18 @@
+# G11-conclude-guard-real-board
+cases: T-B-18
+real artifact: docs/implementation/harness-status-tracking/status.json as committed (8 done, 0 verified)
+clone of /Users/macbook/Workspace/Devotts/do-it/.claude/worktrees/agent-a3be7e62651731553 at 9a253febda6b202b3d1e522e401eff278254e192; writer plugins/build-it/scripts/status/status-write.mjs
+started 2026-10-18T17:21:46.183Z
+
+$ status-write close --move --by conclude-it --file <clone-root>/do-it/docs/implementation/harness-status-tracking/status.json
+  exit 1
+  stderr: status-write: refused: close refused: 8 task(s) not verified (ST-01, ST-06, ST-07, ST-02, ST-03, ST-04, ST-05, ST-08); pass --owner-note to override
+  ok   close --move refused: 8 tasks not verified
+  ok   file byte-identical, folder not moved
+$ status-write close --move --owner-note "real-verify: override on a clone only" --by conclude-it --file <clone-root>/do-it/docs/implementation/harness-status-tracking/status.json
+  exit 0
+  stdout: closed and moved to <clone-root>/do-it/docs/implementation/0-done/harness-status-tracking
+  ok   with an owner note: closed and moved to 0-done
+  ok   moved board validates (evidence paths remapped)
+
+T-B-18: PASS

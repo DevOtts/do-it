@@ -1,0 +1,19 @@
+# G05-concurrent-processes-real-board
+cases: AT-13, T-B-14
+real artifact: docs/implementation/harness-status-tracking/status.json, 8 writer processes started together, 10 rounds
+clone of /Users/macbook/Workspace/Devotts/do-it/.claude/worktrees/agent-a3be7e62651731553 at 9a253febda6b202b3d1e522e401eff278254e192; writer plugins/build-it/scripts/status/status-write.mjs
+started 2026-10-18T17:21:22.225Z
+
+round 0: exits 0,0,0,0,0,0,0,0 pids 48129,48130,48131,48132,48133,48134,48135,48136 all 8 changes present=true history +4 validate=0 residue=[] -> ok
+round 1: exits 0,0,0,0,0,0,0,0 pids 48522,48523,48524,48525,48526,48527,48528,48529 all 8 changes present=true history +4 validate=0 residue=[] -> ok
+round 2: exits 0,0,0,0,0,0,0,0 pids 49017,49018,49019,49020,49021,49022,49023,49024 all 8 changes present=true history +4 validate=0 residue=[] -> ok
+round 3: exits 0,0,0,0,0,0,0,0 pids 49443,49444,49445,49446,49447,49448,49449,49450 all 8 changes present=true history +4 validate=0 residue=[] -> ok
+round 4: exits 0,0,0,0,0,0,0,0 pids 49889,49890,49891,49892,49893,49894,49895,49896 all 8 changes present=true history +4 validate=0 residue=[] -> ok
+round 5: exits 0,0,0,0,0,0,0,0 pids 50211,50212,50213,50214,50215,50216,50217,50218 all 8 changes present=true history +4 validate=0 residue=[] -> ok
+round 6: exits 0,0,0,0,0,0,0,0 pids 50395,50396,50397,50398,50399,50400,50401,50402 all 8 changes present=true history +4 validate=0 residue=[] -> ok
+round 7: exits 0,0,0,0,0,0,0,0 pids 50579,50580,50581,50582,50583,50584,50585,50586 all 8 changes present=true history +4 validate=0 residue=[] -> ok
+round 8: exits 0,0,0,0,0,0,0,0 pids 50760,50761,50762,50763,50764,50765,50766,50767 all 8 changes present=true history +4 validate=0 residue=[] -> ok
+round 9: exits 0,0,0,0,0,0,0,0 pids 50944,50945,50946,50947,50948,50949,50950,50951 all 8 changes present=true history +4 validate=0 residue=[] -> ok
+
+AT-13: PASS
+T-B-14: PASS

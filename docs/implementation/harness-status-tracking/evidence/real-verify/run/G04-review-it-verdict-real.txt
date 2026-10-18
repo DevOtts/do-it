@@ -1,0 +1,48 @@
+# G04-review-it-verdict-real
+cases: AT-08, T-B-08, AT-09, T-B-09, AT-10, T-B-10
+real artifact: docs/implementation/harness-status-tracking/status.json + the real review-it report for ST-06 (ST-06-review-it-report.md)
+clone of /Users/macbook/Workspace/Devotts/do-it/.claude/worktrees/agent-a3be7e62651731553 at 9a253febda6b202b3d1e522e401eff278254e192; writer plugins/build-it/scripts/status/status-write.mjs
+started 2026-10-18T17:21:21.925Z
+
+report: docs/implementation/harness-status-tracking/evidence/review-it/ST-06-review-it-report.md sha cdfd9761edc3 (3697 bytes)
+compatibility probe: the same review run as a plain (non-checkpoint) review-it report, which carries no "verdict:" line
+$ status-write set ST-06 --status verified --evidence docs/implementation/harness-status-tracking/evidence/review-it/ST-06-review-it-report-plain.md --by review-it --file <clone-root>/do-it/docs/implementation/harness-status-tracking/status.json
+  exit 1
+  stderr: status-write: refused: verified refused: verdict file lacks a "verdict: PASS" line: docs/implementation/harness-status-tracking/evidence/review-it/ST-06-review-it-report-plain.md
+  plain report accepted by the writer: no (finding, not a case: D-06 needs a "verdict: PASS" line, which review-it writes only in checkpoint reports)
+$ status-write set ST-06 --status verified --evidence docs/implementation/harness-status-tracking/evidence/review-it/ST-06-review-it-report.md --by review-it --file <clone-root>/do-it/docs/implementation/harness-status-tracking/status.json
+  exit 0
+  stdout: ST-06 ok
+  ok   review-it verified with the real verdict path: accepted
+  ok   ST-06 verified, evidence = the report
+$ status-write view --file <clone-root>/do-it/docs/implementation/harness-status-tracking/status.json
+  exit 0
+  stdout: harness-status-tracking: 65%
+          not-started 0 | in-progress 0 | blocked 0 | done 7 | verified 1 (claims) | total 8
+          claimed by review-it: ST-06 · verdict docs/implementation/harness-status-tracking/evidence/review-it/ST-06-review-it-report.md · at 2026-10-18T17:21:22Z · sha cdfd9761edc3
+  ok   view shows the claim with the verdict sha (D-28)
+$ status-write validate --file <clone-root>/do-it/docs/implementation/harness-status-tracking/status.json
+  exit 0
+  stdout: valid
+  ok   board still validates
+$ status-write set ST-06 --status in-progress --by build-it --file <clone-root>/do-it/docs/implementation/harness-status-tracking/status.json
+  exit 1
+  stderr: status-write: refused: lowering a verified task requires --note
+  ok   lowering verified without a note: refused
+  ok   byte-identical
+$ status-write set ST-06 --status in-progress --note "real-verify: lowered to prove AT-10 on a clone" --by build-it --file <clone-root>/do-it/docs/implementation/harness-status-tracking/status.json
+  exit 0
+  stdout: ST-06 ok
+  ok   lowering with a note: accepted
+  ok   history entry: {"at":"2026-10-18T17:21:22Z","task":"ST-06","from":"verified","to":"in-progress","by":"build-it","note":"real-verify: lowered to prove AT-10 on a clone"}
+$ status-write validate --file <clone-root>/do-it/docs/implementation/harness-status-tracking/status.json
+  exit 0
+  stdout: valid
+  ok   board validates after the lowering
+
+AT-08: PASS
+T-B-08: PASS
+AT-09: PASS
+T-B-09: PASS
+AT-10: PASS
+T-B-10: PASS

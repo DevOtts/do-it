@@ -1,0 +1,303 @@
+{
+  "at": "2026-10-18T17:21:46.406Z",
+  "clone_head": "9a253febda6b202b3d1e522e401eff278254e192",
+  "source_board_sha256_before": "de5f424be67fc5825745cdbe3e3ca4c41e181a634d82b07f2974c3a1bb95627c",
+  "source_board_sha256_after": "de5f424be67fc5825745cdbe3e3ca4c41e181a634d82b07f2974c3a1bb95627c",
+  "source_board_untouched": true,
+  "rows": [
+    {
+      "case": "AT-01",
+      "group": "G01-planit-real-epics",
+      "artifact": "do-it delivery/epics/*.md (5 real epics) -> docs/implementation/do-it-v1/status.json via plan-it status-from-plan",
+      "pass": true,
+      "output": "G01-planit-real-epics.txt"
+    },
+    {
+      "case": "T-B-16",
+      "group": "G01-planit-real-epics",
+      "artifact": "do-it delivery/epics/*.md (5 real epics) -> docs/implementation/do-it-v1/status.json via plan-it status-from-plan",
+      "pass": true,
+      "output": "G01-planit-real-epics.txt"
+    },
+    {
+      "case": "AT-02",
+      "group": "G01-planit-real-epics",
+      "artifact": "do-it delivery/epics/*.md (5 real epics) -> docs/implementation/do-it-v1/status.json via plan-it status-from-plan",
+      "pass": true,
+      "output": "G01-planit-real-epics.txt"
+    },
+    {
+      "case": "AT-03",
+      "group": "G02-done-evidence-real-board",
+      "artifact": "docs/implementation/do-it-v1/status.json created by real plan-it from the real epics; evidence = a real tracked do-it run log",
+      "pass": true,
+      "output": "G02-done-evidence-real-board.txt"
+    },
+    {
+      "case": "T-B-04",
+      "group": "G02-done-evidence-real-board",
+      "artifact": "docs/implementation/do-it-v1/status.json created by real plan-it from the real epics; evidence = a real tracked do-it run log",
+      "pass": true,
+      "output": "G02-done-evidence-real-board.txt"
+    },
+    {
+      "case": "AT-04",
+      "group": "G02-done-evidence-real-board",
+      "artifact": "docs/implementation/do-it-v1/status.json created by real plan-it from the real epics; evidence = a real tracked do-it run log",
+      "pass": true,
+      "output": "G02-done-evidence-real-board.txt"
+    },
+    {
+      "case": "T-B-05",
+      "group": "G02-done-evidence-real-board",
+      "artifact": "docs/implementation/do-it-v1/status.json created by real plan-it from the real epics; evidence = a real tracked do-it run log",
+      "pass": true,
+      "output": "G02-done-evidence-real-board.txt"
+    },
+    {
+      "case": "AT-05",
+      "group": "G02-done-evidence-real-board",
+      "artifact": "docs/implementation/do-it-v1/status.json created by real plan-it from the real epics; evidence = a real tracked do-it run log",
+      "pass": true,
+      "output": "G02-done-evidence-real-board.txt"
+    },
+    {
+      "case": "T-B-06",
+      "group": "G02-done-evidence-real-board",
+      "artifact": "docs/implementation/do-it-v1/status.json created by real plan-it from the real epics; evidence = a real tracked do-it run log",
+      "pass": true,
+      "output": "G02-done-evidence-real-board.txt"
+    },
+    {
+      "case": "AT-06",
+      "group": "G02-done-evidence-real-board",
+      "artifact": "docs/implementation/do-it-v1/status.json created by real plan-it from the real epics; evidence = a real tracked do-it run log",
+      "pass": true,
+      "output": "G02-done-evidence-real-board.txt"
+    },
+    {
+      "case": "T-B-17",
+      "group": "G02-done-evidence-real-board",
+      "artifact": "docs/implementation/do-it-v1/status.json created by real plan-it from the real epics; evidence = a real tracked do-it run log",
+      "pass": true,
+      "output": "G02-done-evidence-real-board.txt"
+    },
+    {
+      "case": "AT-07",
+      "group": "G03-roles-real-dogfood-board",
+      "artifact": "docs/implementation/harness-status-tracking/status.json as committed (8 tasks done by the real build-it run)",
+      "pass": true,
+      "output": "G03-roles-real-dogfood-board.txt"
+    },
+    {
+      "case": "T-B-07",
+      "group": "G03-roles-real-dogfood-board",
+      "artifact": "docs/implementation/harness-status-tracking/status.json as committed (8 tasks done by the real build-it run)",
+      "pass": true,
+      "output": "G03-roles-real-dogfood-board.txt"
+    },
+    {
+      "case": "AT-11",
+      "group": "G03-roles-real-dogfood-board",
+      "artifact": "docs/implementation/harness-status-tracking/status.json as committed (8 tasks done by the real build-it run)",
+      "pass": true,
+      "output": "G03-roles-real-dogfood-board.txt"
+    },
+    {
+      "case": "AT-16",
+      "group": "G03-roles-real-dogfood-board",
+      "artifact": "docs/implementation/harness-status-tracking/status.json as committed (8 tasks done by the real build-it run)",
+      "pass": true,
+      "output": "G03-roles-real-dogfood-board.txt"
+    },
+    {
+      "case": "AT-08",
+      "group": "G04-review-it-verdict-real",
+      "artifact": "docs/implementation/harness-status-tracking/status.json + the real review-it report for ST-06 (ST-06-review-it-report.md)",
+      "pass": true,
+      "output": "G04-review-it-verdict-real.txt"
+    },
+    {
+      "case": "T-B-08",
+      "group": "G04-review-it-verdict-real",
+      "artifact": "docs/implementation/harness-status-tracking/status.json + the real review-it report for ST-06 (ST-06-review-it-report.md)",
+      "pass": true,
+      "output": "G04-review-it-verdict-real.txt"
+    },
+    {
+      "case": "AT-09",
+      "group": "G04-review-it-verdict-real",
+      "artifact": "docs/implementation/harness-status-tracking/status.json + the real review-it report for ST-06 (ST-06-review-it-report.md)",
+      "pass": true,
+      "output": "G04-review-it-verdict-real.txt"
+    },
+    {
+      "case": "T-B-09",
+      "group": "G04-review-it-verdict-real",
+      "artifact": "docs/implementation/harness-status-tracking/status.json + the real review-it report for ST-06 (ST-06-review-it-report.md)",
+      "pass": true,
+      "output": "G04-review-it-verdict-real.txt"
+    },
+    {
+      "case": "AT-10",
+      "group": "G04-review-it-verdict-real",
+      "artifact": "docs/implementation/harness-status-tracking/status.json + the real review-it report for ST-06 (ST-06-review-it-report.md)",
+      "pass": true,
+      "output": "G04-review-it-verdict-real.txt"
+    },
+    {
+      "case": "T-B-10",
+      "group": "G04-review-it-verdict-real",
+      "artifact": "docs/implementation/harness-status-tracking/status.json + the real review-it report for ST-06 (ST-06-review-it-report.md)",
+      "pass": true,
+      "output": "G04-review-it-verdict-real.txt"
+    },
+    {
+      "case": "AT-13",
+      "group": "G05-concurrent-processes-real-board",
+      "artifact": "docs/implementation/harness-status-tracking/status.json, 8 writer processes started together, 10 rounds",
+      "pass": true,
+      "output": "G05-concurrent-processes-real-board.txt"
+    },
+    {
+      "case": "T-B-14",
+      "group": "G05-concurrent-processes-real-board",
+      "artifact": "docs/implementation/harness-status-tracking/status.json, 8 writer processes started together, 10 rounds",
+      "pass": true,
+      "output": "G05-concurrent-processes-real-board.txt"
+    },
+    {
+      "case": "AT-14",
+      "group": "G06-sigkill-mid-write-real-board",
+      "artifact": "docs/implementation/harness-status-tracking/status.json and docs/implementation/do-it-v1/status.json (plan-it, real epics); writer child SIGKILLed the moment status.json.tmp appears; no test hook",
+      "pass": true,
+      "output": "G06-sigkill-mid-write-real-board.txt"
+    },
+    {
+      "case": "T-B-15",
+      "group": "G06-sigkill-mid-write-real-board",
+      "artifact": "docs/implementation/harness-status-tracking/status.json and docs/implementation/do-it-v1/status.json (plan-it, real epics); writer child SIGKILLed the moment status.json.tmp appears; no test hook",
+      "pass": true,
+      "output": "G06-sigkill-mid-write-real-board.txt"
+    },
+    {
+      "case": "AT-15",
+      "group": "G07-unknown-key-real-producer",
+      "artifact": "docs/implementation/harness-status-tracking/status.json + review_checkpoints block computed by plan-it review-checkpoints.mjs from the real board",
+      "pass": true,
+      "output": "G07-unknown-key-real-producer.txt"
+    },
+    {
+      "case": "AT-12",
+      "group": "G08-validator-mod-real-board",
+      "artifact": "docs/implementation/harness-status-tracking/status.json hand-edited in the clone the way a model would; read by the installed doit-status mod (~/.claude/mods/doit-status/scripts/lib.mjs)",
+      "pass": true,
+      "output": "G08-validator-mod-real-board.txt"
+    },
+    {
+      "case": "T-B-11",
+      "group": "G08-validator-mod-real-board",
+      "artifact": "docs/implementation/harness-status-tracking/status.json hand-edited in the clone the way a model would; read by the installed doit-status mod (~/.claude/mods/doit-status/scripts/lib.mjs)",
+      "pass": true,
+      "output": "G08-validator-mod-real-board.txt"
+    },
+    {
+      "case": "T-B-12",
+      "group": "G08-validator-mod-real-board",
+      "artifact": "docs/implementation/harness-status-tracking/status.json hand-edited in the clone the way a model would; read by the installed doit-status mod (~/.claude/mods/doit-status/scripts/lib.mjs)",
+      "pass": true,
+      "output": "G08-validator-mod-real-board.txt"
+    },
+    {
+      "case": "T-B-13",
+      "group": "G08-validator-mod-real-board",
+      "artifact": "docs/implementation/harness-status-tracking/status.json hand-edited in the clone the way a model would; read by the installed doit-status mod (~/.claude/mods/doit-status/scripts/lib.mjs)",
+      "pass": true,
+      "output": "G08-validator-mod-real-board.txt"
+    },
+    {
+      "case": "AT-17",
+      "group": "G09-percent-real-boards",
+      "artifact": "committed dogfood board; real do-it delivery/STATUS.md migrated; real lens-data-honesty STATUS.md migrated; real plan-it board emptied by plan-it remove; real board in a 4-status mix via the writer + real review-it verdict",
+      "pass": true,
+      "output": "G09-percent-real-boards.txt"
+    },
+    {
+      "case": "AT-18",
+      "group": "G09-percent-real-boards",
+      "artifact": "committed dogfood board; real do-it delivery/STATUS.md migrated; real lens-data-honesty STATUS.md migrated; real plan-it board emptied by plan-it remove; real board in a 4-status mix via the writer + real review-it verdict",
+      "pass": true,
+      "output": "G09-percent-real-boards.txt"
+    },
+    {
+      "case": "T-B-02",
+      "group": "G09-percent-real-boards",
+      "artifact": "committed dogfood board; real do-it delivery/STATUS.md migrated; real lens-data-honesty STATUS.md migrated; real plan-it board emptied by plan-it remove; real board in a 4-status mix via the writer + real review-it verdict",
+      "pass": true,
+      "output": "G09-percent-real-boards.txt"
+    },
+    {
+      "case": "AT-19",
+      "group": "G09-percent-real-boards",
+      "artifact": "committed dogfood board; real do-it delivery/STATUS.md migrated; real lens-data-honesty STATUS.md migrated; real plan-it board emptied by plan-it remove; real board in a 4-status mix via the writer + real review-it verdict",
+      "pass": true,
+      "output": "G09-percent-real-boards.txt"
+    },
+    {
+      "case": "T-B-01",
+      "group": "G09-percent-real-boards",
+      "artifact": "committed dogfood board; real do-it delivery/STATUS.md migrated; real lens-data-honesty STATUS.md migrated; real plan-it board emptied by plan-it remove; real board in a 4-status mix via the writer + real review-it verdict",
+      "pass": true,
+      "output": "G09-percent-real-boards.txt"
+    },
+    {
+      "case": "T-B-03",
+      "group": "G09-percent-real-boards",
+      "artifact": "committed dogfood board; real do-it delivery/STATUS.md migrated; real lens-data-honesty STATUS.md migrated; real plan-it board emptied by plan-it remove; real board in a 4-status mix via the writer + real review-it verdict",
+      "pass": true,
+      "output": "G09-percent-real-boards.txt"
+    },
+    {
+      "case": "AT-20",
+      "group": "G10-migration-real-boards",
+      "artifact": "do-it delivery/STATUS.md (real, in the clone with its tracked .taskstate) and ANM lens-data-honesty delivery/STATUS.md (real, read only)",
+      "pass": true,
+      "output": "G10-migration-real-boards.txt"
+    },
+    {
+      "case": "T-B-19",
+      "group": "G10-migration-real-boards",
+      "artifact": "do-it delivery/STATUS.md (real, in the clone with its tracked .taskstate) and ANM lens-data-honesty delivery/STATUS.md (real, read only)",
+      "pass": true,
+      "output": "G10-migration-real-boards.txt"
+    },
+    {
+      "case": "AT-21",
+      "group": "G10-migration-real-boards",
+      "artifact": "do-it delivery/STATUS.md (real, in the clone with its tracked .taskstate) and ANM lens-data-honesty delivery/STATUS.md (real, read only)",
+      "pass": true,
+      "output": "G10-migration-real-boards.txt"
+    },
+    {
+      "case": "T-B-18",
+      "group": "G11-conclude-guard-real-board",
+      "artifact": "docs/implementation/harness-status-tracking/status.json as committed (8 done, 0 verified)",
+      "pass": true,
+      "output": "G11-conclude-guard-real-board.txt"
+    },
+    {
+      "case": "T-B-20",
+      "group": "G12-stale-real-git",
+      "artifact": "docs/implementation/harness-status-tracking in the real do-it history (git log -1 of the folder) vs the board's updated_at",
+      "pass": false,
+      "output": "G12-stale-real-git.txt"
+    },
+    {
+      "case": "AT-22",
+      "group": "G13-boundaries-real-run-history",
+      "artifact": "docs/implementation/harness-status-tracking/status.json history written by the real build-it run on 2026-10-18",
+      "pass": true,
+      "output": "G13-boundaries-real-run-history.txt"
+    }
+  ]
+}

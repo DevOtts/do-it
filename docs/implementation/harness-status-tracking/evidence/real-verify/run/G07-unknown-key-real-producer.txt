@@ -1,0 +1,21 @@
+# G07-unknown-key-real-producer
+cases: AT-15
+real artifact: docs/implementation/harness-status-tracking/status.json + review_checkpoints block computed by plan-it review-checkpoints.mjs from the real board
+clone of /Users/macbook/Workspace/Devotts/do-it/.claude/worktrees/agent-a3be7e62651731553 at 9a253febda6b202b3d1e522e401eff278254e192; writer plugins/build-it/scripts/status/status-write.mjs
+started 2026-10-18T17:21:35.719Z
+
+$ review-checkpoints.mjs decide --inputs rc-inputs.json --status docs/implementation/harness-status-tracking/status.json --write docs/implementation/harness-status-tracking/status.json
+  exit 0 stderr: wrote review_checkpoints (2, level standard) into <clone-root>/do-it/docs/implementation/harness-status-tracking/status.json
+  (the documented --write target is READINESS.json; pointing it at status.json is how a real tool, not a hand edit, puts a key the writer does not know into the file)
+$ status-write validate --file <clone-root>/do-it/docs/implementation/harness-status-tracking/status.json
+  exit 0
+  stdout: valid
+$ status-write set ST-03 --owner build-it:real-verify --by build-it --file <clone-root>/do-it/docs/implementation/harness-status-tracking/status.json
+  exit 0
+  stdout: ST-03 ok
+  ok   real block written by a real tool
+  ok   validator accepts the unknown key
+  ok   writer rewrite ok
+  ok   review_checkpoints identical after the rewrite (849 chars)
+
+AT-15: PASS

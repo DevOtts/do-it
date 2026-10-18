@@ -1,0 +1,44 @@
+# G08-validator-mod-real-board
+cases: AT-12, T-B-11, T-B-12, T-B-13
+real artifact: docs/implementation/harness-status-tracking/status.json hand-edited in the clone the way a model would; read by the installed doit-status mod (~/.claude/mods/doit-status/scripts/lib.mjs)
+clone of /Users/macbook/Workspace/Devotts/do-it/.claude/worktrees/agent-a3be7e62651731553 at 9a253febda6b202b3d1e522e401eff278254e192; writer plugins/build-it/scripts/status/status-write.mjs
+started 2026-10-18T17:21:35.847Z
+
+$ status-from-plan --package docs/implementation/do-it-v1 --epics delivery/epics   (plan-it main scripts, real do-it v1 epics)
+  exit 0
+  stdout: initialised <clone-root>/do-it/docs/implementation/do-it-v1/status.json (176 tasks)
+          status-from-plan: wrote <clone-root>/do-it/docs/implementation/do-it-v1/status.json (176 tasks, writer: /Users/macbook/Workspace/Devotts/build-it-wt/real-verify/plugins/build-it/scripts/status/status-write.mjs)
+  stderr: 
+edit: added "percent": 100 at top level of the real board
+$ status-write validate --file <clone-root>/do-it/docs/implementation/harness-status-tracking/status.json
+  exit 1
+  stderr: forbidden key "percent" at top level (computed values are never stored)
+  ok   validator error naming the key "percent"
+  mod.readStatus: percent=null notes=[] errors=["forbidden key \"percent\" at top level (computed values are never stored)"]
+$ status-write set ST-01 --owner x --by build-it --file <clone-root>/do-it/docs/implementation/harness-status-tracking/status.json
+  exit 1
+  stderr: status-write: refused: forbidden key "percent" in the resulting document
+$ status-write set ST-01 --percent 100 --by build-it --file <clone-root>/do-it/docs/implementation/harness-status-tracking/status.json
+  exit 1
+  stderr: status-write: refused: forbidden key "percent": computed values are never written by a model
+  mod summary lines: ["Implementation: Harness status tracking","INVALID: this status.json fails validation, so the implementation is NOT trustworthy and no percent is shown.","  - forbidden key \"percent\" at top level (computed values are never stored)"]
+  ok   mod does not show the typed 100 (percent null, invalid true)
+  ok   writer refuses to write on top of the edited file
+  ok   writer refuses a --percent flag
+edit: schema 1 -> 2 on the real board
+  mod.readStatus: percent=null error="unsupported schema 2: this view reads schema 1 only" unsupportedSchema=true; lib.loadView error="unsupported schema 2"
+  ok   mod shows "unsupported schema", no crash
+  ok   lib error unsupported schema 2
+edit: real board truncated to 3758 of 7517 bytes (a write cut in half)
+  do-it-next: source=unknown percent=null total=0 error=null notes=["no status.json and no STATUS.md"]
+  do-it-v1: source=status.json percent=0 total=176 error=null notes=[]
+  do-it-v2: source=unknown percent=null total=0 error=null notes=["no status.json and no STATUS.md"]
+  harness-status-tracking: source=status.json percent=null total=0 error="status.json is not valid JSON" notes=[]
+  ok   mod lists every implementation without throwing
+  ok   the broken one carries a clear error and no percent
+  ok   the real sibling do-it-v1 still lists (176 tasks, 0)
+
+AT-12: PASS
+T-B-11: PASS
+T-B-12: PASS
+T-B-13: PASS

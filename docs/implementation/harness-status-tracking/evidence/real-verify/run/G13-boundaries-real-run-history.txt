@@ -1,0 +1,24 @@
+# G13-boundaries-real-run-history
+cases: AT-22
+real artifact: docs/implementation/harness-status-tracking/status.json history written by the real build-it run on 2026-10-18
+clone of /Users/macbook/Workspace/Devotts/do-it/.claude/worktrees/agent-a3be7e62651731553 at 9a253febda6b202b3d1e522e401eff278254e192; writer plugins/build-it/scripts/status/status-write.mjs
+started 2026-10-18T17:21:46.376Z
+
+  distinct write times in history: 2026-10-18T14:24:33Z, 2026-10-18T14:30:38Z, 2026-10-18T14:47:48Z; final updated_at 2026-10-18T14:47:48Z
+  ST-01: start 2026-10-18T14:24:33Z (bootstrap note: started before the board existed), done 2026-10-18T14:24:33Z -> written together at board creation
+  ST-06: start 2026-10-18T14:24:33Z (bootstrap note: started before the board existed), done 2026-10-18T14:24:33Z -> written together at board creation
+  ST-07: start 2026-10-18T14:24:33Z (bootstrap note: started before the board existed), done 2026-10-18T14:24:33Z -> written together at board creation
+  ST-02: start 2026-10-18T14:24:33Z (bootstrap note: started before the board existed), done 2026-10-18T14:24:33Z -> written together at board creation
+  ST-03: start 2026-10-18T14:24:33Z, done 2026-10-18T14:30:38Z -> start and finish written at separate boundaries
+  ST-04: start 2026-10-18T14:24:33Z, done 2026-10-18T14:30:38Z -> start and finish written at separate boundaries
+  ST-05: start 2026-10-18T14:24:33Z, done 2026-10-18T14:30:38Z -> start and finish written at separate boundaries
+  ST-08: start 2026-10-18T14:30:38Z, done 2026-10-18T14:47:48Z -> start and finish written at separate boundaries
+$ status-write validate --file <clone-root>/do-it/docs/implementation/harness-status-tracking/status.json
+  exit 0
+  stdout: valid
+  ok   history has 3 distinct write times, not one write at the end
+  ok   every task started after the board existed has its start and finish at separate times
+  ok   history chain validates
+  caveat: W1 (ST-01, ST-02, ST-06, ST-07) ran before the writer existed and was recorded in one batch at board creation (D-16); per-task boundaries hold for W2 and W3 (4 tasks), where W2's three parallel tasks share wave-level timestamps.
+
+AT-22: PASS
