@@ -152,7 +152,8 @@ export function checkTone(text) {
   const errs = [];
   const prose = outsideCode(text);
   for (const re of [/coming soon/i, /next month/i, /\b20[2-9]\d-\d\d\b/, /\b(TODO|TBD|FIXME|WIP)\b/, /lorem ipsum/i]) if (re.test(prose)) errs.push('tone: matches ' + re);
-  for (const m of prose.replace(/<\/?(div|h[1-6]|strong|em|a|img|br|p|details|summary|sub|sup)\b[^>]*>/g, '').matchAll(/<[A-Za-z][^>\n]*>/g)) errs.push('tone: angle-bracket placeholder ' + m[0]);
+  // picture and source are real markup (the reduced-motion poster for the README GIFs), not placeholders.
+  for (const m of prose.replace(/<\/?(div|h[1-6]|strong|em|a|img|br|p|details|summary|sub|sup|picture|source)\b[^>]*>/g, '').matchAll(/<[A-Za-z][^>\n]*>/g)) errs.push('tone: angle-bracket placeholder ' + m[0]);
   const status = sectionBody(text, 'Status');
   if (!/honest claim/i.test(status)) errs.push('Status has no honest claim paragraph');
   if (new RegExp(['her'+'mes','open'+'claw'].join('|'), 'i').test(text)) errs.push('out-of-scope host named');

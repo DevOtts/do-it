@@ -1,5 +1,10 @@
 <div align="center">
 
+<picture>
+  <source media="(prefers-reduced-motion: reduce)" srcset="assets/marketing/final/a-clip1-header-poster.png">
+  <img src="assets/marketing/final/a-clip1-header.gif" width="100%" alt="do-it, illustrated: a man says just do it while one message travels through prompt-it, plan-it, build-it, review-it, deploy-it and conclude-it and ends as a verified delivery">
+</picture>
+
 <h1>do-it</h1>
 
 <h3><strong>One message in. A verified delivery out.</strong></h3>
@@ -288,5 +293,14 @@ Legend: **Native** = built for the host's features. **Supported** = full pipelin
 ## License
 
 [MIT](LICENSE). Free to use, change and ship.
+
+<div align="center">
+
+<picture>
+  <source media="(prefers-reduced-motion: reduce)" srcset="assets/marketing/final/b-clip2-outro-poster.png">
+  <img src="assets/marketing/final/b-clip2-outro.gif" width="100%" alt="do-it, illustrated: one message goes in, travels through the six stages, and comes out verified">
+</picture>
+
+</div>
 
 _Built by [DevOtts](https://github.com/DevOtts)._
