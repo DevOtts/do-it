@@ -1,0 +1,12 @@
+  ✓ SKILL.md ≡ plugins/plan-it/skills/plan-it/SKILL.md (39497 bytes)
+  ✓ machine.json ≡ plugins/plan-it/skills/plan-it/machine.json (13602 bytes)
+  ✓ scripts/gate-check.mjs ≡ plugins/plan-it/skills/plan-it/scripts/gate-check.mjs (136272 bytes)
+  ✓ scripts/hooks/planit-guard.mjs ≡ plugins/plan-it/scripts/hooks/planit-guard.mjs (8137 bytes)
+  ✓ references/formats.md ≡ plugins/plan-it/skills/plan-it/references/formats.md (11270 bytes)
+  ✓ references/machine.md ≡ plugins/plan-it/skills/plan-it/references/machine.md (11231 bytes)
+  ✓ references/playbooks.md ≡ plugins/plan-it/skills/plan-it/references/playbooks.md (16851 bytes)
+  ✓ references/templates.md ≡ plugins/plan-it/skills/plan-it/references/templates.md (29605 bytes)
+  ✓ scripts/build-report.mjs ≡ plugins/plan-it/skills/plan-it/scripts/build-report.mjs (49588 bytes)
+  ✓ scripts/report-template.html ≡ plugins/plan-it/skills/plan-it/scripts/report-template.html (9570 bytes)
+  ✓ assets/brand/default.brand.json ≡ plugins/plan-it/skills/plan-it/assets/brand/default.brand.json (1551 bytes)
+PASS — mirror-check: 11 pair(s) byte-identical

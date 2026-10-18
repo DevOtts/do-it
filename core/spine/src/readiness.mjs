@@ -42,6 +42,8 @@ export function checkReadiness(ctx) {
   }
   const errors = validateSchema(loadSchemaFile('readiness.schema.json'), data);
   if (errors.length) return { ok: false, outcome: 'READINESS_INVALID', extra: { file, errors } };
+  const cpErrors = checkpointErrors(data.review_checkpoints);
+  if (cpErrors.length) return { ok: false, outcome: 'READINESS_INVALID', extra: { file, errors: cpErrors } };
   const unresolved = decisionList(data.decisions).filter((d) => d.state !== 'RESOLVED' && d.state !== 'DEFAULTED').map((d) => d.id);
   if (unresolved.length) return { ok: false, outcome: 'READINESS_UNRESOLVED', extra: { decisions: unresolved } };
   if (data.preflight.passed !== true) return { ok: false, outcome: 'READINESS_PREFLIGHT_FAILED', extra: {} };
@@ -61,6 +63,34 @@ export function rereadReadiness(ctx, state) {
   if (v.ok) return null;
   appendEvent(ctx, state.run_id, { event: 'readiness_revoked', stage: state.stage, host: state.host, verdict: v.outcome, detail: { outcome: v.outcome, ...v.extra } });
   return fail(v.outcome, 1, { run_id: state.run_id, revoked: true, ...v.extra });
+}
+
+// review_checkpoints (CHECKPOINT-POLICY v1) is decided by plan-it; the spine
+// only checks it is self-consistent and turns each checkpoint into a
+// finish-line row, so a run cannot close without its review-it verdicts.
+export const CHECKPOINT_ROW_PREFIX = 'checkpoint:';
+
+export function checkpointErrors(block) {
+  if (block === undefined) return [];
+  const errors = [];
+  const list = Array.isArray(block.checkpoints) ? block.checkpoints : [];
+  if (block.count !== list.length) errors.push({ pointer: '/review_checkpoints/count', message: 'count ' + block.count + ' does not match ' + list.length + ' checkpoint(s)' });
+  list.forEach((c, i) => {
+    const want = 'CP-' + String(i + 1).padStart(2, '0');
+    if (c.id !== want) errors.push({ pointer: '/review_checkpoints/checkpoints/' + i + '/id', message: 'must be ' + want });
+  });
+  return errors;
+}
+
+export function seedCheckpoints(state, fl, data) {
+  const block = data.review_checkpoints;
+  if (!block) return 0;
+  state.review_checkpoints = { count: block.count, level: block.level || null, checkpoints: block.checkpoints.map((c) => ({ id: c.id, kind: c.kind, at: c.at || null, evidence: c.evidence })) };
+  for (const c of block.checkpoints) {
+    const id = CHECKPOINT_ROW_PREFIX + c.id;
+    if (!fl.rows.some((r) => r.id === id)) finishLineUpsert(fl, id, { kind: 'package' });
+  }
+  return block.count;
 }
 
 export function seedSlices(state, data) {
@@ -109,6 +139,7 @@ export function gateBuild(ctx, args) {
   }
   const from = state.status;
   seedSlices(state, v.data);
+  const checkpoints = seedCheckpoints(state, fl, v.data);
   state.gates.build = { approved: true, owner: 'readiness', date: now, readiness_sha256: v.sha256 };
   state.status = 'BUILDING';
   writeState(ctx, state);
@@ -120,6 +151,6 @@ export function gateBuild(ctx, args) {
     finishLineUpsert(fl, CRED_ROW_ID, { state: 'DONE', reason: null, evidence: path.relative(ctx.repo, readinessPath(ctx)) });
   }
   writeFinishLine(ctx, fl);
-  appendEvent(ctx, runId, { event: 'build_approved', stage: state.stage, host: state.host, verdict: 'READINESS_OK', detail: { from, readiness_sha256: v.sha256, slices: state.slices.length } });
-  return { outcome: 'READINESS_OK', exit: 0, run_id: runId, status: 'BUILDING', slices: state.slices.map((s) => s.id) };
+  appendEvent(ctx, runId, { event: 'build_approved', stage: state.stage, host: state.host, verdict: 'READINESS_OK', detail: { from, readiness_sha256: v.sha256, slices: state.slices.length, review_checkpoints: checkpoints } });
+  return { outcome: 'READINESS_OK', exit: 0, run_id: runId, status: 'BUILDING', slices: state.slices.map((s) => s.id), review_checkpoints: checkpoints };
 }

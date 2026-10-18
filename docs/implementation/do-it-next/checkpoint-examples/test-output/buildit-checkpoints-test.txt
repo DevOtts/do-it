@@ -1,0 +1,70 @@
+TAP version 13
+# Subtest: the fixture block (harness-status-tracking) validates
+ok 1 - the fixture block (harness-status-tracking) validates
+  ---
+  duration_ms: 0.699875
+  type: 'test'
+  ...
+# Subtest: validateBlock refuses tampering
+ok 2 - validateBlock refuses tampering
+  ---
+  duration_ms: 0.196084
+  type: 'test'
+  ...
+# Subtest: dueAt maps boundaries to checkpoints
+ok 3 - dueAt maps boundaries to checkpoints
+  ---
+  duration_ms: 0.153167
+  type: 'test'
+  ...
+# Subtest: readVerdict: missing, empty, wrong id, no verdict line, FAIL, PASS
+ok 4 - readVerdict: missing, empty, wrong id, no verdict line, FAIL, PASS
+  ---
+  duration_ms: 1.85875
+  type: 'test'
+  ...
+# Subtest: CLI plan lists every checkpoint; no READINESS is exit 2
+ok 5 - CLI plan lists every checkpoint; no READINESS is exit 2
+  ---
+  duration_ms: 50.934166
+  type: 'test'
+  ...
+# Subtest: CLI: an older plan with no block is exit 2 and names the one-checkpoint fallback
+ok 6 - CLI: an older plan with no block is exit 2 and names the one-checkpoint fallback
+  ---
+  duration_ms: 28.645708
+  type: 'test'
+  ...
+# Subtest: CLI: zero-task plan says there is nothing to review
+ok 7 - CLI: zero-task plan says there is nothing to review
+  ---
+  duration_ms: 46.438166
+  type: 'test'
+  ...
+# Subtest: CLI due: exit 0 with the verdict path, 3 when nothing is due
+ok 8 - CLI due: exit 0 with the verdict path, 3 when nothing is due
+  ---
+  duration_ms: 78.25975
+  type: 'test'
+  ...
+# Subtest: CLI check gates the boundary: missing 2, FAIL 1, PASS 0
+ok 9 - CLI check gates the boundary: missing 2, FAIL 1, PASS 0
+  ---
+  duration_ms: 93.595416
+  type: 'test'
+  ...
+# Subtest: CLI status is 0 only when every checkpoint has a PASS verdict
+ok 10 - CLI status is 0 only when every checkpoint has a PASS verdict
+  ---
+  duration_ms: 74.356292
+  type: 'test'
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 418.096458

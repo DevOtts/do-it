@@ -1,0 +1,91 @@
+core/spine/test/**/*.test.mjs  exit=0  tests=93 pass=93 fail=0 skipped=0
+core/routing/tests/*.test.mjs  exit=0  tests=24 pass=24 fail=0 skipped=0
+core/cache/tests/**/*.test.mjs  exit=0  tests=18 pass=18 fail=0 skipped=0
+core/pipelines/tests/*.test.mjs  exit=0  tests=11 pass=11 fail=0 skipped=0
+core/pipelines/review-loop/tests/*.test.mjs  exit=0  tests=23 pass=23 fail=0 skipped=0
+core/personas/tests/*.test.mjs  exit=0  tests=7 pass=7 fail=0 skipped=0
+core/state-stores/tests/*.test.mjs  exit=0  tests=21 pass=21 fail=0 skipped=0
+hosts/_interface/tests/*.test.mjs  exit=0  tests=18 pass=18 fail=0 skipped=0
+hosts/codex/tests/*.test.mjs  exit=0  tests=17 pass=17 fail=0 skipped=0
+hosts/opencode/tests/*.test.mjs  exit=0  tests=18 pass=18 fail=0 skipped=0
+hosts/engine/tests/*.test.mjs  exit=0  tests=35 pass=35 fail=0 skipped=0
+tests/plugin/*.test.mjs  exit=0  tests=16 pass=16 fail=0 skipped=0
+tests/catalog/*.test.mjs  exit=0  tests=16 pass=16 fail=0 skipped=0
+tests/readme/*.test.mjs  exit=0  tests=22 pass=22 fail=0 skipped=0
+tests/e2e/r4.test.mjs  exit=0  tests=27 pass=25 fail=0 skipped=2
+
+===== core/spine/test/**/*.test.mjs  exit=0  tests=93 pass=93 fail=0 skipped=0
+# tests 93
+# pass 93
+# fail 0
+# skipped 0
+===== core/routing/tests/*.test.mjs  exit=0  tests=24 pass=24 fail=0 skipped=0
+# tests 24
+# pass 24
+# fail 0
+# skipped 0
+===== core/cache/tests/**/*.test.mjs  exit=0  tests=18 pass=18 fail=0 skipped=0
+# tests 18
+# pass 18
+# fail 0
+# skipped 0
+===== core/pipelines/tests/*.test.mjs  exit=0  tests=11 pass=11 fail=0 skipped=0
+# tests 11
+# pass 11
+# fail 0
+# skipped 0
+===== core/pipelines/review-loop/tests/*.test.mjs  exit=0  tests=23 pass=23 fail=0 skipped=0
+# tests 23
+# pass 23
+# fail 0
+# skipped 0
+===== core/personas/tests/*.test.mjs  exit=0  tests=7 pass=7 fail=0 skipped=0
+# tests 7
+# pass 7
+# fail 0
+# skipped 0
+===== core/state-stores/tests/*.test.mjs  exit=0  tests=21 pass=21 fail=0 skipped=0
+# tests 21
+# pass 21
+# fail 0
+# skipped 0
+===== hosts/_interface/tests/*.test.mjs  exit=0  tests=18 pass=18 fail=0 skipped=0
+# tests 18
+# pass 18
+# fail 0
+# skipped 0
+===== hosts/codex/tests/*.test.mjs  exit=0  tests=17 pass=17 fail=0 skipped=0
+# tests 17
+# pass 17
+# fail 0
+# skipped 0
+===== hosts/opencode/tests/*.test.mjs  exit=0  tests=18 pass=18 fail=0 skipped=0
+# tests 18
+# pass 18
+# fail 0
+# skipped 0
+===== hosts/engine/tests/*.test.mjs  exit=0  tests=35 pass=35 fail=0 skipped=0
+# tests 35
+# pass 35
+# fail 0
+# skipped 0
+===== tests/plugin/*.test.mjs  exit=0  tests=16 pass=16 fail=0 skipped=0
+# tests 16
+# pass 16
+# fail 0
+# skipped 0
+===== tests/catalog/*.test.mjs  exit=0  tests=16 pass=16 fail=0 skipped=0
+# tests 16
+# pass 16
+# fail 0
+# skipped 0
+===== tests/readme/*.test.mjs  exit=0  tests=22 pass=22 fail=0 skipped=0
+# tests 22
+# pass 22
+# fail 0
+# skipped 0
+===== tests/e2e/r4.test.mjs  exit=0  tests=27 pass=25 fail=0 skipped=2
+# tests 27
+# pass 25
+# fail 0
+# skipped 2

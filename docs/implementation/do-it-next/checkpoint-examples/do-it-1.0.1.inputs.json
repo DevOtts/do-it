@@ -1,0 +1,21 @@
+{
+  "implementation": "do-it-1.0.1",
+  "tasks": 16,
+  "epics": 3,
+  "adversarial_wave": "W3",
+  "waves": [
+    { "id": "W1", "tasks": ["ST-01", "ST-02", "ST-06", "ST-07", "CP-POLICY", "CP-EMIT"] },
+    { "id": "W2", "tasks": ["ST-03", "ST-04", "ST-05", "CP-READ", "CP-SEED"] },
+    { "id": "W3", "tasks": ["ST-08", "CP-ADV"] },
+    { "id": "W4", "tasks": ["REL-PINS", "REL-CHANGELOG", "REL-TAG"] }
+  ],
+  "flags": {
+    "cross_cutting": "status-write and review_checkpoints are read by four plugins and the do-it spine; build-it run loop changes",
+    "owner_gated": "the version bump, the release tag and repo visibility need Fernando's yes",
+    "new_surface": "status.json schema 1, status-write CLI, /doit-status mod, review_checkpoints block in READINESS.json",
+    "data": "status.json and finish-line rows are persisted run state the owner reads as truth",
+    "money": null,
+    "security": null,
+    "prod_facing": "a tagged release of do-it plus companion plugin releases installed by every session"
+  }
+}

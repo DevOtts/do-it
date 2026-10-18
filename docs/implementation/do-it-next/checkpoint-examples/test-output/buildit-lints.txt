@@ -1,0 +1,10 @@
+PASS  t11-launch-unattended.sh
+PASS  t16-loops-feeders.sh
+PASS  t17-cdp-dedup.sh
+PASS  t2-conductor.sh
+PASS  t20-release.sh
+PASS  t24-launch-routing.sh
+PASS  t8-verifier-prompt.sh
+PASS  consistency-7-2.sh
+PASS  hooks/tests/run-tests.sh
+ALL LINTS + UNIT TESTS GREEN
