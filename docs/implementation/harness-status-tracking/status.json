@@ -1,0 +1,283 @@
+{
+  "schema": 1,
+  "implementation": "harness-status-tracking",
+  "title": "Harness status tracking",
+  "updated_at": "2026-10-18T14:47:48Z",
+  "approximate": false,
+  "closed": false,
+  "waves": [
+    {
+      "id": "W1",
+      "title": "Writer, render, migration, plan-it",
+      "tasks": [
+        {
+          "id": "ST-01",
+          "title": "Schema v1, shared writer and validator",
+          "status": "done",
+          "blocked_on": null,
+          "evidence": "docs/implementation/harness-status-tracking/evidence/ST-01.md",
+          "owner": "build-it:sonnet",
+          "updated_at": "2026-10-18T14:24:33Z",
+          "note": null
+        },
+        {
+          "id": "ST-06",
+          "title": "Render STATUS.md from status.json",
+          "status": "done",
+          "blocked_on": null,
+          "evidence": "docs/implementation/harness-status-tracking/evidence/ST-06.md",
+          "owner": "build-it:haiku",
+          "updated_at": "2026-10-18T14:24:33Z",
+          "note": null
+        },
+        {
+          "id": "ST-07",
+          "title": "Migration script, run on do-it and one ANM package",
+          "status": "done",
+          "blocked_on": null,
+          "evidence": "docs/implementation/harness-status-tracking/evidence/ST-07.md",
+          "owner": "build-it:sonnet",
+          "updated_at": "2026-10-18T14:24:33Z",
+          "note": null
+        },
+        {
+          "id": "ST-02",
+          "title": "plan-it creates status.json from epics and Test Contract",
+          "status": "done",
+          "blocked_on": null,
+          "evidence": "docs/implementation/harness-status-tracking/evidence/ST-02.md",
+          "owner": "build-it:sonnet",
+          "updated_at": "2026-10-18T14:24:33Z",
+          "note": null
+        }
+      ]
+    },
+    {
+      "id": "W2",
+      "title": "Lifecycle callers",
+      "tasks": [
+        {
+          "id": "ST-03",
+          "title": "build-it updates status and evidence at task boundaries",
+          "status": "done",
+          "blocked_on": null,
+          "evidence": "docs/implementation/harness-status-tracking/evidence/ST-03.md",
+          "owner": "build-it:opus",
+          "updated_at": "2026-10-18T14:30:38Z",
+          "note": null
+        },
+        {
+          "id": "ST-04",
+          "title": "review-it path: set verified from the verdict",
+          "status": "done",
+          "blocked_on": null,
+          "evidence": "docs/implementation/harness-status-tracking/evidence/ST-04.md",
+          "owner": "build-it:sonnet",
+          "updated_at": "2026-10-18T14:30:38Z",
+          "note": null
+        },
+        {
+          "id": "ST-05",
+          "title": "conclude-it path: final state, freeze, move to 0-done with the guard",
+          "status": "done",
+          "blocked_on": null,
+          "evidence": "docs/implementation/harness-status-tracking/evidence/ST-05.md",
+          "owner": "build-it:sonnet",
+          "updated_at": "2026-10-18T14:30:38Z",
+          "note": null
+        }
+      ]
+    },
+    {
+      "id": "W3",
+      "title": "Adversarial review",
+      "tasks": [
+        {
+          "id": "ST-08",
+          "title": "Adversarial review: try to get a fake 100% through every writer",
+          "status": "done",
+          "blocked_on": null,
+          "evidence": "docs/implementation/harness-status-tracking/evidence/ST-08.md",
+          "owner": "build-it:opus",
+          "updated_at": "2026-10-18T14:47:48Z",
+          "note": null
+        }
+      ]
+    }
+  ],
+  "sessions": [],
+  "pieces": [
+    {
+      "piece": "Shared writer",
+      "status": "done",
+      "blocked_on": null,
+      "whats_left": "Verification by review-it"
+    },
+    {
+      "piece": "plan-it creation",
+      "status": "done",
+      "blocked_on": null,
+      "whats_left": "Verification by review-it"
+    },
+    {
+      "piece": "build-it boundaries",
+      "status": "done",
+      "blocked_on": null,
+      "whats_left": "Verification by review-it"
+    },
+    {
+      "piece": "review-it and conclude-it paths",
+      "status": "done",
+      "blocked_on": null,
+      "whats_left": "Wire review-it and conclude-it plugins to call the writer (follow-up)"
+    },
+    {
+      "piece": "STATUS.md render",
+      "status": "done",
+      "blocked_on": null,
+      "whats_left": "Verification by review-it"
+    },
+    {
+      "piece": "Migration",
+      "status": "done",
+      "blocked_on": null,
+      "whats_left": "Verification by review-it"
+    },
+    {
+      "piece": "Adversarial review",
+      "status": "done",
+      "blocked_on": null,
+      "whats_left": "Residual risks listed in the run report"
+    }
+  ],
+  "history": [
+    {
+      "at": "2026-10-18T14:24:33Z",
+      "task": "ST-01",
+      "from": "not-started",
+      "to": "in-progress",
+      "by": "build-it",
+      "note": "bootstrap: task started before the board existed (D-16)"
+    },
+    {
+      "at": "2026-10-18T14:24:33Z",
+      "task": "ST-06",
+      "from": "not-started",
+      "to": "in-progress",
+      "by": "build-it",
+      "note": "bootstrap: task started before the board existed (D-16)"
+    },
+    {
+      "at": "2026-10-18T14:24:33Z",
+      "task": "ST-07",
+      "from": "not-started",
+      "to": "in-progress",
+      "by": "build-it",
+      "note": "bootstrap: task started before the board existed (D-16)"
+    },
+    {
+      "at": "2026-10-18T14:24:33Z",
+      "task": "ST-02",
+      "from": "not-started",
+      "to": "in-progress",
+      "by": "build-it",
+      "note": "bootstrap: task started before the board existed (D-16)"
+    },
+    {
+      "at": "2026-10-18T14:24:33Z",
+      "task": "ST-01",
+      "from": "in-progress",
+      "to": "done",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-10-18T14:24:33Z",
+      "task": "ST-06",
+      "from": "in-progress",
+      "to": "done",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-10-18T14:24:33Z",
+      "task": "ST-07",
+      "from": "in-progress",
+      "to": "done",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-10-18T14:24:33Z",
+      "task": "ST-02",
+      "from": "in-progress",
+      "to": "done",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-10-18T14:24:33Z",
+      "task": "ST-03",
+      "from": "not-started",
+      "to": "in-progress",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-10-18T14:24:33Z",
+      "task": "ST-04",
+      "from": "not-started",
+      "to": "in-progress",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-10-18T14:24:33Z",
+      "task": "ST-05",
+      "from": "not-started",
+      "to": "in-progress",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-10-18T14:30:38Z",
+      "task": "ST-03",
+      "from": "in-progress",
+      "to": "done",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-10-18T14:30:38Z",
+      "task": "ST-04",
+      "from": "in-progress",
+      "to": "done",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-10-18T14:30:38Z",
+      "task": "ST-05",
+      "from": "in-progress",
+      "to": "done",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-10-18T14:30:38Z",
+      "task": "ST-08",
+      "from": "not-started",
+      "to": "in-progress",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-10-18T14:47:48Z",
+      "task": "ST-08",
+      "from": "in-progress",
+      "to": "done",
+      "by": "build-it",
+      "note": null
+    }
+  ]
+}
