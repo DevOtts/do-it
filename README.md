@@ -20,6 +20,7 @@ Hand it a request and walk away. do-it picks the right lifecycle, asks you every
 <img src="https://img.shields.io/badge/Native-Claude_Code-d97706?style=for-the-badge" alt="Native Claude Code">
 <img src="https://img.shields.io/badge/portable-SKILL.md-6366f1?style=for-the-badge" alt="portable SKILL.md">
 <a href="https://github.com/DevOtts"><img src="https://img.shields.io/badge/author-DevOtts-111827?style=for-the-badge" alt="author DevOtts"></a>
+<a href="https://github.com/DevOtts/do-it/releases/latest"><img src="https://img.shields.io/github/v/release/DevOtts/do-it?style=for-the-badge&label=version&color=00e5a0" alt="version"></a>
 
 <a href="#installation">Install</a>&nbsp;·&nbsp;<a href="#the-bottleneck-it-kills">Why</a>&nbsp;·&nbsp;<a href="#how-it-works">How it works</a>&nbsp;·&nbsp;<a href="#whats-inside">What's inside</a>&nbsp;·&nbsp;<a href="#platform-compatibility">Platforms</a>&nbsp;·&nbsp;<a href="CHANGELOG.md">Changelog</a>
 
