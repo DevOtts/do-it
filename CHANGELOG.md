@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.2
+- Checkpoints no longer serialize the waves. A wave checkpoint holds only the slices that depend on the reviewed work and the promotion of that work, never independent slices (checkpoint items gain `gates` and `covers`, slices gain `wave`; build-it 4.1.1 adds `checkpoints.mjs gate`, plan-it 5.1.1 emits the fields). Older READINESS files are read with the corrected meaning. Policy rewritten, with decisions D13 to D18, in `docs/implementation/do-it-next/CHECKPOINT-POLICY.md`; tests T-CP-05 to T-CP-10.
+- Fix to 1.0.1: the `checkpoint:CP-NN` finish-line row closed for any existing evidence file, without reading the verdict, so a checkpoint could count as satisfied with no PASS. It now closes only when the evidence is that checkpoint's verdict file and the file passes the same rule build-it reads (one overall verdict, code blocks and comments ignored, PASS with FAIL is not a pass); otherwise the row stays OPEN and `record` answers `CHECKPOINT_NOT_PASS`.
+- `gate build` rejects a `depends_on` cycle (READINESS_INVALID with the cycle printed) instead of leaving the slices unrunnable with no explanation.
+- Marketplace: the version labels of the siblings equal the pins in `companions.json` (they showed old versions on a real install), and `check-pins --marketplace` fails on that drift.
+- Companion pins: plan-it 5.1.1, build-it 4.1.1, review-it 2.1.1, conclude-it 2.1.1. prompt-it, parallel-lifecycle, deploy-it and reconcile-it are unchanged. plan-it, review-it and conclude-it now name their marketplace after themselves, so `devotts` is only this hub.
+- README: the version badge the header check requires once a release exists.
+- Known limits: `gate` needs each slice to carry its `wave` to resolve a wave checkpoint, and exits 1 saying so when it does not. A `verified` status row is still a claim, not proof.
+
 ## 1.0.1
 - Review checkpoints: plan-it decides the number and position of review-it checkpoints from size, complexity and importance and records it in `READINESS.json`; the spine reads it and a run does not close without each checkpoint's PASS verdict, as a `checkpoint:CP-NN` finish-line row. Policy in `docs/implementation/do-it-next/CHECKPOINT-POLICY.md`; tests T-CP-01 to T-CP-04.
 - Status tracking: the harness-status-tracking board and the program board (`docs/implementation/do-it-next/status.json`, migrated from `delivery/STATUS.md` and marked approximate) are written through build-it's status writer. 41 of the 42 binding status cases are verified against real artifacts; the stale half of T-B-20 is parked until a commit lands more than 24 hours after the board.
