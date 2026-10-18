@@ -59,6 +59,8 @@ Checkpoints are numbered `CP-01`, `CP-02` and so on, in run order: wave and phas
 
 Finding H-10 (first real run, 23 epics, 5 waves): writing `blocks: start of W<n+1>` and reading it as "do not cross" stopped the whole next wave, including epics that depended on nothing in the finished wave. That is the wave lock again. The rule now: a checkpoint may hold the promotion of the work it reviewed and the work that depends on it, never independent work.
 
+Finding H-21 (same run, on the real plan): with the whole of W0 covered, a W0 slice that needs another W0 slice waited on the W0 checkpoint, a review that only runs after W0 has ended, so W0 could never finish. A checkpoint reviews the work it covers, so it cannot hold the start of that same work: `dependents` holds the slices outside the covered work that depend on it.
+
 Each checkpoint carries two optional fields (schema stays `review-checkpoints/1`; the fields are additive):
 
 - `gates`: what it holds until its verdict is PASS, a subset of `dependents`, `promotion`, `merge`, `release`.
@@ -66,7 +68,7 @@ Each checkpoint carries two optional fields (schema stays `review-checkpoints/1`
 
 | Gate | Holds until PASS | Never holds |
 |---|---|---|
-| `dependents` | The start of any slice that depends, directly or through other slices (`depends_on`), on covered work | A slice that depends on nothing covered |
+| `dependents` | The start of any slice outside the covered work that depends, directly or through other slices (`depends_on`), on covered work | A slice that depends on nothing covered, and a slice that is itself covered work (it waits on its own dependencies, not on a review that only runs after it) |
 | `promotion` | Promoting covered work beyond the integration environment: deploy, cut over, publish | Work in the integration environment |
 | `merge` | Merge to the main branch | Starting or building anything |
 | `release` | Tag, publish or deploy of the release (a release also needs every `promotion` gate, since it publishes all the work) | Starting or building anything |
@@ -126,6 +128,8 @@ In a do-it run, `do-it gate build` turns each checkpoint into a finish-line row 
 | Older block with no `gates`/`covers` (`blocks: start of W2`) | Read with the corrected meaning (section 3a): an independent next-wave slice is allowed |
 | A wave id in `covers`, slices with no `wave` | `gate` exits 1 and says plan-it must tag slices; it does not guess |
 | A slice that depends on a covered slice, directly or through others | `gate --action start` exits 2 naming the checkpoint |
+| A slice inside the covered wave that depends on another slice of that wave (H-21) | Not held by that wave's checkpoint: it waits on its own dependencies. `gate --action start` exits 0 with no verdict |
+| `due --at merge` and `due --at release` (H-22) | Aliases of the `pre-merge` and `pre-release` kinds. They used to match the `at` text by prefix, which returned the pre-release checkpoint for `merge` and nothing for `release` |
 | `depends_on`, `covers` or `gates` that is not a list (of strings) | A plan error: `gate` exits 1 naming the slice or checkpoint; do-it says READINESS_INVALID |
 | A cycle in `depends_on` | A plan error: `gate --action start` exits 1 and prints it (`A -> C -> A`); do-it says READINESS_INVALID with the cycle |
 | A verdict file with PASS and FAIL lines, or PASS only inside code or a comment | Not a pass: `gate` exits 2, `check` exits 1, the do-it row stays OPEN |
@@ -207,6 +211,7 @@ Format: the default that is applied, the alternatives, and the recommendation. "
 | D16 | Merge and wave verdicts | (a) Wave checkpoints do not hold the merge; pre-merge does. Recommended: follows the contract; the run still closes only on all PASS | (b) merge needs every checkpoint | pre-approved |
 | D17 | Blocked and unknown at once | (a) Exit 2, listing the unknowns too. Recommended: the block is certain either way | (b) exit 1 | pre-approved |
 | D18 | Old `phase` checkpoint | (a) Coverage unknown, so a dependent start is exit 1 until plan-it is re-run. Recommended: its `at` names only the lock task, and guessing the rest is what fail-loud forbids | (b) treat the slices before the lock in list order as covered | pre-approved |
+| D19 | A checkpoint and the work it covers (H-21) | (a) A checkpoint never holds the start of the work it covers; it holds slices outside it that depend on it, and the promotion of the covered work. Recommended: the review runs after the covered work ends, so holding that work's own slices is a deadlock | (b) hold covered slices that depend on other covered slices until a partial review; rejected, there is no partial review to wait for | pre-approved |
 
 ## 9. Not done here
 

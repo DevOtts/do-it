@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.3
+- Checkpoints, second fix from the first real run. A checkpoint no longer holds the start of the work it covers (H-21): with W0 covered, a W0 slice that needs another W0 slice waited on a review that only runs after W0 ends, so the wave could never finish. It holds the slices outside the covered work that depend on it, and the promotion of that work. `due --at merge` and `due --at release` returned the wrong checkpoint or none (H-22); they are now aliases of the `pre-merge` and `pre-release` kinds. Both fixes are in build-it 4.1.2; the policy states the rule, with decision D19.
+- plan-it 5.1.2 (H-23): the glossary check no longer reads a `STATUS.md` generated from `status.json` as prose (47 false unknown ids on the real package).
+- Companion pins: plan-it 5.1.2, build-it 4.1.2. review-it 2.1.1, conclude-it 2.1.1, prompt-it 1.0.0, parallel-lifecycle 1.0.0, deploy-it 1.0.0 and reconcile-it 1.0.0 are unchanged.
+- Known limits: `gate` needs each slice to carry its `wave` to resolve a wave checkpoint, and exits 1 saying so when it does not. A `verified` status row is still a claim, not proof.
+
 ## 1.0.2
 - Checkpoints no longer serialize the waves. A wave checkpoint holds only the slices that depend on the reviewed work and the promotion of that work, never independent slices (checkpoint items gain `gates` and `covers`, slices gain `wave`; build-it 4.1.1 adds `checkpoints.mjs gate`, plan-it 5.1.1 emits the fields). Older READINESS files are read with the corrected meaning. Policy rewritten, with decisions D13 to D18, in `docs/implementation/do-it-next/CHECKPOINT-POLICY.md`; tests T-CP-05 to T-CP-10.
 - Fix to 1.0.1: the `checkpoint:CP-NN` finish-line row closed for any existing evidence file, without reading the verdict, so a checkpoint could count as satisfied with no PASS. It now closes only when the evidence is that checkpoint's verdict file and the file passes the same rule build-it reads (one overall verdict, code blocks and comments ignored, PASS with FAIL is not a pass); otherwise the row stays OPEN and `record` answers `CHECKPOINT_NOT_PASS`.

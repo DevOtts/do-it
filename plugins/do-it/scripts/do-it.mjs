@@ -1717,10 +1717,10 @@ function checkpointErrors(block) {
   return errors;
 }
 
-// What a checkpoint holds until PASS. It holds the start of slices that depend on
-// covered work, the promotion of covered work, the merge or the release, never
-// independent work (finding H-10). Plans written before `gates` existed get the
-// same corrected meaning, read from the kind.
+// What a checkpoint holds until PASS. It holds the start of slices outside the covered work that
+// depend on it, the promotion of covered work, the merge or the release. It never holds independent work
+// (finding H-10), nor the start of the work it covers (finding H-21). Plans written before `gates`
+// existed get the same corrected meaning, read from the kind.
 function checkpointGates(c) {
   if (Array.isArray(c.gates)) return c.gates;
   if (c.kind === 'wave' || c.kind === 'phase') return ['dependents', 'promotion'];
@@ -3004,7 +3004,7 @@ function gateVerify(ctx, args) {
 }
 
 // ---- version.mjs ----
-const DO_IT_VERSION = '1.0.2';
+const DO_IT_VERSION = '1.0.3';
 
 // ---- wake.mjs ----
 const NO_WAKE_TEXT = 'no wake: parked; run do-it resume after the reset';
