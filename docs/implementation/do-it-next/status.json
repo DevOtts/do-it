@@ -1,0 +1,533 @@
+{
+  "schema": 1,
+  "implementation": "do-it-next",
+  "title": "do-it 1.0.1 program board",
+  "updated_at": "2026-10-18T17:08:15Z",
+  "approximate": true,
+  "closed": false,
+  "waves": [
+    {
+      "id": "W0",
+      "title": "W0",
+      "tasks": [
+        {
+          "id": "S1",
+          "title": "state, schemas, settings, doctor",
+          "status": "verified",
+          "blocked_on": null,
+          "evidence": ".taskstate/evidence.md",
+          "owner": "spine",
+          "updated_at": "2026-10-18T17:08:15Z",
+          "note": null
+        },
+        {
+          "id": "S3",
+          "title": "record, gate, evidence, conclude",
+          "status": "verified",
+          "blocked_on": null,
+          "evidence": ".taskstate/evidence.md",
+          "owner": "spine",
+          "updated_at": "2026-10-18T17:08:15Z",
+          "note": null
+        },
+        {
+          "id": "H0",
+          "title": "host interface and conformance",
+          "status": "verified",
+          "blocked_on": null,
+          "evidence": ".taskstate/evidence.md",
+          "owner": "hosts-a",
+          "updated_at": "2026-10-18T17:08:15Z",
+          "note": null
+        },
+        {
+          "id": "R2",
+          "title": "plugin shell, marketplace, companions",
+          "status": "verified",
+          "blocked_on": null,
+          "evidence": ".taskstate/evidence.md",
+          "owner": "ship",
+          "updated_at": "2026-10-18T17:08:15Z",
+          "note": null
+        }
+      ]
+    },
+    {
+      "id": "W1",
+      "title": "W1",
+      "tasks": [
+        {
+          "id": "S2",
+          "title": "router, next, finish-line, stop-gate",
+          "status": "verified",
+          "blocked_on": null,
+          "evidence": ".taskstate/evidence.md",
+          "owner": "spine",
+          "updated_at": "2026-10-18T17:08:15Z",
+          "note": null
+        },
+        {
+          "id": "S5",
+          "title": "handoff, park, resume, ceilings, secrets",
+          "status": "done",
+          "blocked_on": null,
+          "evidence": ".taskstate/evidence.md",
+          "owner": "spine",
+          "updated_at": "2026-10-18T17:08:15Z",
+          "note": null
+        },
+        {
+          "id": "P2",
+          "title": "tier policy, briefs, meter",
+          "status": "verified",
+          "blocked_on": null,
+          "evidence": ".taskstate/evidence.md",
+          "owner": "economy",
+          "updated_at": "2026-10-18T17:08:15Z",
+          "note": null
+        },
+        {
+          "id": "H1",
+          "title": "claude-code adapter",
+          "status": "verified",
+          "blocked_on": null,
+          "evidence": ".taskstate/evidence.md",
+          "owner": "hosts-a",
+          "updated_at": "2026-10-18T17:08:15Z",
+          "note": null
+        },
+        {
+          "id": "R4",
+          "title": "fixtures and e2e",
+          "status": "done",
+          "blocked_on": null,
+          "evidence": ".taskstate/evidence.md",
+          "owner": "ship",
+          "updated_at": "2026-10-18T17:08:15Z",
+          "note": null
+        }
+      ]
+    },
+    {
+      "id": "W2",
+      "title": "W2",
+      "tasks": [
+        {
+          "id": "S4",
+          "title": "owner pack, answer, renderers",
+          "status": "verified",
+          "blocked_on": null,
+          "evidence": ".taskstate/evidence.md",
+          "owner": "spine",
+          "updated_at": "2026-10-18T17:08:15Z",
+          "note": null
+        },
+        {
+          "id": "P1",
+          "title": "pipelines and personas",
+          "status": "verified",
+          "blocked_on": null,
+          "evidence": ".taskstate/evidence.md",
+          "owner": "economy",
+          "updated_at": "2026-10-18T17:08:15Z",
+          "note": null
+        },
+        {
+          "id": "P4",
+          "title": "review-loop convergence",
+          "status": "verified",
+          "blocked_on": null,
+          "evidence": ".taskstate/evidence.md",
+          "owner": "economy",
+          "updated_at": "2026-10-18T17:08:15Z",
+          "note": null
+        },
+        {
+          "id": "H2",
+          "title": "codex adapter",
+          "status": "verified",
+          "blocked_on": null,
+          "evidence": ".taskstate/evidence.md",
+          "owner": "hosts-a",
+          "updated_at": "2026-10-18T17:08:15Z",
+          "note": null
+        },
+        {
+          "id": "H3",
+          "title": "opencode adapter",
+          "status": "verified",
+          "blocked_on": null,
+          "evidence": ".taskstate/evidence.md",
+          "owner": "hosts-a",
+          "updated_at": "2026-10-18T17:08:15Z",
+          "note": null
+        },
+        {
+          "id": "N2",
+          "title": "StateStore and backends",
+          "status": "verified",
+          "blocked_on": null,
+          "evidence": ".taskstate/evidence.md",
+          "owner": "engine",
+          "updated_at": "2026-10-18T17:08:15Z",
+          "note": null
+        }
+      ]
+    },
+    {
+      "id": "W3",
+      "title": "W3",
+      "tasks": [
+        {
+          "id": "P3",
+          "title": "cache",
+          "status": "verified",
+          "blocked_on": null,
+          "evidence": ".taskstate/evidence.md",
+          "owner": "economy",
+          "updated_at": "2026-10-18T17:08:15Z",
+          "note": null
+        },
+        {
+          "id": "N1",
+          "title": "engine adapter",
+          "status": "verified",
+          "blocked_on": null,
+          "evidence": ".taskstate/results/engine-adapter-live.md",
+          "owner": "engine",
+          "updated_at": "2026-10-18T17:08:15Z",
+          "note": null
+        },
+        {
+          "id": "N3",
+          "title": "Engine-layer handoff and replay",
+          "status": "done",
+          "blocked_on": null,
+          "evidence": ".taskstate/evidence.md",
+          "owner": "engine",
+          "updated_at": "2026-10-18T17:08:15Z",
+          "note": null
+        },
+        {
+          "id": "R3",
+          "title": "companion-change catalog",
+          "status": "verified",
+          "blocked_on": null,
+          "evidence": ".taskstate/evidence.md",
+          "owner": "ship",
+          "updated_at": "2026-10-18T17:08:15Z",
+          "note": null
+        }
+      ]
+    },
+    {
+      "id": "W4",
+      "title": "W4",
+      "tasks": [
+        {
+          "id": "R1",
+          "title": "README and assets",
+          "status": "in-progress",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": "ship",
+          "updated_at": "2026-10-18T17:08:15Z",
+          "note": null
+        }
+      ]
+    }
+  ],
+  "sessions": [],
+  "pieces": [
+    {
+      "piece": "state, schemas, settings, doctor",
+      "status": "verified",
+      "blocked_on": null,
+      "whats_left": "Nothing"
+    },
+    {
+      "piece": "router, next, finish-line, stop-gate",
+      "status": "verified",
+      "blocked_on": null,
+      "whats_left": "Nothing"
+    },
+    {
+      "piece": "record, gate, evidence, conclude",
+      "status": "verified",
+      "blocked_on": null,
+      "whats_left": "Nothing"
+    },
+    {
+      "piece": "owner pack, answer, renderers",
+      "status": "verified",
+      "blocked_on": null,
+      "whats_left": "Nothing"
+    },
+    {
+      "piece": "handoff, park, resume, ceilings, secrets",
+      "status": "done",
+      "blocked_on": null,
+      "whats_left": "T-S5-16,17 live aws/op not run; stub CLI contract only"
+    },
+    {
+      "piece": "pipelines and personas",
+      "status": "verified",
+      "blocked_on": null,
+      "whats_left": "Nothing"
+    },
+    {
+      "piece": "tier policy, briefs, meter",
+      "status": "verified",
+      "blocked_on": null,
+      "whats_left": "Nothing"
+    },
+    {
+      "piece": "cache",
+      "status": "verified",
+      "blocked_on": null,
+      "whats_left": "Nothing"
+    },
+    {
+      "piece": "review-loop convergence",
+      "status": "verified",
+      "blocked_on": null,
+      "whats_left": "Nothing"
+    },
+    {
+      "piece": "host interface and conformance",
+      "status": "verified",
+      "blocked_on": null,
+      "whats_left": "Nothing"
+    },
+    {
+      "piece": "claude-code adapter",
+      "status": "verified",
+      "blocked_on": null,
+      "whats_left": "Nothing"
+    },
+    {
+      "piece": "codex adapter",
+      "status": "verified",
+      "blocked_on": null,
+      "whats_left": "Nothing"
+    },
+    {
+      "piece": "opencode adapter",
+      "status": "verified",
+      "blocked_on": null,
+      "whats_left": "Nothing"
+    },
+    {
+      "piece": "engine adapter",
+      "status": "verified",
+      "blocked_on": null,
+      "whats_left": "Nothing"
+    },
+    {
+      "piece": "StateStore and backends",
+      "status": "verified",
+      "blocked_on": null,
+      "whats_left": "Nothing"
+    },
+    {
+      "piece": "Engine-layer handoff and replay",
+      "status": "done",
+      "blocked_on": null,
+      "whats_left": "T-N3-14: inject + state read-back verified live; no W3 pipeline or drain installed so cards never run"
+    },
+    {
+      "piece": "README and assets",
+      "status": "in-progress",
+      "blocked_on": null,
+      "whats_left": "T-R1-15 compared to stub-host report only"
+    },
+    {
+      "piece": "plugin shell, marketplace, companions",
+      "status": "verified",
+      "blocked_on": null,
+      "whats_left": "Nothing"
+    },
+    {
+      "piece": "companion-change catalog",
+      "status": "verified",
+      "blocked_on": null,
+      "whats_left": "Nothing"
+    },
+    {
+      "piece": "fixtures and e2e",
+      "status": "done",
+      "blocked_on": null,
+      "whats_left": "T-R4-05: Engine reachable but no W3 pipeline/drain, no sandbox is created"
+    }
+  ],
+  "history": [
+    {
+      "at": "2026-10-18T17:08:15Z",
+      "task": "S1",
+      "from": "not-started",
+      "to": "verified",
+      "by": "migration",
+      "note": "migrated from STATUS.md"
+    },
+    {
+      "at": "2026-10-18T17:08:15Z",
+      "task": "S2",
+      "from": "not-started",
+      "to": "verified",
+      "by": "migration",
+      "note": "migrated from STATUS.md"
+    },
+    {
+      "at": "2026-10-18T17:08:15Z",
+      "task": "S3",
+      "from": "not-started",
+      "to": "verified",
+      "by": "migration",
+      "note": "migrated from STATUS.md"
+    },
+    {
+      "at": "2026-10-18T17:08:15Z",
+      "task": "S4",
+      "from": "not-started",
+      "to": "verified",
+      "by": "migration",
+      "note": "migrated from STATUS.md"
+    },
+    {
+      "at": "2026-10-18T17:08:15Z",
+      "task": "S5",
+      "from": "not-started",
+      "to": "done",
+      "by": "migration",
+      "note": "migrated from STATUS.md"
+    },
+    {
+      "at": "2026-10-18T17:08:15Z",
+      "task": "P1",
+      "from": "not-started",
+      "to": "verified",
+      "by": "migration",
+      "note": "migrated from STATUS.md"
+    },
+    {
+      "at": "2026-10-18T17:08:15Z",
+      "task": "P2",
+      "from": "not-started",
+      "to": "verified",
+      "by": "migration",
+      "note": "migrated from STATUS.md"
+    },
+    {
+      "at": "2026-10-18T17:08:15Z",
+      "task": "P3",
+      "from": "not-started",
+      "to": "verified",
+      "by": "migration",
+      "note": "migrated from STATUS.md"
+    },
+    {
+      "at": "2026-10-18T17:08:15Z",
+      "task": "P4",
+      "from": "not-started",
+      "to": "verified",
+      "by": "migration",
+      "note": "migrated from STATUS.md"
+    },
+    {
+      "at": "2026-10-18T17:08:15Z",
+      "task": "H0",
+      "from": "not-started",
+      "to": "verified",
+      "by": "migration",
+      "note": "migrated from STATUS.md"
+    },
+    {
+      "at": "2026-10-18T17:08:15Z",
+      "task": "H1",
+      "from": "not-started",
+      "to": "verified",
+      "by": "migration",
+      "note": "migrated from STATUS.md"
+    },
+    {
+      "at": "2026-10-18T17:08:15Z",
+      "task": "H2",
+      "from": "not-started",
+      "to": "verified",
+      "by": "migration",
+      "note": "migrated from STATUS.md"
+    },
+    {
+      "at": "2026-10-18T17:08:15Z",
+      "task": "H3",
+      "from": "not-started",
+      "to": "verified",
+      "by": "migration",
+      "note": "migrated from STATUS.md"
+    },
+    {
+      "at": "2026-10-18T17:08:15Z",
+      "task": "N1",
+      "from": "not-started",
+      "to": "verified",
+      "by": "migration",
+      "note": "migrated from STATUS.md"
+    },
+    {
+      "at": "2026-10-18T17:08:15Z",
+      "task": "N2",
+      "from": "not-started",
+      "to": "verified",
+      "by": "migration",
+      "note": "migrated from STATUS.md"
+    },
+    {
+      "at": "2026-10-18T17:08:15Z",
+      "task": "N3",
+      "from": "not-started",
+      "to": "done",
+      "by": "migration",
+      "note": "migrated from STATUS.md"
+    },
+    {
+      "at": "2026-10-18T17:08:15Z",
+      "task": "R1",
+      "from": "not-started",
+      "to": "done",
+      "by": "migration",
+      "note": "migrated from STATUS.md"
+    },
+    {
+      "at": "2026-10-18T17:08:15Z",
+      "task": "R1",
+      "from": "done",
+      "to": "in-progress",
+      "by": "migration",
+      "note": "no resolvable evidence: downgraded"
+    },
+    {
+      "at": "2026-10-18T17:08:15Z",
+      "task": "R2",
+      "from": "not-started",
+      "to": "verified",
+      "by": "migration",
+      "note": "migrated from STATUS.md"
+    },
+    {
+      "at": "2026-10-18T17:08:15Z",
+      "task": "R3",
+      "from": "not-started",
+      "to": "verified",
+      "by": "migration",
+      "note": "migrated from STATUS.md"
+    },
+    {
+      "at": "2026-10-18T17:08:15Z",
+      "task": "R4",
+      "from": "not-started",
+      "to": "done",
+      "by": "migration",
+      "note": "migrated from STATUS.md"
+    }
+  ]
+}

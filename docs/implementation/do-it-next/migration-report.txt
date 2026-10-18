@@ -1,0 +1,8 @@
+status-migrate report (delivery/STATUS.md)
+tasks found: 20
+pre-downgrade counts: verified=16 done=4
+final counts: verified=16 done=3 in-progress=1
+downgrades: 1
+  R1: done -> in-progress
+unparsed rows: 0
+wrote: /Users/macbook/Workspace/Devotts/do-it/.claude/worktrees/agent-af84c3501053e0174/docs/implementation/do-it-next/status.json (approximate: true)
