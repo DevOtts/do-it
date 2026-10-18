@@ -258,9 +258,9 @@ do-it/
 
 ## Status
 
-Version 1.0.0, the first stable release.
+Version 1.0.1. The first stable release was 1.0.0.
 
-In it: the spine and its commands, five presets, ten personas, the token meter, the owner pack with three renderers, the review-loop convergence controller, adapters for Claude Code, Codex, OpenCode and Engine, the plugin and marketplace, and the fixtures that back the claims above.
+In it: the spine and its commands, five presets, ten personas, the token meter, the owner pack with three renderers, the review-loop convergence controller, adapters for Claude Code, Codex, OpenCode and Engine, the plugin and marketplace, the review-it checkpoint policy enforced from `READINESS.json` at the finish line, and the fixtures that back the claims above.
 
 Not yet proven:
 
@@ -268,6 +268,7 @@ Not yet proven:
 - Paid host calls were measured on Claude Code only. Codex and OpenCode are covered by adapter tests and conformance, not by a paid end-to-end run.
 - The Codex tier mapping is a best guess that the owner confirms at init.
 - Deploy runs are exercised against fixtures, not against your infrastructure.
+- A `verified` row on the status board is a claim. build-it's writer cannot authenticate which role calls it, so a hand-written verdict can still be passed as review-it's. The board labels the count `verified N (claims)`.
 
 The honest claim: do-it makes the process mechanical and the states honest. It does not make a model smarter. When a row cannot be proven, the report says so instead of showing green.
 
