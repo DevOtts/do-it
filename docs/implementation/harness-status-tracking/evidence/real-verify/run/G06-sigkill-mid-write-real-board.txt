@@ -1,0 +1,23 @@
+# G06-sigkill-mid-write-real-board
+cases: AT-14, T-B-15
+real artifact: docs/implementation/harness-status-tracking/status.json and docs/implementation/do-it-v1/status.json (plan-it, real epics); writer child SIGKILLed the moment status.json.tmp appears; no test hook
+clone of /Users/macbook/Workspace/Devotts/do-it/.claude/worktrees/agent-a3be7e62651731553 at 9a253febda6b202b3d1e522e401eff278254e192; writer plugins/build-it/scripts/status/status-write.mjs
+started 2026-10-18T17:21:26.073Z
+
+$ status-from-plan --package docs/implementation/do-it-v1 --epics delivery/epics   (plan-it main scripts, real do-it v1 epics)
+  exit 0
+  stdout: initialised <clone-root>/do-it/docs/implementation/do-it-v1/status.json (176 tasks)
+          status-from-plan: wrote <clone-root>/do-it/docs/implementation/do-it-v1/status.json (176 tasks, writer: /Users/macbook/Workspace/Devotts/build-it-wt/real-verify/plugins/build-it/scripts/status/status-write.mjs)
+  stderr: 
+trial 1 docs/implementation/harness-status-tracking/status.json: killed (signal SIGKILL) with status.json.tmp on disk (complete JSON, the new state, not renamed); status.json byte-identical to before; valid JSON true
+trial 2 docs/implementation/harness-status-tracking/status.json: killed (signal SIGKILL) with status.json.tmp on disk (partial write); status.json byte-identical to before; valid JSON true
+trial 3 docs/implementation/harness-status-tracking/status.json: killed (signal SIGKILL) with status.json.tmp on disk (complete JSON, the new state, not renamed); status.json byte-identical to before; valid JSON true
+trial 5 docs/implementation/harness-status-tracking/status.json: killed (signal SIGKILL) with status.json.tmp on disk (complete JSON, the new state, not renamed); status.json byte-identical to before; valid JSON true
+docs/implementation/harness-status-tracking/status.json after all trials: validate exit 0 valid
+docs/implementation/do-it-v1/status.json after all trials: validate exit 0 valid
+summary: {"trials":300,"tmpLeft":300,"intactOld":300,"completedNew":0,"bad":0,"tmpComplete":150,"tmpPartial":150,"reclaimed":0}
+  ok   at least one kill landed after the tmp write finished and before the rename (150 of 300; 150 more mid-write)
+  ok   every trial left status.json either byte-identical to before or fully renamed to the new state, always valid JSON
+
+AT-14: PASS
+T-B-15: PASS

@@ -1,0 +1,34 @@
+# G03-roles-real-dogfood-board
+cases: AT-07, T-B-07, AT-11, AT-16
+real artifact: docs/implementation/harness-status-tracking/status.json as committed (8 tasks done by the real build-it run)
+clone of /Users/macbook/Workspace/Devotts/do-it/.claude/worktrees/agent-a3be7e62651731553 at 9a253febda6b202b3d1e522e401eff278254e192; writer plugins/build-it/scripts/status/status-write.mjs
+started 2026-10-18T17:21:21.723Z
+
+$ status-write set ST-01 --status verified --evidence docs/implementation/harness-status-tracking/evidence/ST-01.md --by build-it --file <clone-root>/do-it/docs/implementation/harness-status-tracking/status.json
+  exit 1
+  stderr: status-write: refused: role build-it may not set status verified (allowed: review-it, conclude-it)
+  ok   build-it asking for verified: refused by the role check
+  ok   byte-identical
+$ status-write set ST-05 --status blocked --by build-it --file <clone-root>/do-it/docs/implementation/harness-status-tracking/status.json
+  exit 1
+  stderr: status-write: refused: blocked requires --blocked-on
+  ok   blocked with no blocked_on: refused
+  ok   byte-identical
+$ status-write set ST-05 --status blocked --blocked-on "owner: Fernando wires conclude-it" --by build-it --file <clone-root>/do-it/docs/implementation/harness-status-tracking/status.json
+  exit 0
+  stdout: ST-05 ok
+  ok   blocked with blocked_on: accepted
+$ status-write rename ST-01 --title Renamed --by plan-it --file <clone-root>/do-it/docs/implementation/harness-status-tracking/status.json
+  exit 1
+  stderr: status-write: refused: rename refused: task ST-01 is done (task ids and work past not-started are stable)
+$ status-write remove ST-01 --by plan-it --file <clone-root>/do-it/docs/implementation/harness-status-tracking/status.json
+  exit 1
+  stderr: status-write: refused: remove refused: task ST-01 is done (task ids and work past not-started are stable)
+  ok   rename of a done task: refused
+  ok   remove of a done task: refused
+  ok   byte-identical
+
+AT-07: PASS
+T-B-07: PASS
+AT-11: PASS
+AT-16: PASS

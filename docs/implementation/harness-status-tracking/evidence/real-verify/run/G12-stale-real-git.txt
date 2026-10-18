@@ -1,0 +1,13 @@
+# G12-stale-real-git
+cases: T-B-20
+real artifact: docs/implementation/harness-status-tracking in the real do-it history (git log -1 of the folder) vs the board's updated_at
+clone of /Users/macbook/Workspace/Devotts/do-it/.claude/worktrees/agent-a3be7e62651731553 at 9a253febda6b202b3d1e522e401eff278254e192; writer plugins/build-it/scripts/status/status-write.mjs
+started 2026-10-18T17:21:46.332Z
+
+  newest commit touching the board folder: f66d806 2026-10-18T11:56:27-03:00 docs(status): dogfood status.json board for harness-status-tracking
+  board updated_at 2026-10-18T14:47:48Z; newest activity 2026-10-18T14:56:27.000Z; gap 0.14 h; threshold 24 h -> stale=false
+  ok   fresh half: the real board is not flagged
+  mod.readStatus stale=false
+  stale half: not observable on real data yet. It needs a real commit to the board folder later than 2026-10-19T14:47:48.000Z with no writer call (for example merging the do-it real-verify PR after that time), then re-run with --only T-B-20.
+
+T-B-20: FAIL

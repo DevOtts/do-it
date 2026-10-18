@@ -1,0 +1,31 @@
+# G01-planit-real-epics
+cases: AT-01, T-B-16, AT-02
+real artifact: do-it delivery/epics/*.md (5 real epics) -> docs/implementation/do-it-v1/status.json via plan-it status-from-plan
+clone of /Users/macbook/Workspace/Devotts/do-it/.claude/worktrees/agent-a3be7e62651731553 at 9a253febda6b202b3d1e522e401eff278254e192; writer plugins/build-it/scripts/status/status-write.mjs
+started 2026-10-18T17:17:48.164Z
+
+$ status-from-plan --package docs/implementation/do-it-v1 --epics delivery/epics   (plan-it main scripts, real do-it v1 epics)
+  exit 0
+  stdout: initialised <clone-root>/do-it/docs/implementation/do-it-v1/status.json (176 tasks)
+          status-from-plan: wrote <clone-root>/do-it/docs/implementation/do-it-v1/status.json (176 tasks, writer: /Users/macbook/Workspace/Devotts/build-it-wt/real-verify/plugins/build-it/scripts/status/status-write.mjs)
+  stderr: 
+  ok   plan-it exit 0
+  tasks=176 dry-run tasks=176 independent checklist-line count=176 waves=W0:30 W1:116 W2:16 W3:8 W4:6
+  ok   schema 1
+  ok   task count equals the dry-run plan (176)
+  ok   task count equals the independent checklist-line count (176)
+  ok   every task not-started
+  ok   sessions and history empty
+$ status-write validate --file <clone-root>/do-it/docs/implementation/do-it-v1/status.json
+  exit 0
+  stdout: valid
+  ok   validate exit 0
+  ok   STATUS.md rendered by the writer (marker on line 1)
+  STATUS.md line: Tasks: 176 · verified 0 (claims) · done 0 · in-progress 0 · blocked 0 · not-started 176; Progress line: Progress: 0%
+  view counts: {"not-started":176,"in-progress":0,"blocked":0,"done":0,"verified":0} total 176 percent 0
+  ok   STATUS.md counts equal the JSON counts
+  ok   STATUS.md has one task row per task (176)
+
+AT-01: PASS
+T-B-16: PASS
+AT-02: PASS

@@ -1,0 +1,124 @@
+TAP version 13
+# Subtest: ST-06 marker is line 1 and equals RENDER_MARKER
+ok 1 - ST-06 marker is line 1 and equals RENDER_MARKER
+  ---
+  duration_ms: 1.018125
+  type: 'test'
+  ...
+# Subtest: ST-06 title heading uses title, falls back to implementation
+ok 2 - ST-06 title heading uses title, falls back to implementation
+  ---
+  duration_ms: 0.206625
+  type: 'test'
+  ...
+# Subtest: ST-06 percent and counts lines match the view
+ok 3 - ST-06 percent and counts lines match the view
+  ---
+  duration_ms: 0.077708
+  type: 'test'
+  ...
+# Subtest: ST-06 renders percent from view and never recomputes it
+ok 4 - ST-06 renders percent from view and never recomputes it
+  ---
+  duration_ms: 0.124875
+  type: 'test'
+  ...
+# Subtest: ST-06 approximate suffix appears only when view.approximate
+ok 5 - ST-06 approximate suffix appears only when view.approximate
+  ---
+  duration_ms: 0.203875
+  type: 'test'
+  ...
+# Subtest: ST-06 unknown percent renders Progress: unknown
+ok 6 - ST-06 unknown percent renders Progress: unknown
+  ---
+  duration_ms: 0.0805
+  type: 'test'
+  ...
+# Subtest: ST-06 Closed line appears only when view.closed
+ok 7 - ST-06 Closed line appears only when view.closed
+  ---
+  duration_ms: 0.167042
+  type: 'test'
+  ...
+# Subtest: ST-06 blocked section lists blocked_on
+ok 8 - ST-06 blocked section lists blocked_on
+  ---
+  duration_ms: 0.080417
+  type: 'test'
+  ...
+# Subtest: ST-06 blocked section says None when nothing is blocked
+ok 9 - ST-06 blocked section says None when nothing is blocked
+  ---
+  duration_ms: 0.532291
+  type: 'test'
+  ...
+# Subtest: ST-06 pipe characters in cells are escaped
+ok 10 - ST-06 pipe characters in cells are escaped
+  ---
+  duration_ms: 0.279208
+  type: 'test'
+  ...
+# Subtest: ST-06 newlines in cells are flattened to spaces
+ok 11 - ST-06 newlines in cells are flattened to spaces
+  ---
+  duration_ms: 0.09625
+  type: 'test'
+  ...
+# Subtest: ST-06 task with evidence shows the path in backticks; without shows dash
+ok 12 - ST-06 task with evidence shows the path in backticks; without shows dash
+  ---
+  duration_ms: 0.044125
+  type: 'test'
+  ...
+# Subtest: ST-06 wave heading and per-wave table are rendered
+ok 13 - ST-06 wave heading and per-wave table are rendered
+  ---
+  duration_ms: 0.039166
+  type: 'test'
+  ...
+# Subtest: ST-06 empty waves, pieces, sessions and history render None without crashing
+ok 14 - ST-06 empty waves, pieces, sessions and history render None without crashing
+  ---
+  duration_ms: 0.07775
+  type: 'test'
+  ...
+# Subtest: ST-06 empty tasks in a wave render None
+ok 15 - ST-06 empty tasks in a wave render None
+  ---
+  duration_ms: 0.035166
+  type: 'test'
+  ...
+# Subtest: ST-06 sessions table renders when present
+ok 16 - ST-06 sessions table renders when present
+  ---
+  duration_ms: 0.034583
+  type: 'test'
+  ...
+# Subtest: ST-06 history lists newest first with note
+ok 17 - ST-06 history lists newest first with note
+  ---
+  duration_ms: 0.0435
+  type: 'test'
+  ...
+# Subtest: ST-06 history keeps only the latest 20 entries
+ok 18 - ST-06 history keeps only the latest 20 entries
+  ---
+  duration_ms: 0.0745
+  type: 'test'
+  ...
+# Subtest: ST-06 output is identical across two calls
+ok 19 - ST-06 output is identical across two calls
+  ---
+  duration_ms: 0.044875
+  type: 'test'
+  ...
+1..19
+# tests 19
+# suites 0
+# pass 19
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 40.805583

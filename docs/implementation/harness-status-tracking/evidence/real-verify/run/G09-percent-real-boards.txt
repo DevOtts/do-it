@@ -1,0 +1,52 @@
+# G09-percent-real-boards
+cases: AT-17, AT-18, T-B-02, AT-19, T-B-01, T-B-03
+real artifact: committed dogfood board; real do-it delivery/STATUS.md migrated; real lens-data-honesty STATUS.md migrated; real plan-it board emptied by plan-it remove; real board in a 4-status mix via the writer + real review-it verdict
+clone of /Users/macbook/Workspace/Devotts/do-it/.claude/worktrees/agent-a3be7e62651731553 at 9a253febda6b202b3d1e522e401eff278254e192; writer plugins/build-it/scripts/status/status-write.mjs
+started 2026-10-18T17:21:36.124Z
+
+  dogfood board as committed: counts {"not-started":0,"in-progress":0,"blocked":0,"done":8,"verified":0} total 8 -> lib 60 mod 60 formula 60 blocked_list [] errors 0
+  ok   every task done, none verified: 60, never 100 (spec AT-19 is T=1; the real board is T=8, same rule)
+$ status-migrate --from delivery/STATUS.md --out delivery/status.json --impl delivery -> exit 0
+  do-it delivery (migrated, 20 epics): counts {"not-started":0,"in-progress":1,"blocked":0,"done":3,"verified":16} total 20 -> lib 89 mod 89 formula 89 blocked_list [] errors 0
+$ status-migrate --from <ANM>/docs/implementations/lens-data-honesty/delivery/STATUS.md (read only) -> exit 0
+  lens-data-honesty (migrated, 21 tasks): counts {"not-started":17,"in-progress":0,"blocked":4,"done":0,"verified":0} total 21 -> lib 0 mod 0 formula 0 blocked_list ["LDH-01","LDH-02","LDH-03","LDH-21"] errors 0
+  ok   real owner-gated rows: 4 in the blocked list, contribute 0, shown separately
+$ status-write set ST-06 --status verified --evidence docs/implementation/harness-status-tracking/evidence/review-it/ST-06-review-it-report.md --by review-it --file <clone-root>/do-it/docs/implementation/harness-status-tracking/status.json
+  exit 0
+  stdout: ST-06 ok
+$ status-write set ST-01 --status in-progress --by build-it --file <clone-root>/do-it/docs/implementation/harness-status-tracking/status.json
+  exit 0
+  stdout: ST-01 ok
+$ status-write set ST-02 --status not-started --by build-it --file <clone-root>/do-it/docs/implementation/harness-status-tracking/status.json
+  exit 0
+  stdout: ST-02 ok
+  dogfood board in a 4-status mix: counts {"not-started":1,"in-progress":1,"blocked":0,"done":5,"verified":1} total 8 -> lib 50 mod 50 formula 50 blocked_list [] errors 0
+$ status-write view --file <clone-root>/do-it/docs/implementation/harness-status-tracking/status.json
+  exit 0
+  stdout: harness-status-tracking: 50%
+          not-started 1 | in-progress 1 | blocked 0 | done 5 | verified 1 (claims) | total 8
+          claimed by review-it: ST-06 · verdict docs/implementation/harness-status-tracking/evidence/review-it/ST-06-review-it-report.md · at 2026-10-18T17:21:36Z · sha cdfd9761edc3
+  ok   verified+done+in-progress+not-started: lib, mod and writer view all equal the formula (50)
+  ok   formula matches to the digit on the three other real boards too
+  spec worked example (literal input): lib.percent=62
+  ok   worked example is exactly 62
+  ok   and the same function gives the formula on the real boards
+$ status-from-plan --package docs/implementation/do-it-v1 --epics delivery/epics   (plan-it main scripts, real do-it v1 epics)
+  exit 0
+  stdout: initialised <clone-root>/do-it/docs/implementation/do-it-v1/status.json (176 tasks)
+          status-from-plan: wrote <clone-root>/do-it/docs/implementation/do-it-v1/status.json (176 tasks, writer: /Users/macbook/Workspace/Devotts/build-it-wt/real-verify/plugins/build-it/scripts/status/status-write.mjs)
+  stderr: 
+$ status-write remove <each of 176 tasks> --by plan-it --file docs/implementation/do-it-v1/status.json -> all ok: true
+  real plan-it board after removing every task: counts {"not-started":0,"in-progress":0,"blocked":0,"done":0,"verified":0} total 0 -> lib "unknown" mod null formula "unknown" blocked_list [] errors 0
+$ status-write view --file <clone-root>/do-it/docs/implementation/do-it-v1/status.json
+  exit 0
+  stdout: do-it-v1: unknown
+          not-started 0 | in-progress 0 | blocked 0 | done 0 | verified 0 (claims) | total 0
+  ok   zero tasks: lib "unknown", mod no number, writer view "unknown" (never 0, never 100)
+
+AT-17: PASS
+AT-18: PASS
+T-B-02: PASS
+AT-19: PASS
+T-B-01: PASS
+T-B-03: PASS

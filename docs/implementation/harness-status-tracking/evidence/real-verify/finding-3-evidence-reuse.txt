@@ -1,0 +1,7 @@
+# Finding 3 probe (2026-10-18, clone of do-it at 9a253fe, scratch copy)
+$ status-write set ST-01 --status in-progress --by build-it --file docs/implementation/harness-status-tracking/status.json
+ST-01 ok
+$ status-write set ST-01 --status done --by build-it --file docs/implementation/harness-status-tracking/status.json   (no --evidence)
+ST-01 ok
+exit 0
+task after: ST-01 done docs/implementation/harness-status-tracking/evidence/ST-01.md   (old evidence reused)

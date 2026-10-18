@@ -1,0 +1,86 @@
+{
+  "at": "2026-10-18T17:17:49.831Z",
+  "clone_head": "9a253febda6b202b3d1e522e401eff278254e192",
+  "source_board_sha256_before": "de5f424be67fc5825745cdbe3e3ca4c41e181a634d82b07f2974c3a1bb95627c",
+  "source_board_sha256_after": "de5f424be67fc5825745cdbe3e3ca4c41e181a634d82b07f2974c3a1bb95627c",
+  "source_board_untouched": true,
+  "rows": [
+    {
+      "case": "AT-01",
+      "group": "G01-planit-real-epics",
+      "artifact": "do-it delivery/epics/*.md (5 real epics) -> docs/implementation/do-it-v1/status.json via plan-it status-from-plan",
+      "pass": true,
+      "output": "G01-planit-real-epics.txt"
+    },
+    {
+      "case": "T-B-16",
+      "group": "G01-planit-real-epics",
+      "artifact": "do-it delivery/epics/*.md (5 real epics) -> docs/implementation/do-it-v1/status.json via plan-it status-from-plan",
+      "pass": true,
+      "output": "G01-planit-real-epics.txt"
+    },
+    {
+      "case": "AT-02",
+      "group": "G01-planit-real-epics",
+      "artifact": "do-it delivery/epics/*.md (5 real epics) -> docs/implementation/do-it-v1/status.json via plan-it status-from-plan",
+      "pass": true,
+      "output": "G01-planit-real-epics.txt"
+    },
+    {
+      "case": "AT-03",
+      "group": "G02-done-evidence-real-board",
+      "artifact": "docs/implementation/do-it-v1/status.json created by real plan-it from the real epics; evidence = a real tracked do-it run log",
+      "pass": true,
+      "output": "G02-done-evidence-real-board.txt"
+    },
+    {
+      "case": "T-B-04",
+      "group": "G02-done-evidence-real-board",
+      "artifact": "docs/implementation/do-it-v1/status.json created by real plan-it from the real epics; evidence = a real tracked do-it run log",
+      "pass": true,
+      "output": "G02-done-evidence-real-board.txt"
+    },
+    {
+      "case": "AT-04",
+      "group": "G02-done-evidence-real-board",
+      "artifact": "docs/implementation/do-it-v1/status.json created by real plan-it from the real epics; evidence = a real tracked do-it run log",
+      "pass": true,
+      "output": "G02-done-evidence-real-board.txt"
+    },
+    {
+      "case": "T-B-05",
+      "group": "G02-done-evidence-real-board",
+      "artifact": "docs/implementation/do-it-v1/status.json created by real plan-it from the real epics; evidence = a real tracked do-it run log",
+      "pass": true,
+      "output": "G02-done-evidence-real-board.txt"
+    },
+    {
+      "case": "AT-05",
+      "group": "G02-done-evidence-real-board",
+      "artifact": "docs/implementation/do-it-v1/status.json created by real plan-it from the real epics; evidence = a real tracked do-it run log",
+      "pass": true,
+      "output": "G02-done-evidence-real-board.txt"
+    },
+    {
+      "case": "T-B-06",
+      "group": "G02-done-evidence-real-board",
+      "artifact": "docs/implementation/do-it-v1/status.json created by real plan-it from the real epics; evidence = a real tracked do-it run log",
+      "pass": true,
+      "output": "G02-done-evidence-real-board.txt"
+    },
+    {
+      "case": "AT-06",
+      "group": "G02-done-evidence-real-board",
+      "artifact": "docs/implementation/do-it-v1/status.json created by real plan-it from the real epics; evidence = a real tracked do-it run log",
+      "pass": true,
+      "output": "G02-done-evidence-real-board.txt"
+    },
+    {
+      "case": "T-B-17",
+      "group": "G02-done-evidence-real-board",
+      "artifact": "docs/implementation/do-it-v1/status.json created by real plan-it from the real epics; evidence = a real tracked do-it run log",
+      "pass": true,
+      "output": "G02-done-evidence-real-board.txt"
+    }
+  ]
+}

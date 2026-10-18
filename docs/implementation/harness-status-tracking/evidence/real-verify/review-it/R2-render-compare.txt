@@ -1,0 +1,3 @@
+byte-identical: false
+identical after removing only the D-28 labels (" (claims)" and the empty "Verified claims" section): true
+CB-7 red check: committed STATUS.md with one count mutated (done 8 -> done 7) vs fresh render: identical=false

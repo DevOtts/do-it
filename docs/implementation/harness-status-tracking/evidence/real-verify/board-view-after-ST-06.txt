@@ -1,0 +1,4 @@
+harness-status-tracking: 65%
+not-started 0 | in-progress 0 | blocked 0 | done 7 | verified 1 (claims) | total 8
+claimed by review-it: ST-06 · verdict docs/implementation/harness-status-tracking/evidence/real-verify/review-it/ST-06-review-it-report.md · at 2026-10-18T17:22:44Z · sha cdfd9761edc3
+valid

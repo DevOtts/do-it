@@ -1,0 +1,55 @@
+# G02-done-evidence-real-board
+cases: AT-03, T-B-04, AT-04, T-B-05, AT-05, T-B-06, AT-06, T-B-17
+real artifact: docs/implementation/do-it-v1/status.json created by real plan-it from the real epics; evidence = a real tracked do-it run log
+clone of /Users/macbook/Workspace/Devotts/do-it/.claude/worktrees/agent-a3be7e62651731553 at 9a253febda6b202b3d1e522e401eff278254e192; writer plugins/build-it/scripts/status/status-write.mjs
+started 2026-10-18T17:21:20.252Z
+
+$ status-from-plan --package docs/implementation/do-it-v1 --epics delivery/epics   (plan-it main scripts, real do-it v1 epics)
+  exit 0
+  stdout: initialised <clone-root>/do-it/docs/implementation/do-it-v1/status.json (176 tasks)
+          status-from-plan: wrote <clone-root>/do-it/docs/implementation/do-it-v1/status.json (176 tasks, writer: /Users/macbook/Workspace/Devotts/build-it-wt/real-verify/plugins/build-it/scripts/status/status-write.mjs)
+  stderr: 
+task under test: S1-01 (first task of the real board)
+$ status-write set S1-01 --status done --by build-it --file <clone-root>/do-it/docs/implementation/do-it-v1/status.json
+  exit 1
+  stderr: status-write: refused: done refused: evidence path is empty
+  ok   done with no evidence: exit non-zero
+  ok   status.json and STATUS.md byte-identical
+$ status-write set S1-01 --status done --evidence docs/implementation/do-it-v1/evidence/S1-01.md --by build-it --file <clone-root>/do-it/docs/implementation/do-it-v1/status.json
+  exit 1
+  stderr: status-write: refused: done refused: evidence file does not exist: docs/implementation/do-it-v1/evidence/S1-01.md
+  ok   done with a path that does not exist: refused
+  ok   byte-identical
+  (created the empty file docs/implementation/do-it-v1/evidence/S1-01.md: no real empty evidence file exists in do-it)
+$ status-write set S1-01 --status done --evidence docs/implementation/do-it-v1/evidence/S1-01.md --by build-it --file <clone-root>/do-it/docs/implementation/do-it-v1/status.json
+  exit 1
+  stderr: status-write: refused: done refused: evidence file is empty: docs/implementation/do-it-v1/evidence/S1-01.md
+  ok   done with an empty evidence file: refused
+  ok   byte-identical
+  evidence: .taskstate/results/S1.log (tracked in do-it, 2981 bytes, sha 173589f86455)
+$ status-write set S1-01 --status in-progress --owner build-it:real-verify --by build-it --file <clone-root>/do-it/docs/implementation/do-it-v1/status.json
+  exit 0
+  stdout: S1-01 ok
+  ok   start boundary written (in-progress)
+$ status-write set S1-01 --status done --evidence .taskstate/results/S1.log --by build-it --file <clone-root>/do-it/docs/implementation/do-it-v1/status.json
+  exit 0
+  stdout: S1-01 ok
+  ok   evidence is a real non-empty tracked file
+  ok   done with a valid file: accepted
+  ok   task is done with that evidence
+  ok   updated_at 2026-10-18T17:21:21Z set by the script clock during the call
+  ok   top-level updated_at moved with it
+  ok   history entry appended: {"at":"2026-10-18T17:21:21Z","task":"S1-01","from":"in-progress","to":"done","by":"build-it","note":null}
+  STATUS.md row before: | S1-01 | `core/spine/build.mjs`: deterministic bundler (sorted module order, import and export stripped, only `node:` imports allowed in output) | in-progress | — | build-it:real-verify | 2026-10-18T17:21:20Z |
+  STATUS.md row after:  | S1-01 | `core/spine/build.mjs`: deterministic bundler (sorted module order, import and export stripped, only `node:` imports allowed in output) | done | `.taskstate/results/S1.log` | build-it:real-verify | 2026-10-18T17:21:21Z |
+  ok   STATUS.md row shows done, the evidence and the new updated_at, with no hand edit
+  ok   updated_at changed (2026-10-18T17:21:20Z -> 2026-10-18T17:21:21Z)
+
+AT-03: PASS
+T-B-04: PASS
+AT-04: PASS
+T-B-05: PASS
+AT-05: PASS
+T-B-06: PASS
+AT-06: PASS
+T-B-17: PASS
