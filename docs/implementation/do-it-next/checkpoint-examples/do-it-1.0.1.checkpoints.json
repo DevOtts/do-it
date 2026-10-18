@@ -34,7 +34,14 @@
       "kind": "wave",
       "at": "after W1",
       "review": "contract cases of the finished waves, on the merged tree",
-      "blocks": "start of W2",
+      "blocks": "slices that depend on W1 work, and promotion of W1 work",
+      "gates": [
+        "dependents",
+        "promotion"
+      ],
+      "covers": [
+        "W1"
+      ],
       "evidence": "docs/implementation/do-it-next/reviews/CP-01-wave-w1.md"
     },
     {
@@ -42,7 +49,14 @@
       "kind": "wave",
       "at": "after W2",
       "review": "contract cases of the finished waves, on the merged tree",
-      "blocks": "start of W3",
+      "blocks": "slices that depend on W2 work, and promotion of W2 work",
+      "gates": [
+        "dependents",
+        "promotion"
+      ],
+      "covers": [
+        "W2"
+      ],
       "evidence": "docs/implementation/do-it-next/reviews/CP-02-wave-w2.md"
     },
     {
@@ -50,7 +64,13 @@
       "kind": "adversarial",
       "at": "after W3",
       "review": "adversarial: try to get a false pass through every gate and writer",
-      "blocks": "start of W4",
+      "blocks": "slices that depend on W3 work",
+      "gates": [
+        "dependents"
+      ],
+      "covers": [
+        "W3"
+      ],
       "evidence": "docs/implementation/do-it-next/reviews/CP-03-adversarial-w3.md"
     },
     {
@@ -59,6 +79,15 @@
       "at": "before merge to main",
       "review": "the whole Test Contract on the integrated branch",
       "blocks": "merge to main",
+      "gates": [
+        "merge"
+      ],
+      "covers": [
+        "W1",
+        "W2",
+        "W3",
+        "W4"
+      ],
       "evidence": "docs/implementation/do-it-next/reviews/CP-04-pre-merge.md"
     },
     {
@@ -67,6 +96,15 @@
       "at": "after merge, before tag, publish or deploy",
       "review": "deploy-verify plus the [REAL] cases on the released artifact",
       "blocks": "tag, publish or deploy",
+      "gates": [
+        "release"
+      ],
+      "covers": [
+        "W1",
+        "W2",
+        "W3",
+        "W4"
+      ],
       "evidence": "docs/implementation/do-it-next/reviews/CP-05-pre-release.md"
     }
   ]

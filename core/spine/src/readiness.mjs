@@ -42,6 +42,8 @@ export function checkReadiness(ctx) {
   }
   const errors = validateSchema(loadSchemaFile('readiness.schema.json'), data);
   if (errors.length) return { ok: false, outcome: 'READINESS_INVALID', extra: { file, errors } };
+  const graphErrors = sliceCycleErrors(data.slices);
+  if (graphErrors.length) return { ok: false, outcome: 'READINESS_INVALID', extra: { file, errors: graphErrors } };
   const cpErrors = checkpointErrors(data.review_checkpoints);
   if (cpErrors.length) return { ok: false, outcome: 'READINESS_INVALID', extra: { file, errors: cpErrors } };
   const unresolved = decisionList(data.decisions).filter((d) => d.state !== 'RESOLVED' && d.state !== 'DEFAULTED').map((d) => d.id);
@@ -52,6 +54,33 @@ export function checkReadiness(ctx) {
     return { ok: false, outcome: 'READINESS_OWNER_DEPENDENT', extra: { slices: dependent, owner_dependent_slices: data.owner_dependent_slices || dependent.length } };
   }
   return { ok: true, outcome: 'READINESS_OK', extra: {}, data, sha256: sha256Bytes(bytes) };
+}
+
+// A cycle in depends_on would leave its slices never runnable, so the run would
+// idle without saying why. It is a plan error, printed as the cycle.
+export function sliceCycleErrors(slices) {
+  if (!Array.isArray(slices)) return [];
+  const byId = new Map(slices.map((s) => [s.id, s]));
+  const done = new Set();
+  const errors = [];
+  const visit = (id, trail) => {
+    const at = trail.indexOf(id);
+    if (at >= 0) return [...trail.slice(at), id];
+    if (done.has(id) || !byId.has(id)) return null;
+    trail.push(id);
+    for (const d of byId.get(id).depends_on || []) {
+      const c = visit(d, trail);
+      if (c) return c;
+    }
+    trail.pop();
+    done.add(id);
+    return null;
+  };
+  for (const s of slices) {
+    const c = visit(s.id, []);
+    if (c) { errors.push({ pointer: '/slices', message: 'depends_on has a cycle: ' + c.join(' -> ') }); break; }
+  }
+  return errors;
 }
 
 // `next` calls this for a run whose build gate was approved: an edit after the
@@ -82,10 +111,34 @@ export function checkpointErrors(block) {
   return errors;
 }
 
+// What a checkpoint holds until PASS. It holds the start of slices that depend on
+// covered work, the promotion of covered work, the merge or the release, never
+// independent work (finding H-10). Plans written before `gates` existed get the
+// same corrected meaning, read from the kind.
+export function checkpointGates(c) {
+  if (Array.isArray(c.gates)) return c.gates;
+  if (c.kind === 'wave' || c.kind === 'phase') return ['dependents', 'promotion'];
+  if (c.kind === 'adversarial') return /^\s*start of\b/i.test(String(c.blocks || '')) ? ['dependents'] : ['merge'];
+  if (c.kind === 'pre-merge') return ['merge'];
+  return ['release'];
+}
+
 export function seedCheckpoints(state, fl, data) {
   const block = data.review_checkpoints;
   if (!block) return 0;
-  state.review_checkpoints = { count: block.count, level: block.level || null, checkpoints: block.checkpoints.map((c) => ({ id: c.id, kind: c.kind, at: c.at || null, evidence: c.evidence })) };
+  state.review_checkpoints = {
+    count: block.count,
+    level: block.level || null,
+    checkpoints: block.checkpoints.map((c) => ({
+      id: c.id,
+      kind: c.kind,
+      at: c.at || null,
+      gates: checkpointGates(c),
+      covers: Array.isArray(c.covers) ? c.covers : null,
+      blocks: c.blocks || null,
+      evidence: c.evidence,
+    })),
+  };
   for (const c of block.checkpoints) {
     const id = CHECKPOINT_ROW_PREFIX + c.id;
     if (!fl.rows.some((r) => r.id === id)) finishLineUpsert(fl, id, { kind: 'package' });
@@ -103,6 +156,7 @@ export function seedSlices(state, data) {
       tier: s.tier || CLASS_TIER[klass] || 'T2',
       class: klass,
       depends_on: Array.isArray(s.depends_on) ? s.depends_on : [],
+      wave: typeof s.wave === 'string' ? s.wave : null,
       status: 'READY',
       attempts: 0,
       escalations: 0,
