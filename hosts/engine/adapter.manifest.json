@@ -1,6 +1,6 @@
 {
   "host": "engine",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "calls": {
     "spawn": {
       "input": { "type": "object", "required": ["role", "tier", "brief"] },

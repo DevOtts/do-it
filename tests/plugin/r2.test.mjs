@@ -51,7 +51,7 @@ test('T-R2-03 marketplace entry shape', () => {
   const own = m.plugins.filter((p) => p.name === 'do-it');
   assert.equal(own.length, 1);
   assert.equal(own[0].source, './plugins/do-it');
-  assert.equal(own[0].version, '1.0.1');
+  assert.equal(own[0].version, '1.0.2');
   for (const p of m.plugins.filter((x) => x.name !== 'do-it')) {
     assert.equal(p.source.source, 'github', p.name);
     assert.match(p.source.repo, /^DevOtts\/[a-z-]+$/, p.name);
