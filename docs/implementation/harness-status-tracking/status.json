@@ -2,7 +2,7 @@
   "schema": 1,
   "implementation": "harness-status-tracking",
   "title": "Harness status tracking",
-  "updated_at": "2026-10-18T14:47:48Z",
+  "updated_at": "2026-10-18T17:22:44Z",
   "approximate": false,
   "closed": false,
   "waves": [
@@ -23,11 +23,11 @@
         {
           "id": "ST-06",
           "title": "Render STATUS.md from status.json",
-          "status": "done",
+          "status": "verified",
           "blocked_on": null,
-          "evidence": "docs/implementation/harness-status-tracking/evidence/ST-06.md",
+          "evidence": "docs/implementation/harness-status-tracking/evidence/real-verify/review-it/ST-06-review-it-report.md",
           "owner": "build-it:haiku",
-          "updated_at": "2026-10-18T14:24:33Z",
+          "updated_at": "2026-10-18T17:22:44Z",
           "note": null
         },
         {
@@ -277,6 +277,14 @@
       "from": "in-progress",
       "to": "done",
       "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-10-18T17:22:44Z",
+      "task": "ST-06",
+      "from": "done",
+      "to": "verified",
+      "by": "review-it",
       "note": null
     }
   ]
