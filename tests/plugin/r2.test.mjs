@@ -7,6 +7,7 @@ import { readFileSync, writeFileSync, mkdirSync, mkdtempSync, cpSync, existsSync
 import { createHash } from 'node:crypto';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { PRE_COMPANIONS_COMMIT, baselineCompanionsRoot, preMergeSiblings } from '../lib/pre-merge-siblings.mjs';
 import { tmpdir } from 'node:os';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -50,7 +51,7 @@ test('T-R2-03 marketplace entry shape', () => {
   const own = m.plugins.filter((p) => p.name === 'do-it');
   assert.equal(own.length, 1);
   assert.equal(own[0].source, './plugins/do-it');
-  assert.equal(own[0].version, '0.1.0');
+  assert.equal(own[0].version, '1.0.0');
   for (const p of m.plugins.filter((x) => x.name !== 'do-it')) {
     assert.equal(p.source.source, 'github', p.name);
     assert.match(p.source.repo, /^DevOtts\/[a-z-]+$/, p.name);
@@ -69,8 +70,10 @@ test('T-R2-04 dependencies equal the published required companions', () => {
 
 test('T-R2-05 pins are exact', () => {
   assert.equal(node(['scripts/check-pins.mjs', '--lint']).status, 0);
-  const planned = json('core/companions.json').companions.filter((c) => c.status === 'planned');
-  assert.ok(planned.length === 2 && planned.every((c) => c.version === null));
+  const companions = json('core/companions.json').companions;
+  for (const c of companions) assert.match(c.version, /^[0-9]+\.[0-9]+\.[0-9]+$/, c.name);
+  const released = companions.filter((c) => ['deploy-it', 'reconcile-it'].includes(c.name));
+  assert.ok(released.length === 2 && released.every((c) => c.status === 'published' && c.version === '1.0.0'));
   for (const bad of ['^0.3.0', 'latest']) {
     const d = scratchRoot();
     const c = json('core/companions.json');
@@ -86,11 +89,12 @@ test('T-R2-06 pin-drift detector finds the 0.2.1 to 0.3.0 drift [REAL]', (t) => 
   const need = ['build-it', 'plan-it', 'review-it'].map((n) => join(SIBLINGS, n, '.claude-plugin/marketplace.json'));
   if (need.some((f) => !existsSync(f))) return t.skip(`IMPLEMENTED-NOT-VERIFIED: sibling repos not found under ${SIBLINGS}`);
   const before = need.map((f) => statSync(f).mtimeMs);
-  const r = node(['scripts/check-pins.mjs', '--siblings', SIBLINGS]);
+  const pre = preMergeSiblings(SIBLINGS);
+  const r = spawnSync('node', [join(ROOT, 'scripts/check-pins.mjs'), '--root', baselineCompanionsRoot(ROOT, PRE_COMPANIONS_COMMIT), '--siblings', pre], { encoding: 'utf8' });
   assert.equal(r.status, 1, r.stdout);
   const lines = r.stdout.trim().split('\n');
   assert.equal(lines.length, 3, r.stdout);
-  const got = lines.map((l) => l.replace(SIBLINGS + '/', '')).sort();
+  const got = lines.map((l) => l.replace(pre + '/', '')).sort();
   assert.deepEqual(got, [
     'build-it/.claude-plugin/marketplace.json:18 prompt-it found 0.2.1 expected 0.3.0',
     'plan-it/.claude-plugin/marketplace.json:16 prompt-it found 0.2.1 expected 0.3.0',

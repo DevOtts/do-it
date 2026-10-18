@@ -59,7 +59,7 @@ Verdicts: VERIFIED, IMPLEMENTED-NOT-VERIFIED, BLOCKED. Run verdicts: DONE_ALL_VE
 
 **Owner repo:** DevOtts/plan-it
 
-**Current state:** the Test Contract header is defined at `plan-it/references/formats.md:67` contains «Test Contract — <feature>» and described at `plan-it/SKILL.md:129` contains «The Test Contract». It has no `Verify` column and plan-it writes no readiness verdict. Tier words found in `plan-it/SKILL.md`: `plan-it/SKILL.md:651` contains «tier» (about a test-tier matrix, not model tiers).
+**Current state:** the Test Contract header is defined at `plan-it/references/formats.md:63` contains «Test Contract — <feature>» and described at `plan-it/SKILL.md:129` contains «The Test Contract». It has no `Verify` column and plan-it writes no readiness verdict. Tier words found in `plan-it/SKILL.md`: `plan-it/SKILL.md:651` contains «tier» (about a test-tier matrix, not model tiers).
 
 **Exact changes:** at G4, plan-it writes `plan/READINESS.json` and `plan/DECISIONS.md` (G-8: build cannot start without them). The Test Contract grammar gains a `Verify` column whose only values are `auto`, `attended`, `judgement` (any other value is a lint error).
 

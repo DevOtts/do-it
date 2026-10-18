@@ -253,7 +253,7 @@ do-it/
 
 ## Status
 
-Version 0.1.0, the first release.
+Version 1.0.0, the first stable release.
 
 In it: the spine and its commands, five presets, ten personas, the token meter, the owner pack with three renderers, the review-loop convergence controller, adapters for Claude Code, Codex, OpenCode and Engine, the plugin and marketplace, and the fixtures that back the claims above.
 

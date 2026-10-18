@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import { spawnSync, execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, statSync, writeFileSync } from 'node:fs';
+import { PRE_COMPANIONS_COMMIT, baselineCompanionsRoot, preMergeSiblings } from '../lib/pre-merge-siblings.mjs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -29,6 +30,9 @@ const sha = (f) => createHash('sha256').update(readFileSync(f)).digest('hex');
 const SIBLINGS = process.env.DO_IT_SIBLINGS ?? dirname(dirname(resolve(ROOT, git(ROOT, 'rev-parse', '--git-common-dir'))));
 const REPOS = ['prompt-it', 'plan-it', 'build-it', 'review-it', 'conclude-it', 'parallel-lifecycle'];
 const siblingsReadable = REPOS.every((r) => existsSync(join(SIBLINGS, r, 'SKILL.md')));
+// pre-merge replay: the state the catalog describes (see tests/lib/pre-merge-siblings.mjs)
+const PRE = siblingsReadable ? preMergeSiblings(SIBLINGS) : null;
+const PRE_ROOT = siblingsReadable ? baselineCompanionsRoot(ROOT, PRE_COMPANIONS_COMMIT) : null;
 
 function snapshot() {
   const out = {};
@@ -106,7 +110,7 @@ test('T-R3-04 [REAL] DO_IT_HOME resolution on a real git worktree', () => {
 
 const TIER_WORD = /\b(T1|T2|T3|opus|sonnet|haiku|tier|tiers|tiering)\b/gi;
 function citeCheck(c) {
-  const line = readFileSync(join(SIBLINGS, c.path), 'utf8').split('\n')[c.line - 1];
+  const line = readFileSync(join(PRE, c.path), 'utf8').split('\n')[c.line - 1];
   return line !== undefined && line.includes(c.text);
 }
 
@@ -233,9 +237,9 @@ test('T-R3-10 adversarial verify is specified and works', () => {
 test('T-R3-11 [REAL] one-line fixes apply cleanly to the real files', (t) => {
   if (!siblingsReadable) return t.skip('IMPLEMENTED-NOT-VERIFIED: sibling files unreadable');
   const files = ['build-it/.claude-plugin/marketplace.json', 'plan-it/.claude-plugin/marketplace.json', 'review-it/.claude-plugin/marketplace.json', 'build-it/SKILL.md'];
-  const realSums = files.map((f) => sha(join(SIBLINGS, f)));
+  const realSums = files.map((f) => sha(join(PRE, f)));
   const dir = tmp('apply');
-  for (const f of files) { mkdirSync(dirname(join(dir, f)), { recursive: true }); cpSync(join(SIBLINGS, f), join(dir, f)); }
+  for (const f of files) { mkdirSync(dirname(join(dir, f)), { recursive: true }); cpSync(join(PRE, f), join(dir, f)); }
   git(dir, 'init', '-q'); git(dir, 'add', '-A'); git(dir, '-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-qm', 'real copies');
   const diffs = [...md.matchAll(/^```diff (\S+)\n([\s\S]*?)^```/gm)].map((m) => [m[1], m[2]]);
   assert.deepEqual(diffs.map((d) => d[0]), ['pin-build-it', 'pin-plan-it', 'pin-review-it', 'report-dir-build-it']);
@@ -250,9 +254,9 @@ test('T-R3-11 [REAL] one-line fixes apply cleanly to the real files', (t) => {
     assert.equal(m.plugins.find((p) => p.name === 'prompt-it').version, '0.3.0', f);
   }
   assert.match(readFileSync(join(dir, 'build-it/SKILL.md'), 'utf8'), /never create or write `\.fable-it-reports\/`/);
-  const pins = spawnSync('node', [join(ROOT, 'scripts/check-pins.mjs'), '--siblings', dir], { encoding: 'utf8' });
+  const pins = spawnSync('node', [join(ROOT, 'scripts/check-pins.mjs'), '--root', PRE_ROOT, '--siblings', dir], { encoding: 'utf8' });
   assert.equal(pins.status, 0, pins.stdout);
-  assert.deepEqual(files.map((f) => sha(join(SIBLINGS, f))), realSums, 'real sibling files unchanged');
+  assert.deepEqual(files.map((f) => sha(join(PRE, f))), realSums, 'real sibling files unchanged');
 });
 
 test('T-R3-12 plan-it readiness and Verify column', () => {

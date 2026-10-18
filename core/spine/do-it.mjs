@@ -2830,7 +2830,7 @@ function gateVerify(ctx, args) {
 }
 
 // ---- version.mjs ----
-const DO_IT_VERSION = '0.1.0';
+const DO_IT_VERSION = '1.0.0';
 
 // ---- wake.mjs ----
 const NO_WAKE_TEXT = 'no wake: parked; run do-it resume after the reset';

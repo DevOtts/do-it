@@ -9,7 +9,7 @@
     {
       "name": "do-it",
       "source": "./plugins/do-it",
-      "version": "0.1.0",
+      "version": "1.0.0",
       "description": "One conductor for the whole *-it lifecycle.",
       "author": {
         "name": "DevOtts",
