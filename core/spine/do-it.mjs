@@ -349,6 +349,7 @@ function cmdStart(ctx, args) {
     request: f.request,
     size,
     host: typeof f.host === 'string' ? f.host : settings.values.host.driver,
+    owner: { session_id: typeof f.session === 'string' && f.session ? f.session : (ctx.env.DO_IT_SESSION_ID || null), cwd: ctx.cwd },
   });
   const routed = state.preset ? null : route(f.request);
   if (routed && routed.preset) {
@@ -675,6 +676,30 @@ function rowTerminal(row) {
 
 function rowClosed(row) {
   return row.state === 'DONE' && nonEmpty(row.evidence);
+}
+
+// A package row (a slice) closes by itself once every one of its case rows
+// (`T-<slice>-<n>`) is terminal: DONE when all are DONE, else BLOCKED naming the
+// ones that are not. A package with no case rows, or with one still open, is left alone.
+function autoClosePackages(fl) {
+  const closed = [];
+  for (const pkg of fl.rows) {
+    if (pkg.kind !== 'package' || pkg.state !== 'OPEN' || pkg.id.includes(':')) continue;
+    const re = new RegExp('^T-' + pkg.id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '-\\d');
+    const cases = fl.rows.filter((r) => r.kind === 'dod' && re.test(r.id));
+    if (!cases.length || !cases.every(rowTerminal)) continue;
+    const notDone = cases.filter((r) => r.state !== 'DONE');
+    if (notDone.length) {
+      pkg.state = 'BLOCKED';
+      pkg.reason = 'auto-closed: ' + notDone.length + ' of ' + cases.length + ' case rows not DONE: ' + notDone.map((r) => r.id + ' ' + r.state).join(', ');
+    } else {
+      pkg.state = 'DONE';
+      pkg.evidence = 'auto-closed: all ' + cases.length + ' case rows DONE (' + cases.map((r) => r.id).join(', ') + ')';
+      pkg.reason = null;
+    }
+    closed.push(pkg.id);
+  }
+  return closed;
 }
 
 function openRows(fl) {
@@ -1818,6 +1843,20 @@ function gateBuild(ctx, args) {
 // ---- record.mjs ----
 const EXIT_FOR_STATUS = { ok: 0, failed: 1, needs_human: 2, blocked: 3, usage_limit: 3, context_reset: 3 };
 
+// Workers write the natural words for success. A strict list of aliases is
+// recorded as `ok`; any other word is still RESULT_INVALID.
+const STATUS_ALIASES = { done: 'ok', pass: 'ok', success: 'ok' };
+
+// Rewrites result.status in place; returns the original word when it was an alias, else null.
+function normalizeStatus(result) {
+  if (!result || typeof result !== 'object' || typeof result.status !== 'string') return null;
+  const to = STATUS_ALIASES[result.status.trim().toLowerCase()];
+  if (!to) return null;
+  const from = result.status;
+  result.status = to;
+  return from;
+}
+
 function journalPath(ctx, runId) {
   return path.join(ctx.home, 'runs', runId, 'record.journal.json');
 }
@@ -1853,6 +1892,7 @@ function cmdRecord(ctx, args) {
   try { result = JSON.parse(bytes.toString('utf8')); } catch (e) {
     throw fail('RESULT_INVALID', 1, { errors: [{ pointer: '', message: 'not JSON: ' + e.message }] });
   }
+  const aliased = normalizeStatus(result);
   const schemaErrors = validateSchema(loadSchemaFile('it-result.1.schema.json'), result);
   if (schemaErrors.length) throw fail('RESULT_INVALID', 1, { errors: schemaErrors });
   if (result.run_id !== runId) throw fail('RUN_ID_MISMATCH', 1, { expected: runId, got: result.run_id });
@@ -1867,7 +1907,7 @@ function cmdRecord(ctx, args) {
     run_id: runId,
     result_sha256: resultSha,
     result_name: 'record-' + resultSha.slice(0, 12) + '.json',
-    result_text: bytes.toString('utf8'),
+    result_text: aliased ? JSON.stringify(result, null, 2) + '\n' : bytes.toString('utf8'),
     ledger_rows: plan.ledgerRows,
     fl_ops: plan.flOps,
     questions: plan.questions,
@@ -1894,6 +1934,7 @@ function applyJournal(ctx, j, allowFault) {
   if (j.fl_ops.length) {
     const fl = readFinishLine(ctx);
     for (const op of j.fl_ops) finishLineUpsert(fl, op.id, op.patch);
+    autoClosePackages(fl);
     writeFinishLine(ctx, fl);
   }
   if (j.questions.length) packAppend(ctx, runId, j.questions);
@@ -2749,6 +2790,7 @@ function newState(ctx, runId, fields) {
     status: 'INTAKE',
     size: fields.size === undefined ? null : fields.size,
     host: fields.host === undefined ? null : fields.host,
+    owner: fields.owner === undefined ? null : fields.owner,
     stage: 'intake',
     slices: [],
     gates: {},
@@ -2828,6 +2870,34 @@ function selectRunId(ctx, flags) {
   return best.id;
 }
 
+// Which run does this session (or this cwd) own? Ownership is recorded once, at `start`:
+// the session id when the host gave one, always the cwd. A run with no owner field (state
+// written before this existed) belongs to nobody in particular and stays gated for everyone.
+// Returns { run: id|null, owned: bool } for the newest owned run, else the newest unowned
+// one, else null.
+function selectScopedRunId(ctx, scope) {
+  const owned = [];
+  const legacy = [];
+  for (const id of listRunIds(ctx)) {
+    let st = {};
+    try { st = JSON.parse(fs.readFileSync(path.join(runDir(ctx, id), 'state.json'), 'utf8')); } catch { /* tampered: gated by its own load */ }
+    const o = st.owner;
+    const row = { id, created: st.created_at || '' };
+    if (!o || typeof o !== 'object') { legacy.push(row); continue; }
+    let mine = false;
+    if (o.session_id && scope.session) mine = o.session_id === scope.session;
+    else if (o.cwd && scope.cwd) {
+      const rel = path.relative(realpathSafe(o.cwd), realpathSafe(scope.cwd));
+      mine = rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel));
+    }
+    if (mine) owned.push(row);
+  }
+  const newest = (rows) => rows.sort((a, b) => (a.created === b.created ? (a.id < b.id ? 1 : -1) : (a.created < b.created ? 1 : -1)))[0];
+  if (owned.length) return { run: newest(owned).id, owned: true };
+  if (legacy.length) return { run: newest(legacy).id, owned: false };
+  return { run: null, owned: false };
+}
+
 // Raw read for callers that only need to know whether a run is in flight.
 function peekRunStatus(ctx, runId) {
   try {
@@ -2873,7 +2943,17 @@ function advanceRunStatus(ctx, state, to) {
 // G-9: refuse to stop with open rows, with the board, `patience` times without
 // progress; the next call parks the run and asks the owner.
 function gateStop(ctx, args) {
-  const runId = selectRunId(ctx, args.flags);
+  const f = args.flags;
+  const scope = { session: typeof f.session === 'string' ? f.session : null, cwd: typeof f.cwd === 'string' ? f.cwd : null };
+  let runId;
+  if (f.run || (!scope.session && !scope.cwd)) {
+    runId = selectRunId(ctx, f);
+  } else {
+    // A hook names its session and cwd: only the run they own is gated.
+    const scoped = selectScopedRunId(ctx, scope);
+    if (!scoped.run) return { outcome: 'STOP_ALLOWED', exit: 0, owned: false, reason: 'no run is owned by this session or cwd' };
+    runId = scoped.run;
+  }
   const state = loadState(ctx, runId);
   const fl = readFinishLine(ctx);
   const open = openRows(fl);
@@ -2938,24 +3018,36 @@ function proseLines(text) {
   return out;
 }
 
+// Review rounds: a heading that opens a re-review or a numbered round starts a new
+// round, and the last round that says anything about the verdict supersedes the rest.
+const ROUND_HEADING = /^#{1,6}\s+.*(re-?review|round\s*\d+|\br\d+\b)/i;
+const clean = (v) => v.trim().split(/\s+/)[0].replace(/^[`*]+|[`*.,;]+$/g, '');
+
 // Returns { state: pass|fail|invalid|contradictory, reason }.
 function parseVerdict(text, id) {
   if (!text.trim()) return { state: 'invalid', reason: 'the file is empty' };
   const cps = new Set();
-  const overall = [];
-  const tasks = [];
+  const rounds = [{ overall: [], tasks: [], finals: [] }];
   let inTask = false;
   for (const line of proseLines(text)) {
     if (line === '') { inTask = false; continue; }
+    if (ROUND_HEADING.test(line)) { rounds.push({ overall: [], tasks: [], finals: [] }); inTask = false; continue; }
+    const cur = rounds[rounds.length - 1];
     let m = /^checkpoint\s*:\s*(.*)$/i.exec(line);
     if (m) { cps.add(m[1].trim()); continue; }
     if (/^task\s*:/i.test(line)) { inTask = true; continue; }
+    m = /^[*_]*final\s+verdict\s*[:*]+\s*(.*)$/i.exec(line);
+    if (m) { cur.finals.push(clean(m[1])); continue; }
     m = /^verdict\s*:\s*(.*)$/i.exec(line);
-    if (m) (inTask ? tasks : overall).push(m[1].trim().split(/\s+/)[0].replace(/^[`*]+|[`*.,;]+$/g, ''));
+    if (m) (inTask ? cur.tasks : cur.overall).push(clean(m[1]));
   }
   if (cps.size === 0) return { state: 'invalid', reason: 'no "checkpoint: ' + id + '" line outside code and comments' };
   if (cps.size > 1) return { state: 'invalid', reason: 'names more than one checkpoint (' + [...cps].join(', ') + ')' };
   if (!cps.has(id)) return { state: 'invalid', reason: 'does not name checkpoint ' + id + ' (names ' + [...cps][0] + ')' };
+  // An explicit "Final verdict:" line decides across the whole file; else the last round with a verdict.
+  const finals = rounds.flatMap((r) => r.finals);
+  const deciding = finals.length ? { overall: finals, tasks: [] } : [...rounds].reverse().find((r) => r.overall.length) || rounds[0];
+  const { overall, tasks } = deciding;
   if (!overall.length) return { state: 'invalid', reason: 'no "verdict: PASS|FAIL" line outside code and comments' };
   const odd = [...new Set([...overall, ...tasks])].filter((v) => v !== 'PASS' && v !== 'FAIL');
   if (odd.length) return { state: 'invalid', reason: 'verdict value ' + odd.map((v) => JSON.stringify(v)).join(', ') + ' is not PASS or FAIL' };
@@ -3004,7 +3096,7 @@ function gateVerify(ctx, args) {
 }
 
 // ---- version.mjs ----
-const DO_IT_VERSION = '1.0.4';
+const DO_IT_VERSION = '1.0.5';
 
 // ---- wake.mjs ----
 const NO_WAKE_TEXT = 'no wake: parked; run do-it resume after the reset';

@@ -50,6 +50,30 @@ export function rowClosed(row) {
   return row.state === 'DONE' && nonEmpty(row.evidence);
 }
 
+// A package row (a slice) closes by itself once every one of its case rows
+// (`T-<slice>-<n>`) is terminal: DONE when all are DONE, else BLOCKED naming the
+// ones that are not. A package with no case rows, or with one still open, is left alone.
+export function autoClosePackages(fl) {
+  const closed = [];
+  for (const pkg of fl.rows) {
+    if (pkg.kind !== 'package' || pkg.state !== 'OPEN' || pkg.id.includes(':')) continue;
+    const re = new RegExp('^T-' + pkg.id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '-\\d');
+    const cases = fl.rows.filter((r) => r.kind === 'dod' && re.test(r.id));
+    if (!cases.length || !cases.every(rowTerminal)) continue;
+    const notDone = cases.filter((r) => r.state !== 'DONE');
+    if (notDone.length) {
+      pkg.state = 'BLOCKED';
+      pkg.reason = 'auto-closed: ' + notDone.length + ' of ' + cases.length + ' case rows not DONE: ' + notDone.map((r) => r.id + ' ' + r.state).join(', ');
+    } else {
+      pkg.state = 'DONE';
+      pkg.evidence = 'auto-closed: all ' + cases.length + ' case rows DONE (' + cases.map((r) => r.id).join(', ') + ')';
+      pkg.reason = null;
+    }
+    closed.push(pkg.id);
+  }
+  return closed;
+}
+
 export function openRows(fl) {
   return fl.rows.filter((r) => !rowTerminal(r));
 }

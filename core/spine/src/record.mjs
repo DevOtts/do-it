@@ -4,7 +4,7 @@ import path from 'node:path';
 import { fail } from './errors.mjs';
 import { appendEvent } from './events.mjs';
 import { resolveEvidence } from './evidence.mjs';
-import { finishLineUpsert, readFinishLine, writeFinishLine } from './finish-line.mjs';
+import { autoClosePackages, finishLineUpsert, readFinishLine, writeFinishLine } from './finish-line.mjs';
 import { atomicWrite, atomicWriteJson, readJsonIfExists } from './fs-atomic.mjs';
 import { sha256Bytes } from './hash.mjs';
 import { escalationQuestion, ladderEscalated } from './ladder.mjs';
@@ -17,6 +17,20 @@ import { CHECKPOINT_ROW_PREFIX } from './readiness.mjs';
 import { parseVerdict } from './verdict-file.mjs';
 
 export const EXIT_FOR_STATUS = { ok: 0, failed: 1, needs_human: 2, blocked: 3, usage_limit: 3, context_reset: 3 };
+
+// Workers write the natural words for success. A strict list of aliases is
+// recorded as `ok`; any other word is still RESULT_INVALID.
+export const STATUS_ALIASES = { done: 'ok', pass: 'ok', success: 'ok' };
+
+// Rewrites result.status in place; returns the original word when it was an alias, else null.
+export function normalizeStatus(result) {
+  if (!result || typeof result !== 'object' || typeof result.status !== 'string') return null;
+  const to = STATUS_ALIASES[result.status.trim().toLowerCase()];
+  if (!to) return null;
+  const from = result.status;
+  result.status = to;
+  return from;
+}
 
 export function journalPath(ctx, runId) {
   return path.join(ctx.home, 'runs', runId, 'record.journal.json');
@@ -53,6 +67,7 @@ export function cmdRecord(ctx, args) {
   try { result = JSON.parse(bytes.toString('utf8')); } catch (e) {
     throw fail('RESULT_INVALID', 1, { errors: [{ pointer: '', message: 'not JSON: ' + e.message }] });
   }
+  const aliased = normalizeStatus(result);
   const schemaErrors = validateSchema(loadSchemaFile('it-result.1.schema.json'), result);
   if (schemaErrors.length) throw fail('RESULT_INVALID', 1, { errors: schemaErrors });
   if (result.run_id !== runId) throw fail('RUN_ID_MISMATCH', 1, { expected: runId, got: result.run_id });
@@ -67,7 +82,7 @@ export function cmdRecord(ctx, args) {
     run_id: runId,
     result_sha256: resultSha,
     result_name: 'record-' + resultSha.slice(0, 12) + '.json',
-    result_text: bytes.toString('utf8'),
+    result_text: aliased ? JSON.stringify(result, null, 2) + '\n' : bytes.toString('utf8'),
     ledger_rows: plan.ledgerRows,
     fl_ops: plan.flOps,
     questions: plan.questions,
@@ -94,6 +109,7 @@ export function applyJournal(ctx, j, allowFault) {
   if (j.fl_ops.length) {
     const fl = readFinishLine(ctx);
     for (const op of j.fl_ops) finishLineUpsert(fl, op.id, op.patch);
+    autoClosePackages(fl);
     writeFinishLine(ctx, fl);
   }
   if (j.questions.length) packAppend(ctx, runId, j.questions);

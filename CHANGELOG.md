@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.5
+Four frictions from the BCL r11 run (backlog note do-it-plugin-friction-from-bcl-r11).
+- Stop gate run scope: `start` records the owning session and cwd on the run; the Stop hook passes its session and cwd to `gate stop`, which gates only the run they own (and parks only that run). Runs written before this have no owner and stay gated for everyone.
+- Multi-round checkpoint files: the last re-review/round section decides, or an explicit `Final verdict:` line. A flat file with both PASS and FAIL is still contradictory.
+- `it-result` status aliases `done`, `pass`, `success` are recorded as `ok`. Any other word is still `RESULT_INVALID`.
+- A package row closes by itself when every `T-<slice>-<n>` case row is terminal: DONE if all DONE, else BLOCKED naming the rest.
+
 ## 1.0.4
 - Merge model (H-22). A program whose slices merge to main one by one could never merge, because the adversarial and pre-merge reviews cover every wave and can only run after the last. Policy section 3b and decision D20: plan-it 5.2.0 takes `merge_model: incremental`, writes no `pre-merge`, and the closing reviews gate `release`. The spine already read gates from each checkpoint, so a block without `pre-merge` is accepted as is.
 - `due --at merge` and `due --at release` list every checkpoint that gates that action (build-it 4.1.3, H-27).

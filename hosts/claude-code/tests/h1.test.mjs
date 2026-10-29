@@ -133,6 +133,18 @@ test('T-H1-06 stop-gate allows a finished run', () => {
   assert.equal(spineCalls(log).filter((c) => c.name === 'park').length, 0);
 });
 
+test('T-H1-06b stop-gate scopes the spine call to its session and cwd, and parks only the run it refused', () => {
+  const cwd = scratch('h1-stop-'); const log = join(cwd, 'spine.log');
+  const fixtureData = { 'gate stop': { outcome: 'STOP_REFUSED', run_id: 'r-own', reason: 'open', progress: false, _exit: 1 }, park: { outcome: 'PARKED' } };
+  for (let i = 0; i < 4; i++) hookRun('stop-gate.mjs', { session_id: 's-own', cwd, hook_event_name: 'Stop' }, { cwd, fixtureData, log });
+  const c = spineCalls(log);
+  const stop = c.find((x) => x.name === 'gate stop').args.args;
+  assert.deepEqual(stop.slice(stop.indexOf('--session'), stop.indexOf('--session') + 2), ['--session', 's-own']);
+  assert.deepEqual(stop.slice(stop.indexOf('--cwd'), stop.indexOf('--cwd') + 2), ['--cwd', cwd]);
+  const park = c.find((x) => x.name === 'park').args.args;
+  assert.deepEqual(park.slice(park.indexOf('--run'), park.indexOf('--run') + 2), ['--run', 'r-own']);
+});
+
 test('T-H1-07 ceiling blocks a spawn but not the handoff write', () => {
   const cwd = scratch('h1-ceil-'); const log = join(cwd, 'spine.log');
   const fixtureData = { 'gate ceiling': { outcome: 'CEILING_BLOCKED', _exit: 3 } };

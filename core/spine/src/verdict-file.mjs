@@ -25,24 +25,36 @@ export function proseLines(text) {
   return out;
 }
 
+// Review rounds: a heading that opens a re-review or a numbered round starts a new
+// round, and the last round that says anything about the verdict supersedes the rest.
+const ROUND_HEADING = /^#{1,6}\s+.*(re-?review|round\s*\d+|\br\d+\b)/i;
+const clean = (v) => v.trim().split(/\s+/)[0].replace(/^[`*]+|[`*.,;]+$/g, '');
+
 // Returns { state: pass|fail|invalid|contradictory, reason }.
 export function parseVerdict(text, id) {
   if (!text.trim()) return { state: 'invalid', reason: 'the file is empty' };
   const cps = new Set();
-  const overall = [];
-  const tasks = [];
+  const rounds = [{ overall: [], tasks: [], finals: [] }];
   let inTask = false;
   for (const line of proseLines(text)) {
     if (line === '') { inTask = false; continue; }
+    if (ROUND_HEADING.test(line)) { rounds.push({ overall: [], tasks: [], finals: [] }); inTask = false; continue; }
+    const cur = rounds[rounds.length - 1];
     let m = /^checkpoint\s*:\s*(.*)$/i.exec(line);
     if (m) { cps.add(m[1].trim()); continue; }
     if (/^task\s*:/i.test(line)) { inTask = true; continue; }
+    m = /^[*_]*final\s+verdict\s*[:*]+\s*(.*)$/i.exec(line);
+    if (m) { cur.finals.push(clean(m[1])); continue; }
     m = /^verdict\s*:\s*(.*)$/i.exec(line);
-    if (m) (inTask ? tasks : overall).push(m[1].trim().split(/\s+/)[0].replace(/^[`*]+|[`*.,;]+$/g, ''));
+    if (m) (inTask ? cur.tasks : cur.overall).push(clean(m[1]));
   }
   if (cps.size === 0) return { state: 'invalid', reason: 'no "checkpoint: ' + id + '" line outside code and comments' };
   if (cps.size > 1) return { state: 'invalid', reason: 'names more than one checkpoint (' + [...cps].join(', ') + ')' };
   if (!cps.has(id)) return { state: 'invalid', reason: 'does not name checkpoint ' + id + ' (names ' + [...cps][0] + ')' };
+  // An explicit "Final verdict:" line decides across the whole file; else the last round with a verdict.
+  const finals = rounds.flatMap((r) => r.finals);
+  const deciding = finals.length ? { overall: finals, tasks: [] } : [...rounds].reverse().find((r) => r.overall.length) || rounds[0];
+  const { overall, tasks } = deciding;
   if (!overall.length) return { state: 'invalid', reason: 'no "verdict: PASS|FAIL" line outside code and comments' };
   const odd = [...new Set([...overall, ...tasks])].filter((v) => v !== 'PASS' && v !== 'FAIL');
   if (odd.length) return { state: 'invalid', reason: 'verdict value ' + odd.map((v) => JSON.stringify(v)).join(', ') + ' is not PASS or FAIL' };
