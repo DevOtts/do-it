@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { realpathSafe } from './ctx.mjs';
 import { fail } from './errors.mjs';
 import { appendEvent } from './events.mjs';
 import { atomicWrite } from './fs-atomic.mjs';
@@ -28,6 +29,7 @@ export function newState(ctx, runId, fields) {
     status: 'INTAKE',
     size: fields.size === undefined ? null : fields.size,
     host: fields.host === undefined ? null : fields.host,
+    owner: fields.owner === undefined ? null : fields.owner,
     stage: 'intake',
     slices: [],
     gates: {},
@@ -105,6 +107,34 @@ export function selectRunId(ctx, flags) {
     if (!best || created > best.created || (created === best.created && id > best.id)) best = { id, created };
   }
   return best.id;
+}
+
+// Which run does this session (or this cwd) own? Ownership is recorded once, at `start`:
+// the session id when the host gave one, always the cwd. A run with no owner field (state
+// written before this existed) belongs to nobody in particular and stays gated for everyone.
+// Returns { run: id|null, owned: bool } for the newest owned run, else the newest unowned
+// one, else null.
+export function selectScopedRunId(ctx, scope) {
+  const owned = [];
+  const legacy = [];
+  for (const id of listRunIds(ctx)) {
+    let st = {};
+    try { st = JSON.parse(fs.readFileSync(path.join(runDir(ctx, id), 'state.json'), 'utf8')); } catch { /* tampered: gated by its own load */ }
+    const o = st.owner;
+    const row = { id, created: st.created_at || '' };
+    if (!o || typeof o !== 'object') { legacy.push(row); continue; }
+    let mine = false;
+    if (o.session_id && scope.session) mine = o.session_id === scope.session;
+    else if (o.cwd && scope.cwd) {
+      const rel = path.relative(realpathSafe(o.cwd), realpathSafe(scope.cwd));
+      mine = rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel));
+    }
+    if (mine) owned.push(row);
+  }
+  const newest = (rows) => rows.sort((a, b) => (a.created === b.created ? (a.id < b.id ? 1 : -1) : (a.created < b.created ? 1 : -1)))[0];
+  if (owned.length) return { run: newest(owned).id, owned: true };
+  if (legacy.length) return { run: newest(legacy).id, owned: false };
+  return { run: null, owned: false };
 }
 
 // Raw read for callers that only need to know whether a run is in flight.

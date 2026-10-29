@@ -138,6 +138,7 @@ export function cmdStart(ctx, args) {
     request: f.request,
     size,
     host: typeof f.host === 'string' ? f.host : settings.values.host.driver,
+    owner: { session_id: typeof f.session === 'string' && f.session ? f.session : (ctx.env.DO_IT_SESSION_ID || null), cwd: ctx.cwd },
   });
   const routed = state.preset ? null : route(f.request);
   if (routed && routed.preset) {

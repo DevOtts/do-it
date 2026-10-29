@@ -3,12 +3,22 @@ import { fail } from './errors.mjs';
 import { openRows, readFinishLine, renderBoard, rowsSignature } from './finish-line.mjs';
 import { packAppend } from './pack.mjs';
 import { loadSettings } from './settings.mjs';
-import { loadState, selectRunId, writeState } from './state.mjs';
+import { loadState, selectRunId, selectScopedRunId, writeState } from './state.mjs';
 
 // G-9: refuse to stop with open rows, with the board, `patience` times without
 // progress; the next call parks the run and asks the owner.
 export function gateStop(ctx, args) {
-  const runId = selectRunId(ctx, args.flags);
+  const f = args.flags;
+  const scope = { session: typeof f.session === 'string' ? f.session : null, cwd: typeof f.cwd === 'string' ? f.cwd : null };
+  let runId;
+  if (f.run || (!scope.session && !scope.cwd)) {
+    runId = selectRunId(ctx, f);
+  } else {
+    // A hook names its session and cwd: only the run they own is gated.
+    const scoped = selectScopedRunId(ctx, scope);
+    if (!scoped.run) return { outcome: 'STOP_ALLOWED', exit: 0, owned: false, reason: 'no run is owned by this session or cwd' };
+    runId = scoped.run;
+  }
   const state = loadState(ctx, runId);
   const fl = readFinishLine(ctx);
   const open = openRows(fl);

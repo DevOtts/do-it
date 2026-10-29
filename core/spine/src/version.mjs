@@ -1,1 +1,1 @@
-export const DO_IT_VERSION = '1.0.4';
+export const DO_IT_VERSION = '1.0.5';
