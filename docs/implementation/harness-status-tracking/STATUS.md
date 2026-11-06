@@ -2,13 +2,25 @@
 
 # Harness status tracking — status
 
-Progress: 60%
-Tasks: 8 · verified 0 · done 8 · in-progress 0 · blocked 0 · not-started 0
-Updated: 2026-10-18T14:47:48Z
+Progress: 100%
+Tasks: 8 · verified 8 (claims) · done 0 · in-progress 0 · blocked 0 · not-started 0
+Updated: 2026-11-06T21:52:47Z
+Closed: yes
 
 ## Blocked
 
 None
+
+## Verified claims
+
+- ST-01 claimed by review-it · verdict `docs/implementation/harness-status-tracking/evidence/b1-review-it/ST-01-review-it.md` · at 2026-11-06T21:52:05Z · sha 313da6a35f45
+- ST-06 claimed by review-it · verdict `docs/implementation/harness-status-tracking/evidence/b1-review-it/ST-06-review-it.md` · at 2026-11-06T21:52:05Z · sha 15e79018e7e4
+- ST-07 claimed by review-it · verdict `docs/implementation/harness-status-tracking/evidence/b1-review-it/ST-07-review-it.md` · at 2026-11-06T21:52:06Z · sha 4f466a307fed
+- ST-02 claimed by review-it · verdict `docs/implementation/harness-status-tracking/evidence/b1-review-it/ST-02-review-it.md` · at 2026-11-06T21:52:05Z · sha 4ebe6f74239e
+- ST-03 claimed by review-it · verdict `docs/implementation/harness-status-tracking/evidence/b1-review-it/ST-03-review-it.md` · at 2026-11-06T21:52:05Z · sha 119fc498bb30
+- ST-04 claimed by review-it · verdict `docs/implementation/harness-status-tracking/evidence/b1-review-it/ST-04-review-it.md` · at 2026-11-06T21:52:05Z · sha 5bb3c10e82f0
+- ST-05 claimed by review-it · verdict `docs/implementation/harness-status-tracking/evidence/b1-review-it/ST-05-review-it.md` · at 2026-11-06T21:52:05Z · sha c5d0b8d2e4cb
+- ST-08 claimed by review-it · verdict `docs/implementation/harness-status-tracking/evidence/b1-review-it/ST-08-review-it.md` · at 2026-11-06T21:52:06Z · sha f61abe23cc26
 
 ## Pieces
 
@@ -26,24 +38,24 @@ None
 
 | Task | Title | Status | Evidence | Owner | Updated |
 | --- | --- | --- | --- | --- | --- |
-| ST-01 | Schema v1, shared writer and validator | done | `docs/implementation/harness-status-tracking/evidence/ST-01.md` | build-it:sonnet | 2026-10-18T14:24:33Z |
-| ST-06 | Render STATUS.md from status.json | done | `docs/implementation/harness-status-tracking/evidence/ST-06.md` | build-it:haiku | 2026-10-18T14:24:33Z |
-| ST-07 | Migration script, run on do-it and one ANM package | done | `docs/implementation/harness-status-tracking/evidence/ST-07.md` | build-it:sonnet | 2026-10-18T14:24:33Z |
-| ST-02 | plan-it creates status.json from epics and Test Contract | done | `docs/implementation/harness-status-tracking/evidence/ST-02.md` | build-it:sonnet | 2026-10-18T14:24:33Z |
+| ST-01 | Schema v1, shared writer and validator | verified | `docs/implementation/harness-status-tracking/evidence/b1-review-it/ST-01-review-it.md` | build-it:sonnet | 2026-11-06T21:52:05Z |
+| ST-06 | Render STATUS.md from status.json | verified | `docs/implementation/harness-status-tracking/evidence/b1-review-it/ST-06-review-it.md` | build-it:haiku | 2026-11-06T21:52:05Z |
+| ST-07 | Migration script, run on do-it and one ANM package | verified | `docs/implementation/harness-status-tracking/evidence/b1-review-it/ST-07-review-it.md` | build-it:sonnet | 2026-11-06T21:52:06Z |
+| ST-02 | plan-it creates status.json from epics and Test Contract | verified | `docs/implementation/harness-status-tracking/evidence/b1-review-it/ST-02-review-it.md` | build-it:sonnet | 2026-11-06T21:52:05Z |
 
 ## W2 Lifecycle callers
 
 | Task | Title | Status | Evidence | Owner | Updated |
 | --- | --- | --- | --- | --- | --- |
-| ST-03 | build-it updates status and evidence at task boundaries | done | `docs/implementation/harness-status-tracking/evidence/ST-03.md` | build-it:opus | 2026-10-18T14:30:38Z |
-| ST-04 | review-it path: set verified from the verdict | done | `docs/implementation/harness-status-tracking/evidence/ST-04.md` | build-it:sonnet | 2026-10-18T14:30:38Z |
-| ST-05 | conclude-it path: final state, freeze, move to 0-done with the guard | done | `docs/implementation/harness-status-tracking/evidence/ST-05.md` | build-it:sonnet | 2026-10-18T14:30:38Z |
+| ST-03 | build-it updates status and evidence at task boundaries | verified | `docs/implementation/harness-status-tracking/evidence/b1-review-it/ST-03-review-it.md` | build-it:opus | 2026-11-06T21:52:05Z |
+| ST-04 | review-it path: set verified from the verdict | verified | `docs/implementation/harness-status-tracking/evidence/b1-review-it/ST-04-review-it.md` | build-it:sonnet | 2026-11-06T21:52:05Z |
+| ST-05 | conclude-it path: final state, freeze, move to 0-done with the guard | verified | `docs/implementation/harness-status-tracking/evidence/b1-review-it/ST-05-review-it.md` | build-it:sonnet | 2026-11-06T21:52:05Z |
 
 ## W3 Adversarial review
 
 | Task | Title | Status | Evidence | Owner | Updated |
 | --- | --- | --- | --- | --- | --- |
-| ST-08 | Adversarial review: try to get a fake 100% through every writer | done | `docs/implementation/harness-status-tracking/evidence/ST-08.md` | build-it:opus | 2026-10-18T14:47:48Z |
+| ST-08 | Adversarial review: try to get a fake 100% through every writer | verified | `docs/implementation/harness-status-tracking/evidence/b1-review-it/ST-08-review-it.md` | build-it:opus | 2026-11-06T21:52:06Z |
 
 ## Sessions
 
@@ -51,6 +63,15 @@ None
 
 ## History (latest 20)
 
+- 2026-11-06T21:52:47Z *: open → closed by conclude-it
+- 2026-11-06T21:52:06Z ST-08: done → verified by review-it
+- 2026-11-06T21:52:06Z ST-07: done → verified by review-it
+- 2026-11-06T21:52:05Z ST-06: done → verified by review-it
+- 2026-11-06T21:52:05Z ST-05: done → verified by review-it
+- 2026-11-06T21:52:05Z ST-04: done → verified by review-it
+- 2026-11-06T21:52:05Z ST-03: done → verified by review-it
+- 2026-11-06T21:52:05Z ST-02: done → verified by review-it
+- 2026-11-06T21:52:05Z ST-01: done → verified by review-it
 - 2026-10-18T14:47:48Z ST-08: in-progress → done by build-it
 - 2026-10-18T14:30:38Z ST-08: not-started → in-progress by build-it
 - 2026-10-18T14:30:38Z ST-05: in-progress → done by build-it
@@ -62,8 +83,3 @@ None
 - 2026-10-18T14:24:33Z ST-02: in-progress → done by build-it
 - 2026-10-18T14:24:33Z ST-07: in-progress → done by build-it
 - 2026-10-18T14:24:33Z ST-06: in-progress → done by build-it
-- 2026-10-18T14:24:33Z ST-01: in-progress → done by build-it
-- 2026-10-18T14:24:33Z ST-02: not-started → in-progress by build-it — bootstrap: task started before the board existed (D-16)
-- 2026-10-18T14:24:33Z ST-07: not-started → in-progress by build-it — bootstrap: task started before the board existed (D-16)
-- 2026-10-18T14:24:33Z ST-06: not-started → in-progress by build-it — bootstrap: task started before the board existed (D-16)
-- 2026-10-18T14:24:33Z ST-01: not-started → in-progress by build-it — bootstrap: task started before the board existed (D-16)

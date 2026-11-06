@@ -2,9 +2,9 @@
   "schema": 1,
   "implementation": "harness-status-tracking",
   "title": "Harness status tracking",
-  "updated_at": "2026-10-18T14:47:48Z",
+  "updated_at": "2026-11-06T21:52:47Z",
   "approximate": false,
-  "closed": false,
+  "closed": true,
   "waves": [
     {
       "id": "W1",
@@ -13,41 +13,41 @@
         {
           "id": "ST-01",
           "title": "Schema v1, shared writer and validator",
-          "status": "done",
+          "status": "verified",
           "blocked_on": null,
-          "evidence": "docs/implementation/harness-status-tracking/evidence/ST-01.md",
+          "evidence": "docs/implementation/harness-status-tracking/evidence/b1-review-it/ST-01-review-it.md",
           "owner": "build-it:sonnet",
-          "updated_at": "2026-10-18T14:24:33Z",
+          "updated_at": "2026-11-06T21:52:05Z",
           "note": null
         },
         {
           "id": "ST-06",
           "title": "Render STATUS.md from status.json",
-          "status": "done",
+          "status": "verified",
           "blocked_on": null,
-          "evidence": "docs/implementation/harness-status-tracking/evidence/ST-06.md",
+          "evidence": "docs/implementation/harness-status-tracking/evidence/b1-review-it/ST-06-review-it.md",
           "owner": "build-it:haiku",
-          "updated_at": "2026-10-18T14:24:33Z",
+          "updated_at": "2026-11-06T21:52:05Z",
           "note": null
         },
         {
           "id": "ST-07",
           "title": "Migration script, run on do-it and one ANM package",
-          "status": "done",
+          "status": "verified",
           "blocked_on": null,
-          "evidence": "docs/implementation/harness-status-tracking/evidence/ST-07.md",
+          "evidence": "docs/implementation/harness-status-tracking/evidence/b1-review-it/ST-07-review-it.md",
           "owner": "build-it:sonnet",
-          "updated_at": "2026-10-18T14:24:33Z",
+          "updated_at": "2026-11-06T21:52:06Z",
           "note": null
         },
         {
           "id": "ST-02",
           "title": "plan-it creates status.json from epics and Test Contract",
-          "status": "done",
+          "status": "verified",
           "blocked_on": null,
-          "evidence": "docs/implementation/harness-status-tracking/evidence/ST-02.md",
+          "evidence": "docs/implementation/harness-status-tracking/evidence/b1-review-it/ST-02-review-it.md",
           "owner": "build-it:sonnet",
-          "updated_at": "2026-10-18T14:24:33Z",
+          "updated_at": "2026-11-06T21:52:05Z",
           "note": null
         }
       ]
@@ -59,31 +59,31 @@
         {
           "id": "ST-03",
           "title": "build-it updates status and evidence at task boundaries",
-          "status": "done",
+          "status": "verified",
           "blocked_on": null,
-          "evidence": "docs/implementation/harness-status-tracking/evidence/ST-03.md",
+          "evidence": "docs/implementation/harness-status-tracking/evidence/b1-review-it/ST-03-review-it.md",
           "owner": "build-it:opus",
-          "updated_at": "2026-10-18T14:30:38Z",
+          "updated_at": "2026-11-06T21:52:05Z",
           "note": null
         },
         {
           "id": "ST-04",
           "title": "review-it path: set verified from the verdict",
-          "status": "done",
+          "status": "verified",
           "blocked_on": null,
-          "evidence": "docs/implementation/harness-status-tracking/evidence/ST-04.md",
+          "evidence": "docs/implementation/harness-status-tracking/evidence/b1-review-it/ST-04-review-it.md",
           "owner": "build-it:sonnet",
-          "updated_at": "2026-10-18T14:30:38Z",
+          "updated_at": "2026-11-06T21:52:05Z",
           "note": null
         },
         {
           "id": "ST-05",
           "title": "conclude-it path: final state, freeze, move to 0-done with the guard",
-          "status": "done",
+          "status": "verified",
           "blocked_on": null,
-          "evidence": "docs/implementation/harness-status-tracking/evidence/ST-05.md",
+          "evidence": "docs/implementation/harness-status-tracking/evidence/b1-review-it/ST-05-review-it.md",
           "owner": "build-it:sonnet",
-          "updated_at": "2026-10-18T14:30:38Z",
+          "updated_at": "2026-11-06T21:52:05Z",
           "note": null
         }
       ]
@@ -95,11 +95,11 @@
         {
           "id": "ST-08",
           "title": "Adversarial review: try to get a fake 100% through every writer",
-          "status": "done",
+          "status": "verified",
           "blocked_on": null,
-          "evidence": "docs/implementation/harness-status-tracking/evidence/ST-08.md",
+          "evidence": "docs/implementation/harness-status-tracking/evidence/b1-review-it/ST-08-review-it.md",
           "owner": "build-it:opus",
-          "updated_at": "2026-10-18T14:47:48Z",
+          "updated_at": "2026-11-06T21:52:06Z",
           "note": null
         }
       ]
@@ -277,6 +277,78 @@
       "from": "in-progress",
       "to": "done",
       "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-11-06T21:52:05Z",
+      "task": "ST-01",
+      "from": "done",
+      "to": "verified",
+      "by": "review-it",
+      "note": null
+    },
+    {
+      "at": "2026-11-06T21:52:05Z",
+      "task": "ST-02",
+      "from": "done",
+      "to": "verified",
+      "by": "review-it",
+      "note": null
+    },
+    {
+      "at": "2026-11-06T21:52:05Z",
+      "task": "ST-03",
+      "from": "done",
+      "to": "verified",
+      "by": "review-it",
+      "note": null
+    },
+    {
+      "at": "2026-11-06T21:52:05Z",
+      "task": "ST-04",
+      "from": "done",
+      "to": "verified",
+      "by": "review-it",
+      "note": null
+    },
+    {
+      "at": "2026-11-06T21:52:05Z",
+      "task": "ST-05",
+      "from": "done",
+      "to": "verified",
+      "by": "review-it",
+      "note": null
+    },
+    {
+      "at": "2026-11-06T21:52:05Z",
+      "task": "ST-06",
+      "from": "done",
+      "to": "verified",
+      "by": "review-it",
+      "note": null
+    },
+    {
+      "at": "2026-11-06T21:52:06Z",
+      "task": "ST-07",
+      "from": "done",
+      "to": "verified",
+      "by": "review-it",
+      "note": null
+    },
+    {
+      "at": "2026-11-06T21:52:06Z",
+      "task": "ST-08",
+      "from": "done",
+      "to": "verified",
+      "by": "review-it",
+      "note": null
+    },
+    {
+      "at": "2026-11-06T21:52:47Z",
+      "task": "*",
+      "from": "open",
+      "to": "closed",
+      "by": "conclude-it",
       "note": null
     }
   ]
