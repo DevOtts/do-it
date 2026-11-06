@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
-import { mkRepo, real, unit, readJson, runDirOf, startRun, writeJson } from '../helpers.mjs';
+import { mkRepo, real, unit, readJson, runDirOf, sha, startRun, writeJson } from '../helpers.mjs';
 import { parseVerdict } from '../../src/verdict-file.mjs';
 
 function result(repo, name, over) {
@@ -107,7 +107,7 @@ function twoRuns(repo) {
   const b = real(repo, ['start', '--preset', 'feature', '--request', 'B', '--session', 'sess-B']);
   assert.equal(a.code, 0, a.stdout);
   assert.equal(b.code, 0, b.stdout);
-  seedBoard(repo, [['T-1', 'dod', 'OPEN']]);
+  seedBoard(repo, [['T-1', 'dod', 'OPEN', { run_id: a.out.run_id }]]);
   return { a: a.out.run_id, b: b.out.run_id };
 }
 
@@ -125,23 +125,32 @@ test('T-FR-08 the stop gate gates only the run its session owns [REAL]', () => {
   assert.equal(st.stop_refusals, 1, 'the foreign session did not touch run state');
 });
 
-test('T-FR-09 runs without an owner (older state files) still gate every session', () => {
+test('T-FR-09 runs without an owner (older state files) are never gated from a hook; an explicit stop still gates', () => {
   const repo = mkRepo();
   startRun(repo, real);
+  const file = path.join(repo.doIt, 'runs');
+  for (const id of fs.readdirSync(file)) {
+    const sf = path.join(file, id, 'state.json');
+    const st = readJson(sf);
+    delete st.owner;
+    fs.writeFileSync(sf, JSON.stringify(st, null, 2) + '\n');
+    fs.writeFileSync(path.join(file, id, '.state.sha256'), sha(sf) + '\n');
+  }
   seedBoard(repo, [['T-1', 'dod', 'OPEN']]);
   const r = real(repo, ['gate', 'stop', '--session', 'any', '--cwd', repo.dir]);
-  assert.equal(r.out.outcome, 'STOP_REFUSED', r.stdout);
+  assert.equal(r.out.outcome, 'STOP_ALLOWED', r.stdout);
+  assert.equal(r.out.reason, 'legacy run has no owner');
   const noSession = real(repo, ['gate', 'stop']);
   assert.equal(noSession.out.outcome, 'STOP_REFUSED', noSession.stdout);
 });
 
-test('T-FR-10 a run started without --session is owned by its cwd; another cwd is not gated', () => {
+test('T-FR-10 a run started without a session is owned by its cwd for a host that gives no session; another cwd is not gated', () => {
   const repo = mkRepo();
   const s = real(repo, ['start', '--preset', 'feature', '--request', 'A']);
   assert.equal(s.code, 0, s.stdout);
-  seedBoard(repo, [['T-1', 'dod', 'OPEN']]);
-  assert.equal(real(repo, ['gate', 'stop', '--session', 'x', '--cwd', repo.dir]).out.outcome, 'STOP_REFUSED');
-  const elsewhere = path.join(repo.dir, 'sub');
-  fs.mkdirSync(elsewhere);
-  assert.equal(real(repo, ['gate', 'stop', '--session', 'x', '--cwd', '/tmp']).out.outcome, 'STOP_ALLOWED');
+  seedBoard(repo, [['T-1', 'dod', 'OPEN', { run_id: s.out.run_id }]]);
+  assert.equal(real(repo, ['gate', 'stop', '--cwd', repo.dir]).out.outcome, 'STOP_REFUSED');
+  assert.equal(real(repo, ['gate', 'stop', '--session', 'x', '--cwd', repo.dir]).out.outcome, 'STOP_ALLOWED', 'a host that gives a session never falls back to the cwd');
+  assert.equal(real(repo, ['gate', 'stop', '--cwd', '/tmp']).out.outcome, 'STOP_ALLOWED');
 });
+

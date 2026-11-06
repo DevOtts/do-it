@@ -14,20 +14,22 @@ import { renderBoard, readFinishLine } from './finish-line.mjs';
 import { cmdMeter } from './meter.mjs';
 import { cmdNext, gateRoute } from './next.mjs';
 import { gateBuild } from './readiness.mjs';
+import { cmdPack } from './pack.mjs';
 import { cmdPark } from './park.mjs';
 import { cmdRecord } from './record.mjs';
 import { redactInit, redactText } from './redact.mjs';
 import { cmdResume } from './resume.mjs';
 import { redactFlushEvents } from './secrets.mjs';
 import { route } from './router.mjs';
+import { resolveSessionId } from './session.mjs';
 import { loadSettings } from './settings.mjs';
 import { gateStop } from './stopgate.mjs';
-import { advanceRunStatus, loadState, newRunId, newState, runDir, selectRunId, writeState } from './state.mjs';
+import { advanceRunStatus, loadState, newRunId, newState, runDir, selectRunId, unreadableRuns, writeState } from './state.mjs';
 import { gateVerify } from './verify.mjs';
 import { DO_IT_VERSION } from './version.mjs';
 
 export const BOOL_FLAGS = new Set(['json', 'migrate', 'install', 'secrets', 'append', 'force', 'finalize', 'help', 'version', 'verbose', 'dry-run']);
-export const COMMANDS = ['init', 'start', 'next', 'record', 'gate', 'answer', 'handoff', 'resume', 'park', 'status', 'meter', 'doctor'];
+export const COMMANDS = ['init', 'start', 'next', 'record', 'gate', 'answer', 'handoff', 'resume', 'park', 'pack', 'status', 'meter', 'doctor'];
 
 export function parseArgs(argv) {
   const out = { positionals: [], flags: {}, sets: [] };
@@ -85,6 +87,7 @@ export function dispatch(ctx, args) {
     case 'handoff': return cmdHandoff(ctx, args);
     case 'resume': return cmdResume(ctx, args);
     case 'park': return cmdPark(ctx, args);
+    case 'pack': return cmdPack(ctx, args);
     default:
       throw fail('USAGE', 1, { message: 'unknown command', commands: COMMANDS });
   }
@@ -138,7 +141,7 @@ export function cmdStart(ctx, args) {
     request: f.request,
     size,
     host: typeof f.host === 'string' ? f.host : settings.values.host.driver,
-    owner: { session_id: typeof f.session === 'string' && f.session ? f.session : (ctx.env.DO_IT_SESSION_ID || null), cwd: ctx.cwd },
+    owner: { session_id: resolveSessionId(ctx, f), cwd: ctx.cwd },
   });
   const routed = state.preset ? null : route(f.request);
   if (routed && routed.preset) {
@@ -174,6 +177,7 @@ export function cmdStatus(ctx, args) {
     run_verdict: state.run_verdict === undefined ? null : state.run_verdict,
     board: renderBoard(readFinishLine(ctx)),
     stale_tmp_removed: removed,
+    unreadable_runs: unreadableRuns(ctx),
   };
 }
 
