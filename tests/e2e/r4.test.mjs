@@ -228,13 +228,7 @@ test('T-R4-02 feature fixture on the real Claude Code host (G-3) [REAL]', { skip
   }, null, 2) + '\n');
 });
 
-test('T-R4-05 sandboxes equal slices needing a build (D16) [REAL]', async (t) => {
-  // Sandboxes are created by the Engine. With no reachable Engine the case cannot be VERIFIED; the stub never plays it.
-  const { probeEngine } = await import('../../hosts/engine/live/probe.mjs');
-  const rec = await probeEngine({});
-  if (!rec.reachable) { t.skip('IMPLEMENTED-NOT-VERIFIED: no live Engine (' + rec.error + ')'); return; }
-  t.skip('IMPLEMENTED-NOT-VERIFIED: Engine reachable at ' + rec.baseUrl + ' but Engine PR #727 only injects cards and reads their state: no do-it W3 pipeline or drain is installed, so no card runs and no sandbox is created to sample (sampler and check are ready in tests/e2e/lib/worktrees.mjs)');
-});
+// T-R4-05 (sandboxes equal slices, D16) needs a live Engine, so it moved to hosts/engine/tests/r4-sandbox.test.mjs (epic E1).
 
 test('T-R4-07 review loop converges', () => {
   const exp = expected('review-loop').variants;

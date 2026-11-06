@@ -1,7 +1,7 @@
 // Engine run-rows transport (Engine PR #727, /api/run-rows): rowGet/rowPut/rowAppend/rowKeys/rowDelete over HTTP.
 // Auth is the service key header x-service-api-key; the key is read from the environment at construction and is
 // never logged or put into an error message. One write is capped at 3 MiB by the Engine (413 write_too_large).
-import { StoreError, ERR } from '../interface.mjs';
+import { StoreError, ERR } from '../../../../core/state-stores/interface.mjs';
 
 export const ENGINE_WRITE_CAP = 3 * 1024 * 1024;
 

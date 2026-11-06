@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 // Deterministic root SKILL.md from plugins/do-it/skill-src/*.md plus preset and
-// persona names read from core/pipelines and core/personas (read-only inputs).
+// persona names read from core/pipelines and core/personas, and the host table read from
+// hosts/*/adapter.manifest.json (all read-only inputs).
 //   --root <dir>   repo root (default: this repo)   --out <file>   write here (default root/SKILL.md)
 import { readFileSync, readdirSync, writeFileSync, existsSync } from 'node:fs';
 import { join, resolve, dirname, basename, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readHosts, renderSkillTable } from './hosts-table.mjs';
 
 const args = process.argv.slice(2);
 const val = (n) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : undefined; };
@@ -29,18 +31,8 @@ const lists = [];
 if (presets.length) lists.push('## Presets\n\n' + presets.map((n) => `- ${n}`).join('\n'));
 if (personas.length) lists.push('## Personas\n\n' + personas.map((n) => `- ${n}`).join('\n'));
 
-const hosts = [
-  '## Hosts',
-  '',
-  '```',
-  '| Host        | Level     |',
-  '|-------------|-----------|',
-  '| claude-code | Native    |',
-  '| codex       | Supported |',
-  '| opencode    | Supported |',
-  '| engine      | Supported |',
-  '```',
-].join('\n');
+const hostRows = readHosts(root);
+const hosts = hostRows.length ? ['## Hosts', '', '```', renderSkillTable(hostRows), '```'].join('\n') : '';
 
-const text = [...head.map(frag), ...lists, hosts, ...foot.map(frag)].join('\n\n') + '\n';
+const text = [...head.map(frag), ...lists, ...(hosts ? [hosts] : []), ...foot.map(frag)].join('\n\n') + '\n';
 writeFileSync(out, text);

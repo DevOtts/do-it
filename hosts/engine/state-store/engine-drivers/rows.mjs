@@ -1,5 +1,5 @@
 // Blob driver `rows`: blobs live in database rows next to the state, size-capped (D14 default).
-import { StoreError, ERR } from '../interface.mjs';
+import { StoreError, ERR } from '../../../../core/state-stores/interface.mjs';
 
 export const ROWS_BLOB_CAP = 8 * 1024 * 1024;
 

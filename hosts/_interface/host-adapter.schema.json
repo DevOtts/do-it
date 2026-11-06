@@ -7,6 +7,21 @@
   "properties": {
     "host": { "type": "string", "minLength": 1 },
     "version": { "type": "string", "minLength": 1 },
+    "display": { "type": "string", "minLength": 1 },
+    "level": { "enum": ["native", "supported", "experimental"] },
+    "server_side": { "enum": ["supported", "declined"] },
+    "status_label": { "type": "string", "minLength": 1 },
+    "note": { "type": "string" },
+    "state_store": {
+      "type": "object", "additionalProperties": false,
+      "required": ["module"],
+      "properties": {
+        "backend": { "type": "string", "minLength": 1 },
+        "module": { "type": "string", "minLength": 1 },
+        "settings_schema": { "type": "string" },
+        "conformance": { "type": "string" }
+      }
+    },
     "skips": {
       "type": "array",
       "items": {

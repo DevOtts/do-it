@@ -1,5 +1,7 @@
 #!/usr/bin/env node
-// Usage: node core/state-stores/conformance/run.mjs --backend local-fs|git-branch|engine [--driver memory-engine|rows|fs-mirror|r2]
+// Usage: node core/state-stores/conformance/run.mjs --backend local-fs|git-branch|<host backend> [--driver NAME]
+// A host backend supplies its own target through the manifest's state_store.conformance module
+// (export makeTarget({ backend, driver, tmp }) -> { store, meta, rootLabel? } | { unreachable: { driver, error } }).
 // Exit: 0 all pass, 1 a case failed, 3 target unreachable (IMPLEMENTED-NOT-VERIFIED).
 import fs from 'node:fs/promises';
 import os from 'node:os';
@@ -7,10 +9,8 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { cases } from './cases.mjs';
-import { openStore } from '../index.mjs';
-import { selectBlobDriver } from '../engine.mjs';
-import { MemoryEngine } from '../engine-drivers/memory-engine.mjs';
-import { createHttpRowsTransport } from '../engine-drivers/http-rows.mjs';
+import { openStore, hostBackend } from '../index.mjs';
+import { pathToFileURL } from 'node:url';
 
 export async function runSuite(store, meta = {}) {
   const results = [];
@@ -30,33 +30,19 @@ export async function makeTarget({ backend, driver, tmp }) {
     execFileSync('git', ['init', '-q', repo]);
     return { store: openStore({ backend, repo }), meta: { backend, driver: 'git', real: true } };
   }
-  if (backend === 'engine') {
-    if (driver === 'memory-engine') {
-      const transport = new MemoryEngine();
-      return { store: openStore({ backend, transport, settings: {} }), meta: { backend, driver: 'memory-engine', real: false } };
-    }
-    const miss = probeEngine(driver);
-    if (miss) return { unreachable: miss };
-    const transport = createHttpRowsTransport({ baseUrl: process.env.DO_IT_ENGINE_URL, apiKey: process.env.DO_IT_ENGINE_TOKEN, spaceId: process.env.DO_IT_ENGINE_SPACE_ID });
-    const reach = await transport.rowKeys('runs/conf-probe/').then(() => null, (e) => ({ driver, error: `${new URL(process.env.DO_IT_ENGINE_URL).host} not reachable or rows API off: ${e.message}` }));
-    if (reach) return { unreachable: reach };
-    const blobs = driver === 'rows' ? undefined : selectBlobDriver({ state: { engine: { blobs: driver } } }, { transport });
-    return { store: openStore({ backend, transport, blobs, settings: {} }), meta: { backend, driver, real: true } };
+  const h = hostBackend(backend);
+  if (h && h.conformance) {
+    const mod = await import(pathToFileURL(path.join(h.dir, h.conformance)).href);
+    return mod.makeTarget({ backend, driver, tmp });
   }
-  throw new Error(`unknown backend ${backend}`);
-}
-
-// G-3: never pass on a mock. Returns a record naming what is missing, or null when URL and key are configured.
-export function probeEngine(driver) {
-  if (!process.env.DO_IT_ENGINE_URL) return { driver, error: 'DO_IT_ENGINE_URL is unset: no reachable Engine staging with a card' };
-  if (!process.env.DO_IT_ENGINE_TOKEN) return { driver, error: 'DO_IT_ENGINE_TOKEN is unset: the Engine rows API needs a service key (x-service-api-key)' };
-  return null;
+  openStore({ backend }); // throws DRIVER_UNKNOWN naming the missing host
+  throw new Error(`backend ${backend} has no conformance target`);
 }
 
 async function main() {
   const argv = process.argv.slice(2);
   const arg = (k, d) => { const i = argv.indexOf(k); return i < 0 ? d : argv[i + 1]; };
-  const backend = arg('--backend'), driver = arg('--driver', 'rows');
+  const backend = arg('--backend'), driver = arg('--driver', 'default');
   const tmp = await fs.mkdtemp(path.join(os.tmpdir(), 'do-it-conf-'));
   try {
     const t = await makeTarget({ backend, driver, tmp });
@@ -67,7 +53,7 @@ async function main() {
     const r = await runSuite(t.store, t.meta);
     for (const c of r.results) console.log(`${c.ok ? 'ok  ' : 'FAIL'} ${String(c.n).padStart(2)} ${c.name}${c.ok ? '' : ' -- ' + c.error}`);
     console.log(`${r.passed === r.total ? 'PASS' : 'FAIL'} ${r.passed}/${r.total}`);
-    console.log(`backend: ${r.backend}, driver: ${r.driver}, real: ${r.real}, root: ${backend === 'engine' ? (r.real ? 'engine-run-rows' : 'memory') : tmp}`);
+    console.log(`backend: ${r.backend}, driver: ${r.driver}, real: ${r.real}, root: ${t.rootLabel ? t.rootLabel() : tmp}`);
     process.exitCode = r.passed === r.total ? 0 : 1;
   } catch (e) {
     console.error(JSON.stringify({ ok: false, error: { code: e.code || 'ERROR', message: e.message } }));
