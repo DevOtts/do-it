@@ -1,0 +1,26 @@
+{
+  "schema": "planit-report/1",
+  "kind": "RESEARCH-REPORT",
+  "title": "Architecture \u2014 do-it 1.1",
+  "subtitle_html": "Local HTML twin of the markdown source (plan-it run do-it-1.1, 2026-11-06); not published.",
+  "source": {
+    "path": "../../docs/02-architecture.md"
+  },
+  "output": "../../docs/02-architecture.html",
+  "glossary": {
+    "path": "../GLOSSARY.md"
+  },
+  "sections": [
+    {
+      "id": "source",
+      "heading": "Architecture \u2014 do-it 1.1",
+      "blocks": [
+        {
+          "type": "embed",
+          "path": "../../docs/02-architecture.md",
+          "label": "../docs/02-architecture.md"
+        }
+      ]
+    }
+  ]
+}

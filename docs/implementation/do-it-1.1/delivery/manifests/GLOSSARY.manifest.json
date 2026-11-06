@@ -1,0 +1,24 @@
+{
+  "schema": "planit-report/1",
+  "kind": "GLOSSARY",
+  "title": "GLOSSARY \u2014 do-it 1.1",
+  "subtitle_html": "Local HTML twin of the markdown source (plan-it run do-it-1.1, 2026-11-06); not published.",
+  "source": {
+    "path": "../GLOSSARY.md"
+  },
+  "output": "../GLOSSARY.html",
+  "glossary": {
+    "path": "../GLOSSARY.md"
+  },
+  "sections": [
+    {
+      "id": "glossary-panel",
+      "heading": "Glossary",
+      "blocks": [
+        {
+          "type": "glossary"
+        }
+      ]
+    }
+  ]
+}

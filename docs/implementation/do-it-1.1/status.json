@@ -1,0 +1,1751 @@
+{
+  "schema": 1,
+  "implementation": "do-it-1.1",
+  "title": "do-it-1.1",
+  "updated_at": "2026-11-06T15:22:04Z",
+  "approximate": false,
+  "closed": false,
+  "waves": [
+    {
+      "id": "W0",
+      "title": "Wave 0",
+      "tasks": [
+        {
+          "id": "S1-00",
+          "title": "`start` falls back to `CLAUDE_CODE_SESSION_ID` (after `--session` and `DO_IT_SESSION_ID`); `resume` after `/clear` re-binds the run to the new id with a history entry",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "none",
+            "unchecked": [
+              {
+                "case": "T-S1-09",
+                "reason": "live"
+              }
+            ],
+            "reason": "live"
+          }
+        },
+        {
+          "id": "S1-06",
+          "title": "`SKILL.md` `start` line uses `--request` (C30)",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "none",
+            "unchecked": [
+              {
+                "case": "T-S1-01",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-S1-02",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-S1-03",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-S1-04",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-S1-05",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-S1-06",
+                "reason": "live"
+              },
+              {
+                "case": "T-S1-11",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-S1-09",
+                "reason": "live"
+              },
+              {
+                "case": "T-S1-10",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-S1-08",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-S1-07",
+                "reason": "epic-level case, not mapped to this task"
+              }
+            ],
+            "reason": "epic-level case, not mapped to this task, live"
+          }
+        },
+        {
+          "id": "S1-07",
+          "title": "Patience parks only a run the hook's session owns",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "command",
+            "command": "node --test core/spine/test/s2/stopgate-owner.test.mjs",
+            "cases": [
+              "T-S1-10"
+            ]
+          }
+        },
+        {
+          "id": "S1-01",
+          "title": "Match on `owner.session_id` only; cwd fallback only when the host gives no session and the run has none",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "command",
+            "command": "(node --test core/spine/test/s2/stopgate-owner.test.mjs) && (node --test core/spine/test/s2/stopgate-owner.test.mjs)",
+            "cases": [
+              "T-S1-01",
+              "T-S1-02"
+            ],
+            "unchecked": [
+              {
+                "case": "T-S1-06",
+                "reason": "live"
+              }
+            ]
+          }
+        },
+        {
+          "id": "S1-02",
+          "title": "Legacy runs (no owner) are never gated from a hook",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "command",
+            "command": "node --test core/spine/test/s2/stopgate-owner.test.mjs",
+            "cases": [
+              "T-S1-03"
+            ]
+          }
+        },
+        {
+          "id": "S1-03",
+          "title": "Allow by exclusion: PARKED, NEEDS_HUMAN, BLOCKED, AWAIT_RATIFY and terminal statuses never gate; every other run status does",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "command",
+            "command": "(node --test core/spine/test/s2/stopgate-owner.test.mjs) && (node --test core/spine/test/s2/stopgate-owner.test.mjs)",
+            "cases": [
+              "T-S1-04",
+              "T-S1-08"
+            ]
+          }
+        },
+        {
+          "id": "S1-04",
+          "title": "Finish-line rows carry `run_id`; a hook stop counts only the gated run's rows",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "command",
+            "command": "node --test core/spine/test/s2/stopgate-owner.test.mjs",
+            "cases": [
+              "T-S1-05"
+            ]
+          }
+        },
+        {
+          "id": "S1-05",
+          "title": "`start` never records a null session id when the host supplies one",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "command",
+            "command": "node --test core/spine/test/s2/stopgate-owner.test.mjs",
+            "cases": [
+              "T-S1-07"
+            ]
+          }
+        },
+        {
+          "id": "S1-08",
+          "title": "`do-it pack withdraw --by stop-gate [--run <id>]`: marks unanswered questions whose source is the stop gate as `withdrawn` (kept, with date and reason); answered questions and stage questions are untouched (D10)",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "command",
+            "command": "node --test core/spine/test/s2/pack-withdraw.test.mjs",
+            "cases": [
+              "T-S1-11"
+            ]
+          }
+        },
+        {
+          "id": "A1-02",
+          "title": "conclude-it S4: guarded close when `status.json` exists; CLOSEOUT then move when it does not; never a bare `git mv`",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "command",
+            "command": "(node --test tests/ship-pipeline/s4.test.mjs) && (node --test tests/ship-pipeline/s4.test.mjs) && (node --test tests/status/close-partial-failure.test.mjs)",
+            "cases": [
+              "T-A1-03",
+              "T-A1-04",
+              "T-A1-06"
+            ]
+          }
+        },
+        {
+          "id": "A1-03",
+          "title": "conclude-it Step 0 runs `doc-it check archive` and reports, never fixes; without doc-it it prints `[skip] doc-it not installed`",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "command",
+            "command": "node --test tests/ship-pipeline/step0-audit.test.mjs",
+            "cases": [
+              "T-A1-05"
+            ]
+          }
+        },
+        {
+          "id": "A1-04",
+          "title": "conclude-it S4 writes CLOSEOUT.md from doc-it's template (K1-04), never its own copy",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "none",
+            "unchecked": [
+              {
+                "case": "T-A1-03",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-A1-04",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-A1-06",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-A1-07",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-A1-05",
+                "reason": "epic-level case, not mapped to this task"
+              }
+            ],
+            "reason": "epic-level case, not mapped to this task"
+          }
+        },
+        {
+          "id": "A1-05",
+          "title": "`ledger-card.mjs close` accepts a package already in `0-done/` and closes it in place (`status-write close` without `--move`)",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "command",
+            "command": "node --test tests/ledger-card-archived.test.mjs",
+            "cases": [
+              "T-A1-07"
+            ]
+          }
+        },
+        {
+          "id": "B1-01",
+          "title": "An independent review-it run (not the REAL-VERIFY session) syncs the board's 8 tasks from `REAL-VERIFY.md`",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "command",
+            "command": "node ../build-it/plugins/build-it/scripts/status/status-write.mjs validate --file docs/implementation/harness-status-tracking/status.json",
+            "cases": [
+              "T-B1-01"
+            ]
+          }
+        },
+        {
+          "id": "B1-02",
+          "title": "Re-check T-B-20's stale half; it stays parked until a commit lands more than 24 h after the board",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "command",
+            "command": "node ../build-it/plugins/build-it/scripts/status/status-write.mjs recheck --file docs/implementation/harness-status-tracking/status.json",
+            "cases": [
+              "T-B1-02"
+            ]
+          }
+        },
+        {
+          "id": "B1-03",
+          "title": "Close the program through the guarded close once every case is terminal",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "none",
+            "unchecked": [
+              {
+                "case": "T-B1-01",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-B1-02",
+                "reason": "epic-level case, not mapped to this task"
+              }
+            ],
+            "reason": "epic-level case, not mapped to this task"
+          }
+        },
+        {
+          "id": "I1-01",
+          "title": "Create `DevOtts/init-it` (visibility per D1), push the local tree, tag `v0.1.0`, GitHub release",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "none",
+            "unchecked": [
+              {
+                "case": "T-I1-01",
+                "reason": "live"
+              }
+            ],
+            "reason": "live"
+          }
+        },
+        {
+          "id": "I1-02",
+          "title": "`core/companions.json` entry (`required: false`) and marketplace entry",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "command",
+            "command": "node scripts/check-pins.mjs --marketplace",
+            "cases": [
+              "T-I1-02"
+            ]
+          }
+        },
+        {
+          "id": "I1-03",
+          "title": "plan-it hand-off prints \"init-it not installed\" when the plugin is missing",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "none",
+            "unchecked": [
+              {
+                "case": "T-I1-01",
+                "reason": "live"
+              },
+              {
+                "case": "T-I1-02",
+                "reason": "epic-level case, not mapped to this task"
+              }
+            ],
+            "reason": "live, epic-level case, not mapped to this task"
+          }
+        },
+        {
+          "id": "K1-01",
+          "title": "Plugin skeleton: `.claude-plugin/plugin.json`, `plugins/doc-it/skills/doc-it/SKILL.md` (DevOtts author fields and footer), `scripts/doc-it.mjs` (zero-dependency Node CLI)",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "command",
+            "command": "node --test test/neutral.test.mjs",
+            "cases": [
+              "T-K1-07"
+            ]
+          }
+        },
+        {
+          "id": "K1-02",
+          "title": "Standard v0.1: OWNER-QUESTIONS 1–5 applied with their recommendations (D13); each rule DS-1..DS-8 marked `checked` or `not yet checked` in 0.1.0",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "none",
+            "unchecked": [
+              {
+                "case": "T-K1-01",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-K1-02",
+                "reason": "live"
+              },
+              {
+                "case": "T-K1-03",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-K1-04",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-K1-05",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-K1-06",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-K1-07",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-K1-08",
+                "reason": "live"
+              }
+            ],
+            "reason": "epic-level case, not mapped to this task, live"
+          }
+        },
+        {
+          "id": "K1-03",
+          "title": "`doc-it check archive`: read-only scan of the archive role; JSON (`done_unclosed`, `done_without_closeout`, `stale_active`) and exit codes 0 clean, 1 findings, 2 config error (DS-3)",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "command",
+            "command": "node --test test/check-archive.test.mjs",
+            "cases": [
+              "T-K1-01"
+            ],
+            "unchecked": [
+              {
+                "case": "T-K1-02",
+                "reason": "live"
+              }
+            ]
+          }
+        },
+        {
+          "id": "K1-04",
+          "title": "CLOSEOUT template and its lint: one row per piece, `shipped` with evidence, `dropped`, or `carried` with a backlog link (DS-3)",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "command",
+            "command": "node --test test/closeout.test.mjs",
+            "cases": [
+              "T-K1-03"
+            ]
+          }
+        },
+        {
+          "id": "K1-05",
+          "title": "`.doc-it/config.json`: role → paths map and `expiry_days` (default 60); `doc-it init` writes it from a short interview; a path with no role is reported as unowned",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "command",
+            "command": "node --test test/config.test.mjs",
+            "cases": [
+              "T-K1-04"
+            ]
+          }
+        },
+        {
+          "id": "K1-06",
+          "title": "`doc-it check checkout <repo...>`: compares HEAD and working tree with `origin/<default>`; exit 1 when behind, naming local and remote sha (DS-6)",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "command",
+            "command": "node --test test/check-checkout.test.mjs",
+            "cases": [
+              "T-K1-05"
+            ]
+          }
+        },
+        {
+          "id": "K1-07",
+          "title": "`doc-it check expiry` (report only, never rewrites; DS-4) and `doc-it tiers --json` (the tier enum of STANDARD §2)",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "command",
+            "command": "node --test test/check-expiry.test.mjs",
+            "cases": [
+              "T-K1-06"
+            ]
+          }
+        },
+        {
+          "id": "K1-08",
+          "title": "Create `DevOtts/doc-it` public, push, tag `v0.1.0`, GitHub release; `core/companions.json` entry (`required: false`) and marketplace entry pinned with `ref: v0.1.0` (D4)",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "none",
+            "unchecked": [
+              {
+                "case": "T-K1-08",
+                "reason": "live"
+              }
+            ],
+            "reason": "live"
+          }
+        },
+        {
+          "id": "E1-01",
+          "title": "Move `core/state-stores/engine.mjs`, `core/state-stores/engine-drivers/*` and their tests to `hosts/engine/state-store/`; `core/state-stores/index.mjs` keeps `local-fs` and `git-branch` and loads any other backend from the `state_store` entry of `hosts/<name>/adapter.manifest.json`; the engine cases in `core/state-stores/cli.mjs` and `conformance/run.mjs` move with it",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "command",
+            "command": "(node --test tests/hosts/isolation.test.mjs) && (node --test hosts/engine/state-store/tests/)",
+            "cases": [
+              "T-E1-02",
+              "T-E1-03"
+            ]
+          }
+        },
+        {
+          "id": "E1-02",
+          "title": "Settings: the core schema keeps `state.backend` and accepts one object keyed by the backend name, validated by that host's own schema (`hosts/engine/state-store/settings.schema.json`); `settings.mjs` drops the `engine` default. Existing `state.engine.blobs` files stay valid (no new key, G-8)",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "command",
+            "command": "node --test core/spine/test/s2/settings-host.test.mjs",
+            "cases": [
+              "T-E1-04"
+            ]
+          }
+        },
+        {
+          "id": "E1-03",
+          "title": "G-12 word list gains `engine`; the scan covers `core/` and `scripts/`, skips `hosts/` and `plugins/do-it/`",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "command",
+            "command": "node --test core/spine/test/s1/s1.test.mjs",
+            "cases": [
+              "T-E1-01"
+            ]
+          }
+        },
+        {
+          "id": "E1-04",
+          "title": "Host tables in README, SKILL and `generate-skill.mjs` are generated from `hosts/*/adapter.manifest.json` (`level`, `server_side`); `check-readme.mjs` reads the manifests instead of a fixed host list",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "none",
+            "unchecked": [
+              {
+                "case": "T-E1-01",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-E1-02",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-E1-03",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-E1-04",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-E1-05",
+                "reason": "epic-level case, not mapped to this task"
+              }
+            ],
+            "reason": "epic-level case, not mapped to this task"
+          }
+        },
+        {
+          "id": "E1-05",
+          "title": "The Engine live case in `tests/e2e/r4.test.mjs` moves to `hosts/engine/tests/`",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "none",
+            "unchecked": [
+              {
+                "case": "T-E1-01",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-E1-02",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-E1-03",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-E1-04",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-E1-05",
+                "reason": "epic-level case, not mapped to this task"
+              }
+            ],
+            "reason": "epic-level case, not mapped to this task"
+          }
+        },
+        {
+          "id": "E1-06",
+          "title": "`hosts/engine/adapter.manifest.json` gains `\"level\": \"experimental\", \"server_side\": \"declined\"`; README, hero alt text and `hosts/engine/README.md` show \"Experimental: server side declined (PR #727, 2026-10-29)\" (D2)",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "command",
+            "command": "node --test tests/readme/*.test.mjs",
+            "cases": [
+              "T-E1-05"
+            ]
+          }
+        },
+        {
+          "id": "E1-07",
+          "title": "CHANGELOG 1.1.0 records the move and D2",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "none",
+            "unchecked": [
+              {
+                "case": "T-E1-01",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-E1-02",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-E1-03",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-E1-04",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-E1-05",
+                "reason": "epic-level case, not mapped to this task"
+              }
+            ],
+            "reason": "epic-level case, not mapped to this task"
+          }
+        },
+        {
+          "id": "H1-01",
+          "title": "prompt-it: tag per D3 (v1.0.0 at the plugin.json 1.0.0 commit, or pin 0.2.1); do-it: tag v1.0.5 at `d38cedb` (C32)",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "none",
+            "unchecked": [
+              {
+                "case": "T-H1-01",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-H1-02",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-H1-04",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-H1-03",
+                "reason": "owner-gated"
+              }
+            ],
+            "reason": "epic-level case, not mapped to this task, owner-gated"
+          }
+        },
+        {
+          "id": "H1-02",
+          "title": "`check-pins` fails when a pinned version (do-it's own included) has no matching tag on the remote",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "command",
+            "command": "node --test tests/catalog/*.test.mjs",
+            "cases": [
+              "T-H1-02"
+            ]
+          }
+        },
+        {
+          "id": "H1-03",
+          "title": "reconcile-it 1.0.1: remove `scripts/reconcile-it.mjs` (duplicate)",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "command",
+            "command": "node --test ../reconcile-it/tests/",
+            "cases": [
+              "T-H1-01"
+            ]
+          }
+        },
+        {
+          "id": "H1-04",
+          "title": "Marketplace `ref: v<version>` pins per D4, only after each tag exists (C33)",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "none",
+            "unchecked": [
+              {
+                "case": "T-H1-03",
+                "reason": "owner-gated"
+              }
+            ],
+            "reason": "owner-gated"
+          }
+        },
+        {
+          "id": "H1-05",
+          "title": "Replace the stale 1.0.0 KICKOFF with a pointer to this package",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "none",
+            "unchecked": [
+              {
+                "case": "T-H1-01",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-H1-02",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-H1-04",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-H1-03",
+                "reason": "owner-gated"
+              }
+            ],
+            "reason": "epic-level case, not mapped to this task, owner-gated"
+          }
+        },
+        {
+          "id": "H1-06",
+          "title": "plan-it SKILL: script paths resolve in the installed layout (`plugins/plan-it/scripts/`), with a test that runs each documented command from a cache-shaped copy; and `handoff` stops reading plan-it's own generated `ENV-FACTS.md` (PRESENT/ABSENT) as a STATUS board when it sits in the delivery folder",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "command",
+            "command": "node --test tests/plugin/skill-paths.test.mjs",
+            "cases": [
+              "T-H1-04"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "W1",
+      "title": "Wave 1",
+      "tasks": [
+        {
+          "id": "L1-01",
+          "title": "Ledger format in `references/formats.md`; the tier enum is read from `doc-it tiers --json` (K1-07), never copied; SKILL Phase 5 requires the ledger for decision-grade packages",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "none",
+            "unchecked": [
+              {
+                "case": "T-L1-01",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-L1-02",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-L1-03",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-L1-04",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-L1-05",
+                "reason": "epic-level case, not mapped to this task"
+              }
+            ],
+            "reason": "epic-level case, not mapped to this task"
+          }
+        },
+        {
+          "id": "L1-02",
+          "title": "`gate-check claims <claims.md>`: tier enum, source present, sha/path rule for code/git, fact rule, count rule",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "command",
+            "command": "(node scripts/gate-check.mjs claims tests/fixtures/claims/do-it-1.1.md) && (node --test tests/claims/*.test.mjs) && (node --test tests/claims/*.test.mjs) && (node --test tests/claims/*.test.mjs)",
+            "cases": [
+              "T-L1-01",
+              "T-L1-02",
+              "T-L1-03",
+              "T-L1-04"
+            ]
+          }
+        },
+        {
+          "id": "L1-03",
+          "title": "\"Evidence against the hypothesis\" rule and its lint",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "command",
+            "command": "node --test tests/claims/*.test.mjs",
+            "cases": [
+              "T-L1-05"
+            ]
+          }
+        },
+        {
+          "id": "L1-04",
+          "title": "`gate-check handoff` runs `claims` for decision-grade packages",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "none",
+            "unchecked": [
+              {
+                "case": "T-L1-01",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-L1-02",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-L1-03",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-L1-04",
+                "reason": "epic-level case, not mapped to this task"
+              },
+              {
+                "case": "T-L1-05",
+                "reason": "epic-level case, not mapped to this task"
+              }
+            ],
+            "reason": "epic-level case, not mapped to this task"
+          }
+        },
+        {
+          "id": "V1-01",
+          "title": "Preflight probe `behind-remote` calls `doc-it check checkout` (K1-06) and records the remote sha; without doc-it the probe reports WARN `doc-it not installed`, never PASS",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "command",
+            "command": "node --test tests/preflight/behind-remote.test.mjs",
+            "cases": [
+              "T-V1-01"
+            ]
+          }
+        },
+        {
+          "id": "V1-02",
+          "title": "Preflight probe `shipped-layers` and the `research/SHIPPED-LAYERS.md` template",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "command",
+            "command": "node --test tests/preflight/shipped-layers.test.mjs",
+            "cases": [
+              "T-V1-03"
+            ]
+          }
+        },
+        {
+          "id": "V1-03",
+          "title": "`gate-check handoff` requires SHIPPED-LAYERS for size M/L; KICKOFF pinning uses the remote sha",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "command",
+            "command": "node --test tests/preflight/shipped-layers.test.mjs",
+            "cases": [
+              "T-V1-02"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "W2",
+      "title": "Wave 2",
+      "tasks": [
+        {
+          "id": "K2-01",
+          "title": "conclude-it Step 2 (debrief) runs `doc-it check expiry` on the pages it touched and puts the result in the verdict; the supersession sweep asks doc-it for each fact kind's home",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "none",
+            "unchecked": [
+              {
+                "case": "T-K2-01",
+                "reason": "judgement"
+              }
+            ],
+            "reason": "judgement"
+          }
+        },
+        {
+          "id": "K2-02",
+          "title": "review-it audit mode (Q1) tags each claim with the tier from `doc-it tiers --json`",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "command",
+            "command": "node --test tests/audit/tiers.test.mjs",
+            "cases": [
+              "T-K2-02"
+            ]
+          }
+        },
+        {
+          "id": "K2-03",
+          "title": "One shared rule in every consumer: when doc-it is missing, print `[skip] doc-it not installed: <what was not checked>` and never PASS that check (D14)",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "command",
+            "command": "node --test tests/doc-it-missing/*.test.mjs",
+            "cases": [
+              "T-K2-03"
+            ]
+          }
+        },
+        {
+          "id": "K2-04",
+          "title": "do-it README family table and SKILL list doc-it; `doctor --install` offers it",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "command",
+            "command": "node --test tests/readme/*.test.mjs",
+            "cases": [
+              "T-K2-04"
+            ]
+          }
+        },
+        {
+          "id": "Q1-01",
+          "title": "`--audit <claims.md>`: auditor dispatch (a different model from the author), primary sources only, verdict file per CONTRACT §2.5",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "command",
+            "command": "node --test tests/audit/chain.test.mjs",
+            "cases": [
+              "T-Q1-03"
+            ],
+            "unchecked": [
+              {
+                "case": "T-Q1-01",
+                "reason": "judgement"
+              }
+            ]
+          }
+        },
+        {
+          "id": "Q1-02",
+          "title": "Ombudsman dispatch and rulings; SAFE and DO-NOT-PUBLISH lists; tokens per role",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "none",
+            "unchecked": [
+              {
+                "case": "T-Q1-04",
+                "reason": "judgement"
+              }
+            ],
+            "reason": "judgement"
+          }
+        },
+        {
+          "id": "Q1-03",
+          "title": "Audit-chain states per CONTRACT §3.2, including retry, escalation and abort",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "command",
+            "command": "(node --test tests/audit/chain.test.mjs) && (node --test tests/audit/chain.test.mjs)",
+            "cases": [
+              "T-Q1-02",
+              "T-Q1-06"
+            ]
+          }
+        },
+        {
+          "id": "Q1-04",
+          "title": "`--stakes routine` runs only `gate-check claims`",
+          "status": "not-started",
+          "blocked_on": null,
+          "evidence": null,
+          "owner": null,
+          "updated_at": "2026-11-06T15:22:04Z",
+          "note": null,
+          "check": {
+            "kind": "command",
+            "command": "node --test tests/audit/chain.test.mjs",
+            "cases": [
+              "T-Q1-05"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "sessions": [],
+  "pieces": [
+    {
+      "piece": "S1 — Stop gate binds only the owning session (W0)",
+      "status": "not-started",
+      "blocked_on": null,
+      "whats_left": "All 9 tasks"
+    },
+    {
+      "piece": "A1 — One guarded path to 0-done (W0)",
+      "status": "not-started",
+      "blocked_on": null,
+      "whats_left": "All 4 tasks"
+    },
+    {
+      "piece": "B1 — harness-status-tracking board tells the truth (W0)",
+      "status": "not-started",
+      "blocked_on": null,
+      "whats_left": "All 3 tasks"
+    },
+    {
+      "piece": "I1 — init-it is installable (W0, after D1)",
+      "status": "not-started",
+      "blocked_on": null,
+      "whats_left": "All 3 tasks"
+    },
+    {
+      "piece": "K1 — doc-it 0.1.0: the standard and its first checks (W0, D11)",
+      "status": "not-started",
+      "blocked_on": null,
+      "whats_left": "All 8 tasks"
+    },
+    {
+      "piece": "K2 — The family consumes doc-it (W2, D11)",
+      "status": "not-started",
+      "blocked_on": null,
+      "whats_left": "All 4 tasks"
+    },
+    {
+      "piece": "E1 — Host integrations stay isolated under hosts/ (W0, R3)",
+      "status": "not-started",
+      "blocked_on": null,
+      "whats_left": "All 7 tasks"
+    },
+    {
+      "piece": "H1 — Release hygiene (W0)",
+      "status": "not-started",
+      "blocked_on": null,
+      "whats_left": "All 6 tasks"
+    },
+    {
+      "piece": "L1 — Claim ledger and source tiers (W1)",
+      "status": "not-started",
+      "blocked_on": null,
+      "whats_left": "All 4 tasks"
+    },
+    {
+      "piece": "V1 — Grounding preflight reads what is current (W1)",
+      "status": "not-started",
+      "blocked_on": null,
+      "whats_left": "All 3 tasks"
+    },
+    {
+      "piece": "Q1 — review-it audit mode (W2)",
+      "status": "not-started",
+      "blocked_on": null,
+      "whats_left": "All 4 tasks"
+    }
+  ],
+  "history": [
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "S1-00",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "S1-06",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "S1-07",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "S1-01",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "S1-02",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "S1-03",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "S1-04",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "S1-05",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "S1-08",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "A1-02",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "A1-03",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "A1-04",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "A1-05",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "B1-01",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "B1-02",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "B1-03",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "I1-01",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "I1-02",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "I1-03",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "K1-01",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "K1-02",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "K1-03",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "K1-04",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "K1-05",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "K1-06",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "K1-07",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "K1-08",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "E1-01",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "E1-02",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "E1-03",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "E1-04",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "E1-05",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "E1-06",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "E1-07",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "H1-01",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "H1-02",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "H1-03",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "H1-04",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "H1-05",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "H1-06",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "L1-01",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "L1-02",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "L1-03",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "L1-04",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "V1-01",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "V1-02",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "V1-03",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "K2-01",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "K2-02",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "K2-03",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "K2-04",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "Q1-01",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "Q1-02",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "Q1-03",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    },
+    {
+      "at": "2026-11-06T15:22:04Z",
+      "task": "Q1-04",
+      "from": "not-started",
+      "to": "not-started",
+      "by": "plan-it",
+      "note": "created"
+    }
+  ]
+}

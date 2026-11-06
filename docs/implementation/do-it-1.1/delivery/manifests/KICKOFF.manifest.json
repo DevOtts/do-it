@@ -1,0 +1,26 @@
+{
+  "schema": "planit-report/1",
+  "kind": "KICKOFF",
+  "title": "KICKOFF \u2014 do-it 1.1",
+  "subtitle_html": "Local HTML twin of the markdown source (plan-it run do-it-1.1, 2026-11-06); not published.",
+  "source": {
+    "path": "../KICKOFF.md"
+  },
+  "output": "../KICKOFF.html",
+  "glossary": {
+    "path": "../GLOSSARY.md"
+  },
+  "sections": [
+    {
+      "id": "source",
+      "heading": "KICKOFF \u2014 do-it 1.1",
+      "blocks": [
+        {
+          "type": "embed",
+          "path": "../KICKOFF.md",
+          "label": "KICKOFF.md"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "schema": "planit-report/1",
+  "kind": "DECISIONS",
+  "title": "DECISIONS \u2014 do-it 1.1",
+  "subtitle_html": "Local HTML twin of the markdown source (plan-it run do-it-1.1, 2026-11-06); not published.",
+  "source": {
+    "path": "../../plan/DECISIONS.md"
+  },
+  "output": "../../plan/DECISIONS.html",
+  "glossary": {
+    "path": "../GLOSSARY.md"
+  },
+  "sections": [
+    {
+      "id": "source",
+      "heading": "DECISIONS \u2014 do-it 1.1",
+      "blocks": [
+        {
+          "type": "embed",
+          "path": "../../plan/DECISIONS.md",
+          "label": "../plan/DECISIONS.md"
+        }
+      ]
+    }
+  ]
+}
