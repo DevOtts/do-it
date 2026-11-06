@@ -1,0 +1,4 @@
+{ "schema": "planit-report/1", "kind": "DECISIONS", "title": "resumable-test-gates: DECISIONS",
+  "source": { "path": "DECISIONS.md" }, "output": "DECISIONS.html", "glossary": { "path": "GLOSSARY.md" },
+  "allow_tokens": ["do-it", "gate-results", "claude-code"],
+  "sections": [ { "id": "body", "heading": "DECISIONS", "blocks": [ { "type": "embed", "path": "DECISIONS.md", "label": "DECISIONS.md (full text)" } ] } ] }

@@ -1,0 +1,13 @@
+{
+  "probes": [
+    {"id":"config-reachability","check":["/usr/bin/git","-C","/Users/macbook/Workspace/Devotts/do-it","rev-parse","origin/main"]},
+    {"id":"live-registry","check":["/usr/bin/git","-C","/Users/macbook/Workspace/Engine/Engine-Core/brain-api-core","rev-parse","origin/main"]},
+    {"id":"deployed-vs-installed","check":["node","-p","require('/Users/macbook/Workspace/Engine/Engine-Core/brain-api-core/node_modules/jest/package.json').version"],"tool":"node"},
+    {"id":"credential-validity","check":["/bin/echo","no credential needed: planning is read-only, no live system is called"]},
+    {"id":"dependency-actual-usage","check":["/usr/bin/grep","-c","gate_slot_acquire","/Users/macbook/Workspace/Engine/Engine-Core/brain-api-core/scripts/pre-push.sh"]},
+    {"id":"code-vs-external-split","check":["/usr/bin/git","-C","/Users/macbook/Workspace/Engine/Engine-Core/brain-docs","rev-parse","origin/main"]},
+    {"id":"tool-availability","check":["node","--version"],"tool":"node"},
+    {"id":"caller-consumer-surface","check":["/usr/sbin/sysctl","-n","kern.memorystatus_vm_pressure_level"]},
+    {"id":"secret-scan-on-import","check":["/bin/echo","no repo import in this plan: nothing is copied between repos"]}
+  ]
+}

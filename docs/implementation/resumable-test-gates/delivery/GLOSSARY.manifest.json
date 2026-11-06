@@ -1,0 +1,4 @@
+{ "schema": "planit-report/1", "kind": "GLOSSARY", "title": "resumable-test-gates: GLOSSARY",
+  "source": { "path": "GLOSSARY.md" }, "output": "GLOSSARY.html", "glossary": { "path": "GLOSSARY.md" },
+  "allow_tokens": ["do-it", "gate-results", "claude-code"],
+  "sections": [ { "id": "body", "heading": "GLOSSARY", "blocks": [ { "type": "embed", "path": "GLOSSARY.md", "label": "GLOSSARY.md (full text)" } ] } ] }

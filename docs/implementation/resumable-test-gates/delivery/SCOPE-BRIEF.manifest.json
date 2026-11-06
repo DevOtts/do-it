@@ -1,0 +1,4 @@
+{ "schema": "planit-report/1", "kind": "SCOPE-BRIEF", "title": "resumable-test-gates: SCOPE-BRIEF",
+  "source": { "path": "SCOPE-BRIEF.md" }, "output": "SCOPE-BRIEF.html", "glossary": { "path": "GLOSSARY.md" },
+  "allow_tokens": ["do-it", "gate-results", "claude-code"],
+  "sections": [ { "id": "body", "heading": "SCOPE-BRIEF", "blocks": [ { "type": "embed", "path": "SCOPE-BRIEF.md", "label": "SCOPE-BRIEF.md (full text)" } ] } ] }

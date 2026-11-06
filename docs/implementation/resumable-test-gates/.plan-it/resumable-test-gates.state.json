@@ -1,0 +1,586 @@
+{
+  "schemaVersion": 1,
+  "machineVersion": "5.2.0",
+  "run": {
+    "name": "resumable-test-gates",
+    "goal": "Plan resumable test gates: a per-test-file result store keyed by a dependency-closure fingerprint, a composed verdict that says it is composed, T3 clean as the safety net, a deterministic per-machine gate queue, generic in do-it (P1-P6) and adopted first by Engine-Core (P7).",
+    "startedAt": "2026-11-06T13:10:07Z",
+    "mode": "autonomous-draft",
+    "topology": "orchestrator+squads",
+    "deliveryRoot": "delivery",
+    "doItRun": "r-20261106-130657-7ff2",
+    "originSession": "study-bateria-testes-tempo",
+    "anamnesis": {
+      "access": "read-only: do-it repo, Engine-Core repos via git show origin/main and installed node_modules/.venv; no credentials read",
+      "fences": "zero code, no edits outside docs/implementation/resumable-test-gates/, no PRs/pushes, no test suite or gate run, no git checkout in Engine repos, never print credentials",
+      "naming": "do-it repo DevOtts/do-it; epic branches epic/<EID>-<slug>; Engine PRs per repo; settings block named gates (settings.tiers = model tiers)",
+      "topology": "orchestrator+squads (owner away; conductor-spawned planner)",
+      "liveProbe": "read-only ps/sysctl/vm_stat/git only (brief)",
+      "knownDecisions": "README 5.1 (do-it owns trigger, project owns command, optional gates block, visible skip) and 6.1 (one deterministic machine queue, never run without a slot) owner rulings 2026-11-06; T0-T3 tiers agreed; resume mandatory; Docker cap stays 13 GB"
+    }
+  },
+  "state": "done",
+  "size": "M",
+  "shape": 1,
+  "gates": {
+    "G0": {
+      "approved": true,
+      "owner": "Fernando Ott (derived from README owner rulings 2026-11-06 + do-it planner brief; contradict at G4)",
+      "date": "2026-11-06"
+    },
+    "G1": {
+      "approved": true,
+      "owner": "Fernando Ott (derived: brief fixes scope P1-P7, two homes; contradict at G4)",
+      "date": "2026-11-06",
+      "note": "size M, shape 1 (multi-doc + delivery), topology orchestrator+squads",
+      "decisions": {
+        "size": "M",
+        "shape": 1,
+        "topology": "orchestrator+squads",
+        "tiers": {
+          "planner": "T1 (opus) crown jewels: fingerprint/invalidation, composed verdict, queue admission",
+          "squads-drafting": "T2 (sonnet) spec'd PRD/epic drafting: adapters, stages, Engine adoption",
+          "mechanical": "T3 (haiku) lint/render/count passes",
+          "builder": "T2 (sonnet) against the Test Contract; escalate to T1 on struggle",
+          "verifier": "T2 (sonnet), never the builder",
+          "conductor": "T2 per do-it RUN-POLICY"
+        }
+      }
+    },
+    "G2": {
+      "defaults": [
+        {
+          "id": "R1",
+          "question": "Store name and place",
+          "default": "see DECISIONS.md",
+          "rationale": "see DECISIONS.md",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R2",
+          "question": "Gate scope labels inside do-it",
+          "default": "see DECISIONS.md",
+          "rationale": "see DECISIONS.md",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R3",
+          "question": "Code placement",
+          "default": "see DECISIONS.md",
+          "rationale": "see DECISIONS.md",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R4",
+          "question": "Hash and manifest",
+          "default": "see DECISIONS.md",
+          "rationale": "see DECISIONS.md",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R5",
+          "question": "PASS predicate",
+          "default": "see DECISIONS.md",
+          "rationale": "see DECISIONS.md",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R6",
+          "question": "Key classes",
+          "default": "see DECISIONS.md",
+          "rationale": "see DECISIONS.md",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R7",
+          "question": "Env values",
+          "default": "see DECISIONS.md",
+          "rationale": "see DECISIONS.md",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R8",
+          "question": "Dependency input",
+          "default": "see DECISIONS.md",
+          "rationale": "see DECISIONS.md",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R9",
+          "question": "Reuse lifetime",
+          "default": "see DECISIONS.md",
+          "rationale": "see DECISIONS.md",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R10",
+          "question": "ts-jest isolatedModules",
+          "default": "see DECISIONS.md",
+          "rationale": "see DECISIONS.md",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R11",
+          "question": "Dirty tree",
+          "default": "see DECISIONS.md",
+          "rationale": "see DECISIONS.md",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R12",
+          "question": "Train complete",
+          "default": "see DECISIONS.md",
+          "rationale": "see DECISIONS.md",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R13",
+          "question": "Queue admission",
+          "default": "see DECISIONS.md",
+          "rationale": "see DECISIONS.md",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R14",
+          "question": "Queue timeout and home",
+          "default": "see DECISIONS.md",
+          "rationale": "see DECISIONS.md",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R15",
+          "question": "Nightly schedule",
+          "default": "see DECISIONS.md",
+          "rationale": "see DECISIONS.md",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R16",
+          "question": "Engine never-reuse set",
+          "default": "see DECISIONS.md",
+          "rationale": "see DECISIONS.md",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R17",
+          "question": "Engine queue placement",
+          "default": "see DECISIONS.md",
+          "rationale": "see DECISIONS.md",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R18",
+          "question": "Flaky and unstable",
+          "default": "see DECISIONS.md",
+          "rationale": "see DECISIONS.md",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R19",
+          "question": "Test seams",
+          "default": "see DECISIONS.md",
+          "rationale": "see DECISIONS.md",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R20",
+          "question": "gates block additions",
+          "default": "see DECISIONS.md",
+          "rationale": "see DECISIONS.md",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R21",
+          "question": "Engine env vars",
+          "default": "see DECISIONS.md",
+          "rationale": "see DECISIONS.md",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R22",
+          "question": "jest skip mechanism",
+          "default": "see DECISIONS.md",
+          "rationale": "see DECISIONS.md",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R23",
+          "question": "Row size and integrity",
+          "default": "see DECISIONS.md",
+          "rationale": "see DECISIONS.md",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R24",
+          "question": "Conductor HOLD file",
+          "default": "see DECISIONS.md",
+          "rationale": "see DECISIONS.md",
+          "source": "recommended",
+          "contradicted": false
+        }
+      ],
+      "approved": true,
+      "owner": "Fernando Ott",
+      "date": "2026-11-06"
+    },
+    "G4": {
+      "approved": true,
+      "owner": "Fernando Ott",
+      "date": "2026-11-06",
+      "answers": {
+        "G4-1": "approve with changes (A15)",
+        "OQ-1": "yes",
+        "OQ-2": "jest -> pytest -> vitest",
+        "OQ-3": "per machine",
+        "OQ-4": "fresh leg in v1",
+        "A14": "keep"
+      },
+      "recordedVia": "do-it answer, run r-20261106-130657-7ff2",
+      "contradictions": []
+    },
+    "G3": {
+      "approved": true,
+      "owner": "Fernando Ott",
+      "date": "2026-11-06",
+      "note": "recorded via planReview (autonomous-draft)"
+    }
+  },
+  "contract": {
+    "version": "v1.1",
+    "path": "delivery/CONTRACT.md",
+    "frozenAt": "2026-11-06",
+    "draft": false,
+    "sha256": "584304c1a42b03d42d3d5811685ea9a8c53b28cabccb00d88b50e564d5fd4639",
+    "pinned": "do-it origin/main d38cedbee0e3e63e8c03b1e51f7ac2bbec4bfb71",
+    "amendments": [
+      {
+        "id": "A15",
+        "date": "2026-11-06",
+        "owner": "Fernando Ott (do-it 1.1 R3)",
+        "summary": "host-agnostic core: PRD-6, E1/E2, SQ-E, A10 content, G-17/G-18 moved to the pilot program; wording neutral; 11 epics, 81 tasks, 174 cases (36 REAL)",
+        "by": "trust-research-study (package handed over by study-bateria-testes-tempo)"
+      }
+    ],
+    "finalAt": "2026-11-06T17:10:00.000Z"
+  },
+  "artifacts": [
+    {
+      "path": "research/01-do-it-repo.md",
+      "phase": 4,
+      "verifiedAt": "2026-11-06T13:30:00Z"
+    },
+    {
+      "path": "research/02-engine-gates.md",
+      "phase": 4,
+      "verifiedAt": "2026-11-06T13:30:00Z"
+    },
+    {
+      "path": "research/03-runners-and-fingerprint.md",
+      "phase": 4,
+      "verifiedAt": "2026-11-06T13:30:00Z"
+    },
+    {
+      "path": "ENV-FACTS.md",
+      "phase": 4,
+      "verifiedAt": "2026-11-06T13:31:00Z"
+    },
+    {
+      "path": "docs/01-current-state-and-findings.md",
+      "phase": 6,
+      "verifiedAt": "2026-11-06T14:10:00Z"
+    },
+    {
+      "path": "docs/02-vision-and-architecture.md",
+      "phase": 6,
+      "verifiedAt": "2026-11-06T14:10:00Z"
+    },
+    {
+      "path": "docs/03-data-model-and-contract.md",
+      "phase": 6,
+      "verifiedAt": "2026-11-06T14:10:00Z"
+    },
+    {
+      "path": "docs/05-components.md",
+      "phase": 6,
+      "verifiedAt": "2026-11-06T14:10:00Z"
+    },
+    {
+      "path": "docs/06-roadmap-and-open-questions.md",
+      "phase": 6,
+      "verifiedAt": "2026-11-06T14:10:00Z"
+    },
+    {
+      "path": "delivery/SCOPE-BRIEF.md",
+      "phase": 6,
+      "verifiedAt": "2026-11-06T14:10:00Z"
+    },
+    {
+      "path": "delivery/DECISIONS.md",
+      "phase": 6,
+      "verifiedAt": "2026-11-06T14:10:00Z"
+    },
+    {
+      "path": "delivery/CONTRACT.md",
+      "phase": 6,
+      "verifiedAt": "2026-11-06T14:10:00Z"
+    },
+    {
+      "path": "delivery/prds",
+      "phase": 10,
+      "verifiedAt": "2026-11-06T16:21:00Z"
+    },
+    {
+      "path": "delivery/epics",
+      "phase": 10,
+      "verifiedAt": "2026-11-06T16:21:00Z"
+    },
+    {
+      "path": "delivery/KICKOFF.md",
+      "phase": 10,
+      "verifiedAt": "2026-11-06T16:21:00Z"
+    },
+    {
+      "path": "delivery/PLAN-REVIEW.md",
+      "phase": 10,
+      "verifiedAt": "2026-11-06T16:21:00Z"
+    },
+    {
+      "path": "delivery/GLOSSARY.md",
+      "phase": 10,
+      "verifiedAt": "2026-11-06T16:21:00Z"
+    },
+    {
+      "path": "plan/READINESS.json",
+      "phase": 10,
+      "verifiedAt": "2026-11-06T16:21:00Z"
+    },
+    {
+      "path": "plan/DECISIONS.md",
+      "phase": 10,
+      "verifiedAt": "2026-11-06T16:21:00Z"
+    },
+    {
+      "path": "status.json",
+      "phase": 10,
+      "verifiedAt": "2026-11-06T16:21:00Z"
+    },
+    {
+      "path": "delivery/STATUS.md",
+      "phase": 10,
+      "verifiedAt": "2026-11-06T16:21:00Z"
+    }
+  ],
+  "triage": {
+    "verdict": "plan",
+    "measuredAt": "2026-11-06",
+    "measurements": [
+      "owner-approved proposal README with 7 pieces across 2 repos",
+      "api-core full suite 1,624 spec files at origin/main, 14 archived full runs median 686 s (research/02)",
+      "no existing per-file result store in jest 29 / do-it (research/03 F13, research/01 2.6)"
+    ]
+  },
+  "history": [
+    {
+      "state": "intake",
+      "event": "INTAKE_CAPTURED",
+      "at": "2026-11-06T13:10:07Z"
+    },
+    {
+      "state": "triage",
+      "event": "TRIAGE_PLAN",
+      "at": "2026-11-06T13:10:30Z"
+    },
+    {
+      "state": "anamnesis",
+      "event": "G0_ANSWERED",
+      "at": "2026-11-06T13:10:40Z"
+    },
+    {
+      "state": "dodLock",
+      "event": "DOD_LOCKED",
+      "at": "2026-11-06T13:10:50Z"
+    },
+    {
+      "state": "scopeBrief",
+      "event": "BRIEF_RENDERED",
+      "at": "2026-11-06T13:11:00Z"
+    },
+    {
+      "state": "scopeGate",
+      "event": "G1_APPROVED",
+      "at": "2026-11-06T13:11:10Z"
+    },
+    {
+      "state": "preGround",
+      "event": "GROUNDED",
+      "at": "2026-11-06T13:11:20Z"
+    },
+    {
+      "state": "discovery",
+      "event": "FANOUT_COMPLETE",
+      "at": "2026-11-06T13:30:00Z"
+    },
+    {
+      "state": "preflight",
+      "event": "PREFLIGHT_VERIFIED",
+      "at": "2026-11-06T13:31:00Z"
+    },
+    {
+      "state": "synthesis",
+      "event": "SYNTHESIZED",
+      "at": "2026-11-06T13:40:00Z"
+    },
+    {
+      "state": "specAuthoring",
+      "event": "SPECS_DRAFTED_AUTONOMOUS",
+      "at": "2026-11-06T14:05:00Z"
+    },
+    {
+      "state": "defaultsApplied",
+      "event": "DEFAULTS_APPLIED",
+      "at": "2026-11-06T14:06:00Z"
+    },
+    {
+      "state": "coherencePass",
+      "event": "COHERENT_AUTONOMOUS",
+      "at": "2026-11-06T14:10:00Z"
+    },
+    {
+      "state": "backboneFreeze",
+      "event": "CONTRACT_FROZEN",
+      "at": "2026-11-06T14:15:00Z"
+    },
+    {
+      "state": "parallelPlanning",
+      "event": "AMENDMENT",
+      "at": "2026-11-06T15:05:00Z"
+    },
+    {
+      "state": "parallelPlanning",
+      "event": "SQUADS_COMPLETE",
+      "at": "2026-11-06T16:10:00Z"
+    },
+    {
+      "state": "verify",
+      "event": "LINT_CLEAN",
+      "at": "2026-11-06T16:20:00Z"
+    },
+    {
+      "state": "adversaryGate",
+      "event": "ADVERSARY_CLEAN",
+      "at": "2026-11-06T16:20:30Z"
+    },
+    {
+      "state": "render",
+      "event": "REVIEW_READY",
+      "at": "2026-11-06T16:21:00Z"
+    },
+    {
+      "state": "parallelPlanning",
+      "event": "AMENDMENT",
+      "at": "2026-11-06T15:25:02.000Z",
+      "note": "A15 loop"
+    },
+    {
+      "state": "verify",
+      "event": "ARTIFACTS_VERIFIED",
+      "at": "2026-11-06T15:25:02.000Z",
+      "note": "A15 loop"
+    },
+    {
+      "state": "adversaryGate",
+      "event": "LINT_CLEAN",
+      "at": "2026-11-06T15:25:02.000Z",
+      "note": "A15 loop"
+    },
+    {
+      "state": "render",
+      "event": "ADVERSARY_CLEAN",
+      "at": "2026-11-06T15:25:02.000Z",
+      "note": "A15 loop"
+    },
+    {
+      "state": "planReview",
+      "event": "REVIEW_ANSWERED",
+      "at": "2026-11-06T17:10:00.000Z",
+      "note": "owner approved the whole plan"
+    },
+    {
+      "state": "freeze",
+      "event": "CONTRACT_FINAL",
+      "at": "2026-11-06T17:10:00.000Z",
+      "note": "v1.1-draft -> v1.1"
+    },
+    {
+      "state": "handoff",
+      "event": "HANDED_OFF",
+      "at": "2026-11-06T17:15:00.000Z",
+      "note": "KICKOFF + launch prompt"
+    }
+  ],
+  "render": {
+    "manifest": "delivery/*.manifest.json",
+    "outputs": [
+      {
+        "md": "delivery/SCOPE-BRIEF.md",
+        "html": "delivery/SCOPE-BRIEF.html",
+        "sha256": "a2c4f2469bd81de4bd84948d9775cd620fbd48b7d2334ebfb50d7d6a493f6c92"
+      },
+      {
+        "md": "delivery/DECISIONS.md",
+        "html": "delivery/DECISIONS.html",
+        "sha256": "0855ba0ca8dd97dd4ef5763209b2f2ac21132771072608ffd455d021dc770180"
+      },
+      {
+        "md": "delivery/CONTRACT.md",
+        "html": "delivery/CONTRACT.html",
+        "sha256": "5833766073aa23897bd35ea519e179efb3e05a183acf7358e3728c0ad36b0c64"
+      },
+      {
+        "md": "delivery/KICKOFF.md",
+        "html": "delivery/KICKOFF.html",
+        "sha256": "c0ba70a90c7b92c255f4c0d87a1c2cc117fc370eb22dec1f171f0591d2e6690f"
+      },
+      {
+        "md": "delivery/PLAN-REVIEW.md",
+        "html": "delivery/PLAN-REVIEW.html",
+        "sha256": "68d9b65ee0a1279fba8868bb64a46e5472292a214861016dc1cb15d5f1d9ab8c"
+      },
+      {
+        "md": "delivery/GLOSSARY.md",
+        "html": "delivery/GLOSSARY.html",
+        "sha256": "1ed9546e4cdba89d836715134f8b6fb0c151e70c7c9071fb179b0e88b968e3d7"
+      }
+    ]
+  },
+  "tally": {
+    "epics": 13,
+    "tasks": 96,
+    "cases": 205,
+    "real": 42,
+    "reviewCheckpoints": 5
+  }
+}
