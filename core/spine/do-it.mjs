@@ -2755,17 +2755,13 @@ function settingsHostSchema(ctx, name) {
 }
 
 // Errors for the host-owned part of `state`, with pointers under /state/<name>.
-function settingsHostErrors(ctx, data, keyed = true) {
+function settingsHostErrors(ctx, data) {
   const state = data && data.state;
   if (!isPlainObject(state)) return [];
   const errors = [];
   const names = Object.keys(state).filter((k) => k !== 'backend' && isPlainObject(state[k]));
-  if (names.length > 1) errors.push({ pointer: '/state', message: 'holds one object keyed by the backend name, found ' + names.join(', ') });
+  // Any installed host may hold its object here, active backend or not (a dormant block is valid, as in 1.0.5).
   for (const name of names) {
-    if (keyed && typeof state.backend === 'string' && state.backend !== name) {
-      errors.push({ pointer: '/state/' + schemaEscape(name), message: 'is keyed "' + name + '" but state.backend is "' + state.backend + '"' });
-      continue;
-    }
     const h = settingsHostSchema(ctx, name);
     if (h.absent) continue;
     if (h.error) { errors.push({ pointer: '/state/' + schemaEscape(name), message: h.error }); continue; }
@@ -2922,7 +2918,7 @@ function loadSettings(ctx, setFlags) {
     sources[key] = 'run-flag';
   }
   if (setFlags && setFlags.length) {
-    const flagErrors = validateSchema(schema, merged).concat(settingsHostErrors(ctx, merged, false)).map((e) => ({ file: 'run-flag', pointer: e.pointer, message: e.message }));
+    const flagErrors = validateSchema(schema, merged).concat(settingsHostErrors(ctx, merged)).map((e) => ({ file: 'run-flag', pointer: e.pointer, message: e.message }));
     if (flagErrors.length) throw fail('SETTINGS_INVALID', 1, { errors: flagErrors });
   }
   const leaves = flattenSettings(merged, '', {});

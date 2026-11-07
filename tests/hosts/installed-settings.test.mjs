@@ -56,6 +56,17 @@ test('T-E1-04 installed plugin: state.<host>.blobs "r2" validates; an unknown st
   assert.equal(typo.out.outcome, 'SETTINGS_INVALID');
 });
 
+test('N1 installed plugin: the 1.0.5 shape (backend local + dormant state.<host> block) is valid; bad dormant block and unknown host are refused', () => {
+  const ok = doctor({ state: { backend: 'local', [HOST]: { blobs: 'fs-mirror' } } });
+  assert.equal(ok.code, 0, ok.raw);
+  const bad = doctor({ state: { backend: 'local', [HOST]: { blobs: 'bogus' } } });
+  assert.equal(bad.code, 1, bad.raw);
+  assert.ok(bad.out.errors.some((e) => e.pointer === '/state/' + HOST + '/blobs'), bad.raw);
+  const unk = doctor({ state: { backend: 'local', nohost: { x: 1 } } });
+  assert.equal(unk.code, 1, unk.raw);
+  assert.ok(unk.out.errors.some((e) => e.pointer === '/state/nohost' && e.message.includes('"nohost"')), unk.raw);
+});
+
 test('T-E1-04 installed plugin: the mirrored engine store loads and opens from the cache', async () => {
   const mod = await import(path.join(cache, 'core', 'state-stores', 'index.mjs'));
   assert.ok(mod.hostBackend(HOST), 'host backend preloaded from <plugin>/hosts');
