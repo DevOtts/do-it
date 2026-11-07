@@ -216,26 +216,67 @@ test('T-S1-12 events and meter trace fields are frozen (ruling D17)', () => {
   assert.equal(rows[0].estimated, true);
 });
 
-test('T-S1-13 G-12 core names no harness', () => {
-  // Assembled so this file passes the G-14 scan of the removed-host words.
-  const names = ['claude', 'codex', 'opencode', ['her', 'mes'].join(''), ['open', 'claw'].join('')];
-  const words = new RegExp('\\b(' + names.join('|') + ')\\b', 'i');
+// G-12 / G-9 (R3): core/ and scripts/ name no host. Words are assembled from fragments so this file passes its own scan.
+const HOST_WORDS = ['claude', 'codex', 'opencode', ['her', 'mes'].join(''), ['open', 'claw'].join(''), ['eng', 'ine'].join('')];
+const HOST_RE = new RegExp('\\b(' + HOST_WORDS.join('|') + ')\\b', 'i');
+const REPO_DIR = path.resolve(CORE_DIR, '..');
+// Pre-existing, outside E1: plugin packaging paths (the plugin folder name) and one measurement file name.
+// Only the first word is tolerated here; any other host word in these files still fails.
+const SCRIPTS_PACKAGING_ALLOW = {
+  'scripts/check-pins.mjs': ['claude'],
+  'scripts/mirror-manifest.json': ['claude'],
+  'scripts/gen-claims.mjs': ['claude'],
+  'scripts/gen-motion-assets.mjs': ['claude'],
+};
+
+// Files under dir (skipping test folders and node_modules) that contain a host word: [relative path, word].
+function hostWordHits(dir, base, allow = {}) {
   const hits = [];
-  const walk = (dir) => {
-    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
-      const p = path.join(dir, e.name);
+  const walk = (d) => {
+    for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+      const p = path.join(d, e.name);
       if (e.isDirectory()) {
         if (['test', 'tests', '__tests__', 'node_modules'].includes(e.name)) continue;
         walk(p);
-      } else if (e.isFile() && words.test(fs.readFileSync(p, 'utf8'))) hits.push(path.relative(CORE_DIR, p));
+      } else if (e.isFile()) {
+        const rel = path.relative(base, p).split(path.sep).join('/');
+        const found = new Set([...fs.readFileSync(p, 'utf8').matchAll(new RegExp(HOST_RE.source, 'gi'))].map((m) => m[1].toLowerCase()));
+        for (const w of found) if (!(allow[rel] || []).includes(w)) hits.push(rel + ':' + w);
+      }
     }
   };
-  walk(CORE_DIR);
-  assert.deepEqual(hits, []);
+  walk(dir);
+  return hits.sort();
+}
+
+test('T-S1-13 G-12 core names no harness', () => {
+  assert.deepEqual(hostWordHits(CORE_DIR, REPO_DIR), []);
   assert.ok(fs.existsSync(BIN), 'built file is part of the scan');
   const host = loadSchemaFile('settings.schema.json').properties.host.properties.driver;
   assert.equal(host.type, 'string');
   assert.equal(host.enum, undefined);
+});
+
+test('T-E1-01 G-12 with the engine word: core/ and scripts/ have zero hits; a planted word fails naming the file (R3)', () => {
+  assert.ok(HOST_WORDS.includes(['eng', 'ine'].join('')));
+  assert.deepEqual(hostWordHits(CORE_DIR, REPO_DIR), []);
+  assert.deepEqual(hostWordHits(path.join(REPO_DIR, 'scripts'), REPO_DIR, SCRIPTS_PACKAGING_ALLOW), []);
+  assert.ok(!fs.existsSync(path.join(REPO_DIR, 'core', 'state-stores', 'engine.mjs')), 'the engine store moved to its host');
+  // The scan only skips hosts/ and plugins/do-it/ by not looking there: it is never pointed at them.
+  const scanRoot = tmp('dit-scan-');
+  const copy = path.join(scanRoot, 'src');
+  fs.cpSync(path.join(SPINE_DIR, 'src'), copy, { recursive: true });
+  assert.deepEqual(hostWordHits(copy, path.dirname(copy)), []);
+  fs.writeFileSync(path.join(copy, 'settings.mjs'), fs.readFileSync(path.join(copy, 'settings.mjs'), 'utf8') + '\n// ' + ['eng', 'ine'].join('') + ' default\n');
+  assert.deepEqual(hostWordHits(copy, path.dirname(copy)), ['src/settings.mjs:' + ['eng', 'ine'].join('')]);
+  // The allowlist is not a back door for the new word.
+  const plantedRoot = tmp('dit-scan-');
+  const planted = path.join(plantedRoot, 'scripts');
+  fs.mkdirSync(planted);
+  fs.writeFileSync(path.join(planted, 'check-pins.mjs'), '// claude and ' + ['eng', 'ine'].join('') + '\n');
+  assert.deepEqual(hostWordHits(planted, path.dirname(planted), SCRIPTS_PACKAGING_ALLOW), ['scripts/check-pins.mjs:' + ['eng', 'ine'].join('')]);
+  fs.rmSync(scanRoot, { recursive: true, force: true });
+  fs.rmSync(plantedRoot, { recursive: true, force: true });
 });
 
 test('T-S1-14 worktree resolves the main checkout (home rule D7) [REAL]', () => {

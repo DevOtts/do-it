@@ -67,12 +67,12 @@ If the host did not install the companions, run `do-it doctor --install`; it rea
 ## Hosts
 
 ```
-| Host        | Level     |
-|-------------|-----------|
-| claude-code | Native    |
-| codex       | Supported |
-| opencode    | Supported |
-| engine      | Supported |
+| Host        | Level        |
+|-------------|--------------|
+| claude-code | Native       |
+| codex       | Supported    |
+| opencode    | Supported    |
+| engine      | Experimental |
 ```
 
 ---

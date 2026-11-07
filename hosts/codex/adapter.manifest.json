@@ -1,6 +1,9 @@
 {
   "host": "codex",
   "version": "1.0.5",
+  "display": "Codex",
+  "level": "supported",
+  "note": "sequential passes, Markdown owner pack, park instead of wake",
   "calls": {
     "spawn": {
       "input": {

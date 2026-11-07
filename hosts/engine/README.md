@@ -2,6 +2,8 @@
 
 The `engine` host adapter lets an Engine org run a do-it squad. Engine holds the state, asks the questions through the org's channels, and runs each role as a job. The adapter compiles a `squad.yaml` into an Engine squad definition and reads it back to prove nothing was lost.
 
+**Experimental: server side declined (PR #727, 2026-10-29).** The adapter is kept, isolated under `hosts/engine/`; the Engine server half it was written against was closed, so no live path is expected.
+
 Status: only 1 of 5 live cases is verified against a real Engine (the checkpoint card). Offline cases pass: 32 of 32 tests. See [Status](#status).
 
 ## What it does
@@ -15,7 +17,7 @@ Status: only 1 of 5 live cases is verified against a real Engine (the checkpoint
 
 ## State
 
-The adapter's state backend id is `engine`. It is one of three `StateStore` backends (`local-fs`, `git-branch`, `engine`) in `core/state-stores/`. The Engine backend's row driver is not built yet: Engine has no generic keyed row store, so `engine` has no live path today.
+The adapter's state backend id is `engine`. It is a `StateStore` backend that lives in this host, `hosts/engine/state-store/`, and core loads it through the `state_store` entry of `adapter.manifest.json`; `core/state-stores/` itself keeps only `local-fs` and `git-branch`. Its settings (`state.engine.blobs`) are validated by `hosts/engine/state-store/settings.schema.json`. The Engine backend's row driver is not built yet: Engine has no generic keyed row store, so `engine` has no live path today.
 
 ## Config
 

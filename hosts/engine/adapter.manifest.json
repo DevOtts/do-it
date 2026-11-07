@@ -1,6 +1,12 @@
 {
   "host": "engine",
   "version": "1.0.5",
+  "display": "Engine",
+  "level": "experimental",
+  "server_side": "declined",
+  "status_label": "Experimental: server side declined (PR #727, 2026-10-29)",
+  "note": "jobs per role, channel delivery for the owner pack",
+  "state_store": { "backend": "engine", "module": "state-store/index.mjs", "settings_schema": "state-store/settings.schema.json", "conformance": "state-store/conformance.mjs" },
   "calls": {
     "spawn": {
       "input": { "type": "object", "required": ["role", "tier", "brief"] },

@@ -1,4 +1,4 @@
-// Epic N2 test contract. Test names carry the case ID. [REAL] cases use the real fs and real git.
+// Epic N2 test contract (core backends: local-fs, git-branch). The host-backed cases live under hosts/. Test names carry the case ID. [REAL] cases use the real fs and real git.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
@@ -7,11 +7,7 @@ import path from 'node:path';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash, randomBytes } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { openStore, recover, resume, selectBlobDriver, loadEngineConfig, GitBranchStore } from '../index.mjs';
-import { MemoryEngine } from '../engine-drivers/memory-engine.mjs';
-import { createFsMirrorDriver } from '../engine-drivers/fs-mirror.mjs';
-import { createR2Driver } from '../engine-drivers/r2.mjs';
-import { createRowsDriver } from '../engine-drivers/rows.mjs';
+import { openStore, recover, resume, GitBranchStore } from '../index.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const SS = path.resolve(HERE, '..');
@@ -30,11 +26,9 @@ async function gitRepo() {
 }
 async function allBackends() {
   const root = await tmpdir(), repo = await gitRepo();
-  const mem = new MemoryEngine();
   return [
     ['local-fs', openStore({ backend: 'local-fs', root }), { root }],
     ['git-branch', openStore({ backend: 'git-branch', repo }), { repo }],
-    ['engine', openStore({ backend: 'engine', transport: mem, settings: {} }), { mem }],
   ];
 }
 const rejectCode = async (fn, code) => assert.rejects(fn, (e) => { assert.equal(e.code, code); return true; });
@@ -68,21 +62,6 @@ test('T-N2-02 [REAL] shared conformance suite on git-branch, one commit per writ
   assert.equal(await s.get('runs/r1/events.jsonl').then(String), 'e1\ne2\ne3\n');
 });
 
-test('T-N2-03 shared conformance suite on the engine backend with the in-memory driver', () => {
-  const r = node([RUNNER, '--backend', 'engine', '--driver', 'memory-engine']);
-  assert.equal(r.status, 0, r.stderr);
-  assert.match(r.stdout, /^PASS 12\/12$/m);
-  assert.match(r.stdout, /driver: memory-engine, real: false/);
-});
-
-test('T-N2-04 [REAL] engine backend on a real Engine environment: IMPLEMENTED-NOT-VERIFIED when unreachable', () => {
-  const r = node([RUNNER, '--backend', 'engine', '--driver', 'rows'], { env: { ...process.env, DO_IT_ENGINE_URL: '' } });
-  // No reachable Engine staging: must NOT print PASS and must say so with the probe error and the blob driver.
-  assert.doesNotMatch(r.stdout, /PASS/);
-  assert.match(r.stdout, /^IMPLEMENTED-NOT-VERIFIED backend: engine, driver: rows, real: true, probe: .+/m);
-  assert.equal(r.status, 3);
-});
-
 test('T-N2-05 interface semantics on every backend', async () => {
   for (const [name, s] of await allBackends()) {
     await s.append('runs/r1/events.jsonl', 'one');
@@ -104,7 +83,6 @@ test('T-N2-06 path guard rejects traversal and creates nothing', async () => {
     await rejectCode(() => s.get('other/state.json'), 'PATH_REJECTED');
     if (h.root) assert.deepEqual(await fs.readdir(h.root), [], name);
     if (h.repo) assert.equal(git(h.repo, 'for-each-ref'), '', name);
-    if (h.mem) assert.equal(h.mem.rows.size, 0, name);
   }
   const root = await tmpdir();
   const r = cli(['put', 'runs/r1/../r2/state.json', '--data', 'x', '--backend', 'local-fs', '--root', root]);
@@ -153,23 +131,6 @@ test('T-N2-09 [REAL] adversarial verify on git-branch: blob rewritten and commit
   });
   const r = cli(['get-blob', 'r1', k, '--backend', 'git-branch', '--repo', repo]);
   assert.equal(r.status, 1); assert.equal(r.stdout, '');
-});
-
-test('T-N2-10 adversarial verify on engine backend: rows, fs-mirror and r2 (stub transport)', async () => {
-  const mirror = await tmpdir();
-  const mem = new MemoryEngine();
-  const variants = {
-    rows: [createRowsDriver({ transport: mem }), async (key) => mem.rows.set(key, Buffer.from('forged'))],
-    'fs-mirror': [createFsMirrorDriver({ dir: mirror }), async (key) => fs.writeFile(createFsMirrorDriver({ dir: mirror }).file(key), 'forged')],
-    r2: [createR2Driver({ config: { bucket: 'b', endpoint: 'https://stub', token_ref: 'env:X' }, transport: mem }), async (key) => mem.objects.set(`b/${key}`, Buffer.from('forged'))],
-  };
-  for (const [name, [blobs, tamper]] of Object.entries(variants)) {
-    const s = openStore({ backend: 'engine', transport: mem, blobs });
-    const k = await s.putBlob('r1', Buffer.from('payload ' + name));
-    assert.equal(String(await s.getBlob('r1', k)), 'payload ' + name);
-    await tamper(`runs/r1/blobs/${k}`);
-    await rejectCode(() => s.getBlob('r1', k), 'HASH_MISMATCH');
-  }
 });
 
 test('T-N2-11 [REAL] kill -9 between blob write and reference rename, then recovery', async () => {
@@ -252,22 +213,6 @@ test('T-N2-14 resume without the previous result file is BLOCKED, nothing writte
   assert.equal(git(repo, 'rev-parse', 'do-it/runs/r1'), tipBefore);
 });
 
-test('T-N2-15 blob driver selection', async () => {
-  const t = new MemoryEngine();
-  const pick = (blobs, extra = {}) => selectBlobDriver({ state: { engine: blobs === undefined ? {} : { blobs } } }, { transport: t, mirrorDir: os.tmpdir(), ...extra });
-  assert.equal(pick('rows').id, 'rows');
-  assert.equal(pick('fs-mirror').id, 'fs-mirror');
-  assert.equal(pick(undefined).id, 'rows');
-  assert.throws(() => pick('r2'), (e) => e.code === 'DRIVER_UNCONFIGURED');
-  assert.throws(() => pick('bogus'), (e) => e.code === 'DRIVER_UNKNOWN');
-  for (const [blobs, code] of [['r2', 'DRIVER_UNCONFIGURED'], ['bogus', 'DRIVER_UNKNOWN']]) {
-    const r = cli(['driver', '--blobs', blobs]);
-    assert.equal(r.status, 1); assert.equal(JSON.parse(r.stderr).error.code, code);
-  }
-  assert.equal(JSON.parse(cli(['driver']).stdout).driver, 'rows');
-  assert.equal(JSON.parse(cli(['driver', '--blobs', 'fs-mirror', '--mirror-dir', os.tmpdir()]).stdout).driver, 'fs-mirror');
-});
-
 test('T-N2-16 failed recovery retries once then escalates with an owner-pack question', async () => {
   const repo = await gitRepo();
   const gone = path.join(await tmpdir(), 'no-such-remote');
@@ -283,20 +228,8 @@ test('T-N2-16 failed recovery retries once then escalates with an owner-pack que
   assert.equal(c.status, 2); assert.equal(JSON.parse(c.stdout).status, 'ESCALATED');
 });
 
-test('T-N2-17 secrets are references only and never echoed', () => {
-  const literal = 'sk-live-abc123';
-  const bad = cli(['config', '--data', JSON.stringify({ base_url: 'https://e.example', token: literal })]);
-  assert.equal(bad.status, 1);
-  assert.equal(JSON.parse(bad.stderr).error.code, 'SECRET_LITERAL_REJECTED');
-  assert.ok(!bad.stdout.includes(literal) && !bad.stderr.includes(literal));
-  const ok = cli(['config', '--data', JSON.stringify({ base_url: 'https://e.example', token_ref: 'env:ENGINE_TOKEN' })]);
-  assert.equal(ok.status, 0); assert.ok(!ok.stdout.includes(literal));
-  assert.throws(() => loadEngineConfig({ nested: { api_key: literal } }), (e) => e.code === 'SECRET_LITERAL_REJECTED' && !e.message.includes(literal));
-  assert.throws(() => loadEngineConfig({ token_ref: literal }), (e) => e.code === 'SECRET_REF_INVALID' && !e.message.includes(literal));
-});
-
 test('T-N2-18 core/state-stores names no harness (G-12)', async () => {
-  const words = [['cla', 'ude'], ['co', 'dex'], ['open', 'code']].map((w) => w.join(''));
+  const words = [['cla', 'ude'], ['co', 'dex'], ['open', 'code'], ['eng', 'ine']].map((w) => w.join(''));
   const g = spawnSync('grep', ['-rniE', words.join('|'), SS]);
   assert.equal(g.status, 1, `unexpected matches:\n${g.stdout}`);
   assert.equal(String(g.stdout), '');

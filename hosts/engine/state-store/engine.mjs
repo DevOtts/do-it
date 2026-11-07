@@ -1,6 +1,6 @@
 // engine backend: small state in database rows (or interaction records) behind a transport;
 // blobs in a driver chosen by settings `state.engine.blobs` (rows | r2 | fs-mirror, default rows) (D14, D19).
-import { StateStore, StoreError, ERR } from './interface.mjs';
+import { StateStore, StoreError, ERR } from '../../../core/state-stores/interface.mjs';
 import { createRowsDriver } from './engine-drivers/rows.mjs';
 import { createR2Driver } from './engine-drivers/r2.mjs';
 import { createFsMirrorDriver } from './engine-drivers/fs-mirror.mjs';

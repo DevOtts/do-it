@@ -13,7 +13,7 @@ Hand it a request and walk away. do-it picks the right lifecycle, asks you every
 
 <em>The conductor above the *-it family: plan-it plans it, build-it builds it, review-it reviews it, and do-it runs them as one.</em>
 
-<a href="#how-it-works"><img src="assets/do-it-hero.svg" width="100%" alt="do-it hero: one message enters a router and a deterministic spine, flows through the *-it lifecycle with three human gates, and runs on Claude Code, Codex, OpenCode and Engine"></a>
+<a href="#how-it-works"><img src="assets/do-it-hero.svg" width="100%" alt="do-it hero: one message enters a router and a deterministic spine, flows through the *-it lifecycle with three human gates, and runs on Claude Code, Codex and OpenCode, with Engine as Experimental: server side declined (PR #727, 2026-10-29)"></a>
 
 <a href="#installation"><img src="https://img.shields.io/badge/Quick_Start-2_commands-0ea5e9?style=for-the-badge" alt="Quick Start"></a>
 <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License MIT"></a>
@@ -80,7 +80,7 @@ npx skills add DevOtts/do-it -a opencode
 
 ### Engine
 
-An Engine org adopts the squad through the Engine layer: state in the Engine store, questions through its channels, roles as jobs. Start at [`hosts/engine/README.md`](hosts/engine/README.md).
+Experimental: server side declined (PR #727, 2026-10-29). The adapter stays in the repo under `hosts/engine/`, isolated from the core. An Engine org adopts the squad through the Engine layer: state in the Engine store, questions through its channels, roles as jobs. Start at [`hosts/engine/README.md`](hosts/engine/README.md).
 
 ### Others
 
@@ -226,7 +226,7 @@ Both runs used the stub host so they are reproducible byte for byte (`node tests
 | `core/pipelines/` | presets as YAML: feature, investigate-fix, drain, review-loop, reconcile |
 | `core/personas/` | stage personas: conductor, intake, planner, builder, reviewer, runner, verifier, deployer, concluder, reconciler |
 | `core/routing/`, `core/cache/` | tier policy, briefs, token meter, cache rules |
-| `core/state-stores/` | local-fs, git-branch and Engine backends |
+| `core/state-stores/` | local-fs and git-branch backends; other backends load from a host |
 | `core/renderers/` | the owner pack as native question, HTML or Markdown |
 | `hosts/` | one adapter per host, each declaring its capabilities |
 | `plugins/do-it/`, `.claude-plugin/` | the Claude Code plugin and the `devotts` marketplace |
@@ -283,14 +283,16 @@ The honest claim: do-it makes the process mechanical and the states honest. It d
 
 ## Platform compatibility
 
+<!-- hosts:begin -->
 | Platform | Level | Notes |
 |---|---|---|
 | Claude Code | Native | plugin, `dependencies`, hooks, native question tool |
 | Codex | Supported | sequential passes, Markdown owner pack, park instead of wake |
 | OpenCode | Supported | sequential passes, Markdown owner pack, park instead of wake |
-| Engine | Supported | jobs per role, channel delivery for the owner pack |
+| Engine | Experimental: server side declined (PR #727, 2026-10-29) | jobs per role, channel delivery for the owner pack |
+<!-- hosts:end -->
 
-Legend: **Native** = built for the host's features. **Supported** = full pipeline through the adapter, with documented fallbacks for what the host lacks. **Fallback** = the generic `SKILL.md` path on any other agent.
+Legend: **Native** = built for the host's features. **Supported** = full pipeline through the adapter, with documented fallbacks for what the host lacks. **Experimental** = the adapter exists, but the host's server side is not there to run it against. **Fallback** = the generic `SKILL.md` path on any other agent.
 
 ## License
 
