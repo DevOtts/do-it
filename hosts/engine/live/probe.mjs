@@ -5,6 +5,7 @@ import { existsSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { pilotRepo } from '../conformance/pilot.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
@@ -20,9 +21,9 @@ export async function probeEngine({ env = process.env, fetchImpl = globalThis.fe
   note('docker ps', dk.status === 0 && names.length > 0, dk.status === 0 ? `${names.length} engine/brain containers` : String(dk.stderr || dk.error?.message || 'docker unavailable').trim().split('\n')[0]);
 
   const root = resolve(HERE, '../../..');
-  const core = env.DO_IT_ENGINE_CORE || '/Users/macbook/Workspace/Engine/Engine-Core';
-  const secrets = [join(root, '.secrets'), join(dirname(root), '.secrets'), join(core, '.secrets')].filter((p) => existsSync(p));
-  note('.secrets file', secrets.length > 0, secrets.length ? 'present (content not read)' : 'none in repo root, parent or Engine-Core');
+  const core = pilotRepo(env);
+  const secrets = [join(root, '.secrets'), join(dirname(root), '.secrets'), ...(core ? [join(core, '.secrets')] : [])].filter((p) => existsSync(p));
+  note('.secrets file', secrets.length > 0, secrets.length ? 'present (content not read)' : 'none in repo root, parent or the pilot consumer repo');
 
   const base = url || (names.length ? 'http://localhost:3001' : null);
   if (base) {

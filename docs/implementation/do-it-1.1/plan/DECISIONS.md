@@ -46,4 +46,4 @@ Legend: G-n governance rule · T-<EID>-NN test case · Wn wave · Dn ruling — 
 | R2 | doc-it is a future independent harness plugin; not designed in 1.1 | Fernando Ott | 2026-11-06 |
 | R3 | do-it's core is host-agnostic. Integrations with a harness or platform (claude-code, codex, opencode, engine) live only under `hosts/<name>/`; nothing in `core/` or `scripts/` names a host. `plugins/do-it/` is the Claude Code package and may name it | Fernando Ott | 2026-11-06 |
 | R4 | doc-it is its own plugin and repo, `DevOtts/doc-it`, like init-it. It owns the documentation rules (source tiers, one home per fact, derived status, expiry, guarded archive); conclude-it, plan-it and review-it consume it and say so when it is missing | Fernando Ott | 2026-11-06 |
-| R5 | The pattern proposed in the pilot repo (docs-trust) becomes doc-it's global standard, written in project-neutral roles; each project maps its own folders to those roles | Fernando Ott | 2026-11-06 |
+| R5 | The pattern proposed in the pilot repo (P3) becomes doc-it's global standard, written in project-neutral roles; each project maps its own folders to those roles | Fernando Ott | 2026-11-06 |

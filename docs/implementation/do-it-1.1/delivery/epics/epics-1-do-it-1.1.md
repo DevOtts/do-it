@@ -223,7 +223,7 @@ Done = every case below is PASS. No [REAL] case VERIFIED on a mock.
 |---|---|---|---|---|---|---|
 | T-L1-01 | L1-02 | This package's `audit/claims.md` (24 rows) | exit 0 | happy | auto | `node scripts/gate-check.mjs claims tests/fixtures/claims/do-it-1.1.md` |
 | T-L1-02 | L1-02 | Row with tier `code` and no sha anywhere | exit 1 naming the row and "sha/path rule" | edge | auto | `node --test tests/claims/*.test.mjs` |
-| T-L1-03 | L1-02 | Row "5 credential ways" with tier `code`, no list | exit 1 "count rule" (the grokbot-plan defect) | edge | auto | `node --test tests/claims/*.test.mjs` |
+| T-L1-03 | L1-02 | Row "5 credential ways" with tier `code`, no list | exit 1 "count rule" (the P2-plan defect) | edge | auto | `node --test tests/claims/*.test.mjs` |
 | T-L1-04 | L1-02 | Row tier `program-doc` stated as plain fact | exit 1 "fact rule"; the same row prefixed "the study says" passes | edge | auto | `node --test tests/claims/*.test.mjs` |
 | T-L1-05 | L1-03 | Findings doc with "your suspicion is confirmed" and no evidence-against heading | exit 1 "evidence against" | edge | auto | `node --test tests/claims/*.test.mjs` |
 

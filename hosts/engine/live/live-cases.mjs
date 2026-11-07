@@ -20,7 +20,7 @@ export class EngineGap extends Error {
   constructor(finding) { super(finding); this.code = 'ENGINE_GAP'; }
 }
 
-// Real Engine shape (verified against a local brain-api-core 2026-10-14): a pipeline definition belongs to a squad
+// Real Engine shape (verified against a local a consumer service 2026-10-14): a pipeline definition belongs to a squad
 // (POST /api/squads/:id/definitions), steps carry `n` and a closed field set (no id/needs/deny/x_do_it), runs start at
 // POST /api/squads/:id/run, and a checkpoint step surfaces as a Mission Control `change_proposal` card.
 export function toNativeCheckpointSteps(def) {

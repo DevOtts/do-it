@@ -18,7 +18,7 @@ Program totals: 20 epics · 16 VERIFIED · 4 IMPLEMENTED-NOT-VERIFIED · 352 cas
 | H1 | claude-code adapter | hosts-a | W1 | VERIFIED | 20/20 | epic/H1-claude | run: node --test "hosts/claude-code/tests/*.test.mjs" exit 0; log .taskstate/evidence.md |
 | H2 | codex adapter | hosts-a | W2 | VERIFIED | 17/17 | epic/H2-codex | run: node --test "hosts/codex/tests/*.test.mjs" exit 0; log .taskstate/evidence.md |
 | H3 | opencode adapter | hosts-a | W2 | VERIFIED | 18/18 | epic/H3-opencode | run: node --test "hosts/opencode/tests/*.test.mjs" exit 0; log .taskstate/evidence.md |
-| N1 | engine adapter | engine | W3 | VERIFIED | 18/18 (T-N1-16,17,18 live against a local brain-api-core PR #727 branch; PR not merged or deployed) | epic/N1-engine | run: node --test "hosts/engine/tests/*.test.mjs" exit 0; live: .taskstate/results/engine-adapter-live.md |
+| N1 | engine adapter | engine | W3 | VERIFIED | 18/18 (T-N1-16,17,18 live against a local a consumer service PR #727 branch; PR not merged or deployed) | epic/N1-engine | run: node --test "hosts/engine/tests/*.test.mjs" exit 0; live: .taskstate/results/engine-adapter-live.md |
 | N2 | StateStore and backends | engine | W2 | VERIFIED | 18/18 (T-N2-04 live: 12/12 on /api/run-rows of a local PR #727 Engine) | epic/N2-statestore | run: node --test "core/state-stores/tests/*.test.mjs" exit 0; log .taskstate/evidence.md |
 | N3 | Engine-layer handoff and replay | engine | W3 | IMPLEMENTED-NOT-VERIFIED | 13/14 (T-N3-14: inject + state read-back verified live; no W3 pipeline or drain installed so cards never run) | epic/N3-handoff | run: node --test "hosts/engine/tests/*.test.mjs" exit 0; log .taskstate/evidence.md |
 | R1 | README and assets | ship | W4 | IMPLEMENTED-NOT-VERIFIED | 15/16 (T-R1-15 compared to stub-host report only) | epic/R1-readme | run: node --test "tests/readme/*.test.mjs" exit 0 |
@@ -32,8 +32,8 @@ Program totals: 20 epics · 16 VERIFIED · 4 IMPLEMENTED-NOT-VERIFIED · 352 cas
 | T-S5-16, T-S5-17 | IMPLEMENTED-NOT-VERIFIED | live aws/op not run, no access; exit: owner supplies access | run: .taskstate/results/S5.md |
 | T-N3-14, T-R4-05 | IMPLEMENTED-NOT-VERIFIED | Engine PR #727 (local, unmerged) gives card inject/state only; no do-it W3 pipeline or Engine drain is installed, so cards never run and no run_status/exit_code or sandbox exists to compare; exit: install the W3 pipeline on an Engine with #727 | run: .taskstate/results/engine-adapter-live.md |
 | T-R1-15 | IMPLEMENTED-NOT-VERIFIED | morning report matched to stub-host run only | run: .taskstate/results/R1.md |
-| T-N1-16, T-N1-17, T-N1-18, T-N2-04 | VERIFIED live | against a local brain-api-core running PR #727 (b901a9bd), scratch DB; not merged, not deployed | run: .taskstate/results/engine-adapter-live.md |
-| (earlier) T-N1-16 | VERIFIED live | local brain-api-core checkpoint card | run: .taskstate/results/live-w4.log exit 0 |
+| T-N1-16, T-N1-17, T-N1-18, T-N2-04 | VERIFIED live | against a local a consumer service running PR #727 (b901a9bd), scratch DB; not merged, not deployed | run: .taskstate/results/engine-adapter-live.md |
+| (earlier) T-N1-16 | VERIFIED live | local a consumer service checkpoint card | run: .taskstate/results/live-w4.log exit 0 |
 
 ## Log
 - 2026-10-14: engine adapter wired to Engine PR #727 routes (ask-cards, x_do_it, internal tasks, run-rows); T-N1-17, T-N1-18, T-N2-04 VERIFIED live on a local PR branch; T-N3-14 and T-R4-05 stay IMPLEMENTED-NOT-VERIFIED (no W3 pipeline/drain).

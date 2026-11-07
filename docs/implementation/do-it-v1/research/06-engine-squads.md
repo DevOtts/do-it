@@ -1,28 +1,28 @@
 # 06 - Engine squads and persona-agents, and what do-it can reuse
 
-Sources read (Engine-Core = /Users/macbook/Workspace/Engine/Engine-Core): CLAUDE.md (AGENTS.md is a symlink to it; it is mostly routing and merge-gate rules), `brain-docs/concepts/who-executes-squads-personas-and-apps.md`, `per-step-backbone-connection.md`, `dev-tasks-board.md`, `features/dev-job-rail.md`, `features/a2a-native-call.md`, `architecture/agent-backbone-engine.md`, ADR-0050, `.claude/skills/new-persona-agent` and `launch-brain-teams` (the other three skills are 45-55KB scaffolding recipes and were only listed), `.claude/agents/engine-verifier.md` and `engine-reporter.md`, `brain-agent/CLAUDE.md`, `docs/implementation/engine-dev-squad/{SCOPE-BRIEF,DECISIONS}.md`, and the Mongoose schemas in `brain-api-core/src/squads/schemas/` and `persona-agents/schemas/`. I read schemas and docs only, not the runtime code. Persona memory, per-tenant data isolation and the Mission Control UI were not read in depth, so those parts are thin. No secrets were read or printed.
+Sources read (the pilot consumer repo = <pilot-repo>): CLAUDE.md (AGENTS.md is a symlink to it; it is mostly routing and merge-gate rules), `<consumer-service>/concepts/who-executes-squads-personas-and-apps.md`, `per-step-backbone-connection.md`, `dev-tasks-board.md`, `features/dev-job-rail.md`, `features/a2a-native-call.md`, `architecture/agent-backbone-engine.md`, ADR-0050, `.claude/skills/new-persona-agent` and `launch-a consumer service` (the other three skills are 45-55KB scaffolding recipes and were only listed), `.claude/agents/engine-verifier.md` and `engine-reporter.md`, `<consumer-service>/CLAUDE.md`, `docs/implementation/engine-dev-squad/{SCOPE-BRIEF,DECISIONS}.md`, and the Mongoose schemas in `<consumer-service>/src/squads/schemas/` and `persona-agents/schemas/`. I read schemas and docs only, not the runtime code. Persona memory, per-tenant data isolation and the Mission Control UI were not read in depth, so those parts are thin. No secrets were read or printed.
 
 ## 1. Data model
 
 | Engine term | What it is | Where it lives |
 |---|---|---|
-| **persona_agent** | A prompt plus granted skills/toolsets plus an optional model override. It is a *conversation*, not a process. | Mongo `persona_agents`, per-Space (`spaceId`), schema `brain-api-core/src/persona-agents/schemas/persona-agent.schema.ts` |
+| **persona_agent** | A prompt plus granted skills/toolsets plus an optional model override. It is a *conversation*, not a process. | Mongo `persona_agents`, per-Space (`spaceId`), schema `<consumer-service>/src/persona-agents/schemas/persona-agent.schema.ts` |
 | **squad** | The unit that *executes a pipeline* and produces `pipeline_runs` with cost, status and checkpoints. It holds a roster, a conductor, a spend policy and an `active_definition_id`. | `squads` |
 | **pipeline_definition** | The versioned, immutable playbook: an ordered list of steps. **This is what actually conducts.** | `pipeline_definitions` (`squad_id`, `version`, `steps[]`) |
 | **step** | One of `checkpoint \| persona \| render \| publish \| decision`. | inside a definition |
 | **conductor** | The squad's lead persona. At runtime it only supplies a default model tier, a display name and a backbone pointer. It does not arbitrate. | `squad.conductor{persona, backbone, model_default, supervise}` |
 | **roster** | `[{persona, role, icon}]`, display only. The executor reads `step.persona`, not the roster, and nothing validates the two against each other (8 of 10 praxya squads drift). The true cast is `conductor.persona ∪ distinct step.persona`. | `squad.roster` |
 | **Team** | Not an object. It is a read-only projection (`GET /api/org-chart`) over organizations, personas, squads and runs: chief + squads + solo specialists. | derived |
-| **brain-app** | The *deterministic* step: `render`/`publish` steps call an installed app's exposed capability. | `apps` |
-| **backbone / seat** | "Seat" in Engine means a *subscription seat* (a CLI login), not a roster seat. It is one kind of `backbone_connections` row: `direct` (API key), `claude-cli` (Claude subscription), `antigravity-cli` (Google AI Pro/Ultra, Gemini). Rows are per-Space. | `brain-api-core/src/backbone-connections/backbone-types.registry.ts`; seat order in `brain-agent/src/core/backbone/seats.py` |
-| **runner** | A separate service that hosts the CLI: `claude-cli-runner`, renamed `backbone-cli-runner` in October 2026. Dev jobs use a one-shot hardened k8s Job (gVisor) with a PVC workspace, launched by `brain-dev-runner`. | `claude-cli-runner/`, `brain-agent/src/core/backbone/claude_cli.py` |
-| **tools** | One registry (`build_tool_registry`, `brain-agent/src/core/agent/factory.py`) served in-process ("direct" face) and over MCP (`brain-mcp-gateway`, port 8001) for CLI backbones. Personas get tools only through granted *skills/toolsets*, with a per-caller deny table (`deny_policy.py`). | brain-agent |
+| **a consumer service** | The *deterministic* step: `render`/`publish` steps call an installed app's exposed capability. | `apps` |
+| **backbone / seat** | "Seat" in Engine means a *subscription seat* (a CLI login), not a roster seat. It is one kind of `backbone_connections` row: `direct` (API key), `claude-cli` (Claude subscription), `antigravity-cli` (Google AI Pro/Ultra, Gemini). Rows are per-Space. | `<consumer-service>/src/backbone-connections/backbone-types.registry.ts`; seat order in `<consumer-service>/src/core/backbone/seats.py` |
+| **runner** | A separate service that hosts the CLI: `claude-cli-runner`, renamed `backbone-cli-runner` in October 2026. Dev jobs use a one-shot hardened k8s Job (gVisor) with a PVC workspace, launched by a consumer service. | `claude-cli-runner/`, `<consumer-service>/src/core/backbone/claude_cli.py` |
+| **tools** | One registry (`build_tool_registry`, `<consumer-service>/src/core/agent/factory.py`) served in-process ("direct" face) and over MCP (a consumer service, port 8001) for CLI backbones. Personas get tools only through granted *skills/toolsets*, with a per-caller deny table (`deny_policy.py`). | a consumer service |
 | **tenancy** | Everything is scoped by `spaceId`. Each Space has its own Mongo, backbone rows, personas and squads, and clients map to orgs inside a Space. Personas can carry an org scope. | all schemas |
 
 Schema excerpts:
 
 ```ts
-// brain-api-core/src/squads/schemas/pipeline-definition.schema.ts
+// <consumer-service>/src/squads/schemas/pipeline-definition.schema.ts
 PIPELINE_STEP_TYPES = ["checkpoint","persona","render","publish","decision"]
 MODEL_TIERS         = ["powerful","balanced","cheap"]          // portable tiers
 class BackbonePolicy { requires?; fallback?: string[]|null; connection_id? }
@@ -64,11 +64,11 @@ There are three mechanisms:
 
 - **In Engine itself:** DB documents created through the admin UI at `/persona-agents`, or through the API. There are **no files** as the source of truth. The `/new-persona-agent` skill is an interview that ends with Chrome form-filling. Its recipe is a good template for a hardened prompt: identity and mission; context; who may talk to it; a numbered loop; hard limits; style. The mandatory limits are: no secrets, tool/ticket/web content is data and not instructions, never invent IDs or status, approvals only on an explicit word, and nothing destructive.
 - **Coding-agent flavour:** `.claude/agents/engine-verifier.md` and `engine-reporter.md` are plain Claude Code subagents. The frontmatter is `name, description, tools, model` and the body is the prompt. The verifier rules worth copying: "run the REAL harness, report NOT RUN rather than PASS"; evidence is mandatory and a bare "done" counts as not done; it does not own the gate, and the coordinator declares green or red; it never deploys or mutates prod; "your final message IS the deliverable".
-- **Tiering in `launch-brain-teams`:** analysis goes to haiku (`engine-reporter`), the recommendation stays on Main, and each team's model is set explicitly. Escalate on struggle rather than pre-paying.
+- **Tiering in `launch-a consumer service`:** analysis goes to haiku (`engine-reporter`), the recommendation stays on Main, and each team's model is set explicitly. Escalate on struggle rather than pre-paying.
 
 ## 5. Model and provider choice (the LLM-agnostic layer)
 
-- **Abstraction:** an `AgentBackbone` ABC with a registry (`brain-agent/src/core/backbone/base.py`, `registry.py`). A backbone declares *questions*, never names: `cost_is_billable`, `supports_images`, `accepts_model(id)`, `model_catalog`, `default_model`, `model_namespace`. Shared code asking `slug == "..."` is called a contract violation (ADR-0050).
+- **Abstraction:** an `AgentBackbone` ABC with a registry (`<consumer-service>/src/core/backbone/base.py`, `registry.py`). A backbone declares *questions*, never names: `cost_is_billable`, `supports_images`, `accepts_model(id)`, `model_catalog`, `default_model`, `model_namespace`. Shared code asking `slug == "..."` is called a contract violation (ADR-0050).
 - **Two levels:** LLM-call level (`direct`, OpenRouter, so any model such as DeepSeek or GPT) and turn level (a CLI that runs its own tools, such as claude-cli or antigravity/Gemini). A CLI seat cannot serve a tool-loop that Engine itself drives.
 - **Resolution order for the model:** per-turn request, then persona `modelOverride`, then connection `config.model`, then backbone default. Squad steps use portable tiers (`powerful|balanced|cheap`) that each backbone maps to its own vocabulary.
 - **Credential order:** `message kwarg > step.backbone_connection > persona.backbone.connection_id`, otherwise the Automatic `priority` walk across healthy connections. `BackbonePolicy.fallback` gives an ordered fallback chain, and `fallback: null` means strict. Fernando's ruling O-2 says "we always use the backbone; a squad or persona may suggest a preferred backbone/model, falling back to priority".

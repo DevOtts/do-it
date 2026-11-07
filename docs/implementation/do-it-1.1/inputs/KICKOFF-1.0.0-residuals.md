@@ -13,13 +13,13 @@ do-it v1.0.0 is built, merged and private. The next work is enhancements on top 
 - deploy-it 1.0.0 and reconcile-it 1.0.0 are released (tags `v1.0.0`), private.
 
 ## Open items (the candidate scope for enhancements)
-1. **Engine-HQ `brain-api-core` PR #727 is held.** It adds the four Engine hooks the do-it adapter needs. Its CI fails and `main` is red on the same commit (Docker build and E2E), so nothing was merged into Engine. Decide whether to fix the Engine CI first, or merge with a known-red check.
+1. **the pilot org a consumer service PR #727 is held.** It adds the four Engine hooks the do-it adapter needs. Its CI fails and `main` is red on the same commit (Docker build and E2E), so nothing was merged into Engine. Decide whether to fix the Engine CI first, or merge with a known-red check.
 2. **T-N3-14 is IMPLEMENTED-NOT-VERIFIED** because no do-it W3 pipeline runs on the Engine (no run status or exit code to compare).
 3. **T-R4-05 is IMPLEMENTED-NOT-VERIFIED** because the Engine has no drain driver.
 4. **T-S5-16 and T-S5-17** need live `aws` / `op` access, which has not been given.
 5. **T-R1-15** is matched only against a stub-host run; needs a real-host run with a non-clean state.
 6. **WhatsApp and chat transports are not built.** Only the Control Tower card works as a reply channel.
-7. **Docs gap:** brain-docs `squads.md` and `tasks.md` do not mention the new Engine fields yet.
+7. **Docs gap:** a consumer service `squads.md` and `tasks.md` do not mention the new Engine fields yet.
 8. **reconcile-it 1.0.1:** remove the duplicate `scripts/reconcile-it.mjs` at the repo root. Identical to the plugin copy; removing it needs a new tag.
 9. **Visibility:** `DevOtts/do-it` stays private until the owner reviews and says public. The README install commands need public access.
 10. **Companion pins for deploy-it and reconcile-it** are set in `core/companions.json` as `published`; confirm they match the marketplace once they go public.
@@ -49,7 +49,7 @@ do-it v1.0.0 is built, merged and private. The next work is enhancements on top 
 - Claims: `node scripts/gen-claims.mjs --write` (check with `--check`).
 - Gate-check (plan-it's script): `node /Users/macbook/Workspace/Devotts/plan-it/scripts/gate-check.mjs handoff delivery/` and `... adversary delivery/`. Both PASS on 1.0.0.
 - Pushes and pulls to DevOtts repos need the token in the same command: `GH_TOKEN=$(gh auth token --user DevOtts) git push ...`. Never print the token.
-- Engine local stack (only if re-running live cases): Docker dev stack, brain-api-core on `:3001`, flags `HOST_ADAPTER_API_ENABLED=true` and `CT_TASKS_ENABLED`. Use a scratch database and drop it afterwards.
+- Engine local stack (only if re-running live cases): Docker dev stack, a consumer service on `:3001`, flags `HOST_ADAPTER_API_ENABLED=true` and `CT_TASKS_ENABLED`. Use a scratch database and drop it afterwards.
 
 ## Gotchas to carry forward (bit us this session)
 - **macOS `sed '0,/re/'` silently does nothing.** It is not supported on macOS. Use a node script to change an exact field.
@@ -59,11 +59,11 @@ do-it v1.0.0 is built, merged and private. The next work is enhancements on top 
 - **Local sibling checkouts may be on the wrong branch.** `plan-it` is on `variables-contract-item` with an unpushed commit from another session. Do not switch or reset it.
 - **Test scratch folders** `dit-*`, `doit-*`, `pre-merge-*`, `r3-apply-*` are created under `$TMPDIR` by the suites and may hold fixture `.secrets`. Clean them after runs.
 - **The `rtk` wrapper rewrites compound `find`.** Use globs with a timestamp marker instead.
-- **Engine-HQ `main` is red.** Do not treat a red PR check as caused by the PR without checking `main` first.
+- **the pilot org `main` is red.** Do not treat a red PR check as caused by the PR without checking `main` first.
 - **Untracked folder from another session:** `docs/implementation/harness-status-tracking/` is not part of do-it 1.0.0. Leave it out of commits.
 - **Vault mirror is not pushed.** `~/Workspace/Vault/OttVault` has a broken remote and 57 unrelated dirty files. The ledger card is mirrored locally only.
 
 ## Handoff state
-- Done and pushed: do-it 1.0.0 on `main`; six companion PRs merged; Engine docs PRs (brain-docs #220, engine-workspace #227) merged; deploy-it and reconcile-it released; ledger card committed.
+- Done and pushed: do-it 1.0.0 on `main`; six companion PRs merged; Engine docs PRs (a consumer service #220, a consumer program #227) merged; deploy-it and reconcile-it released; ledger card committed.
 - Open and owed back to the owner: items 1, 9 and 4 above. Scope for the enhancements is not decided.
 - This note itself is **uncommitted** in do-it. Commit it when the owner agrees to the scope.

@@ -27,7 +27,7 @@ Secrets are read from the environment only. Nothing is stored in the repo.
 |---|---|
 | `DO_IT_ENGINE_URL` | Base URL of a reachable Engine. Unset means live cases stay IMPLEMENTED-NOT-VERIFIED. |
 | `DO_IT_ENGINE_TOKEN` | Service key sent with each request. |
-| `DO_IT_ENGINE_CORE` | Optional path to a local Engine-Core checkout, used by the probe. |
+| `DO_IT_PILOT_REPO` | Optional path to a local the pilot consumer repo checkout, used by the probe. |
 
 Tier names are `T1`, `T2` and `T3`. Their model bindings are chosen at init; `tiers.json` still has `asked_at_init` set to false.
 
@@ -41,7 +41,7 @@ The suite runs offline against fixtures and stubs. The `[REAL]` cases (T-N1-16/1
 
 ## Status
 
-Verified live on 2026-10-14 against a local `brain-api-core` running Engine PR #727 (not merged, not deployed; needs `HOST_ADAPTER_API_ENABLED=true` and `CT_TASKS_ENABLED=true`). Evidence: `.taskstate/results/engine-adapter-live.md`.
+Verified live on 2026-10-14 against a local a consumer service running Engine PR #727 (not merged, not deployed; needs `HOST_ADAPTER_API_ENABLED=true` and `CT_TASKS_ENABLED=true`). Evidence: `.taskstate/results/engine-adapter-live.md`.
 
 | Case | Verdict | Finding |
 |---|---|---|

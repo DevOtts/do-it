@@ -63,8 +63,8 @@ ok 10 - T-N3-10 low-confidence route asks the owner
   duration_ms: 2.267375
   type: 'test'
   ...
-# Subtest: T-N3-11 [REAL] scope check on the real Engine-Core repo
-ok 11 - T-N3-11 [REAL] scope check on the real Engine-Core repo
+# Subtest: T-N3-11 [REAL] scope check on the real the pilot consumer repo repo
+ok 11 - T-N3-11 [REAL] scope check on the real the pilot consumer repo repo
   ---
   duration_ms: 69.686041
   type: 'test'

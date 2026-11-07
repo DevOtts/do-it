@@ -32,7 +32,7 @@ Verdict legend: **build** (new), **adapt** (change an existing plugin), **reuse*
 |---|---|---|
 | Engine adapter: compile `squad.yaml` to `pipeline_definition`, asks on CT/chat/WhatsApp, tier pass-through | build | N1 |
 | StateStore interface with local-fs, git-branch and the Engine backend (rows/interactions + object store) | build | N2 |
-| Engine layer hand-over: spec in Engine-Core `do-it-engine-layer/`, conformance replay of the W3 `lp_content` card | build (spec only) | N3 |
+| Engine layer hand-over: spec in the pilot consumer repo `do-it-engine-layer/`, conformance replay of the W3 `lp_content` card | build (spec only) | N3 |
 
 ## Lane L5: marketing, packaging, companions, tests
 | Component | Verdict | Epic |

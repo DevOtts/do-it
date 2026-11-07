@@ -1,6 +1,6 @@
 {
-  "schema": "do-it-engine-core-baseline/1",
-  "note": "Engine-Core is a shared repo. Paths below were changed or untracked by other sessions when N3 started; none was touched by do-it. A path not listed here makes scope-check return NEEDS_HUMAN (exit 2).",
+  "schema": "do-it-pilot-baseline/1",
+  "note": "the pilot consumer repo is a shared repo. Paths below were changed or untracked by other sessions when N3 started; none was touched by do-it. A path not listed here makes scope-check return NEEDS_HUMAN (exit 2).",
   "head": "e6668ef17bded508a078634c09c9ac3a6279e766",
   "recorded": "2026-10-14",
   "other_programs": [

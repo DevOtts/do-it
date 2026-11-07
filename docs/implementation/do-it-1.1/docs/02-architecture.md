@@ -77,7 +77,7 @@ The ledger is the one new artifact. It lives where analysis is authored (plan-it
 
 ## G. Audit mode in review-it (F6, TRUST 3.5) — new mode, routes to existing subagents
 
-`/review-it --audit <claims.md>` runs the chain the owner built by hand in `grokbot-plan`:
+`/review-it --audit <claims.md>` runs the chain the owner built by hand in `P2-plan`:
 
 ```
 ledger ──► AUDITOR (a different model from the author, primary sources only, sees no conclusions)

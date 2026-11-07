@@ -1,4 +1,4 @@
-# How Fernando works: Engine-Core sessions, 2026-09-14 to 2026-10-14
+# How Fernando works: the pilot consumer repo sessions, 2026-09-14 to 2026-10-14
 
 Sources: ledger `.agents/history/INDEX.md` (112 rows dated >= 09-14), session cards, and user messages extracted from ~199 transcripts across `~/.claude`, `-8fai`, `-8ftools`, `-anm` and `-loudr` (about 19.7k user-role messages, of which most are automated pings). No secrets included.
 
@@ -25,7 +25,7 @@ Sources: ledger `.agents/history/INDEX.md` (112 rows dated >= 09-14), session ca
 5. **Review-it with CDP, looping into the builder session.** "Your /goal is to /review-it the implementation ... Use chrome CDP to execute the ROTEIRO-TESTE.html. The problems you find, sendMessage to the session ... /iterate and /build-it there ... until 100% pass and we are finally able to /conclude-it." This is a reviewer-builder ping-pong between two sessions, ending in a "ROTEIRO 10/0/3" style verdict.
 6. **Live bug report from the product, investigate-only first.** He pastes a chat URL, a screenshot, or a WhatsApp message from a partner (Leo/Léo). Examples: "Investigue o pq o Secretário está dizendo que não está recebendo as mensagens completas", and "(nao faça nenhuma mudança, quero entender)". Then comes the fix, a deploy, and a live retest. Typical results: root cause found, "built-not-shipped", or a premise corrected.
 7. **Cross-session continuation after a usage limit or a compact.** "the session 'praxya-radar-refinement-pt3' stopped due hit weekly limit /read-chat '...' Continue here". Also: "Our current session is almost without limits ... I'd like to move to another subscription where you can finish what you are doing". Numbered runs (pt2..pt8, orchestrator-1..13) carry state through KICKOFF-PTn.md, HANDOFF-PTn.md and `.taskstate/`.
-8. **Conductor over children, cross-session messages.** A conductor ("closeout-130926-orchestrator", "engine-core-46") sends KICKOFFs to child sessions with a named model ("you are memory-caos-w3-exec (model sonnet)"). It runs cheap pings: "Conductor ping. Keep it cheap. 1) ListAgents: are X and Y alive? ... If a child is idle and blocked or stalled...". Instances: closeout (7 children, 12 deploys), ct-p2p orchestrators 1-13, and an overnight conductor for twv plus ct-p2p.
+8. **Conductor over children, cross-session messages.** A conductor ("closeout-130926-orchestrator", "pilot-46") sends KICKOFFs to child sessions with a named model ("you are memory-caos-w3-exec (model sonnet)"). It runs cheap pings: "Conductor ping. Keep it cheap. 1) ListAgents: are X and Y alive? ... If a child is idle and blocked or stalled...". Instances: closeout (7 children, 12 deploys), ct-p2p orchestrators 1-13, and an overnight conductor for twv plus ct-p2p.
 9. **Deploy coordination.** "go ahead. check /deploy-router before deploy, we still have other session running", "now you have priority let the other session know /deploy-router", and "Do the deploys in parallel so we can free the deploy run to the other sessions." Policy is one deploy per run, at the end ("deploy once at end"), canary on fo first, then her0/praxya.
 10. **Reconcile / cleanup.** "/reconcile-it ... only the things related to p2p and ct that is garbage that is already in main. Be careful to not delete code that we didn't ship." Result: a "main-only workspace", with 29 refs deleted and rescue branches landed or dropped.
 11. **Owner-pack Q&A.** The run ends with a "Needs Fernando" section or an OWNER-PACK. He replies with terse numbered answers: "1 - I am rebooting right now ... OD-2 - yes OD-22 - yes OD-13 - Merge 4 - contabo dashboard is logged in in chrome CDP, you can do it now." Another example: "1. approve free build-box disk 2. do not rotate 3. roll out everybody".
@@ -114,7 +114,7 @@ Sources: ledger `.agents/history/INDEX.md` (112 rows dated >= 09-14), session ca
    - Pain removed: the manual transcript archaeology.
 
 ## Evidence pointers
-- Ledger: `/Users/macbook/Workspace/Engine/Engine-Core/.agents/history/INDEX.md` and the alias card folders.
+- Ledger: `<pilot-repo>/.agents/history/INDEX.md` and the alias card folders.
 - Binding token rules appear in the 10-13 hackathon-1012 round-2 kickoff, in the `claudinho` transcript.
-- Repo rules: `/Users/macbook/Workspace/Engine/Engine-Core/CLAUDE.md`. Repo skills include engine-deploy, deploy-router, new-feature, review-pr and engine-session-debrief.
+- Repo rules: `<pilot-repo>/CLAUDE.md`. Repo skills include engine-deploy, deploy-router, new-feature, review-pr and engine-session-debrief.
 - Not read: `.fable-it-reports`, `.build-it-reports`, `.plan-it`, `.review-it` and the individual cards. The analysis rests on the INDEX plus transcript user messages.
