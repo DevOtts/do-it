@@ -109,7 +109,7 @@ test('T-E1-04 --set reaches the host schema', () => {
   assert.equal(unit(repo, ['doctor', '--set', 'state.nohost.x=1'], env).out.outcome, 'SETTINGS_UNKNOWN_KEY');
 });
 
-test('T-E1-04 without the host folder the key is refused naming the host; without any hosts folder it is not checked', () => {
+test('T-E1-04 without the host folder the key is refused naming the host; an override folder that does not exist falls back to the own hosts of the bundle and refuses too', () => {
   const repo = withSettings({ state: { backend: FX, [FX]: { blobs: 'r2' } } });
   const empty = track(tmp('dit-hosts-'));
   fs.mkdirSync(path.join(empty, 'some-other-host'));
@@ -117,5 +117,6 @@ test('T-E1-04 without the host folder the key is refused naming the host; withou
   assert.equal(a.code, 1);
   assert.ok(a.out.errors.some((x) => x.pointer === '/state/' + FX && x.message.includes('host "' + FX + '"')), JSON.stringify(a.out.errors));
   const gone = unit(repo, ['doctor'], { DO_IT_HOSTS_DIR: path.join(empty, 'nope') });
-  assert.equal(gone.code, 0, gone.stdout);
+  assert.equal(gone.code, 1, gone.stdout);
+  assert.ok(gone.out.errors.some((x) => x.pointer === '/state/' + FX && x.message.includes('host "' + FX + '"')), JSON.stringify(gone.out.errors));
 });

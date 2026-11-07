@@ -19,6 +19,8 @@ before(() => {
   copy = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'e1-iso-')));
   fs.cpSync(ROOT, copy, { recursive: true, filter: (src) => !SKIP.has(path.basename(src)) || src === ROOT });
   fs.rmSync(path.join(copy, 'hosts', HOST), { recursive: true, force: true });
+  // The installed plugin carries a mirror of the host (CP-01 defect 1); deleting the host deletes that copy too.
+  fs.rmSync(path.join(copy, 'plugins', 'do-it', 'hosts', HOST), { recursive: true, force: true });
 });
 after(() => fs.rmSync(copy, { recursive: true, force: true }));
 

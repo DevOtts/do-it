@@ -2719,11 +2719,13 @@ const SETTINGS_DEFAULTS = {
 
 // Host-owned settings: `state.<backend>` is one object keyed by the backend name. Core does not know its
 // shape; the host that provides the backend declares it in the `state_store.settings_schema` entry of
-// hosts/<name>/adapter.manifest.json. Returns { schema } | { absent: true } (no hosts folder reachable,
-// e.g. the single file installed alone: accepted unchecked) | { error } (host or schema missing).
+// hosts/<name>/adapter.manifest.json. Returns { schema } | { absent: true } (no hosts folder reachable at all:
+// a lone copy of the bundle, accepted unchecked) | { error } (host or schema missing).
 function settingsHostsDirs(ctx) {
   const here = path.dirname(fileURLToPath(import.meta.url));
-  const cands = ctx.env.DO_IT_HOSTS_DIR ? [ctx.env.DO_IT_HOSTS_DIR] : [path.join(here, '..', '..', 'hosts'), path.join(here, '..', '..', '..', 'hosts')];
+  // Source tree (../../hosts), a bundle one level deeper, and the installed plugin, which ships the host
+  // manifests and settings schemas next to its scripts folder (../hosts). An explicit override is tried first.
+  const cands = [ctx.env.DO_IT_HOSTS_DIR, path.join(here, '..', '..', 'hosts'), path.join(here, '..', '..', '..', 'hosts'), path.join(here, '..', 'hosts')];
   return cands
     .filter(Boolean).map((d) => path.resolve(d)).filter((d) => fs.existsSync(d) && fs.statSync(d).isDirectory());
 }
