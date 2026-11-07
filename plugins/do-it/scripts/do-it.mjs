@@ -1083,7 +1083,11 @@ function cmdInstallCompanions(ctx, args) {
   const todo = required.filter((c) => !have.has(c.name));
   const finished = required.filter((c) => have.has(c.name)).map((c) => c.name);
   if (dry) {
-    return { outcome: 'INSTALL_DRY_RUN', exit: 0, host, lines: todo.map((c) => 'npx ' + cmdOf(c).join(' ')) };
+    // Optional companions are listed (never installed by this command) so the owner can opt in by hand.
+    const optional = loadCompanions(ctx).companions.filter((c) => !c.required && c.status === 'published');
+    const lines = todo.map((c) => 'npx ' + cmdOf(c).join(' '));
+    for (const c of optional) lines.push('optional: npx ' + cmdOf(c).join(' ') + '  # ' + c.name + ' ' + c.version);
+    return { outcome: 'INSTALL_DRY_RUN', exit: 0, host, lines };
   }
   for (const c of todo) {
     const r = cp.spawnSync('npx', cmdOf(c), { encoding: 'utf8', env: ctx.env, stdio: ['ignore', 'pipe', 'pipe'] });

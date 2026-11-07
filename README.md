@@ -256,6 +256,8 @@ do-it/
 | [conclude-it](https://github.com/DevOtts/conclude-it) | closes the session and archives |
 | reconcile-it | scan, plan, apply with approval (built into do-it) |
 | [parallel-lifecycle](https://github.com/DevOtts/parallel-lifecycle) | worktree isolation for parallel slices |
+| [doc-it](https://github.com/DevOtts/doc-it) (optional) | documentation rules and checks: source tiers, archive closeout, expiry, stale checkout |
+| [init-it](https://github.com/DevOtts/init-it) (optional) | registers a session against an implementation |
 
 ## Status
 

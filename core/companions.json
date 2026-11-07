@@ -69,6 +69,22 @@
       "required": false,
       "status": "published",
       "skill_dir": "plugins/reconcile-it"
+    },
+    {
+      "name": "init-it",
+      "repo": "DevOtts/init-it",
+      "version": "0.1.0",
+      "required": false,
+      "status": "published",
+      "skill_dir": "plugins/init-it"
+    },
+    {
+      "name": "doc-it",
+      "repo": "DevOtts/doc-it",
+      "version": "0.1.0",
+      "required": false,
+      "status": "published",
+      "skill_dir": "plugins/doc-it"
     }
   ]
 }

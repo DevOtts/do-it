@@ -35,6 +35,10 @@ do-it is the conductor above the *-it family. The spine (`do-it` CLI) is the onl
 
 If the host did not install the companions, run `do-it doctor --install`; it reads `core/companions.json`.
 
+Optional companions (not installed by default; `do-it doctor --install --host <host> --dry-run` lists them):
+- doc-it: documentation rules and checks: source tiers, archive closeout, expiry, stale checkout.
+- init-it: registers a session against an implementation.
+
 ## Presets
 
 - approval
