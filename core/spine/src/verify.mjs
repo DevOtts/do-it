@@ -24,7 +24,7 @@ export function verifyEvidence(ctx, runId) {
     writeLedger(ctx, ledger);
     const fl = readFinishLine(ctx);
     for (const c of changed) {
-      if (fl.rows.some((r) => r.id === c.row)) finishLineUpsert(fl, c.row, { state: 'OPEN', evidence: null, reason: 'evidence_changed' });
+      if (fl.rows.some((r) => r.id === c.row)) finishLineUpsert(fl, c.row, { state: 'OPEN', evidence: null, reason: 'evidence_changed' }, runId);
       appendEvent(ctx, runId, { event: 'evidence_changed', verdict: 'IMPLEMENTED-NOT-VERIFIED', detail: { row: c.row, reason: c.reason } });
     }
     writeFinishLine(ctx, fl);

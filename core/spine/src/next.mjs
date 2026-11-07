@@ -49,7 +49,7 @@ export function nextWave(ctx, state, runId, fl) {
   if (!pipe || !pipe.steps.length) return { pipe: null };
   let seeded = false;
   for (const st of pipe.steps) {
-    if (!fl.rows.some((r) => r.id === st.id)) { finishLineUpsert(fl, st.id, { kind: 'wave' }); seeded = true; }
+    if (!fl.rows.some((r) => r.id === st.id)) { finishLineUpsert(fl, st.id, { kind: 'wave' }, runId); seeded = true; }
   }
   if (seeded) writeFinishLine(ctx, fl);
   const rowOf = (id) => fl.rows.find((r) => r.id === id);

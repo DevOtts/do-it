@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Stop hook (G-9). Exit 2 with a reason on stderr refuses the stop; exit 0 allows it.
 // After `patience` refusals without progress it calls spine `park` and allows the stop.
-// The gate is scoped to this session and cwd: it only ever refuses the run they own.
+// The gate is scoped to this session: it only ever refuses the run this session owns (a hook that
+// has no session id passes only its cwd, and then only a run that recorded no session is its own).
 // The refusal counter is a host-side file (the spine alone writes state.json, G-1).
 // An unreachable or unintelligible spine fails open: a broken gate must not trap the session.
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -17,7 +18,7 @@ const key = input.session_id || 'session';
 const load = () => { try { return JSON.parse(readFileSync(file, 'utf8')); } catch { return {}; } };
 const save = (n) => { mkdirSync(dir, { recursive: true }); writeFileSync(file, JSON.stringify({ ...load(), [key]: n })); };
 
-const { json } = callSpine(['gate', 'stop', '--session', key, '--cwd', cwd, '--json'], cwd);
+const { json } = callSpine(['gate', 'stop', ...(input.session_id ? ['--session', input.session_id] : []), '--cwd', cwd, '--json'], cwd);
 const outcome = json && json.outcome;
 const patience = Number(json?.patience ?? process.env.DO_IT_STOP_PATIENCE ?? 3);
 

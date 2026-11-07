@@ -16,7 +16,8 @@
           "evidence": { "type": ["string", "null"] },
           "owner_question": { "type": ["string", "null"] },
           "reason": { "type": ["string", "null"] },
-          "archived_to": { "type": ["string", "null"] }
+          "archived_to": { "type": ["string", "null"] },
+          "run_id": { "type": ["string", "null"] }
         }
       }
     }

@@ -7,7 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const EMBEDDED_SCHEMAS = {"answers.schema.json":{"$id":"do-it-answers/1","title":"answers.json: the parsed owner reply, deterministic (no timestamps)","type":"object","required":["pack_id","answers","pending","complete"],"properties":{"pack_id":{"type":"string","minLength":1},"complete":{"type":"boolean"},"pending":{"type":"array","items":{"type":"integer","minimum":1}},"answers":{"type":"array","items":{"type":"object","required":["n","answer","source","free_text"],"properties":{"n":{"type":"integer","minimum":1},"answer":{"type":"string"},"source":{"enum":["reply","recommendation","default"]},"free_text":{"type":"boolean"}},"additionalProperties":false}}},"additionalProperties":false},"do-it-state.1.schema.json":{"$id":"do-it-state/1","title":"do-it run state (written only by the spine)","type":"object","required":["schema","run_id","preset","request","status","size","host","stage","slices","gates","handoffs","stop_refusals","review","created_at","updated_at"],"properties":{"schema":{"const":"do-it-state/1"},"run_id":{"type":"string","minLength":1},"preset":{"type":["string","null"]},"request":{"type":"string"},"status":{"enum":["INTAKE","PLANNING","AWAIT_RATIFY","BUILDING","VERIFYING","REVIEWING","FIXING","DEPLOYING","PROVING","CONCLUDING","DONE","NEEDS_HUMAN","PARKED","BLOCKED","FAILED","PARTIAL_FAILURE","ROLLED_BACK","ESCALATED"]},"size":{"type":["integer","string","null"]},"host":{"type":["string","null"]},"stage":{"type":["string","null"]},"slices":{"type":"array","items":{"type":"object","required":["id","status"],"properties":{"id":{"type":"string","minLength":1},"lane":{"type":["string","null"]},"tier":{"type":["string","null"]},"wave":{"type":["string","null"]},"status":{"type":"string"},"attempts":{"type":"integer","minimum":0},"escalations":{"type":"integer","minimum":0}}}},"gates":{"type":"object"},"handoffs":{"type":"integer","minimum":0},"stop_refusals":{"type":"integer","minimum":0},"review":{"type":"object","required":["round","exit"],"properties":{"round":{"type":"integer","minimum":0},"exit":{"type":["string","null"]}}},"created_at":{"type":"string","minLength":1},"updated_at":{"type":"string","minLength":1},"ceiling":{"type":["string","object","null"]},"park":{"type":["object","null"]},"handoff_state":{"type":["string","object","null"]},"run_verdict":{"enum":["DONE_ALL_VERIFIED","DONE_WITH_RESIDUALS","BLOCKED","NEEDS_RESET","USAGE_LIMIT",null]},"deploy":{"type":["object","null"]},"last_journal":{"type":["string","null"]}}},"events.schema.json":{"$id":"do-it-event/1","title":"events.jsonl row (trace fields frozen for v2 exporters)","type":"object","required":["ts","run_id","slice_id","stage","persona","tier","model","host","event","parent_id","verdict"],"properties":{"ts":{"type":"string","minLength":1},"run_id":{"type":"string","minLength":1},"slice_id":{"type":["string","null"]},"stage":{"type":["string","null"]},"persona":{"type":["string","null"]},"tier":{"type":["string","null"]},"model":{"type":["string","null"]},"host":{"type":["string","null"]},"event":{"type":"string","minLength":1},"parent_id":{"type":["string","null"]},"verdict":{"type":["string","null"]},"detail":{"type":["object","string","null"]}},"additionalProperties":false},"finish-line.schema.json":{"$id":"do-it-finish-line/1","title":"finish-line.json: rows that must all become terminal","type":"object","required":["rows"],"properties":{"rows":{"type":"array","items":{"type":"object","required":["id","kind","state"],"properties":{"id":{"type":"string","minLength":1},"kind":{"enum":["wave","package","dod"]},"state":{"enum":["OPEN","DONE","PARKED","BLOCKED"]},"evidence":{"type":["string","null"]},"owner_question":{"type":["string","null"]},"reason":{"type":["string","null"]},"archived_to":{"type":["string","null"]}}}}}},"it-result.1.schema.json":{"$id":"it-result/1","title":"Result file every stage writes as its last act","type":"object","required":["schema","stage","run_id","status","exit_code"],"properties":{"schema":{"const":"it-result/1"},"stage":{"enum":["prompt-it","plan-it","build-it","review-it","deploy-it","conclude-it","reconcile-it"]},"run_id":{"type":"string","minLength":1},"slice_id":{"type":["string","null"]},"version":{"type":["string","null"]},"head_sha":{"type":["string","null"]},"status":{"enum":["ok","needs_human","blocked","failed","context_reset","usage_limit"]},"exit_code":{"type":"integer","minimum":0,"maximum":3},"verdicts":{"type":"array","items":{"type":"object","required":["row","verdict"],"properties":{"row":{"type":"string","minLength":1},"verdict":{"enum":["VERIFIED","IMPLEMENTED-NOT-VERIFIED","BLOCKED"]},"evidence":{"type":["string","null"]},"real":{"type":"boolean"}}}},"reason":{"type":["string","null"]},"run_verdict":{"enum":["DONE_ALL_VERIFIED","DONE_WITH_RESIDUALS","BLOCKED","NEEDS_RESET","USAGE_LIMIT",null]},"next":{"type":["object","null"]},"pending_human":{"type":["object","null"]},"artifacts":{"type":"array","items":{"type":"object","required":["path"],"properties":{"path":{"type":"string"},"kind":{"type":["string","null"]},"sha256":{"type":["string","null"]}}}},"resume":{"type":["object","null"]},"tokens":{"type":["object","null"]},"rollback":{"type":"boolean"},"legs":{"type":"array","items":{"type":"object","required":["leg","state"],"properties":{"leg":{"type":"string","minLength":1},"state":{"enum":["DEPLOYED_VERIFIED","DEPLOYED_UNVERIFIED","HELD","FAILED","NEEDS_HUMAN","ROLLED_BACK","ROLLBACK_FAILED"]},"evidence":{"type":["string","null"]},"compensate":{"type":["string","object","array","null"]}}}}}},"ledger.schema.json":{"$id":"do-it-ledger/1","title":"ledger.json: latest verdict and evidence per DoD row","type":"object","required":["schema","run_id","rows"],"properties":{"schema":{"const":"do-it-ledger/1"},"run_id":{"type":"string","minLength":1},"rows":{"type":"array","items":{"type":"object","required":["row","verdict","evidence","evidence_sha256","real","recorded_at","updated_at"],"properties":{"row":{"type":"string","minLength":1},"verdict":{"enum":["VERIFIED","IMPLEMENTED-NOT-VERIFIED","BLOCKED"]},"evidence":{"type":["string","null"]},"evidence_path":{"type":["string","null"]},"evidence_sha256":{"type":["string","null"]},"real":{"type":"boolean"},"reason":{"type":["string","null"]},"recorded_at":{"type":"string","minLength":1},"updated_at":{"type":"string","minLength":1}}}}}},"owner-pack.schema.json":{"$id":"do-it-owner-pack/1","title":"owner-pack.json: the single set of questions for the human","type":"object","required":["pack_id","run_id","questions","created_at"],"properties":{"pack_id":{"type":["string","null"]},"run_id":{"type":"string","minLength":1},"created_at":{"type":"string","minLength":1},"questions":{"type":"array","items":{"type":"object","required":["n","kind","text","options","recommendation","default","reversible"],"properties":{"n":{"type":"integer","minimum":1},"kind":{"type":"string","minLength":1},"text":{"type":"string","minLength":1},"options":{"type":"array","items":{"type":"string"}},"recommendation":{"type":["string","null"]},"default":{"type":["string","null"]},"reversible":{"type":"boolean"}},"additionalProperties":false}}},"additionalProperties":false},"readiness.schema.json":{"$id":"do-it-readiness/1","title":"plan/READINESS.json: the verdict that lets a build start (G-8)","type":"object","required":["decisions","preflight"],"properties":{"decisions":{"type":["array","object"]},"preflight":{"type":"object","required":["passed"],"properties":{"passed":{"type":"boolean"}}},"credentials":{"type":"array","items":{"type":"string","minLength":1}},"owner_dependent_slices":{"type":"integer","minimum":0},"review_checkpoints":{"type":"object","required":["schema","count","checkpoints"],"properties":{"schema":{"const":"review-checkpoints/1"},"count":{"type":"integer","minimum":0},"level":{"enum":["none","light","standard","heightened","full"]},"checkpoints":{"type":"array","items":{"type":"object","required":["id","kind","evidence"],"properties":{"id":{"type":"string","pattern":"^CP-\\d{2}$"},"kind":{"enum":["phase","wave","adversarial","pre-merge","pre-release"]},"evidence":{"type":"string","minLength":1},"at":{"type":"string"},"review":{"type":"string"},"blocks":{"type":"string"},"gates":{"type":"array","minItems":1,"items":{"enum":["dependents","promotion","merge","release"]}},"covers":{"type":"array","items":{"type":"string","minLength":1}}}}}}},"slices":{"type":"array","items":{"type":"object","required":["id"],"properties":{"id":{"type":"string","minLength":1},"lane":{"type":["string","null"]},"tier":{"type":["string","null"]},"class":{"enum":["deterministic","gather","implementation","hard",null]},"depends_on":{"type":"array","items":{"type":"string"}},"wave":{"type":["string","null"]},"depends_on_owner_answer":{"type":"boolean"}}}}}},"settings.schema.json":{"$id":"do-it-settings/1","title":"do-it settings (workspace, global or merged)","type":"object","additionalProperties":false,"properties":{"version":{"const":1},"interaction":{"type":"object","additionalProperties":false,"properties":{"owner_pack":{"enum":["auto","native","html","markdown"]},"fallback":{"type":"array","items":{"enum":["native","html","markdown"]}}}},"host":{"type":"object","additionalProperties":false,"properties":{"driver":{"type":"string","minLength":1},"alias":{"type":["string","null"]}}},"isolation":{"type":"object","additionalProperties":false,"properties":{"driver":{"type":"string","minLength":1}}},"state":{"type":"object","additionalProperties":false,"properties":{"backend":{"type":"string","minLength":1},"engine":{"type":"object","additionalProperties":false,"properties":{"blobs":{"enum":["rows","r2","fs-mirror"]}}}}},"secrets":{"type":"object","additionalProperties":false,"properties":{"provider":{"enum":["file","env","aws-secrets-manager","onepassword","1password"]},"ref":{"type":"string"}}},"handoff":{"type":"object","additionalProperties":false,"properties":{"mode":{"enum":["auto","ask"]},"max_per_run":{"type":"integer","minimum":1}}},"review":{"type":"object","additionalProperties":false,"properties":{"max_rounds":{"type":"integer","minimum":1},"cost_cap_tokens":{"type":"integer","minimum":1}}},"tiers":{"type":"object","additionalProperties":false,"properties":{"T1":{"type":"string"},"T2":{"type":"string"},"T3":{"type":"string"}}},"ceilings":{"type":"object","additionalProperties":false,"properties":{"warn_tokens":{"type":"integer","minimum":0},"warn_pct":{"type":"number","minimum":0,"maximum":100},"block_tokens":{"type":"integer","minimum":0},"block_pct":{"type":"number","minimum":0,"maximum":100}}},"stop_gate":{"type":"object","additionalProperties":false,"properties":{"patience":{"type":"integer","minimum":0}}},"observability":{"type":"object","additionalProperties":false,"properties":{"provider":{"type":"string","minLength":1}}}}},"token-meter.schema.json":{"$id":"do-it-token-meter/1","title":"token-meter.jsonl row: the event fields plus usage fields","type":"object","required":["ts","run_id","slice_id","stage","persona","tier","model","host","event","parent_id","verdict","tokens_in","tokens_out","cache_read","cache_write","estimated","source"],"properties":{"ts":{"type":"string","minLength":1},"run_id":{"type":"string","minLength":1},"slice_id":{"type":["string","null"]},"stage":{"type":["string","null"]},"persona":{"type":["string","null"]},"tier":{"type":["string","null"]},"model":{"type":["string","null"]},"host":{"type":["string","null"]},"event":{"type":"string","minLength":1},"parent_id":{"type":["string","null"]},"verdict":{"type":["string","null"]},"tokens_in":{"type":["integer","null"],"minimum":0},"tokens_out":{"type":["integer","null"],"minimum":0},"cache_read":{"type":["integer","null"],"minimum":0},"cache_write":{"type":["integer","null"],"minimum":0},"estimated":{"type":"boolean"},"source":{"enum":["provider","estimate","unknown"]},"extra":{"type":["object","null"]}},"additionalProperties":false}};
+const EMBEDDED_SCHEMAS = {"answers.schema.json":{"$id":"do-it-answers/1","title":"answers.json: the parsed owner reply, deterministic (no timestamps)","type":"object","required":["pack_id","answers","pending","complete"],"properties":{"pack_id":{"type":"string","minLength":1},"complete":{"type":"boolean"},"pending":{"type":"array","items":{"type":"integer","minimum":1}},"answers":{"type":"array","items":{"type":"object","required":["n","answer","source","free_text"],"properties":{"n":{"type":"integer","minimum":1},"answer":{"type":"string"},"source":{"enum":["reply","recommendation","default"]},"free_text":{"type":"boolean"}},"additionalProperties":false}}},"additionalProperties":false},"do-it-state.1.schema.json":{"$id":"do-it-state/1","title":"do-it run state (written only by the spine)","type":"object","required":["schema","run_id","preset","request","status","size","host","stage","slices","gates","handoffs","stop_refusals","review","created_at","updated_at"],"properties":{"schema":{"const":"do-it-state/1"},"run_id":{"type":"string","minLength":1},"preset":{"type":["string","null"]},"request":{"type":"string"},"status":{"enum":["INTAKE","PLANNING","AWAIT_RATIFY","BUILDING","VERIFYING","REVIEWING","FIXING","DEPLOYING","PROVING","CONCLUDING","DONE","NEEDS_HUMAN","PARKED","BLOCKED","FAILED","PARTIAL_FAILURE","ROLLED_BACK","ESCALATED"]},"size":{"type":["integer","string","null"]},"host":{"type":["string","null"]},"stage":{"type":["string","null"]},"slices":{"type":"array","items":{"type":"object","required":["id","status"],"properties":{"id":{"type":"string","minLength":1},"lane":{"type":["string","null"]},"tier":{"type":["string","null"]},"wave":{"type":["string","null"]},"status":{"type":"string"},"attempts":{"type":"integer","minimum":0},"escalations":{"type":"integer","minimum":0}}}},"gates":{"type":"object"},"handoffs":{"type":"integer","minimum":0},"stop_refusals":{"type":"integer","minimum":0},"review":{"type":"object","required":["round","exit"],"properties":{"round":{"type":"integer","minimum":0},"exit":{"type":["string","null"]}}},"created_at":{"type":"string","minLength":1},"updated_at":{"type":"string","minLength":1},"ceiling":{"type":["string","object","null"]},"park":{"type":["object","null"]},"handoff_state":{"type":["string","object","null"]},"run_verdict":{"enum":["DONE_ALL_VERIFIED","DONE_WITH_RESIDUALS","BLOCKED","NEEDS_RESET","USAGE_LIMIT",null]},"deploy":{"type":["object","null"]},"last_journal":{"type":["string","null"]}}},"events.schema.json":{"$id":"do-it-event/1","title":"events.jsonl row (trace fields frozen for v2 exporters)","type":"object","required":["ts","run_id","slice_id","stage","persona","tier","model","host","event","parent_id","verdict"],"properties":{"ts":{"type":"string","minLength":1},"run_id":{"type":"string","minLength":1},"slice_id":{"type":["string","null"]},"stage":{"type":["string","null"]},"persona":{"type":["string","null"]},"tier":{"type":["string","null"]},"model":{"type":["string","null"]},"host":{"type":["string","null"]},"event":{"type":"string","minLength":1},"parent_id":{"type":["string","null"]},"verdict":{"type":["string","null"]},"detail":{"type":["object","string","null"]}},"additionalProperties":false},"finish-line.schema.json":{"$id":"do-it-finish-line/1","title":"finish-line.json: rows that must all become terminal","type":"object","required":["rows"],"properties":{"rows":{"type":"array","items":{"type":"object","required":["id","kind","state"],"properties":{"id":{"type":"string","minLength":1},"kind":{"enum":["wave","package","dod"]},"state":{"enum":["OPEN","DONE","PARKED","BLOCKED"]},"evidence":{"type":["string","null"]},"owner_question":{"type":["string","null"]},"reason":{"type":["string","null"]},"archived_to":{"type":["string","null"]},"run_id":{"type":["string","null"]}}}}}},"it-result.1.schema.json":{"$id":"it-result/1","title":"Result file every stage writes as its last act","type":"object","required":["schema","stage","run_id","status","exit_code"],"properties":{"schema":{"const":"it-result/1"},"stage":{"enum":["prompt-it","plan-it","build-it","review-it","deploy-it","conclude-it","reconcile-it"]},"run_id":{"type":"string","minLength":1},"slice_id":{"type":["string","null"]},"version":{"type":["string","null"]},"head_sha":{"type":["string","null"]},"status":{"enum":["ok","needs_human","blocked","failed","context_reset","usage_limit"]},"exit_code":{"type":"integer","minimum":0,"maximum":3},"verdicts":{"type":"array","items":{"type":"object","required":["row","verdict"],"properties":{"row":{"type":"string","minLength":1},"verdict":{"enum":["VERIFIED","IMPLEMENTED-NOT-VERIFIED","BLOCKED"]},"evidence":{"type":["string","null"]},"real":{"type":"boolean"}}}},"reason":{"type":["string","null"]},"run_verdict":{"enum":["DONE_ALL_VERIFIED","DONE_WITH_RESIDUALS","BLOCKED","NEEDS_RESET","USAGE_LIMIT",null]},"next":{"type":["object","null"]},"pending_human":{"type":["object","null"]},"artifacts":{"type":"array","items":{"type":"object","required":["path"],"properties":{"path":{"type":"string"},"kind":{"type":["string","null"]},"sha256":{"type":["string","null"]}}}},"resume":{"type":["object","null"]},"tokens":{"type":["object","null"]},"rollback":{"type":"boolean"},"legs":{"type":"array","items":{"type":"object","required":["leg","state"],"properties":{"leg":{"type":"string","minLength":1},"state":{"enum":["DEPLOYED_VERIFIED","DEPLOYED_UNVERIFIED","HELD","FAILED","NEEDS_HUMAN","ROLLED_BACK","ROLLBACK_FAILED"]},"evidence":{"type":["string","null"]},"compensate":{"type":["string","object","array","null"]}}}}}},"ledger.schema.json":{"$id":"do-it-ledger/1","title":"ledger.json: latest verdict and evidence per DoD row","type":"object","required":["schema","run_id","rows"],"properties":{"schema":{"const":"do-it-ledger/1"},"run_id":{"type":"string","minLength":1},"rows":{"type":"array","items":{"type":"object","required":["row","verdict","evidence","evidence_sha256","real","recorded_at","updated_at"],"properties":{"row":{"type":"string","minLength":1},"verdict":{"enum":["VERIFIED","IMPLEMENTED-NOT-VERIFIED","BLOCKED"]},"evidence":{"type":["string","null"]},"evidence_path":{"type":["string","null"]},"evidence_sha256":{"type":["string","null"]},"real":{"type":"boolean"},"reason":{"type":["string","null"]},"recorded_at":{"type":"string","minLength":1},"updated_at":{"type":"string","minLength":1}}}}}},"owner-pack.schema.json":{"$id":"do-it-owner-pack/1","title":"owner-pack.json: the single set of questions for the human","type":"object","required":["pack_id","run_id","questions","created_at"],"properties":{"pack_id":{"type":["string","null"]},"run_id":{"type":"string","minLength":1},"created_at":{"type":"string","minLength":1},"questions":{"type":"array","items":{"type":"object","required":["n","kind","text","options","recommendation","default","reversible"],"properties":{"n":{"type":"integer","minimum":1},"kind":{"type":"string","minLength":1},"text":{"type":"string","minLength":1},"options":{"type":"array","items":{"type":"string"}},"recommendation":{"type":["string","null"]},"default":{"type":["string","null"]},"reversible":{"type":"boolean"},"source":{"type":"string","minLength":1},"status":{"enum":["withdrawn"]},"withdrawn_at":{"type":"string"},"withdrawn_reason":{"type":"string"}},"additionalProperties":false}}},"additionalProperties":false},"readiness.schema.json":{"$id":"do-it-readiness/1","title":"plan/READINESS.json: the verdict that lets a build start (G-8)","type":"object","required":["decisions","preflight"],"properties":{"decisions":{"type":["array","object"]},"preflight":{"type":"object","required":["passed"],"properties":{"passed":{"type":"boolean"}}},"credentials":{"type":"array","items":{"type":"string","minLength":1}},"owner_dependent_slices":{"type":"integer","minimum":0},"review_checkpoints":{"type":"object","required":["schema","count","checkpoints"],"properties":{"schema":{"const":"review-checkpoints/1"},"count":{"type":"integer","minimum":0},"level":{"enum":["none","light","standard","heightened","full"]},"checkpoints":{"type":"array","items":{"type":"object","required":["id","kind","evidence"],"properties":{"id":{"type":"string","pattern":"^CP-\\d{2}$"},"kind":{"enum":["phase","wave","adversarial","pre-merge","pre-release"]},"evidence":{"type":"string","minLength":1},"at":{"type":"string"},"review":{"type":"string"},"blocks":{"type":"string"},"gates":{"type":"array","minItems":1,"items":{"enum":["dependents","promotion","merge","release"]}},"covers":{"type":"array","items":{"type":"string","minLength":1}}}}}}},"slices":{"type":"array","items":{"type":"object","required":["id"],"properties":{"id":{"type":"string","minLength":1},"lane":{"type":["string","null"]},"tier":{"type":["string","null"]},"class":{"enum":["deterministic","gather","implementation","hard",null]},"depends_on":{"type":"array","items":{"type":"string"}},"wave":{"type":["string","null"]},"depends_on_owner_answer":{"type":"boolean"}}}}}},"settings.schema.json":{"$id":"do-it-settings/1","title":"do-it settings (workspace, global or merged)","type":"object","additionalProperties":false,"properties":{"version":{"const":1},"interaction":{"type":"object","additionalProperties":false,"properties":{"owner_pack":{"enum":["auto","native","html","markdown"]},"fallback":{"type":"array","items":{"enum":["native","html","markdown"]}}}},"host":{"type":"object","additionalProperties":false,"properties":{"driver":{"type":"string","minLength":1},"alias":{"type":["string","null"]}}},"isolation":{"type":"object","additionalProperties":false,"properties":{"driver":{"type":"string","minLength":1}}},"state":{"type":"object","additionalProperties":false,"properties":{"backend":{"type":"string","minLength":1},"engine":{"type":"object","additionalProperties":false,"properties":{"blobs":{"enum":["rows","r2","fs-mirror"]}}}}},"secrets":{"type":"object","additionalProperties":false,"properties":{"provider":{"enum":["file","env","aws-secrets-manager","onepassword","1password"]},"ref":{"type":"string"}}},"handoff":{"type":"object","additionalProperties":false,"properties":{"mode":{"enum":["auto","ask"]},"max_per_run":{"type":"integer","minimum":1}}},"review":{"type":"object","additionalProperties":false,"properties":{"max_rounds":{"type":"integer","minimum":1},"cost_cap_tokens":{"type":"integer","minimum":1}}},"tiers":{"type":"object","additionalProperties":false,"properties":{"T1":{"type":"string"},"T2":{"type":"string"},"T3":{"type":"string"}}},"ceilings":{"type":"object","additionalProperties":false,"properties":{"warn_tokens":{"type":"integer","minimum":0},"warn_pct":{"type":"number","minimum":0,"maximum":100},"block_tokens":{"type":"integer","minimum":0},"block_pct":{"type":"number","minimum":0,"maximum":100}}},"stop_gate":{"type":"object","additionalProperties":false,"properties":{"patience":{"type":"integer","minimum":0}}},"observability":{"type":"object","additionalProperties":false,"properties":{"provider":{"type":"string","minLength":1}}}}},"token-meter.schema.json":{"$id":"do-it-token-meter/1","title":"token-meter.jsonl row: the event fields plus usage fields","type":"object","required":["ts","run_id","slice_id","stage","persona","tier","model","host","event","parent_id","verdict","tokens_in","tokens_out","cache_read","cache_write","estimated","source"],"properties":{"ts":{"type":"string","minLength":1},"run_id":{"type":"string","minLength":1},"slice_id":{"type":["string","null"]},"stage":{"type":["string","null"]},"persona":{"type":["string","null"]},"tier":{"type":["string","null"]},"model":{"type":["string","null"]},"host":{"type":["string","null"]},"event":{"type":"string","minLength":1},"parent_id":{"type":["string","null"]},"verdict":{"type":["string","null"]},"tokens_in":{"type":["integer","null"],"minimum":0},"tokens_out":{"type":["integer","null"],"minimum":0},"cache_read":{"type":["integer","null"],"minimum":0},"cache_write":{"type":["integer","null"],"minimum":0},"estimated":{"type":"boolean"},"source":{"enum":["provider","estimate","unknown"]},"extra":{"type":["object","null"]}},"additionalProperties":false}};
 
 // ---- answer.mjs ----
 function answersPath(ctx, runId) { return path.join(runDir(ctx, runId), 'answers.json'); }
@@ -54,13 +54,19 @@ function cmdAnswer(ctx, args) {
   const runId = selectRunId(ctx, f);
   const state = loadState(ctx, runId);
   const pack = loadPackChecked(ctx, runId);
-  if (!pack.questions.length) return { outcome: 'NO_QUESTIONS', exit: 0, run_id: runId };
+  if (!pack.questions.some((q) => q.status !== 'withdrawn')) return { outcome: 'NO_QUESTIONS', exit: 0, run_id: runId };
   if (hasReply || f.finalize) return answerApply(ctx, runId, state, pack, f, hasReply);
   return answerRender(ctx, runId, state, pack, f);
 }
 
-function answerApply(ctx, runId, state, pack, f, hasReply) {
-  const packId = packGuard(ctx, runId, pack);
+// Withdrawn questions stay in owner-pack.json (and in its id) but are never asked or counted.
+function activePack(pack) {
+  return { ...pack, questions: pack.questions.filter((q) => q.status !== 'withdrawn') };
+}
+
+function answerApply(ctx, runId, state, fullPack, f, hasReply) {
+  const packId = packGuard(ctx, runId, fullPack);
+  const pack = activePack(fullPack);
   const byN = new Map(pack.questions.map((q) => [q.n, q]));
   const existing = readAnswers(ctx, runId).filter((a) => byN.has(a.n));
   const have = new Map(existing.map((a) => [a.n, a]));
@@ -143,7 +149,8 @@ function renderTo(ctx, runId, mode, file, content) {
   return file;
 }
 
-function answerRender(ctx, runId, state, pack, f) {
+function answerRender(ctx, runId, state, fullPack, f) {
+  const pack = activePack(fullPack);
   const settings = loadSettings(ctx, []).values;
   const nativeMax = f['native-max'] === undefined ? 4 : Number(f['native-max']);
   if (!Number.isInteger(nativeMax) || nativeMax < 0) throw fail('USAGE', 1, { message: '--native-max must be a non-negative integer' });
@@ -154,7 +161,7 @@ function answerRender(ctx, runId, state, pack, f) {
   if (requested === 'auto') chain = fallback.slice();
   else chain = [requested, ...fallback.filter((m) => m !== requested && m !== 'native')];
   if (!chain.includes('markdown')) chain.push('markdown');
-  const packId = packIdOf(pack.questions);
+  const packId = packIdOf(fullPack.questions);
   const dir = runDir(ctx, runId);
   for (const mode of chain) {
     if (mode === 'native') {
@@ -238,7 +245,7 @@ function gateCeiling(ctx, args) {
 
 // ---- cli.mjs ----
 const BOOL_FLAGS = new Set(['json', 'migrate', 'install', 'secrets', 'append', 'force', 'finalize', 'help', 'version', 'verbose', 'dry-run']);
-const COMMANDS = ['init', 'start', 'next', 'record', 'gate', 'answer', 'handoff', 'resume', 'park', 'status', 'meter', 'doctor'];
+const COMMANDS = ['init', 'start', 'next', 'record', 'gate', 'answer', 'handoff', 'resume', 'park', 'pack', 'status', 'meter', 'doctor'];
 
 function parseArgs(argv) {
   const out = { positionals: [], flags: {}, sets: [] };
@@ -296,6 +303,7 @@ function dispatch(ctx, args) {
     case 'handoff': return cmdHandoff(ctx, args);
     case 'resume': return cmdResume(ctx, args);
     case 'park': return cmdPark(ctx, args);
+    case 'pack': return cmdPack(ctx, args);
     default:
       throw fail('USAGE', 1, { message: 'unknown command', commands: COMMANDS });
   }
@@ -349,7 +357,7 @@ function cmdStart(ctx, args) {
     request: f.request,
     size,
     host: typeof f.host === 'string' ? f.host : settings.values.host.driver,
-    owner: { session_id: typeof f.session === 'string' && f.session ? f.session : (ctx.env.DO_IT_SESSION_ID || null), cwd: ctx.cwd },
+    owner: { session_id: resolveSessionId(ctx, f), cwd: ctx.cwd },
   });
   const routed = state.preset ? null : route(f.request);
   if (routed && routed.preset) {
@@ -385,6 +393,7 @@ function cmdStatus(ctx, args) {
     run_verdict: state.run_verdict === undefined ? null : state.run_verdict,
     board: renderBoard(readFinishLine(ctx)),
     stale_tmp_removed: removed,
+    unreadable_runs: unreadableRuns(ctx),
   };
 }
 
@@ -652,14 +661,24 @@ function writeFinishLine(ctx, fl) {
   atomicWriteJson(finishLinePath(ctx), fl);
 }
 
-function finishLineUpsert(fl, id, patch) {
+// A row carries the run that wrote it (`run_id`); a row written before that existed has none.
+function finishLineUpsert(fl, id, patch, runId) {
   let row = fl.rows.find((r) => r.id === id);
   if (!row) {
     row = { id, kind: 'dod', state: 'OPEN', evidence: null, owner_question: null, reason: null, archived_to: null };
+    if (runId) row.run_id = runId;
     fl.rows.push(row);
+  } else if (runId && !row.run_id) {
+    row.run_id = runId;
   }
   Object.assign(row, patch);
   return row;
+}
+
+// The rows one run answers for. A hook stop is strict: rows without a run_id (older boards, other
+// runs) never gate it. An explicit `gate stop` also counts unattributed rows, as 1.0.x did.
+function rowsForRun(fl, runId, includeUnattributed) {
+  return { rows: fl.rows.filter((r) => r.run_id === runId || (includeUnattributed && !r.run_id)) };
 }
 
 function nonEmpty(v) {
@@ -1427,7 +1446,7 @@ function nextWave(ctx, state, runId, fl) {
   if (!pipe || !pipe.steps.length) return { pipe: null };
   let seeded = false;
   for (const st of pipe.steps) {
-    if (!fl.rows.some((r) => r.id === st.id)) { finishLineUpsert(fl, st.id, { kind: 'wave' }); seeded = true; }
+    if (!fl.rows.some((r) => r.id === st.id)) { finishLineUpsert(fl, st.id, { kind: 'wave' }, runId); seeded = true; }
   }
   if (seeded) writeFinishLine(ctx, fl);
   const rowOf = (id) => fl.rows.find((r) => r.id === id);
@@ -1535,7 +1554,7 @@ function packAppend(ctx, runId, questions) {
   const added = [];
   for (const q of questions) {
     if (!q || typeof q.text !== 'string' || !q.text.trim()) continue;
-    if (pack.questions.some((x) => x.text === q.text)) continue;
+    if (pack.questions.some((x) => x.text === q.text && x.status !== 'withdrawn')) continue;
     const n = pack.questions.reduce((m, x) => Math.max(m, x.n), 0) + 1;
     const row = {
       n,
@@ -1546,6 +1565,7 @@ function packAppend(ctx, runId, questions) {
       default: q.default === undefined ? null : q.default,
       reversible: q.reversible === undefined ? true : !!q.reversible,
     };
+    if (typeof q.source === 'string' && q.source) row.source = q.source;
     pack.questions.push(row);
     added.push(row);
   }
@@ -1554,6 +1574,58 @@ function packAppend(ctx, runId, questions) {
     atomicWriteJson(file, pack);
   }
   return added;
+}
+
+// The stop gate wrote its questions with source 'stop-gate'. Before that field existed it wrote this
+// exact sentence; the text is its own template, so it identifies the origin.
+function isStopGateQuestion(q) {
+  return q.source === 'stop-gate' || (q.source === undefined && q.kind === 'default' && /^The run stopped with \d+ open row\(s\) after \d+ refusals: /.test(q.text));
+}
+
+const WITHDRAW_REASON = 'withdrawn: the stop gate raised this for a run it should not have gated';
+
+// pack withdraw --by stop-gate [--run <id>] [--reason <text>] (D10): unanswered stop-gate questions
+// become `withdrawn` and stay in the pack with the date and the reason. Answered questions and stage
+// questions are untouched. Without --run every run's pack is considered. A second call changes nothing.
+function cmdPack(ctx, args) {
+  const f = args.flags;
+  if (args.positionals[1] !== 'withdraw') throw fail('USAGE', 1, { message: 'pack needs a subcommand', subcommands: ['withdraw'] });
+  if (f.by !== 'stop-gate') throw fail('USAGE', 1, { message: 'pack withdraw requires --by stop-gate' });
+  let ids;
+  if (f.run) {
+    if (!fs.existsSync(packPath(ctx, f.run)) && !fs.existsSync(path.join(ctx.home, 'runs', f.run))) throw fail('RUN_NOT_FOUND', 1, { run_id: f.run });
+    ids = [f.run];
+  } else {
+    ids = listRunIds(ctx);
+  }
+  const reason = typeof f.reason === 'string' && f.reason ? f.reason : WITHDRAW_REASON;
+  const withdrawn = [];
+  const kept = [];
+  for (const id of ids) {
+    const file = packPath(ctx, id);
+    const pack = readJsonIfExists(file);
+    if (!pack || !Array.isArray(pack.questions)) continue;
+    const answersDoc = readJsonIfExists(path.join(ctx.home, 'runs', id, 'answers.json'));
+    const answered = new Set((answersDoc && Array.isArray(answersDoc.answers) ? answersDoc.answers : []).map((a) => a.n));
+    const now = ctx.now();
+    let changed = 0;
+    for (const q of pack.questions) {
+      if (!isStopGateQuestion(q) || q.status === 'withdrawn') continue;
+      if (answered.has(q.n)) { kept.push({ run_id: id, n: q.n }); continue; }
+      q.status = 'withdrawn';
+      q.withdrawn_at = now;
+      q.withdrawn_reason = reason;
+      withdrawn.push({ run_id: id, n: q.n });
+      changed += 1;
+    }
+    if (!changed) continue;
+    pack.pack_id = packIdOf(pack.questions);
+    atomicWriteJson(file, pack);
+    let st = {};
+    try { st = loadState(ctx, id); } catch { /* the event still records the withdrawal */ }
+    appendEvent(ctx, id, { event: 'pack_withdrawn', stage: st.stage || null, host: st.host || null, verdict: 'WITHDRAWN', detail: { by: 'stop-gate', count: changed } });
+  }
+  return { outcome: withdrawn.length ? 'PACK_WITHDRAWN' : 'PACK_NOOP', exit: 0, by: 'stop-gate', withdrawn, kept_answered: kept };
 }
 
 // ---- park.mjs ----
@@ -1772,7 +1844,7 @@ function seedCheckpoints(state, fl, data) {
   };
   for (const c of block.checkpoints) {
     const id = CHECKPOINT_ROW_PREFIX + c.id;
-    if (!fl.rows.some((r) => r.id === id)) finishLineUpsert(fl, id, { kind: 'package' });
+    if (!fl.rows.some((r) => r.id === id)) finishLineUpsert(fl, id, { kind: 'package' }, state.run_id);
   }
   return block.count;
 }
@@ -1817,7 +1889,7 @@ function gateBuild(ctx, args) {
     const from = state.status;
     state.status = 'BLOCKED';
     writeState(ctx, state);
-    finishLineUpsert(fl, CRED_ROW_ID, { kind: 'package', state: 'BLOCKED', reason, evidence: null });
+    finishLineUpsert(fl, CRED_ROW_ID, { kind: 'package', state: 'BLOCKED', reason, evidence: null }, runId);
     writeFinishLine(ctx, fl);
     appendEvent(ctx, runId, { event: 'build_blocked', stage: state.stage, host: state.host, verdict: 'CREDENTIAL_MISSING', detail: { from, credentials: missing.map((m) => m.name), provider } });
     return { outcome: 'BLOCKED', exit: 3, run_id: runId, status: 'BLOCKED', reason, missing: missing.map((m) => m.name), provider };
@@ -1829,11 +1901,11 @@ function gateBuild(ctx, args) {
   state.status = 'BUILDING';
   writeState(ctx, state);
   for (const s of state.slices) {
-    if (!fl.rows.some((r) => r.id === s.id)) finishLineUpsert(fl, s.id, { kind: 'package' });
+    if (!fl.rows.some((r) => r.id === s.id)) finishLineUpsert(fl, s.id, { kind: 'package' }, runId);
   }
   const credRow = fl.rows.find((r) => r.id === CRED_ROW_ID);
   if (credRow && credRow.state === 'BLOCKED') {
-    finishLineUpsert(fl, CRED_ROW_ID, { state: 'DONE', reason: null, evidence: path.relative(ctx.repo, readinessPath(ctx)) });
+    finishLineUpsert(fl, CRED_ROW_ID, { state: 'DONE', reason: null, evidence: path.relative(ctx.repo, readinessPath(ctx)) }, runId);
   }
   writeFinishLine(ctx, fl);
   appendEvent(ctx, runId, { event: 'build_approved', stage: state.stage, host: state.host, verdict: 'READINESS_OK', detail: { from, readiness_sha256: v.sha256, slices: state.slices.length, review_checkpoints: checkpoints } });
@@ -1933,7 +2005,7 @@ function applyJournal(ctx, j, allowFault) {
   if (!fs.existsSync(copy)) atomicWrite(copy, j.result_text);
   if (j.fl_ops.length) {
     const fl = readFinishLine(ctx);
-    for (const op of j.fl_ops) finishLineUpsert(fl, op.id, op.patch);
+    for (const op of j.fl_ops) finishLineUpsert(fl, op.id, op.patch, runId);
     autoClosePackages(fl);
     writeFinishLine(ctx, fl);
   }
@@ -2361,7 +2433,21 @@ function cmdResume(ctx, args) {
   const state = loadState(ctx, runId);
   const force = !!args.flags.force;
   const ceilingHeld = state.ceiling === 'BLOCKED';
-  if (state.status !== 'PARKED' && !ceilingHeld) throw fail('NOT_PARKED', 1, { run_id: runId, status: state.status });
+  // The session that resumes owns the run from now on (after /clear the id is new). The old id is kept.
+  const session = resolveSessionId(ctx, args.flags);
+  const rebind = () => {
+    const was = state.owner && typeof state.owner === 'object' ? state.owner : { session_id: null, cwd: ctx.cwd };
+    if (!session || was.session_id === session) return null;
+    state.owner = { ...was, session_id: session, history: [...(Array.isArray(was.history) ? was.history : []), { session_id: was.session_id || null, until: ctx.now(), reason: 'resume' }] };
+    return { from: was.session_id || null, to: session };
+  };
+  if (state.status !== 'PARKED' && !ceilingHeld) {
+    const moved = rebind();
+    if (!moved) throw fail('NOT_PARKED', 1, { run_id: runId, status: state.status });
+    writeState(ctx, state);
+    appendEvent(ctx, runId, { event: 'owner_rebound', stage: state.stage, host: state.host, verdict: 'REBOUND', detail: moved });
+    return { outcome: 'REBOUND', exit: 0, run_id: runId, status: state.status, owner: state.owner };
+  }
 
   if (state.status === 'PARKED') {
     const park = readJsonIfExists(parkPath(ctx, runId));
@@ -2386,12 +2472,14 @@ function cmdResume(ctx, args) {
   if (state.status === 'PARKED') state.status = 'BUILDING';
   if (ceilingHeld) state.ceiling = 'OK';
   state.park = null;
+  const rebound = rebind();
   writeState(ctx, state);
+  if (rebound) appendEvent(ctx, runId, { event: 'owner_rebound', stage: state.stage, host: state.host, verdict: 'REBOUND', detail: rebound });
   const wake = consumeWake(ctx, runId);
   appendEvent(ctx, runId, { event: 'run_resumed', stage: state.stage, host: state.host, verdict: 'RESUMED', detail: { from, requeued, reopened, warnings: changed.length, forced: force, ceiling_cleared: ceilingHeld } });
   return {
     outcome: 'RESUMED', exit: 0, run_id: runId, status: state.status, requeued, reopened, warnings: changed.length,
-    changed: changed.map((c) => c.row), wake: wake ? wake.status : null, ceiling: state.ceiling || null,
+    changed: changed.map((c) => c.row), wake: wake ? wake.status : null, ceiling: state.ceiling || null, owner: state.owner || null,
   };
 }
 
@@ -2597,6 +2685,20 @@ function redactFlushEvents(ctx, result) {
     if (!runId) return;
     for (const name of names) appendEvent(ctx, runId, { event: 'secret_redacted', verdict: 'REDACTED', detail: { name } });
   } catch { /* redaction must never fail a command */ }
+}
+
+// ---- session.mjs ----
+// Which session is calling? Core names no host (R3): the host layer says which environment
+// variables carry its session id by exporting DO_IT_SESSION_ENV (comma-separated names).
+// Order: --session, then DO_IT_SESSION_ID, then the first named variable that is set.
+function resolveSessionId(ctx, flags) {
+  if (flags && typeof flags.session === 'string' && flags.session) return flags.session;
+  const env = ctx.env || {};
+  if (env.DO_IT_SESSION_ID) return env.DO_IT_SESSION_ID;
+  for (const name of String(env.DO_IT_SESSION_ENV || '').split(',').map((s) => s.trim()).filter(Boolean)) {
+    if (env[name]) return env[name];
+  }
+  return null;
 }
 
 // ---- settings.mjs ----
@@ -2870,32 +2972,55 @@ function selectRunId(ctx, flags) {
   return best.id;
 }
 
-// Which run does this session (or this cwd) own? Ownership is recorded once, at `start`:
-// the session id when the host gave one, always the cwd. A run with no owner field (state
-// written before this existed) belongs to nobody in particular and stays gated for everyone.
-// Returns { run: id|null, owned: bool } for the newest owned run, else the newest unowned
-// one, else null.
+// Statuses that never gate a stop (CONTRACT 3.1): the run is waiting on a human, parked, or over.
+// Every other status gates.
+const NON_GATING_STATUSES = ['PARKED', 'NEEDS_HUMAN', 'BLOCKED', 'AWAIT_RATIFY', 'DONE', 'ESCALATED', 'FAILED'];
+
+function cwdInside(ownerCwd, cwd) {
+  const rel = path.relative(realpathSafe(ownerCwd), realpathSafe(cwd));
+  return rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel));
+}
+
+// Which run does the hook's session own? Ownership is recorded once, at `start`, in
+// owner.session_id. A hook that names a session matches on that id only. The cwd is a fallback
+// only for a host that gave no session and a run that has none (a run whose session is null).
+// A run with no owner object (state written before ownership existed) is never owned.
+// Returns { run, owned, status, legacy, unreadable }: the newest owned run that still gates (else the
+// newest owned run), the count of legacy runs, and the ids whose state.json cannot be parsed.
 function selectScopedRunId(ctx, scope) {
   const owned = [];
-  const legacy = [];
+  const unreadable = [];
+  let legacy = 0;
   for (const id of listRunIds(ctx)) {
-    let st = {};
-    try { st = JSON.parse(fs.readFileSync(path.join(runDir(ctx, id), 'state.json'), 'utf8')); } catch { /* tampered: gated by its own load */ }
-    const o = st.owner;
-    const row = { id, created: st.created_at || '' };
-    if (!o || typeof o !== 'object') { legacy.push(row); continue; }
+    let st;
+    try { st = JSON.parse(fs.readFileSync(path.join(runDir(ctx, id), 'state.json'), 'utf8')); } catch { unreadable.push(id); continue; }
+    const o = st && st.owner;
+    if (!o || typeof o !== 'object') { legacy += 1; continue; }
     let mine = false;
-    if (o.session_id && scope.session) mine = o.session_id === scope.session;
-    else if (o.cwd && scope.cwd) {
-      const rel = path.relative(realpathSafe(o.cwd), realpathSafe(scope.cwd));
-      mine = rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel));
-    }
-    if (mine) owned.push(row);
+    if (scope.session) mine = !!o.session_id && o.session_id === scope.session;
+    else if (!o.session_id && o.cwd && scope.cwd) mine = cwdInside(o.cwd, scope.cwd);
+    if (mine) owned.push({ id, created: st.created_at || '', status: st.status });
   }
   const newest = (rows) => rows.sort((a, b) => (a.created === b.created ? (a.id < b.id ? 1 : -1) : (a.created < b.created ? 1 : -1)))[0];
-  if (owned.length) return { run: newest(owned).id, owned: true };
-  if (legacy.length) return { run: newest(legacy).id, owned: false };
-  return { run: null, owned: false };
+  const gating = owned.filter((r) => !NON_GATING_STATUSES.includes(r.status));
+  const pick = gating.length ? newest(gating) : (owned.length ? newest(owned) : null);
+  return { run: pick ? pick.id : null, owned: !!pick, status: pick ? pick.status : null, legacy, unreadable };
+}
+
+// Runs whose state.json fails the same checks loadState makes, reported without side effects.
+function unreadableRuns(ctx) {
+  const bad = [];
+  for (const id of listRunIds(ctx)) {
+    const dir = runDir(ctx, id);
+    try {
+      const bytes = fs.readFileSync(path.join(dir, 'state.json'));
+      const sidecar = fs.readFileSync(path.join(dir, '.state.sha256'), 'utf8').trim();
+      if (sidecar !== sha256Bytes(bytes)) throw new Error('digest');
+      const st = JSON.parse(bytes.toString('utf8'));
+      if (validateSchema(loadSchemaFile('do-it-state.1.schema.json'), st).length) throw new Error('schema');
+    } catch { bad.push(id); }
+  }
+  return bad;
 }
 
 // Raw read for callers that only need to know whether a run is in flight.
@@ -2940,26 +3065,55 @@ function advanceRunStatus(ctx, state, to) {
 }
 
 // ---- stopgate.mjs ----
-// G-9: refuse to stop with open rows, with the board, `patience` times without
-// progress; the next call parks the run and asks the owner.
+function allowed(extra) {
+  return { outcome: 'STOP_ALLOWED', exit: 0, ...extra };
+}
+
+function logQuiet(ctx, runId, row) {
+  try { appendEvent(ctx, runId, row); } catch { /* the hook still fails open */ }
+}
+
+// G-1 (1.1): a hook stop is gated only by an active run owned by the hook's session. Everyone else is
+// allowed, and the answer says whether the run was theirs (`owned`) and why they may stop (`reason`).
+// An explicit `gate stop` (no session and cwd, or --run) gates the run it names, as before.
+// A gated run refuses up to `patience` times without progress; the next call parks that run only.
 function gateStop(ctx, args) {
   const f = args.flags;
-  const scope = { session: typeof f.session === 'string' ? f.session : null, cwd: typeof f.cwd === 'string' ? f.cwd : null };
+  const scope = { session: typeof f.session === 'string' && f.session ? f.session : null, cwd: typeof f.cwd === 'string' ? f.cwd : null };
+  const hook = !f.run && !!(scope.session || scope.cwd);
   let runId;
-  if (f.run || (!scope.session && !scope.cwd)) {
+  const owned = true; // an explicit stop names its run; a hook reaches here only for a run it owns
+  if (!hook) {
     runId = selectRunId(ctx, f);
   } else {
-    // A hook names its session and cwd: only the run they own is gated.
     const scoped = selectScopedRunId(ctx, scope);
-    if (!scoped.run) return { outcome: 'STOP_ALLOWED', exit: 0, owned: false, reason: 'no run is owned by this session or cwd' };
+    if (!scoped.run) {
+      if (scoped.unreadable.length) {
+        for (const id of scoped.unreadable) logQuiet(ctx, id, { event: 'stop_gate_state_unreadable', stage: null, verdict: 'STATE_ERROR', detail: { fail_open: true } });
+        return allowed({ owned: false, reason: 'state unreadable', unreadable: scoped.unreadable });
+      }
+      return allowed({ owned: false, reason: scoped.legacy ? 'legacy run has no owner' : 'no run is owned by this session or cwd' });
+    }
     runId = scoped.run;
   }
-  const state = loadState(ctx, runId);
-  const fl = readFinishLine(ctx);
+  let state;
+  try {
+    state = loadState(ctx, runId);
+  } catch (e) {
+    if (hook && e instanceof CliError && ['STATE_TAMPERED', 'STATE_INVALID'].includes(e.outcome)) {
+      logQuiet(ctx, runId, { event: 'stop_gate_state_unreadable', stage: null, verdict: 'STATE_ERROR', detail: { fail_open: true, cause: e.outcome } });
+      return allowed({ owned: true, run_id: runId, reason: 'state unreadable', state_error: e.outcome });
+    }
+    throw e;
+  }
+  if (NON_GATING_STATUSES.includes(state.status)) {
+    return allowed({ owned, run_id: runId, status: state.status, reason: 'run is ' + state.status + ', it does not gate', stop_refusals: state.stop_refusals });
+  }
+  const fl = rowsForRun(readFinishLine(ctx), runId, !hook);
   const open = openRows(fl);
   const board = renderBoard(fl);
   if (!open.length) {
-    return { outcome: 'STOP_ALLOWED', exit: 0, run_id: runId, stop_refusals: state.stop_refusals, board };
+    return allowed({ owned, run_id: runId, reason: 'no open rows for this run', stop_refusals: state.stop_refusals, board });
   }
   const patience = loadSettings(ctx, []).values.stop_gate.patience;
   const sig = rowsSignature(fl);
@@ -2969,6 +3123,7 @@ function gateStop(ctx, args) {
     const ids = open.map((r) => r.id);
     packAppend(ctx, runId, [{
       kind: 'default',
+      source: 'stop-gate',
       text: 'The run stopped with ' + ids.length + ' open row(s) after ' + patience + ' refusals: ' + ids.join(', ') + '. Resume the run or close it with the open rows as residuals?',
       options: ['resume run', 'close with residuals'],
       recommendation: 'resume run',
@@ -2981,13 +3136,13 @@ function gateStop(ctx, args) {
     state.status = 'PARKED';
     writeState(ctx, state);
     appendEvent(ctx, runId, { event: 'stop_parked', stage: state.stage, host: state.host, verdict: 'PARKED', detail: { from, open: ids } });
-    return { outcome: 'PARKED', exit: 2, run_id: runId, status: 'PARKED', open: ids, board };
+    return { outcome: 'PARKED', exit: 2, owned, run_id: runId, status: 'PARKED', open: ids, board };
   }
   state.stop_refusals += 1;
   state.gates.stop_gate = { sig };
   writeState(ctx, state);
   appendEvent(ctx, runId, { event: 'stop_refused', stage: state.stage, host: state.host, verdict: 'STOP_REFUSED', detail: { refusals: state.stop_refusals, open: open.map((r) => r.id) } });
-  throw fail('STOP_REFUSED', 1, { run_id: runId, stop_refusals: state.stop_refusals, patience, open: open.map((r) => r.id), board });
+  throw fail('STOP_REFUSED', 1, { owned, run_id: runId, reason: 'finish-line rows are still open', stop_refusals: state.stop_refusals, patience, open: open.map((r) => r.id), board });
 }
 
 // ---- verdict-file.mjs ----
@@ -3078,7 +3233,7 @@ function verifyEvidence(ctx, runId) {
     writeLedger(ctx, ledger);
     const fl = readFinishLine(ctx);
     for (const c of changed) {
-      if (fl.rows.some((r) => r.id === c.row)) finishLineUpsert(fl, c.row, { state: 'OPEN', evidence: null, reason: 'evidence_changed' });
+      if (fl.rows.some((r) => r.id === c.row)) finishLineUpsert(fl, c.row, { state: 'OPEN', evidence: null, reason: 'evidence_changed' }, runId);
       appendEvent(ctx, runId, { event: 'evidence_changed', verdict: 'IMPLEMENTED-NOT-VERIFIED', detail: { row: c.row, reason: c.reason } });
     }
     writeFinishLine(ctx, fl);
