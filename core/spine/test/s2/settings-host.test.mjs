@@ -83,14 +83,22 @@ test('T-E1-04 existing state.<backend>.blobs files stay valid; the engine defaul
   assert.equal(entry(b.out, 'state.engine.blobs').value, 'fs-mirror');
 });
 
-test('T-E1-04 one object, keyed by the selected backend', () => {
+test('N1 a dormant host object is valid whatever the active backend; an unknown host is refused naming it', () => {
   const env = { DO_IT_HOSTS_DIR: fixtureHosts() };
-  const mismatch = withSettings({ state: { backend: 'local-fs', [FX]: { blobs: 'rows' } } });
-  const a = unit(mismatch, ['doctor'], env);
-  assert.equal(a.code, 1);
-  assert.ok(a.out.errors.some((x) => x.pointer === '/state/' + FX && /state\.backend/.test(x.message)));
-  const two = withSettings({ state: { [FX]: { blobs: 'rows' }, other: {} } });
-  assert.ok(unit(two, ['doctor'], env).out.errors.some((x) => x.pointer === '/state' && /one object/.test(x.message)));
+  // the exact 1.0.5 shape: backend local plus a dormant state.<host> block
+  const dormant = withSettings({ state: { backend: 'local', [FX]: { blobs: 'rows' } } });
+  const a = unit(dormant, ['doctor'], env);
+  assert.equal(a.code, 0, a.stdout);
+  assert.equal(entry(a.out, 'state.backend').value, 'local');
+  assert.equal(entry(a.out, 'state.' + FX + '.blobs').value, 'rows');
+  // a dormant block is still validated by the host's own schema
+  const bad = unit(withSettings({ state: { backend: 'local', [FX]: { blobs: 'bogus' } } }), ['doctor'], env);
+  assert.equal(bad.code, 1);
+  assert.ok(bad.out.errors.some((x) => x.pointer === '/state/' + FX + '/blobs'));
+  // an unknown host is refused and named
+  const unk = unit(withSettings({ state: { backend: 'local', nohost: { x: 1 } } }), ['doctor'], env);
+  assert.equal(unk.code, 1);
+  assert.ok(unk.out.errors.some((x) => x.pointer === '/state/nohost' && x.message.includes('"nohost"')));
   const notObject = withSettings({ state: { [FX]: 'r2' } });
   assert.equal(unit(notObject, ['doctor'], env).code, 1);
 });
