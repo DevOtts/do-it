@@ -1,4 +1,5 @@
-import { appendEvent } from './events.mjs';
+import fs from 'node:fs';
+import { appendEvent, eventsPath } from './events.mjs';
 import { CliError, fail } from './errors.mjs';
 import { openRows, readFinishLine, renderBoard, rowsForRun, rowsSignature } from './finish-line.mjs';
 import { packAppend } from './pack.mjs';
@@ -11,6 +12,20 @@ function allowed(extra) {
 
 function logQuiet(ctx, runId, row) {
   try { appendEvent(ctx, runId, row); } catch { /* the hook still fails open */ }
+}
+
+// An unreadable run is logged once, not on every stop of every session: skip when the run's last event is
+// already this one (a run we do not own must not grow an events file just because we looked at it).
+function lastEventIs(ctx, runId, name) {
+  try {
+    const lines = fs.readFileSync(eventsPath(ctx, runId), 'utf8').split('\n').filter(Boolean);
+    return JSON.parse(lines[lines.length - 1]).event === name;
+  } catch { return false; }
+}
+
+function logUnreadableOnce(ctx, runId, detail) {
+  if (lastEventIs(ctx, runId, 'stop_gate_state_unreadable')) return;
+  logQuiet(ctx, runId, { event: 'stop_gate_state_unreadable', stage: null, verdict: 'STATE_ERROR', detail });
 }
 
 // G-1 (1.1): a hook stop is gated only by an active run owned by the hook's session. Everyone else is
@@ -29,7 +44,7 @@ export function gateStop(ctx, args) {
     const scoped = selectScopedRunId(ctx, scope);
     if (!scoped.run) {
       if (scoped.unreadable.length) {
-        for (const id of scoped.unreadable) logQuiet(ctx, id, { event: 'stop_gate_state_unreadable', stage: null, verdict: 'STATE_ERROR', detail: { fail_open: true } });
+        for (const id of scoped.unreadable) logUnreadableOnce(ctx, id, { fail_open: true });
         return allowed({ owned: false, reason: 'state unreadable', unreadable: scoped.unreadable });
       }
       return allowed({ owned: false, reason: scoped.legacy ? 'legacy run has no owner' : 'no run is owned by this session or cwd' });
@@ -41,7 +56,7 @@ export function gateStop(ctx, args) {
     state = loadState(ctx, runId);
   } catch (e) {
     if (hook && e instanceof CliError && ['STATE_TAMPERED', 'STATE_INVALID'].includes(e.outcome)) {
-      logQuiet(ctx, runId, { event: 'stop_gate_state_unreadable', stage: null, verdict: 'STATE_ERROR', detail: { fail_open: true, cause: e.outcome } });
+      logUnreadableOnce(ctx, runId, { fail_open: true, cause: e.outcome });
       return allowed({ owned: true, run_id: runId, reason: 'state unreadable', state_error: e.outcome });
     }
     throw e;

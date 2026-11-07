@@ -224,6 +224,25 @@ test('T-S1-08 a corrupt state.json fails open with an event, and status reports 
   assert.equal(real(t, ['gate', 'stop', '--run', tid]).out.outcome, 'STATE_TAMPERED');
 });
 
+test('T-S1-08 an unreadable run owned by someone else is logged once, not on every stop (CP-01 defect 9)', () => {
+  const repo = mkRepo();
+  const bad = start(repo, 'sess-A');
+  fs.writeFileSync(path.join(runDirOf(repo, bad), 'state.json'), '{ not json');
+  const eventsFile = path.join(runDirOf(repo, bad), 'events.jsonl');
+  const count = () => (fs.existsSync(eventsFile) ? readJsonl(eventsFile) : []).filter((e) => e.event === 'stop_gate_state_unreadable').length;
+  const before = count();
+  for (let i = 0; i < 5; i++) {
+    const r = hookStop(repo, 'sess-B');
+    assert.equal(r.out.outcome, 'STOP_ALLOWED', r.stdout);
+    assert.equal(r.out.owned, false);
+    assert.equal(r.out.reason, 'state unreadable');
+  }
+  assert.equal(count() - before, 1, 'one event for five stops');
+  // the owner's own stop on the same run does not add another while it is still the last event
+  assert.equal(hookStop(repo, 'sess-A').out.outcome, 'STOP_ALLOWED');
+  assert.equal(count() - before, 1);
+});
+
 test('T-S1-10 a non-owner hits the hook 5 times: no park, no pack question, the owner run is byte-identical', () => {
   const repo = mkRepo();
   const a = start(repo, 'sess-A');
