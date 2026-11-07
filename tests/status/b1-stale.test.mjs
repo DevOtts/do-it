@@ -3,12 +3,16 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-const WRITER = process.env.BUILD_IT_STATUS_WRITE
-  || '/Users/macbook/Workspace/Devotts/build-it/plugins/build-it/scripts/status/status-write.mjs';
+// The build-it status writer is another repo's script: its path comes from the environment (never hardcoded).
+// Without it the cases print IMPLEMENTED-NOT-VERIFIED and skip.
+const WRITER = process.env.BUILD_IT_STATUS_WRITE || process.env.DOIT_STATUS_WRITE || '';
+const SKIP = WRITER && existsSync(WRITER) ? false
+  : 'IMPLEMENTED-NOT-VERIFIED: set BUILD_IT_STATUS_WRITE or DOIT_STATUS_WRITE to build-it scripts/status/status-write.mjs';
+if (SKIP) console.log('T-B1-02 ' + SKIP);
 const HOUR = 60 * 60 * 1000;
 
 function git(cwd, args, env = {}) {
@@ -47,7 +51,7 @@ function view(file) {
   return JSON.parse(writer(['view', '--file', file, '--json']));
 }
 
-test('T-B1-02 a commit 25 h newer than updated_at is flagged stale', () => {
+test('T-B1-02 a commit 25 h newer than updated_at is flagged stale', { skip: SKIP }, () => {
   const { root, file } = makeBoard(25 * HOUR);
   try {
     const v = view(file);
@@ -57,7 +61,7 @@ test('T-B1-02 a commit 25 h newer than updated_at is flagged stale', () => {
   }
 });
 
-test('T-B1-02 control: a commit 3 h newer than updated_at is not stale', () => {
+test('T-B1-02 control: a commit 3 h newer than updated_at is not stale', { skip: SKIP }, () => {
   const { root, file } = makeBoard(3 * HOUR);
   try {
     const v = view(file);
