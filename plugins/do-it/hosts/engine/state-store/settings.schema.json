@@ -1,0 +1,9 @@
+{
+  "$id": "do-it-host-settings/engine-state",
+  "title": "settings.state.engine (validated by the engine host, not by core)",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "blobs": { "enum": ["rows", "r2", "fs-mirror"] }
+  }
+}

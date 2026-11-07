@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="planit-source" content="01-current-state-and-findings.md sha256=850596405ec4c75e091defe1a831be707924d6a817a1161b7442ab3d4ab3d950">
-<meta name="planit-embeds" content="01-current-state-and-findings.md sha256=850596405ec4c75e091defe1a831be707924d6a817a1161b7442ab3d4ab3d950">
+<meta name="planit-source" content="01-current-state-and-findings.md sha256=962669c165ddfe7bdc5cbe64a7a384aa70587931ded13dbb69e2d0a67dd2d9cd">
+<meta name="planit-embeds" content="01-current-state-and-findings.md sha256=962669c165ddfe7bdc5cbe64a7a384aa70587931ded13dbb69e2d0a67dd2d9cd">
 <meta name="planit-brand" content="default sha256=0206fd2d74525ffb33ff4fc010fe2ce6bb978ebe8a5674fc7ec0ed5d20eccb58">
 <meta name="planit-renderer" content="build-report.mjs/4.0.0 template sha256=ebfa958749844845bc46643049a546fdd9d68de69f36452b7babc089e0a9a410">
 <meta name="planit-kind" content="RESEARCH-REPORT">
@@ -172,7 +172,7 @@ pre.mermaid{background:var(--chip);border-radius:8px;padding:.8rem 1rem;font-fam
 <tr><td>L2, L5, L8</td><td>doc-it lessons</td><td>Lessons in `DevOtts/doc-it` `docs/LEARNINGS.md`</td></tr>
 <tr><td>CP-NN</td><td>Review checkpoint NN (READINESS.json)</td><td>Review checkpoint NN (READINESS.json)</td></tr>
 <tr><td>CLOSEOUT</td><td>`CLOSEOUT.md`, the per-piece disposition of a package with no `status.json`</td><td>`CLOSEOUT.md`, the per-piece disposition of a package with no `status.json`</td></tr>
-<tr><td>BCL</td><td>be-claudecode-like, the Engine program whose run board appeared in other sessions' stop gate</td><td>be-claudecode-like, the Engine program whose run board appeared in other sessions' stop gate</td></tr>
+<tr><td>BCL</td><td>P1, the Engine program whose run board appeared in other sessions' stop gate</td><td>P1, the Engine program whose run board appeared in other sessions' stop gate</td></tr>
 <tr><td>[REAL]</td><td>A case that needs a live target; never VERIFIED on a mock</td><td>A case that needs a live target; never VERIFIED on a mock</td></tr>
 <tr><td>G4</td><td>plan-it's plan-review gate, where the owner reviews every default</td><td>plan-it's plan-review gate, where the owner reviews every default</td></tr>
 <tr><td>T-S1-NN</td><td>Test case of epic S1</td><td>case NN in epic S1's Test Contract</td></tr>
@@ -204,7 +204,7 @@ pre.mermaid{background:var(--chip);border-radius:8px;padding:.8rem 1rem;font-fam
 <tr><td>T-A-NN</td><td>harness-status-tracking Card A case</td><td>case NN in `CARD-A-init-it.md` §9</td></tr>
 <tr><td>OQ-&lt;n&gt;</td><td>resumable-test-gates owner question</td><td>question n in that package's DECISIONS</td></tr>
 <tr><td>R&lt;n&gt;</td><td>resumable-test-gates default</td><td>default n in that package's DECISIONS</td></tr>
-<tr><td>E&lt;n&gt;</td><td>secrets-highway epic (Engine)</td><td>epic n of Engine's secrets-highway program, as named in its archive commit</td></tr>
+<tr><td>E&lt;n&gt;</td><td>a consumer program epic (Engine)</td><td>epic n of Engine's a consumer program program, as named in its archive commit</td></tr>
 <tr><td>T1 · T2 · T3</td><td>Gate tiers (resumable-test-gates)</td><td>T1 branch push, T2 train complete, T3 nightly/pre-release; not model tiers</td></tr>
 <tr><td>ST-NN</td><td>harness-status-tracking task</td><td>task NN on that program's board (ST-01…ST-08)</td></tr></table></div></details>
 <h2>Findings — do-it 1.1</h2>
@@ -226,7 +226,7 @@ do-it 1.0.5 records a run's owner as a session id plus a folder, and its stop ho
 - **Status is never read.** Of 2,034 parks in the pilot repo, 1,997 hit a run that was already PARKED (<abbr class="gl" title="Claim-ledger row">C5</abbr>, <abbr class="gl" title="Claim-ledger row">C31</abbr>).
 - **One repo-wide finish line** (472 rows) judges every run on every other run's rows (<abbr class="gl" title="Claim-ledger row">C7</abbr>).
 
-Pilot repo: 4 PARKED runs, 2 with no session id, 1 owned, 1 legacy (<abbr>C6</abbr>). 30 sessions hit the stop hook there, and 29 of them show three refused stops (<abbr class="gl" title="Claim-ledger row">C27</abbr>). In `grokbot-plan` that was seven refusals showing the repo-wide board (<abbr class="gl" title="Claim-ledger row">C8</abbr>).
+Pilot repo: 4 PARKED runs, 2 with no session id, 1 owned, 1 legacy (<abbr>C6</abbr>). 30 sessions hit the stop hook there, and 29 of them show three refused stops (<abbr class="gl" title="Claim-ledger row">C27</abbr>). In `P2-plan` that was seven refusals showing the repo-wide board (<abbr class="gl" title="Claim-ledger row">C8</abbr>).
 
 **What it costs you:** the owner pack is meant to be the one place for your decisions. In the pilot repo all 62 of its questions were written by the stop gate, not by any stage, and 2 of them have been answered (<abbr class="gl" title="Claim-ledger row">C28</abbr>). The duplicate guard exists (<abbr class="gl" title="Claim-ledger row">C35</abbr>); the questions differ only because the open-row list changed between parks.
 

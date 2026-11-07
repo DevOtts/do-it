@@ -1,0 +1,29 @@
+set SP [lindex $argv 0]
+set PL "$SP/plugin"
+set R "$SP/repo"
+set timeout 20
+log_file -noappend "$SP/tui.log"
+cd $R
+spawn claude --plugin-dir $PL --model haiku --dangerously-skip-permissions
+sleep 7
+send "\033\[B"
+sleep 1
+send "\r"
+sleep 7
+sleep 4
+send -- "Use the Bash tool to run exactly this one command and nothing else: node $PL/scripts/do-it.mjs start --request x --json > $R/start.out 2>&1; echo \$CLAUDE_CODE_SESSION_ID > $R/sid1.txt"
+sleep 1
+send "\r"
+sleep 45
+send -- "/clear"
+sleep 1
+send "\r"
+sleep 8
+send -- "Use the Bash tool to run exactly this one command and nothing else: echo \$CLAUDE_CODE_SESSION_ID > $R/sid2.txt; node $PL/scripts/do-it.mjs resume --json > $R/resume.out 2>&1"
+sleep 1
+send "\r"
+sleep 45
+send -- "/exit"
+sleep 1
+send "\r"
+sleep 4

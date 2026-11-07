@@ -1,7 +1,7 @@
 # live-w4: live local Engine attempt (2026-10-14)
 
-Target: Engine-Core `brain-api-core` run locally (`ts-node src/main.ts`, port 3001) on the local dev infra
-(`brain-scripts/dev-setup/docker-compose.dev.yml`: redis, rabbitmq, mongo). Local only; auth via the local
+Target: the pilot consumer repo a consumer service run locally (`ts-node src/main.ts`, port 3001) on the local dev infra
+(`<consumer-service>/dev-setup/docker-compose.dev.yml`: redis, rabbitmq, mongo). Local only; auth via the local
 service key (value never printed or copied). Stack stopped afterwards (api killed, 3 engine-* containers stopped).
 
 | Case | Verdict | Evidence |
@@ -27,4 +27,4 @@ service key (value never printed or copied). Stack stopped afterwards (api kille
 ## Side effects
 - Local dev Mongo (`brain` db) now holds squads `do-it-live-*` and their runs/proposals (test data, local only).
 - Docker Desktop was started and left running; `analysis-v2-dashboard-*` containers auto-restarted with it (not mine).
-- Engine-Core untouched (no files edited).
+- the pilot consumer repo untouched (no files edited).

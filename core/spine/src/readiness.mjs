@@ -141,7 +141,7 @@ export function seedCheckpoints(state, fl, data) {
   };
   for (const c of block.checkpoints) {
     const id = CHECKPOINT_ROW_PREFIX + c.id;
-    if (!fl.rows.some((r) => r.id === id)) finishLineUpsert(fl, id, { kind: 'package' });
+    if (!fl.rows.some((r) => r.id === id)) finishLineUpsert(fl, id, { kind: 'package' }, state.run_id);
   }
   return block.count;
 }
@@ -186,7 +186,7 @@ export function gateBuild(ctx, args) {
     const from = state.status;
     state.status = 'BLOCKED';
     writeState(ctx, state);
-    finishLineUpsert(fl, CRED_ROW_ID, { kind: 'package', state: 'BLOCKED', reason, evidence: null });
+    finishLineUpsert(fl, CRED_ROW_ID, { kind: 'package', state: 'BLOCKED', reason, evidence: null }, runId);
     writeFinishLine(ctx, fl);
     appendEvent(ctx, runId, { event: 'build_blocked', stage: state.stage, host: state.host, verdict: 'CREDENTIAL_MISSING', detail: { from, credentials: missing.map((m) => m.name), provider } });
     return { outcome: 'BLOCKED', exit: 3, run_id: runId, status: 'BLOCKED', reason, missing: missing.map((m) => m.name), provider };
@@ -198,11 +198,11 @@ export function gateBuild(ctx, args) {
   state.status = 'BUILDING';
   writeState(ctx, state);
   for (const s of state.slices) {
-    if (!fl.rows.some((r) => r.id === s.id)) finishLineUpsert(fl, s.id, { kind: 'package' });
+    if (!fl.rows.some((r) => r.id === s.id)) finishLineUpsert(fl, s.id, { kind: 'package' }, runId);
   }
   const credRow = fl.rows.find((r) => r.id === CRED_ROW_ID);
   if (credRow && credRow.state === 'BLOCKED') {
-    finishLineUpsert(fl, CRED_ROW_ID, { state: 'DONE', reason: null, evidence: path.relative(ctx.repo, readinessPath(ctx)) });
+    finishLineUpsert(fl, CRED_ROW_ID, { state: 'DONE', reason: null, evidence: path.relative(ctx.repo, readinessPath(ctx)) }, runId);
   }
   writeFinishLine(ctx, fl);
   appendEvent(ctx, runId, { event: 'build_approved', stage: state.stage, host: state.host, verdict: 'READINESS_OK', detail: { from, readiness_sha256: v.sha256, slices: state.slices.length, review_checkpoints: checkpoints } });

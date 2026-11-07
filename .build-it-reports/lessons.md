@@ -14,5 +14,5 @@
 - Rewriting JSON with JSON.stringify reflows arrays and adds churn; replace only the version string.
 - Pre-merge catalog checks must replay the baseline commits, not the live sibling checkouts; otherwise merging the PR turns the check red for the right reason. Keep the baseline commit as a named constant.
 - A catalog citation was written against an unpushed local branch (plan-it line 67), not the published line (63). Cite published `origin/main`.
-- Engine-HQ `brain-api-core` main was already red (Docker build and E2E) before the adapter PR; a red main is not a reason to merge code blindly. Hold, and report it.
+- the pilot org a consumer service main was already red (Docker build and E2E) before the adapter PR; a red main is not a reason to merge code blindly. Hold, and report it.
 - `git pull` / `git push` to DevOtts repos need `GH_TOKEN=$(gh auth token --user DevOtts)` in the same command; the default credential helper maps to another account.

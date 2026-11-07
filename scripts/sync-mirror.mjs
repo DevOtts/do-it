@@ -13,22 +13,37 @@ const root = resolve(val('--root') ?? join(dirname(fileURLToPath(import.meta.url
 const manifest = JSON.parse(readFileSync(resolve(val('--manifest') ?? join(root, 'scripts/mirror-manifest.json')), 'utf8'));
 const write = args.includes('--write');
 
-const walk = (dir, rel = '') => {
+const walk = (dir, rel = '', skip = []) => {
   const res = [];
   for (const e of readdirSync(join(dir, rel)).sort()) {
+    if (skip.includes(e)) continue;
     const r = rel ? `${rel}/${e}` : e;
-    if (statSync(join(dir, r)).isDirectory()) res.push(...walk(dir, r)); else res.push(r);
+    if (statSync(join(dir, r)).isDirectory()) res.push(...walk(dir, r, skip)); else res.push(r);
   }
   return res;
 };
 
+// A pair may carry one `*` path segment in src and dst (the same sub-folder name on both sides) and an
+// `exclude` list of file or folder names skipped at any depth. Expands to concrete { src, dst, kind, exclude } pairs.
+const expand = (p) => {
+  if (!p.src.includes('*')) return [p];
+  const [pre, post] = p.src.split('*');
+  const [dpre, dpost] = p.dst.split('*');
+  const parent = join(root, pre);
+  if (!existsSync(parent)) return [p];
+  return readdirSync(parent, { withFileTypes: true })
+    .filter((e) => e.isDirectory() && !e.name.startsWith('_') && existsSync(join(parent, e.name, post)))
+    .map((e) => ({ ...p, src: pre + e.name + post, dst: dpre + e.name + dpost }))
+    .sort((a, b) => a.src.localeCompare(b.src));
+};
+
 let missing = 0;
 let diff = 0;
-for (const p of manifest.pairs) {
+for (const p of manifest.pairs.flatMap(expand)) {
   const src = join(root, p.src);
   const dst = join(root, p.dst);
   if (!existsSync(src)) { console.log(`MISSING ${p.src} (source not shipped; pair ${p.src} -> ${p.dst})`); missing++; continue; }
-  const files = p.kind === 'dir' ? walk(src).map((f) => [join(src, f), join(dst, f), `${p.src}/${f}`]) : [[src, dst, p.src]];
+  const files = p.kind === 'dir' ? walk(src, '', p.exclude ?? []).map((f) => [join(src, f), join(dst, f), `${p.src}/${f}`]) : [[src, dst, p.src]];
   for (const [s, d, label] of files) {
     if (write) { mkdirSync(dirname(d), { recursive: true }); copyFileSync(s, d); continue; }
     if (!existsSync(d) || !readFileSync(s).equals(readFileSync(d))) {

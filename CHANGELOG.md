@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased (1.1.0)
+Host integrations stay isolated under `hosts/` (epic E1, ruling R3, decision D2). The coordinator sets the version.
+- The Engine state store moved out of core: `core/state-stores/engine.mjs`, `engine-drivers/*` and their tests now live in `hosts/engine/state-store/`, with their CLI commands (`driver`, `config`) and the conformance target. `core/state-stores/index.mjs` keeps `local-fs` and `git-branch` and loads any other backend from the `state_store` entry of `hosts/<name>/adapter.manifest.json`; a backend whose host folder is missing fails with `DRIVER_UNKNOWN` naming the host.
+- Settings: `state.backend` stays; `state.<backend>` is one object keyed by the backend name, validated by the host's own schema (`hosts/engine/state-store/settings.schema.json`). The `engine` default is gone from core; existing `state.engine.blobs` files stay valid. No new top-level settings key (G-8). `--set state.<backend>.<key>=value` reaches the host schema.
+- The G-12 scan gains the word `engine` and covers `core/` and `scripts/` (T-E1-01); deleting `hosts/engine/` leaves every core suite green (tests/hosts/isolation.test.mjs).
+- The host tables in the README and the generated `SKILL.md` are built from `hosts/*/adapter.manifest.json` (`level`, `server_side`, `status_label`) by `scripts/hosts-table.mjs`; `check-readme.mjs --hosts` fails when a host folder has no row or a host whose server side is declined is listed as Supported (G-4).
+- D2: Engine shows as "Experimental: server side declined (PR #727, 2026-10-29)" in the README table, the hero alt text, `SKILL.md` and `hosts/engine/README.md`. The adapter is kept; no redesign.
+- The Engine live case T-R4-05 moved from `tests/e2e/r4.test.mjs` to `hosts/engine/tests/`.
+
 ## 1.0.5
 Four frictions from the BCL r11 run (backlog note do-it-plugin-friction-from-bcl-r11).
 - Stop gate run scope: `start` records the owning session and cwd on the run; the Stop hook passes its session and cwd to `gate stop`, which gates only the run they own (and parks only that run). Runs written before this have no owner and stay gated for everyone.

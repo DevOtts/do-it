@@ -28,15 +28,10 @@
     },
     "state": {
       "type": "object",
-      "additionalProperties": false,
       "properties": {
-        "backend": { "type": "string", "minLength": 1 },
-        "engine": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": { "blobs": { "enum": ["rows", "r2", "fs-mirror"] } }
-        }
-      }
+        "backend": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": { "type": "object" }
     },
     "secrets": {
       "type": "object",

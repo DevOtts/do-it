@@ -17,7 +17,7 @@
       "check": [
         "sh",
         "-c",
-        "cd /Users/macbook/Workspace/Engine/Engine-Core/brain-api-core && gh pr view 727 --json state -q .state"
+        "cd <pilot-repo>/a consumer service && gh pr view 727 --json state -q .state"
       ]
     },
     {

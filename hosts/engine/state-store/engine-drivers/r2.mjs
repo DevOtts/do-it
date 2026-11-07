@@ -1,7 +1,7 @@
 // Blob driver `r2` (S3-compatible object store). UNVERIFIED in Engine (D14), so it is never a default
 // and fails closed: without a full config AND an injected transport it throws DRIVER_UNCONFIGURED.
 // This build ships no network client; production wiring injects `transport` {objPut, objGet}.
-import { StoreError, ERR } from '../interface.mjs';
+import { StoreError, ERR } from '../../../../core/state-stores/interface.mjs';
 
 export function createR2Driver({ config, transport } = {}) {
   const need = ['bucket', 'endpoint', 'token_ref'];

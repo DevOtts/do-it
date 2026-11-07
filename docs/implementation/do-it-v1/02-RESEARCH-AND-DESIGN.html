@@ -170,7 +170,7 @@ ol.dec{padding-left:20px}ol.dec li{margin:12px 0;max-width:74ch}
 </section>
 
 <section id="you">
-  <h2>How you work, last 30 days in Engine-Core</h2>
+  <h2>How you work, last 30 days in the pilot consumer repo</h2>
   <div class="grid">
     <div class="card"><div class="stat">112<small>ledger cards 09-14 to 10-14, six aliases</small></div></div>
     <div class="card"><div class="stat">~57<small>marked shipped; 26 concluded; 9 honest partials</small></div></div>
@@ -329,7 +329,7 @@ on_limit: park_and_wake        # persist, then schedule resume; never wait for a
   <p>Loop exits are recorded as one of four states: <code>CONVERGED</code>, <code>CONVERGED_WITH_MINORS</code> (backlog cards created), <code>STALLED</code> (owner decides) or <code>OVER_BUDGET</code> (parked).</p>
 
   <h3>4. One home for everything: <code>.do-it/</code></h3>
-  <p>Your Engine-Core root currently carries <code>.build-it-reports</code>, <code>.fable-it-reports</code>, <code>.plan-it</code>, <code>.review-it</code> and <code>.taskstate</code>, next to the host folders. In the do-it family every stage writes under one folder.</p>
+  <p>Your the pilot consumer repo root currently carries <code>.build-it-reports</code>, <code>.fable-it-reports</code>, <code>.plan-it</code>, <code>.review-it</code> and <code>.taskstate</code>, next to the host folders. In the do-it family every stage writes under one folder.</p>
 <pre>.do-it/
   config.json            driver, tier map, adapters, path overrides
   finish-line.json       every wave/package/DoD row and its terminal state
@@ -397,7 +397,7 @@ on_limit: park_and_wake        # persist, then schedule resume; never wait for a
     <tr><td>11</td><td>Tag every statechart transition as <code>code</code>, <code>persona</code>, <code>checkpoint</code> or <code>decision</code></td><td>Lets a do-it squad file compile to Engine's pipeline definition and back</td><td>M</td></tr>
     <tr><td>12</td><td>Put the cross-program asks and the cancel-honouring dependency into the owner pack with an owner and a date</td><td>They are the real critical path for wave 4</td><td>S</td></tr>
   </table></div>
-  <p class="callout warn"><b>I have not changed anything in Engine-Core.</b> Other sessions work in that repo, so these stay as proposals until you say which to apply. The review behind this section did not read the research bodies, the 146 KB contract, or the epics and PRDs, and did not find the statechart's loop-budget number.</p>
+  <p class="callout warn"><b>I have not changed anything in the pilot consumer repo.</b> Other sessions work in that repo, so these stay as proposals until you say which to apply. The review behind this section did not read the research bodies, the 146 KB contract, or the epics and PRDs, and did not find the statechart's loop-budget number.</p>
 
   <h3>What the Engine layer spec should contain</h3>
   <ol>
@@ -846,7 +846,7 @@ In the user's workspace (created by do-it, not part of the repo):
     <li><b>Owner pack delivery default.</b> <code>auto</code>: native prompt for 4 questions or fewer, otherwise HTML, markdown as last fallback, set in <code>settings.json</code>. <em>Recommend this.</em></li>
     <li><b>Handoff at the ceiling.</b> <code>auto</code> (fresh conductor, cap 5) or <code>ask</code>. <em>Recommend auto with the cap, once the headless start is tested with your aliases.</em></li>
     <li><b>parallel-lifecycle.</b> Stay a separate plugin behind an <code>isolation</code> driver. <em>Recommend yes.</em></li>
-    <li><b>Engine knowledge destination.</b> A new implementation folder in Engine-Core, or an addendum to <code>engine-dev-squad</code>. Draft is in <code>03-ENGINE-LAYER-SPEC.md</code> here until you choose.</li>
+    <li><b>Engine knowledge destination.</b> A new implementation folder in the pilot consumer repo, or an addendum to <code>engine-dev-squad</code>. Draft is in <code>03-ENGINE-LAYER-SPEC.md</code> here until you choose.</li>
     <li><b>Host adapters in scope (settled).</b> Claude Code, Codex, OpenCode and Engine, one folder each behind one interface (Hermes and OpenClaw removed at G1).</li>
     <li><b>Warm cloud box per card.</b> Engine decides after measuring Job start and clone time; do-it only requires cold-start resume. <em>Recommend no warm box in v1.</em></li>
     <li><b>Secrets providers in v1.</b> file and env in v1, AWS Secrets Manager and 1Password too if cheap. <em>Recommend all four behind one interface, since you named them.</em></li>

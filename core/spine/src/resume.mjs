@@ -3,6 +3,7 @@ import { appendEvent } from './events.mjs';
 import { readJsonIfExists } from './fs-atomic.mjs';
 import { handoffWritten } from './ceiling.mjs';
 import { parkPath } from './park.mjs';
+import { resolveSessionId } from './session.mjs';
 import { loadState, selectRunId, writeState } from './state.mjs';
 import { verifyEvidence } from './verify.mjs';
 import { consumeWake } from './wake.mjs';
@@ -15,7 +16,21 @@ export function cmdResume(ctx, args) {
   const state = loadState(ctx, runId);
   const force = !!args.flags.force;
   const ceilingHeld = state.ceiling === 'BLOCKED';
-  if (state.status !== 'PARKED' && !ceilingHeld) throw fail('NOT_PARKED', 1, { run_id: runId, status: state.status });
+  // The session that resumes owns the run from now on (after /clear the id is new). The old id is kept.
+  const session = resolveSessionId(ctx, args.flags);
+  const rebind = () => {
+    const was = state.owner && typeof state.owner === 'object' ? state.owner : { session_id: null, cwd: ctx.cwd };
+    if (!session || was.session_id === session) return null;
+    state.owner = { ...was, session_id: session, history: [...(Array.isArray(was.history) ? was.history : []), { session_id: was.session_id || null, until: ctx.now(), reason: 'resume' }] };
+    return { from: was.session_id || null, to: session };
+  };
+  if (state.status !== 'PARKED' && !ceilingHeld) {
+    const moved = rebind();
+    if (!moved) throw fail('NOT_PARKED', 1, { run_id: runId, status: state.status });
+    writeState(ctx, state);
+    appendEvent(ctx, runId, { event: 'owner_rebound', stage: state.stage, host: state.host, verdict: 'REBOUND', detail: moved });
+    return { outcome: 'REBOUND', exit: 0, run_id: runId, status: state.status, owner: state.owner };
+  }
 
   if (state.status === 'PARKED') {
     const park = readJsonIfExists(parkPath(ctx, runId));
@@ -40,11 +55,13 @@ export function cmdResume(ctx, args) {
   if (state.status === 'PARKED') state.status = 'BUILDING';
   if (ceilingHeld) state.ceiling = 'OK';
   state.park = null;
+  const rebound = rebind();
   writeState(ctx, state);
+  if (rebound) appendEvent(ctx, runId, { event: 'owner_rebound', stage: state.stage, host: state.host, verdict: 'REBOUND', detail: rebound });
   const wake = consumeWake(ctx, runId);
   appendEvent(ctx, runId, { event: 'run_resumed', stage: state.stage, host: state.host, verdict: 'RESUMED', detail: { from, requeued, reopened, warnings: changed.length, forced: force, ceiling_cleared: ceilingHeld } });
   return {
     outcome: 'RESUMED', exit: 0, run_id: runId, status: state.status, requeued, reopened, warnings: changed.length,
-    changed: changed.map((c) => c.row), wake: wake ? wake.status : null, ceiling: state.ceiling || null,
+    changed: changed.map((c) => c.row), wake: wake ? wake.status : null, ceiling: state.ceiling || null, owner: state.owner || null,
   };
 }

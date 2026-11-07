@@ -3,22 +3,12 @@
   "message": "Installing plugin \"do-it@devotts\"...✔ Successfully installed plugin: do-it@devotts (scope: user) (+ 5 dependencies: prompt-it, plan-it, build-it, review-it, conclude-it)",
   "plugin_dependency_resolution": {
     "resolved": true,
-    "claude_version": "2.1.302 (Claude Code)",
+    "claude_version": "2.1.318 (Claude Code)",
     "config_dir": "scratch (empty CLAUDE_CONFIG_DIR)"
   },
   "headless_alias_start": {
     "started_with": "anm",
     "tried": [
-      {
-        "alias": "8fai",
-        "outcome": "HANDOFF_FAILED",
-        "reason": "exit 1: Failed to authenticate: OAuth session expired and could not be refreshed"
-      },
-      {
-        "alias": "8ftools",
-        "outcome": "HANDOFF_FAILED",
-        "reason": "exit 1: Failed to authenticate: OAuth session expired and could not be refreshed"
-      },
       {
         "alias": "anm",
         "outcome": "ok"
@@ -29,6 +19,7 @@
     "fixture_vs_real_field_mismatch": [],
     "real_top_level_keys": [
       "api_error_status",
+      "credential_expires_at",
       "duration_api_ms",
       "duration_ms",
       "fast_mode_disabled_reason",

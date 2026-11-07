@@ -7,7 +7,7 @@
 | id | check | status | evidence | tool |
 |---|---|---|---|---|
 | config-reachability | `sh -c git -C /Users/macbook/Workspace/Devotts/do-it rev-parse --short origin/main && git -C /Users/macbook/Workspace/Devotts/do-it show origin/main:core/companions.json | grep -m1 '"version"'` | PRESENT | d38cedb |  |
-| live-registry | `sh -c cd /Users/macbook/Workspace/Engine/Engine-Core/brain-api-core && gh pr view 727 --json state -q .state` | PRESENT | CLOSED |  |
+| live-registry | `sh -c cd <pilot-repo>/a consumer service && gh pr view 727 --json state -q .state` | PRESENT | CLOSED |  |
 | deployed-vs-installed | `sh -c test -f /Users/macbook/Workspace/Devotts/init-it/plugins/init-it/scripts/init-it.mjs && ! git -C /Users/macbook/Workspace/Devotts/init-it rev-parse 2>/dev/null && echo 'init-it local, not a repo'` | PRESENT | init-it local, not a repo |  |
 | credential-validity | `gh auth status` | PRESENT | github.com |  |
 | dependency-actual-usage | `sh -c git -C /Users/macbook/Workspace/Devotts/build-it cat-file -e origin/main:plugins/build-it/scripts/status/status-write.mjs && echo present` | PRESENT | present |  |

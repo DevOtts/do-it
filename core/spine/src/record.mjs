@@ -108,7 +108,7 @@ export function applyJournal(ctx, j, allowFault) {
   if (!fs.existsSync(copy)) atomicWrite(copy, j.result_text);
   if (j.fl_ops.length) {
     const fl = readFinishLine(ctx);
-    for (const op of j.fl_ops) finishLineUpsert(fl, op.id, op.patch);
+    for (const op of j.fl_ops) finishLineUpsert(fl, op.id, op.patch, runId);
     autoClosePackages(fl);
     writeFinishLine(ctx, fl);
   }

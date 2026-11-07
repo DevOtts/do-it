@@ -15,7 +15,7 @@ do-it 1.0.5 records a run's owner as a session id plus a folder, and its stop ho
 - **Status is never read.** Of 2,034 parks in the pilot repo, 1,997 hit a run that was already PARKED (C5, C31).
 - **One repo-wide finish line** (472 rows) judges every run on every other run's rows (C7).
 
-Pilot repo: 4 PARKED runs, 2 with no session id, 1 owned, 1 legacy (C6). 30 sessions hit the stop hook there, and 29 of them show three refused stops (C27). In `grokbot-plan` that was seven refusals showing the repo-wide board (C8).
+Pilot repo: 4 PARKED runs, 2 with no session id, 1 owned, 1 legacy (C6). 30 sessions hit the stop hook there, and 29 of them show three refused stops (C27). In `P2-plan` that was seven refusals showing the repo-wide board (C8).
 
 **What it costs you:** the owner pack is meant to be the one place for your decisions. In the pilot repo all 62 of its questions were written by the stop gate, not by any stage, and 2 of them have been answered (C28). The duplicate guard exists (C35); the questions differ only because the open-row list changed between parks.
 

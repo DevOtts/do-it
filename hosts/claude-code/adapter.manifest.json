@@ -1,6 +1,9 @@
 {
   "host": "claude-code",
   "version": "1.0.5",
+  "display": "Claude Code",
+  "level": "native",
+  "note": "plugin, `dependencies`, hooks, native question tool",
   "calls": {
     "spawn": {
       "input": { "type": "object", "required": ["role", "tier", "brief"] },

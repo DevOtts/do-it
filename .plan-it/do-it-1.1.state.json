@@ -9,12 +9,12 @@
     "topology": "solo",
     "deliveryRoot": "docs/implementation/do-it-1.1/delivery",
     "anamnesis": {
-      "access": "read-only: local repos under /Users/macbook/Workspace/Devotts and Engine-Core; gh read for DevOtts PRs; no credentials read",
+      "access": "read-only: local repos under /Users/macbook/Workspace/Devotts and the pilot consumer repo; gh read for DevOtts PRs; no credentials read",
       "fences": "do not write resumable-test-gates/ or .plan-it/resumable-test-gates*, do not write .do-it/ (run r-20261106-130657-7ff2 owns it), no code, no push, no release, no Engine changes",
       "naming": "package docs/implementation/do-it-1.1; branch plan/do-it-1.1; epic branches epic/<EID>-<slug>",
       "topology": "solo (planning by main thread; independent auditor + ombudsman subagents for the claim ledger)",
       "liveProbe": "read-only git/gh and local file reads only",
-      "knownDecisions": "owner agreed TRUST-PROPOSAL direction (2026-11-06); doc-it is a future independent plugin piloted in Engine docs-trust, not designed here; resumable-test-gates owner rulings recorded in its README \u00a75.1/\u00a76.1"
+      "knownDecisions": "owner agreed TRUST-PROPOSAL direction (2026-11-06); doc-it is a future independent plugin piloted in Engine P3, not designed here; resumable-test-gates owner rulings recorded in its README \u00a75.1/\u00a76.1"
     }
   },
   "state": "done",
@@ -68,8 +68,8 @@
         },
         {
           "id": "D5",
-          "question": "Engine one-time repair (no new code needed: `status-write close` in place): close the 3 `0-done/` packages with `closed: false` (be-claudecode-like, engine-do-it-squad, secrets-highway) with an owner note copied from each archive commit's disposition?",
-          "default": "Yes, done inside Engine's docs-trust program, not in do-it",
+          "question": "Engine one-time repair (no new code needed: `status-write close` in place): close the 3 `0-done/` packages with `closed: false` (P1, a consumer program, a consumer program) with an owner note copied from each archive commit's disposition?",
+          "default": "Yes, done inside Engine's P3 program, not in do-it",
           "rationale": "The new audit (A1) would otherwise flag them forever; the dispositions exist in the commits",
           "source": "recommended",
           "contradicted": true
@@ -78,7 +78,7 @@
           "id": "D6",
           "question": "Which artifacts get the full audit chain (auditor + ombudsman)?",
           "default": "Decision-grade only",
-          "rationale": "The full chain in grokbot-plan cost about 200k tokens for the ombudsman alone; routine pages don't need it",
+          "rationale": "The full chain in P2-plan cost about 200k tokens for the ombudsman alone; routine pages don't need it",
           "source": "recommended",
           "contradicted": false
         },
@@ -94,13 +94,13 @@
           "id": "D8",
           "question": "Package home: new `docs/implementation/do-it-1.1/`, leaving `do-it-next/` as the 1.0.1 program board?",
           "default": "Yes",
-          "rationale": "One home per fact (docs-trust L5): a new version's plan should not share a board with 1.0.1's",
+          "rationale": "One home per fact (P3 L5): a new version's plan should not share a board with 1.0.1's",
           "source": "recommended",
           "contradicted": false
         },
         {
           "id": "D10",
-          "question": "Engine-Core owner packs: mark the 62 stop-gate questions `withdrawn` (kept, not deleted) once S1 ships?",
+          "question": "the pilot consumer repo owner packs: mark the 62 stop-gate questions `withdrawn` (kept, not deleted) once S1 ships?",
           "default": "Yes",
           "rationale": "All 62 are artifacts of the bug, none is a real question; leaving them buries any real one",
           "source": "recommended",

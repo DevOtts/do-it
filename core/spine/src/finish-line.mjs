@@ -24,14 +24,24 @@ export function writeFinishLine(ctx, fl) {
   atomicWriteJson(finishLinePath(ctx), fl);
 }
 
-export function finishLineUpsert(fl, id, patch) {
+// A row carries the run that wrote it (`run_id`); a row written before that existed has none.
+export function finishLineUpsert(fl, id, patch, runId) {
   let row = fl.rows.find((r) => r.id === id);
   if (!row) {
     row = { id, kind: 'dod', state: 'OPEN', evidence: null, owner_question: null, reason: null, archived_to: null };
+    if (runId) row.run_id = runId;
     fl.rows.push(row);
+  } else if (runId && !row.run_id) {
+    row.run_id = runId;
   }
   Object.assign(row, patch);
   return row;
+}
+
+// The rows one run answers for. A hook stop is strict: rows without a run_id (older boards, other
+// runs) never gate it. An explicit `gate stop` also counts unattributed rows, as 1.0.x did.
+export function rowsForRun(fl, runId, includeUnattributed) {
+  return { rows: fl.rows.filter((r) => r.run_id === runId || (includeUnattributed && !r.run_id)) };
 }
 
 function nonEmpty(v) {

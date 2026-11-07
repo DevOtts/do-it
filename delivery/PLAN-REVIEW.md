@@ -29,7 +29,7 @@ Legend: G-n governance rule · T-EID-NN test case · Wn wave · Rn default · Dn
 7. Plugin `dependencies` field validates, but install-time resolution is unverified: the README may say "installs the family" only if T-R2-11 records `resolved`; otherwise it points to `do-it doctor --install`.
 
 ## Still open for you
-O1 is the reference video the right file? · O2 which Engine dev-squad adjustments to apply (saved in Engine-Core `do-it-engine-layer/`, none applied) · O3 marketing channels for the README.
+O1 is the reference video the right file? · O2 which Engine dev-squad adjustments to apply (saved in the pilot consumer repo `do-it-engine-layer/`, none applied) · O3 marketing channels for the README.
 
 ## Package tree
 ```

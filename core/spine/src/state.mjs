@@ -109,32 +109,55 @@ export function selectRunId(ctx, flags) {
   return best.id;
 }
 
-// Which run does this session (or this cwd) own? Ownership is recorded once, at `start`:
-// the session id when the host gave one, always the cwd. A run with no owner field (state
-// written before this existed) belongs to nobody in particular and stays gated for everyone.
-// Returns { run: id|null, owned: bool } for the newest owned run, else the newest unowned
-// one, else null.
+// Statuses that never gate a stop (CONTRACT 3.1): the run is waiting on a human, parked, or over.
+// Every other status gates.
+export const NON_GATING_STATUSES = ['PARKED', 'NEEDS_HUMAN', 'BLOCKED', 'AWAIT_RATIFY', 'DONE', 'ESCALATED', 'FAILED'];
+
+function cwdInside(ownerCwd, cwd) {
+  const rel = path.relative(realpathSafe(ownerCwd), realpathSafe(cwd));
+  return rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel));
+}
+
+// Which run does the hook's session own? Ownership is recorded once, at `start`, in
+// owner.session_id. A hook that names a session matches on that id only. The cwd is a fallback
+// only for a host that gave no session and a run that has none (a run whose session is null).
+// A run with no owner object (state written before ownership existed) is never owned.
+// Returns { run, owned, status, legacy, unreadable }: the newest owned run that still gates (else the
+// newest owned run), the count of legacy runs, and the ids whose state.json cannot be parsed.
 export function selectScopedRunId(ctx, scope) {
   const owned = [];
-  const legacy = [];
+  const unreadable = [];
+  let legacy = 0;
   for (const id of listRunIds(ctx)) {
-    let st = {};
-    try { st = JSON.parse(fs.readFileSync(path.join(runDir(ctx, id), 'state.json'), 'utf8')); } catch { /* tampered: gated by its own load */ }
-    const o = st.owner;
-    const row = { id, created: st.created_at || '' };
-    if (!o || typeof o !== 'object') { legacy.push(row); continue; }
+    let st;
+    try { st = JSON.parse(fs.readFileSync(path.join(runDir(ctx, id), 'state.json'), 'utf8')); } catch { unreadable.push(id); continue; }
+    const o = st && st.owner;
+    if (!o || typeof o !== 'object') { legacy += 1; continue; }
     let mine = false;
-    if (o.session_id && scope.session) mine = o.session_id === scope.session;
-    else if (o.cwd && scope.cwd) {
-      const rel = path.relative(realpathSafe(o.cwd), realpathSafe(scope.cwd));
-      mine = rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel));
-    }
-    if (mine) owned.push(row);
+    if (scope.session) mine = !!o.session_id && o.session_id === scope.session;
+    else if (!o.session_id && o.cwd && scope.cwd) mine = cwdInside(o.cwd, scope.cwd);
+    if (mine) owned.push({ id, created: st.created_at || '', status: st.status });
   }
   const newest = (rows) => rows.sort((a, b) => (a.created === b.created ? (a.id < b.id ? 1 : -1) : (a.created < b.created ? 1 : -1)))[0];
-  if (owned.length) return { run: newest(owned).id, owned: true };
-  if (legacy.length) return { run: newest(legacy).id, owned: false };
-  return { run: null, owned: false };
+  const gating = owned.filter((r) => !NON_GATING_STATUSES.includes(r.status));
+  const pick = gating.length ? newest(gating) : (owned.length ? newest(owned) : null);
+  return { run: pick ? pick.id : null, owned: !!pick, status: pick ? pick.status : null, legacy, unreadable };
+}
+
+// Runs whose state.json fails the same checks loadState makes, reported without side effects.
+export function unreadableRuns(ctx) {
+  const bad = [];
+  for (const id of listRunIds(ctx)) {
+    const dir = runDir(ctx, id);
+    try {
+      const bytes = fs.readFileSync(path.join(dir, 'state.json'));
+      const sidecar = fs.readFileSync(path.join(dir, '.state.sha256'), 'utf8').trim();
+      if (sidecar !== sha256Bytes(bytes)) throw new Error('digest');
+      const st = JSON.parse(bytes.toString('utf8'));
+      if (validateSchema(loadSchemaFile('do-it-state.1.schema.json'), st).length) throw new Error('schema');
+    } catch { bad.push(id); }
+  }
+  return bad;
 }
 
 // Raw read for callers that only need to know whether a run is in flight.

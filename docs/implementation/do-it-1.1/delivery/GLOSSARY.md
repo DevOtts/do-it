@@ -60,7 +60,7 @@ Legend: G-n governance rule · T-<EID>-NN test case · Wn wave · Dn ruling — 
 | L2, L5, L8 | doc-it lessons | Lessons in `DevOtts/doc-it` `docs/LEARNINGS.md` |
 | CP-NN | Review checkpoint NN (READINESS.json) | Review checkpoint NN (READINESS.json) |
 | CLOSEOUT | `CLOSEOUT.md`, the per-piece disposition of a package with no `status.json` | `CLOSEOUT.md`, the per-piece disposition of a package with no `status.json` |
-| BCL | be-claudecode-like, the Engine program whose run board appeared in other sessions' stop gate | be-claudecode-like, the Engine program whose run board appeared in other sessions' stop gate |
+| BCL | P1, the Engine program whose run board appeared in other sessions' stop gate | P1, the Engine program whose run board appeared in other sessions' stop gate |
 | [REAL] | A case that needs a live target; never VERIFIED on a mock | A case that needs a live target; never VERIFIED on a mock |
 | G4 | plan-it's plan-review gate, where the owner reviews every default | plan-it's plan-review gate, where the owner reviews every default |
 | T-S1-NN | Test case of epic S1 | case NN in epic S1's Test Contract |
@@ -92,6 +92,6 @@ Legend: G-n governance rule · T-<EID>-NN test case · Wn wave · Dn ruling — 
 | T-A-NN | harness-status-tracking Card A case | case NN in `CARD-A-init-it.md` §9 |
 | OQ-<n> | resumable-test-gates owner question | question n in that package's DECISIONS |
 | R<n> | resumable-test-gates default | default n in that package's DECISIONS |
-| E<n> | secrets-highway epic (Engine) | epic n of Engine's secrets-highway program, as named in its archive commit |
+| E<n> | a consumer program epic (Engine) | epic n of Engine's a consumer program program, as named in its archive commit |
 | T1 · T2 · T3 | Gate tiers (resumable-test-gates) | T1 branch push, T2 train complete, T3 nightly/pre-release; not model tiers |
 | ST-NN | harness-status-tracking task | task NN on that program's board (ST-01…ST-08) |
