@@ -1,0 +1,88 @@
+{
+  "implementation": "do-it-1.1",
+  "tasks": 55,
+  "epics": 11,
+  "adversarial_wave": "W2",
+  "waves": [
+    {
+      "id": "W0",
+      "tasks": [
+        "S1-01",
+        "S1-02",
+        "S1-03",
+        "S1-04",
+        "S1-05",
+        "A1-02",
+        "A1-03",
+        "A1-04",
+        "B1-01",
+        "B1-02",
+        "B1-03",
+        "I1-01",
+        "I1-02",
+        "I1-03",
+        "E1-01",
+        "E1-02",
+        "E1-03",
+        "H1-01",
+        "H1-02",
+        "H1-03",
+        "H1-04",
+        "H1-05",
+        "H1-06",
+        "S1-00",
+        "S1-06",
+        "S1-07",
+        "A1-05",
+        "E1-04",
+        "E1-05",
+        "E1-06",
+        "E1-07",
+        "S1-08",
+        "K1-01",
+        "K1-02",
+        "K1-03",
+        "K1-04",
+        "K1-05",
+        "K1-06",
+        "K1-07",
+        "K1-08"
+      ]
+    },
+    {
+      "id": "W1",
+      "tasks": [
+        "L1-01",
+        "L1-02",
+        "L1-03",
+        "L1-04",
+        "V1-01",
+        "V1-02",
+        "V1-03"
+      ]
+    },
+    {
+      "id": "W2",
+      "tasks": [
+        "Q1-01",
+        "Q1-02",
+        "Q1-03",
+        "Q1-04",
+        "K2-01",
+        "K2-02",
+        "K2-03",
+        "K2-04"
+      ]
+    }
+  ],
+  "flags": {
+    "cross_cutting": "touches seven repos (do-it spine, doc-it new, build-it close-in-place, conclude-it S4, plan-it gate-check, review-it) and the only path to 0-done",
+    "owner_gated": "D1 public init-it repo, D11 public doc-it repo, D3 prompt-it tag, D4 marketplace ref pins and the release tags need Fernando's yes",
+    "new_surface": "doc-it CLI (check archive/checkout/expiry, tiers), gate-check claims, review-it --audit mode, two new public repos (init-it, doc-it)",
+    "data": "status.json boards and finish-line rows are run state the owner reads as truth",
+    "money": null,
+    "security": null,
+    "prod_facing": "tagged releases of do-it and five companions installed by every session; the public README"
+  },
+  "merge_model": "incremental"
+}

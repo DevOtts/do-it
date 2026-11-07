@@ -1,0 +1,26 @@
+{
+  "schema": "planit-report/1",
+  "kind": "RESEARCH-REPORT",
+  "title": "Findings \u2014 do-it 1.1",
+  "subtitle_html": "Local HTML twin of the markdown source (plan-it run do-it-1.1, 2026-11-06); not published.",
+  "source": {
+    "path": "../../docs/01-current-state-and-findings.md"
+  },
+  "output": "../../docs/01-current-state-and-findings.html",
+  "glossary": {
+    "path": "../GLOSSARY.md"
+  },
+  "sections": [
+    {
+      "id": "source",
+      "heading": "Findings \u2014 do-it 1.1",
+      "blocks": [
+        {
+          "type": "embed",
+          "path": "../../docs/01-current-state-and-findings.md",
+          "label": "../docs/01-current-state-and-findings.md"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,463 @@
+{
+  "schemaVersion": 1,
+  "machineVersion": "4.0.0",
+  "run": {
+    "name": "do-it-1.1",
+    "goal": "Plan do-it 1.1: trustworthy analysis (TRUST-PROPOSAL), harness-status-tracking leftovers (init-it, archive gate, board truth), 1.0.0 KICKOFF residuals; merge resumable-test-gates (planned by session study-bateria-testes-tempo) at G4.",
+    "startedAt": "2026-11-06T13:12:17.692Z",
+    "mode": "autonomous-draft",
+    "topology": "solo",
+    "deliveryRoot": "docs/implementation/do-it-1.1/delivery",
+    "anamnesis": {
+      "access": "read-only: local repos under /Users/macbook/Workspace/Devotts and Engine-Core; gh read for DevOtts PRs; no credentials read",
+      "fences": "do not write resumable-test-gates/ or .plan-it/resumable-test-gates*, do not write .do-it/ (run r-20261106-130657-7ff2 owns it), no code, no push, no release, no Engine changes",
+      "naming": "package docs/implementation/do-it-1.1; branch plan/do-it-1.1; epic branches epic/<EID>-<slug>",
+      "topology": "solo (planning by main thread; independent auditor + ombudsman subagents for the claim ledger)",
+      "liveProbe": "read-only git/gh and local file reads only",
+      "knownDecisions": "owner agreed TRUST-PROPOSAL direction (2026-11-06); doc-it is a future independent plugin piloted in Engine docs-trust, not designed here; resumable-test-gates owner rulings recorded in its README \u00a75.1/\u00a76.1"
+    }
+  },
+  "state": "done",
+  "size": "M",
+  "shape": 3,
+  "gates": {
+    "G0": {
+      "approved": true,
+      "owner": "Fernando Ott (owner away; derived from session trust-research-study answers, contradict at G4)",
+      "date": "2026-11-06"
+    },
+    "G1": {
+      "approved": true,
+      "owner": "Fernando Ott (owner away; default applied, contradict at G4)",
+      "date": "2026-11-06",
+      "note": "size M, shape 3, topology solo"
+    },
+    "G2": {
+      "defaults": [
+        {
+          "id": "D1",
+          "question": "Create `DevOtts/init-it` and release 0.1.0. Public or private?",
+          "default": "Public",
+          "rationale": "plan-it, build-it and review-it already call init-it by path; today that path only exists on this Mac",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "D2",
+          "question": "Engine host: downgrade to \"Experimental: Engine declined the hooks\" in 1.1, and leave the redesign (squad as an import onto `pipeline_definition`) to Engine's consolidation program?",
+          "default": "Yes, downgrade now; no redesign in 1.1",
+          "rationale": "The repo is public and says \"Supported\" for a server half you closed on 2026-10-29",
+          "source": "recommended",
+          "contradicted": true
+        },
+        {
+          "id": "D3",
+          "question": "prompt-it: tag v1.0.0 at the commit where plugin.json became 1.0.0, or pin back to the released 0.2.1?",
+          "default": "Tag v1.0.0",
+          "rationale": "main already says 1.0.0 and do-it 1.0.1\u20131.0.5 pinned it; the tag is what is missing",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "D4",
+          "question": "Marketplace entries pin each sibling with `ref: v<version>` instead of the default branch head?",
+          "default": "Yes, if Claude Code honors `ref` on a github source; T-H1-03 proves it on a real install first",
+          "rationale": "Today an install takes each sibling's head, not the version do-it was tested with. **UNVERIFIED:** that `ref` is supported has not been checked in this run",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "D5",
+          "question": "Engine one-time repair (no new code needed: `status-write close` in place): close the 3 `0-done/` packages with `closed: false` (be-claudecode-like, engine-do-it-squad, secrets-highway) with an owner note copied from each archive commit's disposition?",
+          "default": "Yes, done inside Engine's docs-trust program, not in do-it",
+          "rationale": "The new audit (A1) would otherwise flag them forever; the dispositions exist in the commits",
+          "source": "recommended",
+          "contradicted": true
+        },
+        {
+          "id": "D6",
+          "question": "Which artifacts get the full audit chain (auditor + ombudsman)?",
+          "default": "Decision-grade only",
+          "rationale": "The full chain in grokbot-plan cost about 200k tokens for the ombudsman alone; routine pages don't need it",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "D7",
+          "question": "Ship trust and fixes together with resumable-test-gates as one 1.1.0, or trust and fixes as 1.1.0 now and test gates as 1.2.0?",
+          "default": "Two releases: 1.1.0 = this package, 1.2.0 = resumable-test-gates",
+          "rationale": "This package is small (W0 is mostly bug fixes and hygiene) and fixes the stop-gate trap now; test gates has 7 pieces plus an Engine consumer and its own owner questions",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "D8",
+          "question": "Package home: new `docs/implementation/do-it-1.1/`, leaving `do-it-next/` as the 1.0.1 program board?",
+          "default": "Yes",
+          "rationale": "One home per fact (docs-trust L5): a new version's plan should not share a board with 1.0.1's",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "D10",
+          "question": "Engine-Core owner packs: mark the 62 stop-gate questions `withdrawn` (kept, not deleted) once S1 ships?",
+          "default": "Yes",
+          "rationale": "All 62 are artifacts of the bug, none is a real question; leaving them buries any real one",
+          "source": "recommended",
+          "contradicted": true
+        },
+        {
+          "id": "D9",
+          "question": "Stop gate on hosts that give no session id (codex, opencode): keep the cwd fallback?",
+          "default": "Yes, only for runs that also have no session id",
+          "rationale": "Without it a non-Claude host could never be gated",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "D12",
+          "question": "doc-it 0.1.0 check set",
+          "default": "see DECISIONS.md",
+          "rationale": "see DECISIONS.md",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "D13",
+          "question": "doc-it open questions 1-5 take their recommendations",
+          "default": "see DECISIONS.md",
+          "rationale": "see DECISIONS.md",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "D14",
+          "question": "missing doc-it prints [skip], never PASS, never fail",
+          "default": "see DECISIONS.md",
+          "rationale": "see DECISIONS.md",
+          "source": "recommended",
+          "contradicted": false
+        }
+      ],
+      "approved": true,
+      "owner": "Fernando Ott",
+      "date": "2026-11-06"
+    },
+    "G3": {
+      "approved": true,
+      "owner": "Fernando Ott",
+      "date": "2026-11-06",
+      "note": "recorded via planReview (autonomous-draft)"
+    },
+    "G4": {
+      "approved": true,
+      "owner": "Fernando Ott",
+      "date": "2026-11-06",
+      "note": "plan approved in full; D11 owner ruling; D12-D14 confirmed; D15 deferred to next version",
+      "contradictions": [
+        {
+          "id": "D2",
+          "summary": "Engine host isolated under hosts/engine; level read from manifest (amendment 1, R3)"
+        },
+        {
+          "id": "D5",
+          "summary": "moved out to the pilot program (amendment 1)"
+        },
+        {
+          "id": "D10",
+          "summary": "generic do-it pack withdraw --by stop-gate, S1-08 (amendment 1)"
+        }
+      ]
+    }
+  },
+  "contract": {
+    "version": "v1.0",
+    "path": "docs/implementation/do-it-1.1/delivery/CONTRACT.md",
+    "frozenAt": "2026-11-06T13:26:45.883Z",
+    "draft": false,
+    "sha256": "5ba3c1561c26d8739c1a679c4ea031b7849dd5ff287e473ee355d7ae842f3abf",
+    "amendments": [
+      {
+        "id": "A1",
+        "date": "2026-11-06",
+        "owner": "Fernando Ott",
+        "summary": "R3 host isolation (E1 rewritten, G-9, D2 amended, D5 moved out, D10 -> pack withdraw S1-08); R4 doc-it own repo DevOtts/doc-it; R5 pilot doc pattern = doc-it global standard",
+        "source": "owner contradiction at G4"
+      },
+      {
+        "id": "A2",
+        "date": "2026-11-06",
+        "owner": "Fernando Ott",
+        "summary": "G4: D1-D10 approved with amendment 1; D11 owner: DevOtts/doc-it 0.1.0 public + family consumes it (K1 W0, K2 W2); A1-01 audit moved to doc-it; V1-01, L1-01 call doc-it; G-10; defaults D12-D14 pending owner confirmation",
+        "source": "owner G4 answer"
+      }
+    ],
+    "finalAt": "2026-11-06T17:00:00.000Z"
+  },
+  "artifacts": [
+    {
+      "path": "docs/implementation/do-it-1.1/delivery/SCOPE-BRIEF.md",
+      "phase": 2,
+      "verifiedAt": "2026-11-06T13:13:02Z",
+      "bytes": 2654
+    },
+    {
+      "path": "docs/implementation/do-it-1.1/audit/claims.md",
+      "phase": 4,
+      "verifiedAt": "2026-11-06T13:37:56Z",
+      "bytes": 9768
+    },
+    {
+      "path": "docs/implementation/do-it-1.1/audit/audit-fable.md",
+      "phase": 4,
+      "verifiedAt": "2026-11-06T13:24:19Z",
+      "bytes": 19074
+    },
+    {
+      "path": "docs/implementation/do-it-1.1/audit/audit-opus.md",
+      "phase": 4,
+      "verifiedAt": "2026-11-06T13:36:40Z",
+      "bytes": 28517
+    },
+    {
+      "path": "docs/implementation/do-it-1.1/ENV-FACTS.md",
+      "phase": 4,
+      "verifiedAt": "2026-11-06T13:26:27Z",
+      "bytes": 2193
+    },
+    {
+      "path": "docs/implementation/do-it-1.1/docs/01-current-state-and-findings.md",
+      "phase": 5,
+      "verifiedAt": "2026-11-06T13:37:56Z",
+      "bytes": 6717
+    },
+    {
+      "path": "docs/implementation/do-it-1.1/docs/02-architecture.md",
+      "phase": 6,
+      "verifiedAt": "2026-11-06T13:37:56Z",
+      "bytes": 10542
+    },
+    {
+      "path": "docs/implementation/do-it-1.1/plan/DECISIONS.md",
+      "phase": 7,
+      "verifiedAt": "2026-11-06T13:38:29Z",
+      "bytes": 5873
+    },
+    {
+      "path": "docs/implementation/do-it-1.1/delivery/CONTRACT.md",
+      "phase": 8,
+      "verifiedAt": "2026-11-06T13:37:56Z",
+      "bytes": 9900
+    },
+    {
+      "path": "docs/implementation/do-it-1.1/delivery/00-program-plan.md",
+      "phase": 8,
+      "verifiedAt": "2026-11-06T13:25:57Z",
+      "bytes": 1180
+    },
+    {
+      "path": "docs/implementation/do-it-1.1/delivery/GLOSSARY.md",
+      "phase": 8,
+      "verifiedAt": "2026-11-06T13:25:57Z",
+      "bytes": 4861
+    },
+    {
+      "path": "docs/implementation/do-it-1.1/delivery/epics/epics-1-do-it-1.1.md",
+      "phase": 9,
+      "verifiedAt": "2026-11-06T13:38:29Z",
+      "bytes": 17603
+    },
+    {
+      "path": "docs/implementation/do-it-1.1/status.json",
+      "phase": 10,
+      "verifiedAt": "2026-11-06T13:38:36Z",
+      "bytes": 36765
+    },
+    {
+      "path": "docs/implementation/do-it-1.1/plan/READINESS.json",
+      "phase": 10,
+      "verifiedAt": "2026-11-06T13:38:36Z",
+      "bytes": 5560
+    }
+  ],
+  "history": [
+    {
+      "state": "intake",
+      "event": "INTAKE_CAPTURED",
+      "at": "2026-11-06T13:12:17.692Z"
+    },
+    {
+      "state": "triage",
+      "event": "TRIAGE_PLAN",
+      "at": "2026-11-06T13:12:17.718Z"
+    },
+    {
+      "state": "anamnesis",
+      "event": "G0_ANSWERED",
+      "at": "2026-11-06T13:12:17.744Z"
+    },
+    {
+      "state": "dodLock",
+      "event": "DOD_LOCKED",
+      "at": "2026-11-06T13:13:06.472Z"
+    },
+    {
+      "state": "scopeBrief",
+      "event": "BRIEF_RENDERED",
+      "at": "2026-11-06T13:13:06.500Z"
+    },
+    {
+      "state": "scopeGate",
+      "event": "G1_APPROVED",
+      "at": "2026-11-06T13:13:06.523Z"
+    },
+    {
+      "state": "preGround",
+      "event": "GROUNDED",
+      "at": "2026-11-06T13:13:06.549Z"
+    },
+    {
+      "state": "discovery",
+      "event": "FANOUT_COMPLETE",
+      "at": "2026-11-06T13:26:25.813Z"
+    },
+    {
+      "state": "preflight",
+      "event": "PREFLIGHT_VERIFIED",
+      "at": "2026-11-06T13:26:27.690Z"
+    },
+    {
+      "state": "synthesis",
+      "event": "SYNTHESIZED",
+      "at": "2026-11-06T13:26:27.726Z"
+    },
+    {
+      "state": "specAuthoring",
+      "event": "SPECS_DRAFTED_AUTONOMOUS",
+      "at": "2026-11-06T13:26:27.816Z"
+    },
+    {
+      "state": "defaultsApplied",
+      "event": "DEFAULTS_APPLIED",
+      "at": "2026-11-06T13:26:27.853Z"
+    },
+    {
+      "state": "coherencePass",
+      "event": "COHERENT_AUTONOMOUS",
+      "at": "2026-11-06T13:26:36.501Z"
+    },
+    {
+      "state": "backboneFreeze",
+      "event": "CONTRACT_FROZEN",
+      "at": "2026-11-06T13:26:45.883Z"
+    },
+    {
+      "state": "parallelPlanning",
+      "event": "SQUADS_COMPLETE",
+      "at": "2026-11-06T13:26:45.953Z"
+    },
+    {
+      "state": "verify",
+      "event": "LINT_CLEAN",
+      "at": "2026-11-06T13:26:46.040Z"
+    },
+    {
+      "state": "adversaryGate",
+      "event": "ADVERSARY_CLEAN",
+      "at": "2026-11-06T13:26:46.148Z"
+    },
+    {
+      "state": "render",
+      "event": "REVIEW_READY",
+      "at": "2026-11-06T13:40:59.926Z"
+    },
+    {
+      "state": "parallelPlanning",
+      "event": "AMENDMENT",
+      "at": "2026-11-06T15:13:08.000Z",
+      "note": "amendment 1 loop"
+    },
+    {
+      "state": "verify",
+      "event": "ARTIFACTS_VERIFIED",
+      "at": "2026-11-06T15:13:08.000Z",
+      "note": "amendment 1 loop"
+    },
+    {
+      "state": "adversaryGate",
+      "event": "LINT_CLEAN",
+      "at": "2026-11-06T15:13:08.000Z",
+      "note": "amendment 1 loop"
+    },
+    {
+      "state": "render",
+      "event": "ADVERSARY_CLEAN",
+      "at": "2026-11-06T15:13:08.000Z",
+      "note": "amendment 1 loop"
+    },
+    {
+      "state": "parallelPlanning",
+      "event": "AMENDMENT",
+      "at": "2026-11-06T15:22:27.000Z",
+      "note": "amendment 2 loop"
+    },
+    {
+      "state": "verify",
+      "event": "ARTIFACTS_VERIFIED",
+      "at": "2026-11-06T15:22:27.000Z",
+      "note": "amendment 2 loop"
+    },
+    {
+      "state": "adversaryGate",
+      "event": "LINT_CLEAN",
+      "at": "2026-11-06T15:22:27.000Z",
+      "note": "amendment 2 loop"
+    },
+    {
+      "state": "render",
+      "event": "ADVERSARY_CLEAN",
+      "at": "2026-11-06T15:22:27.000Z",
+      "note": "amendment 2 loop"
+    },
+    {
+      "state": "planReview",
+      "event": "REVIEW_ANSWERED",
+      "at": "2026-11-06T17:00:00.000Z",
+      "note": "owner approved the whole plan"
+    },
+    {
+      "state": "freeze",
+      "event": "CONTRACT_FINAL",
+      "at": "2026-11-06T17:00:00.000Z",
+      "note": "v1.0-draft -> v1.0"
+    },
+    {
+      "state": "handoff",
+      "event": "HANDED_OFF",
+      "at": "2026-11-06T17:05:00.000Z",
+      "note": "KICKOFF + launch prompt written"
+    }
+  ],
+  "triage": {
+    "verdict": "plan",
+    "measuredAt": "2026-11-06T13:12:17.718Z",
+    "measurements": [
+      "harness-status-tracking Card B shipped in 1.0.1 (41/42 real-verified, REAL-VERIFY.md) but its board says 0 verified",
+      "init-it built locally (/Users/macbook/Workspace/Devotts/init-it), not a git repo, CHANGELOG 0.1.0 unreleased",
+      "Engine 0-done: 3/3 status.json have closed:false; conclude-it ship-pipeline S4 uses git mv, bypassing status-write close",
+      "stop-gate 1.0.5 still gates unrelated sessions via cwd match on null session_id, legacy runs, no status check",
+      "TRUST-PROPOSAL 3.1-3.5 none built"
+    ],
+    "memo": "Real multi-repo work remains in do-it, conclude-it, plan-it, review-it, init-it; plan it."
+  },
+  "render": {
+    "outputs": [
+      {
+        "md": "(owner artifact)",
+        "html": "docs/implementation/do-it-1.1/PLAN-REVIEW.html",
+        "published": "https://claude.ai/artifact/6V6F2BRjbFW5GiNAz7RpYR"
+      }
+    ],
+    "note": "per-doc local HTML twins not generated; owner artifact stands in"
+  }
+}

@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="planit-source" content="02-architecture.md sha256=5ed8475fa572bd7a214c53eca5cd9ff6dacbbd76543b828a3e6fad3e381ec319">
+<meta name="planit-embeds" content="02-architecture.md sha256=5ed8475fa572bd7a214c53eca5cd9ff6dacbbd76543b828a3e6fad3e381ec319">
+<meta name="planit-brand" content="default sha256=0206fd2d74525ffb33ff4fc010fe2ce6bb978ebe8a5674fc7ec0ed5d20eccb58">
+<meta name="planit-renderer" content="build-report.mjs/4.0.0 template sha256=ebfa958749844845bc46643049a546fdd9d68de69f36452b7babc089e0a9a410">
+<meta name="planit-kind" content="RESEARCH-REPORT">
+<title>Architecture — do-it 1.1</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&amp;family=Inter:wght@400;500&amp;family=JetBrains+Mono:wght@400&amp;display=swap">
+<style>
+:root{--bg:#FFFFFF;--card:#F6F8FA;--line:#E6EDF3;--ink:#0D1117;--muted:#484F58;--accent:#0D1117;--accentBg:#00E5A0;--ok:#2EA043;--warn:#D29922;--bad:#F85149;--info:#58A6FF;--chip:#F6F8FA;--hold:#FF6B4A;--font-display:Space Grotesk,sans-serif;--font-body:Inter,sans-serif;--font-mono:JetBrains Mono;}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0D1117;--card:#161B22;--line:#21262D;--ink:#C9D1D9;--muted:#8B949E;--accent:#00E5A0;--accentBg:#00E5A0;--ok:#2EA043;--warn:#D29922;--bad:#F85149;--info:#58A6FF;--chip:#21262D;--hold:#FF6B4A;}}
+:root[data-theme="dark"]{--bg:#0D1117;--card:#161B22;--line:#21262D;--ink:#C9D1D9;--muted:#8B949E;--accent:#00E5A0;--accentBg:#00E5A0;--ok:#2EA043;--warn:#D29922;--bad:#F85149;--info:#58A6FF;--chip:#21262D;--hold:#FF6B4A;}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.55 var(--font-body);padding:2.5rem 1rem}
+main{max-width:900px;margin:0 auto;position:relative}
+h1{font-family:var(--font-display);font-size:1.5rem;margin:0 0 .25rem;text-wrap:balance;padding-right:6rem}
+.eyebrow{color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-size:.78rem;margin:0 0 .3rem}
+.sub{color:var(--muted);margin:0 0 2rem}
+h2{font-family:var(--font-display);font-size:1.05rem;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);
+   margin:2.2rem 0 .8rem;border-bottom:1px solid var(--line);padding-bottom:.4rem}
+#theme-toggle{position:absolute;top:0;right:0;background:var(--card);border:1px solid var(--line);
+  color:var(--muted);border-radius:99px;padding:.3rem .8rem;font:inherit;font-size:.8rem;
+  cursor:pointer;display:inline-flex;align-items:center;gap:.4rem}
+#theme-toggle:hover{color:var(--ink)} #theme-toggle:focus-visible{outline:2px solid var(--accentBg);outline-offset:2px}
+.brand-badge{color:var(--muted);font-size:.75rem;margin:0 0 .6rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;
+      padding:1rem 1.1rem;margin-bottom:.75rem}
+.card h3{margin:0 0 .35rem;font-size:1rem;display:flex;gap:.5rem;align-items:baseline;flex-wrap:wrap}
+.id{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;background:color-mix(in srgb,var(--accentBg) 20%,transparent);border-radius:4px;padding:.05rem .4rem}
+.badge{font-size:.72rem;font-weight:700;letter-spacing:.03em;border-radius:99px;
+       padding:.1rem .55rem;text-transform:uppercase}
+.b-ok{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.b-open{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}
+.b-hold{background:color-mix(in srgb,var(--hold) 20%,transparent);color:var(--ink)}
+.b-act{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--ink)}
+.rename{margin-left:auto;font-size:.75rem;color:var(--muted)}
+.rename code{font-size:.95em}
+.card p{margin:.25rem 0}
+.card ul{margin:.3rem 0 .3rem;padding-left:1.25rem} .card li{margin:.18rem 0}
+code{background:var(--chip);border-radius:4px;padding:.05rem .35rem;font-size:.85em;word-break:break-all;font-family:var(--font-mono)}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);
+      border-radius:10px;overflow:hidden;font-size:.9rem}
+th,td{text-align:left;padding:.5rem .8rem;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600} tr:last-child td{border-bottom:none}
+tr.footer td{font-weight:700}
+.overflow{overflow-x:auto}
+.test{margin-top:.6rem;border-top:1px dashed var(--line);padding-top:.55rem;font-size:.88rem}
+.test b{color:var(--ink);text-transform:uppercase;font-size:.75rem;letter-spacing:.04em}
+.test ul{margin:.3rem 0 0;padding-left:1.25rem}
+.warn{color:var(--warn)} .crit{color:var(--bad);font-weight:600}
+details.more{margin-top:.7rem;border-top:1px dashed var(--line);padding-top:.55rem}
+details.more>summary{cursor:pointer;color:var(--ink);font-weight:600;font-size:.88rem;
+  list-style:none;display:inline-flex;align-items:center;gap:.4rem}
+details.more>summary::before{content:"▸";transition:transform .15s}
+details.more[open]>summary::before{transform:rotate(90deg)}
+.srcnote{font-size:.78rem;color:var(--muted);margin:.6rem 0 .3rem}
+.mdout{background:color-mix(in srgb,var(--chip) 55%,transparent);border:1px solid var(--line);
+       border-radius:8px;padding:.9rem 1rem;font-size:.87rem;overflow-x:auto}
+.mdout h1,.mdout h2,.mdout h3{all:revert;font-size:1.02em;margin:.8em 0 .3em;border:none;
+  text-transform:none;letter-spacing:0;color:var(--ink)}
+.mdout h1{font-size:1.12em}
+.mdout pre{background:var(--chip);padding:.6rem .7rem;border-radius:6px;overflow-x:auto}
+.mdout blockquote{border-left:3px solid var(--line);margin:.5em 0;padding:.1em .8em;color:var(--muted)}
+.mdout ul,.mdout ol{padding-left:1.3em} .mdout li{margin:.15em 0}
+.mdout hr{border:none;border-top:1px solid var(--line);margin:.8em 0}
+.mdout a{color:var(--ink);text-decoration:underline}
+.mdout table{font-size:.85em;margin:.5em 0}
+.mdout td,.mdout th{padding:.35rem .6rem}
+details.glossary{background:var(--card);border:1px solid var(--line);border-radius:10px;
+  padding:.7rem 1rem;margin-bottom:1.2rem;font-size:.88rem}
+details.glossary>summary{cursor:pointer;font-weight:700;color:var(--ink)}
+abbr.gl{text-decoration:underline dotted;cursor:help}
+.gl-x{color:var(--muted);font-size:.82em}
+.decision-card .q{margin:.3rem 0}
+.decision-card .options{margin:.3rem 0;padding-left:1.25rem}
+.decision-card .recommendation{margin:.4rem 0}
+.decision-card .unblocks{margin:.3rem 0;font-size:.85rem;color:var(--muted)}
+.decision-card .ruling{margin:.4rem 0;font-weight:600}
+.mock-win{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:.75rem}
+.mock-bar{background:var(--chip);padding:.4rem .7rem;display:flex;align-items:center;gap:.6rem;font-size:.8rem}
+.mock-dots{color:var(--muted)} .mock-label{color:var(--muted);flex:1}
+.mock-chip{border-radius:99px;padding:.1rem .5rem;font-size:.72rem;font-weight:600}
+.mock-bad{background:color-mix(in srgb,var(--bad) 18%,transparent);color:var(--bad)}
+.mock-ok{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.mock-body{padding:1rem;background:var(--bg)}
+.measure{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.9rem 1.1rem;margin-bottom:.75rem}
+.measure .mvalue{font-family:var(--font-display);font-weight:700;font-size:1.4rem}
+.measure .munit{color:var(--muted);margin-left:.3rem}
+.measure .msrc{color:var(--muted);font-size:.8rem;margin:.3rem 0 0}
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:.75rem}
+.state-col{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.8rem}
+.state-col h4{margin:0 0 .3rem;text-transform:uppercase;font-size:.75rem;letter-spacing:.04em}
+.triage-card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.9rem 1.1rem;margin-bottom:.75rem}
+.triage-card table{border:none}
+.verdict-box{margin-top:.5rem;padding:.5rem .8rem;background:var(--chip);border-radius:8px}
+.lockbox{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accentBg);border-radius:10px;padding:.9rem 1.1rem;margin-bottom:.75rem}
+.lb-head{color:var(--muted);font-size:.85rem;margin:0 0 .4rem}
+.tally-row{display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:.75rem}
+.tally-tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.6rem 1rem;text-align:center}
+.tally-tile .tval{display:block;font-family:var(--font-display);font-weight:700;font-size:1.4rem}
+.tally-tile .tlabel{color:var(--muted);font-size:.78rem}
+pre.copy{background:var(--chip);border-radius:8px;padding:.7rem .9rem;font-family:var(--font-mono);font-size:.85rem;overflow-x:auto}
+.copy-btn{background:var(--card);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:.25rem .7rem;font-size:.78rem;cursor:pointer;margin:-.5rem 0 .75rem}
+pre.mermaid{background:var(--chip);border-radius:8px;padding:.8rem 1rem;font-family:var(--font-mono);font-size:.82rem;overflow-x:auto;white-space:pre-wrap}
+.footer{color:var(--muted);font-size:.75rem;margin-top:2.5rem;border-top:1px solid var(--line);padding-top:.8rem}
+@media (prefers-reduced-motion: reduce){ details.more>summary::before{transition:none} }
+</style>
+</head>
+<body><main>
+<button id="theme-toggle" type="button" aria-label="Toggle light/dark theme">◐ <span id="theme-label">auto</span></button>
+<p class="brand-badge">brand: Her0 default</p>
+<p class="eyebrow">RESEARCH-REPORT</p>
+<h1>Architecture — do-it 1.1</h1>
+<p class="sub">Local HTML twin of the markdown source (plan-it run do-it-1.1, 2026-11-06); not published.</p>
+<details class="glossary"><summary>Glossary</summary><div class="overflow"><table><tr><th>ID</th><th>Means</th><th>Where defined</th></tr><tr><td>S1</td><td>Epic</td><td>Epic: stop gate binds only the owning session</td></tr>
+<tr><td>A1</td><td>Epic</td><td>Epic: one guarded path to `0-done/`</td></tr>
+<tr><td>B1</td><td>Epic</td><td>Epic: harness-status-tracking board tells the truth</td></tr>
+<tr><td>I1</td><td>Epic</td><td>Epic: init-it is installable</td></tr>
+<tr><td>K1</td><td>Epic</td><td>Epic: doc-it 0.1.0, the standard and its first checks</td></tr>
+<tr><td>K2</td><td>Epic</td><td>Epic: the family consumes doc-it</td></tr>
+<tr><td>T-K1-NN</td><td>Test case of epic K1</td><td>case NN in epic K1's Test Contract</td></tr>
+<tr><td>K1-NN</td><td>Task of epic K1</td><td>checklist task NN of epic K1</td></tr>
+<tr><td>T-K2-NN</td><td>Test case of epic K2</td><td>case NN in epic K2's Test Contract</td></tr>
+<tr><td>K2-NN</td><td>Task of epic K2</td><td>checklist task NN of epic K2</td></tr>
+<tr><td>DS-n</td><td>doc-it standard rule</td><td>rule n in `DevOtts/doc-it` `docs/STANDARD.md` §3</td></tr>
+<tr><td>G-10</td><td>Governance rule 10 (CONTRACT §4)</td><td>Governance rule 10 (CONTRACT §4)</td></tr>
+<tr><td>E1</td><td>Epic</td><td>Epic: host integrations stay isolated under `hosts/`</td></tr>
+<tr><td>H1</td><td>Epic</td><td>Epic: release hygiene (tags, pins, duplicate script)</td></tr>
+<tr><td>L1</td><td>Epic</td><td>Epic: claim ledger and source tiers</td></tr>
+<tr><td>V1</td><td>Epic</td><td>Epic: grounding preflight (behind-remote, shipped layers)</td></tr>
+<tr><td>Q1</td><td>Epic</td><td>Epic: review-it audit mode (auditor + ombudsman)</td></tr>
+<tr><td>RTG</td><td>resumable-test-gates, the sibling package planned by another session</td><td>resumable-test-gates, the sibling package planned by another session</td></tr>
+<tr><td>T-&lt;EID&gt;-NN</td><td>Test case NN of epic EID</td><td>Test case NN of epic EID</td></tr>
+<tr><td>&lt;EID&gt;-NN</td><td>Checklist task NN of epic EID</td><td>Checklist task NN of epic EID</td></tr>
+<tr><td>W0</td><td>Wave 0</td><td>Wave 0</td></tr>
+<tr><td>W1</td><td>Wave 1</td><td>Wave 1</td></tr>
+<tr><td>W2</td><td>Wave 2</td><td>Wave 2</td></tr>
+<tr><td>W3</td><td>Wave 3</td><td>Wave 3</td></tr>
+<tr><td>G-1</td><td>Governance rule 1 (CONTRACT §4)</td><td>Governance rule 1 (CONTRACT §4)</td></tr>
+<tr><td>G-2</td><td>Governance rule 2 (CONTRACT §4)</td><td>Governance rule 2 (CONTRACT §4)</td></tr>
+<tr><td>G-3</td><td>Governance rule 3 (CONTRACT §4)</td><td>Governance rule 3 (CONTRACT §4)</td></tr>
+<tr><td>G-4</td><td>Governance rule 4 (CONTRACT §4)</td><td>Governance rule 4 (CONTRACT §4)</td></tr>
+<tr><td>G-5</td><td>Governance rule 5 (CONTRACT §4)</td><td>Governance rule 5 (CONTRACT §4)</td></tr>
+<tr><td>G-6</td><td>Governance rule 6 (CONTRACT §4)</td><td>Governance rule 6 (CONTRACT §4)</td></tr>
+<tr><td>G-7</td><td>Governance rule 7 (CONTRACT §4)</td><td>Governance rule 7 (CONTRACT §4)</td></tr>
+<tr><td>G-8</td><td>Governance rule 8 (CONTRACT §4)</td><td>Governance rule 8 (CONTRACT §4)</td></tr>
+<tr><td>G-9</td><td>Governance rule 9 (CONTRACT §4)</td><td>Governance rule 9 (CONTRACT §4)</td></tr>
+<tr><td>G-12</td><td>do-it's existing rule &quot;core names no harness&quot;</td><td>tested by T-S1-13 in `core/spine/test/s1/s1.test.mjs`</td></tr>
+<tr><td>D1</td><td>Decision 1 (`plan/DECISIONS.md`)</td><td>Decision 1 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>D2</td><td>Decision 2 (`plan/DECISIONS.md`)</td><td>Decision 2 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>D3</td><td>Decision 3 (`plan/DECISIONS.md`)</td><td>Decision 3 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>D4</td><td>Decision 4 (`plan/DECISIONS.md`)</td><td>Decision 4 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>D5</td><td>Decision 5 (`plan/DECISIONS.md`)</td><td>Decision 5 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>D6</td><td>Decision 6 (`plan/DECISIONS.md`)</td><td>Decision 6 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>D7</td><td>Decision 7 (`plan/DECISIONS.md`)</td><td>Decision 7 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>D8</td><td>Decision 8 (`plan/DECISIONS.md`)</td><td>Decision 8 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>D10</td><td>Decision 10</td><td>Decision 10 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>D11</td><td>Decision 11 (`plan/DECISIONS.md`)</td><td>Decision 11 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>D12</td><td>Decision 12 (`plan/DECISIONS.md`)</td><td>Decision 12 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>D13</td><td>Decision 13 (`plan/DECISIONS.md`)</td><td>Decision 13 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>D14</td><td>Decision 14 (`plan/DECISIONS.md`)</td><td>Decision 14 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>D15</td><td>Decision 15, offered after G4 and deferred: session receipts so conclude-it cleans its own branches and worktrees</td><td>Decision 15 (deferred to the next version)</td></tr>
+<tr><td>D9</td><td>Decision 9 (`plan/DECISIONS.md`)</td><td>Decision 9 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>R1–R5</td><td>Owner rulings already given</td><td>Owner rulings already given (DECISIONS, Ruled)</td></tr>
+<tr><td>C1 … C24</td><td>Claim-ledger rows in `audit/claims.md`</td><td>Claim-ledger rows in `audit/claims.md`</td></tr>
+<tr><td>F1 … F8</td><td>Findings in `docs/01`</td><td>Findings in `docs/01`</td></tr>
+<tr><td>P1 … P6</td><td>Principles in `docs/02`</td><td>Principles in `docs/02`</td></tr>
+<tr><td>L2, L5, L8</td><td>doc-it lessons</td><td>Lessons in `DevOtts/doc-it` `docs/LEARNINGS.md`</td></tr>
+<tr><td>CP-NN</td><td>Review checkpoint NN (READINESS.json)</td><td>Review checkpoint NN (READINESS.json)</td></tr>
+<tr><td>CLOSEOUT</td><td>`CLOSEOUT.md`, the per-piece disposition of a package with no `status.json`</td><td>`CLOSEOUT.md`, the per-piece disposition of a package with no `status.json`</td></tr>
+<tr><td>BCL</td><td>be-claudecode-like, the Engine program whose run board appeared in other sessions' stop gate</td><td>be-claudecode-like, the Engine program whose run board appeared in other sessions' stop gate</td></tr>
+<tr><td>[REAL]</td><td>A case that needs a live target; never VERIFIED on a mock</td><td>A case that needs a live target; never VERIFIED on a mock</td></tr>
+<tr><td>G4</td><td>plan-it's plan-review gate, where the owner reviews every default</td><td>plan-it's plan-review gate, where the owner reviews every default</td></tr>
+<tr><td>T-S1-NN</td><td>Test case of epic S1</td><td>case NN in epic S1's Test Contract</td></tr>
+<tr><td>S1-NN</td><td>Task of epic S1</td><td>checklist task NN of epic S1</td></tr>
+<tr><td>T-A1-NN</td><td>Test case of epic A1</td><td>case NN in epic A1's Test Contract</td></tr>
+<tr><td>A1-NN</td><td>Task of epic A1</td><td>checklist task NN of epic A1</td></tr>
+<tr><td>T-B1-NN</td><td>Test case of epic B1</td><td>case NN in epic B1's Test Contract</td></tr>
+<tr><td>B1-NN</td><td>Task of epic B1</td><td>checklist task NN of epic B1</td></tr>
+<tr><td>T-I1-NN</td><td>Test case of epic I1</td><td>case NN in epic I1's Test Contract</td></tr>
+<tr><td>I1-NN</td><td>Task of epic I1</td><td>checklist task NN of epic I1</td></tr>
+<tr><td>T-E1-NN</td><td>Test case of epic E1</td><td>case NN in epic E1's Test Contract</td></tr>
+<tr><td>E1-NN</td><td>Task of epic E1</td><td>checklist task NN of epic E1</td></tr>
+<tr><td>T-H1-NN</td><td>Test case of epic H1</td><td>case NN in epic H1's Test Contract</td></tr>
+<tr><td>H1-NN</td><td>Task of epic H1</td><td>checklist task NN of epic H1</td></tr>
+<tr><td>T-L1-NN</td><td>Test case of epic L1</td><td>case NN in epic L1's Test Contract</td></tr>
+<tr><td>L1-NN</td><td>Task of epic L1</td><td>checklist task NN of epic L1</td></tr>
+<tr><td>T-V1-NN</td><td>Test case of epic V1</td><td>case NN in epic V1's Test Contract</td></tr>
+<tr><td>V1-NN</td><td>Task of epic V1</td><td>checklist task NN of epic V1</td></tr>
+<tr><td>T-Q1-NN</td><td>Test case of epic Q1</td><td>case NN in epic Q1's Test Contract</td></tr>
+<tr><td>Q1-NN</td><td>Task of epic Q1</td><td>checklist task NN of epic Q1</td></tr>
+<tr><td>C&lt;n&gt;</td><td>Claim-ledger row</td><td>row n of `audit/claims.md` (C1–C36)</td></tr>
+<tr><td>F&lt;n&gt;</td><td>Finding</td><td>finding n in `docs/01` (F1–F9)</td></tr>
+<tr><td>P&lt;n&gt;</td><td>Principle</td><td>principle n in `docs/02` (P1–P6)</td></tr>
+<tr><td>M&lt;n&gt;</td><td>Missed item</td><td>item n of the auditor's &quot;Missed&quot; section in `audit/audit-fable.md`</td></tr>
+<tr><td>L&lt;n&gt;</td><td>doc-it lesson</td><td>lesson n in `DevOtts/doc-it` `docs/LEARNINGS.md`</td></tr>
+<tr><td>S4</td><td>conclude-it ship step S4</td><td>the ship-pipeline step that archives a plan folder</td></tr>
+<tr><td>T-S1</td><td>Test cases of epic S1</td><td>shorthand for T-S1-NN</td></tr>
+<tr><td>T-B-NN</td><td>harness-status-tracking Card B case</td><td>case NN in `CARD-B-status-tracking.md` §10</td></tr>
+<tr><td>T-A-NN</td><td>harness-status-tracking Card A case</td><td>case NN in `CARD-A-init-it.md` §9</td></tr>
+<tr><td>OQ-&lt;n&gt;</td><td>resumable-test-gates owner question</td><td>question n in that package's DECISIONS</td></tr>
+<tr><td>R&lt;n&gt;</td><td>resumable-test-gates default</td><td>default n in that package's DECISIONS</td></tr>
+<tr><td>E&lt;n&gt;</td><td>secrets-highway epic (Engine)</td><td>epic n of Engine's secrets-highway program, as named in its archive commit</td></tr>
+<tr><td>T1 · T2 · T3</td><td>Gate tiers (resumable-test-gates)</td><td>T1 branch push, T2 train complete, T3 nightly/pre-release; not model tiers</td></tr>
+<tr><td>ST-NN</td><td>harness-status-tracking task</td><td>task NN on that program's board (ST-01…ST-08)</td></tr></table></div></details>
+<h2>Architecture — do-it 1.1</h2>
+<details class="more" open><summary>../docs/02-architecture.md</summary><div class="mdout"><script type="text/markdown">
+# do-it 1.1: architecture
+
+One rule from the trust diagnosis governs this doc: **extend the shipped layer, never add a parallel road.** Each section names the shipped piece it extends.
+
+## Principles
+
+| # | Principle | Solves |
+|---|---|---|
+| <abbr class="gl" title="Principle">P1</abbr> | A gate binds only the session that owns an active run | <abbr class="gl" title="Finding">F1</abbr> |
+| <abbr class="gl" title="Principle">P2</abbr> | There is one path to `0-done/`, and it is the guarded close | <abbr class="gl" title="Finding">F2</abbr>, <abbr class="gl" title="Finding">F3</abbr> |
+| <abbr class="gl" title="Principle">P3</abbr> | A shipped piece is installable, or the docs say it is not | <abbr class="gl" title="Finding">F4</abbr>, <abbr class="gl" title="Finding">F5</abbr>, <abbr class="gl" title="Finding">F7</abbr> |
+| <abbr class="gl" title="Principle">P4</abbr> | A claim that backs a decision carries its source tier, and the tier decides whether it may be stated as fact | <abbr class="gl" title="Finding">F6</abbr> |
+| <abbr class="gl" title="Principle">P5</abbr> | Verification happens before publishing, sized to the stakes, by a reader that did not write the claim | <abbr>F6</abbr> |
+| <abbr class="gl" title="Principle">P6</abbr> | Read what is current: `origin/main` and the shipped layers, before proposing | <abbr>F6</abbr>, <abbr class="gl" title="doc-it lessons">L8</abbr> |
+
+## A. Stop gate ownership (<abbr>F1</abbr>) — extends 1.0.5 run scope
+
+Shipped: `start` records `owner {session_id, cwd}`, the hook passes `--session` and `--cwd`, and `selectScopedRunId` picks one run. The missing piece is the session id: do-it ignores the one Claude Code provides (<abbr class="gl" title="Claim-ledger row">C26</abbr>).
+
+Change:
+
+0. **Read the session id Claude Code already sets.** `cli.mjs:141` falls back to `CLAUDE_CODE_SESSION_ID` after `--session` and `DO_IT_SESSION_ID`. No new hook is needed. Edge case to test: the id changes on `/clear`, so `resume` from the same conversation after `/clear` must re-bind the run (record the new id with a history entry) instead of losing the gate.
+1. `selectScopedRunId` matches on `owner.session_id` only. A cwd match is used only when the host gives no session id **and** the run has none (<abbr class="gl" title="Decision 9 (`plan/DECISIONS.md`)">D9</abbr>).
+2. Legacy runs (no `owner`) and null-session runs are not gated from a Claude Code hook that has a session id. `gate stop` returns `STOP_ALLOWED` with a reason. An explicit `--run <id>` still gates them.
+3. `gateStop` reads the run status through the existing `peekRunStatus` (`state.mjs:141`) and allows by exclusion: `PARKED`, `NEEDS_HUMAN`, `BLOCKED`, `AWAIT_RATIFY` and the terminal statuses (`TERMINAL_RUN_STATUSES`, `migrate.mjs:14`) return `STOP_ALLOWED`. Every other run status gates (<abbr class="gl" title="Claim-ledger row">C36</abbr>). A run waiting on the owner must not trap the session the owner needs to answer from.
+4. The board shown and counted is the run's own rows. Rows gain a `run_id`, and rows without one never gate a hook stop.
+5. The patience path parks only a run the hook's session owns. (Duplicate questions are already skipped, <abbr class="gl" title="Claim-ledger row">C35</abbr>.)
+6. Cleanup tool (<abbr class="gl" title="Decision 10">D10</abbr>, <abbr class="gl" title="Task of epic S1">S1-08</abbr>): `do-it pack withdraw --by stop-gate` marks unanswered stop-gate questions `withdrawn: stop-gate artifact (do-it 1.1, S1)`, never deleted; answered and stage questions are untouched. Running it on a consumer repo is that repo's work.
+
+Stop-gate decision table (the model the tests follow):
+
+| Hook session matches owner | Run status | Run has owner | Outcome |
+|---|---|---|---|
+| yes | active | yes | gate (refuse up to patience, then PARK this run only) |
+| yes | PARKED, NEEDS_HUMAN, BLOCKED, AWAIT_RATIFY or terminal | yes | STOP_ALLOWED |
+| no | any | yes | STOP_ALLOWED |
+| n/a | any | no (legacy) | STOP_ALLOWED from a hook |
+| no session from host | active | session null, cwd inside | gate (non-Claude host fallback) |
+
+## B. One path to `0-done/` (<abbr>F2</abbr>) — extends conclude-it's guarded close
+
+Shipped: `ledger-card.mjs close` → `status-write close --by conclude-it --move` (refuses unless all tasks are verified or an owner note is given).
+
+Change:
+
+1. conclude-it ship pipeline <abbr class="gl" title="conclude-it ship step S4">S4</abbr> calls `ledger-card.mjs close` instead of `git mv` whenever the package has a `status.json`. Without a `status.json`, <abbr>S4</abbr> writes a `CLOSEOUT.md` listing each piece as shipped (with evidence), dropped or carried over (with a backlog path). Then it moves the folder. A move with neither is refused.
+2. doc-it `check archive` (amendment 2; was build-it `status-write audit`): a read-only scan. It lists `0-done/` packages whose `status.json` has `closed: false`, or that have neither `status.json` nor `CLOSEOUT.md`, plus active boards whose `updated_at` is older than their folder's newest commit by more than the stale threshold. Exit 1 when any are found. conclude-it Step 0 runs it and reports the results; it never fixes anything on its own.
+3. Repairing a consumer repo's archived boards is that repo's call, not automatic and not do-it's work (<abbr class="gl" title="Decision 5 (`plan/DECISIONS.md`)">D5</abbr>, <abbr class="gl" title="resumable-test-gates default">R3</abbr>): <abbr class="gl" title="Task of epic A1">A1-05</abbr> gives it `close --owner-note "<the commit's disposition>"`.
+
+## C. Board truth for harness-status-tracking (<abbr>F3</abbr>) — uses the shipped review-it path
+
+An independent review-it run (not the session that ran REAL-VERIFY, which is why the earlier attempt was reverted) takes `REAL-VERIFY.md` as its evidence and moves the board's 8 tasks (<abbr class="gl" title="harness-status-tracking task">ST-01</abbr>…<abbr class="gl" title="harness-status-tracking task">ST-08</abbr>) to `verified` where their cases are verified. <abbr class="gl" title="harness-status-tracking Card B case">T-B-20</abbr>'s stale half stays parked: no commit to the folder is yet more than 24 h newer than the board (newest is about 3.8 h after).
+
+## D. Installable or honest (<abbr>F4</abbr>, <abbr>F5</abbr>, <abbr>F7</abbr>)
+
+- **init-it 0.1.0:** create the `DevOtts/init-it` repo (decision <abbr class="gl" title="Decision 1 (`plan/DECISIONS.md`)">D1</abbr>), tag `v0.1.0`, add it to `core/companions.json` and the marketplace, and make `doctor --install` fetch it. Until then, plan-it's hand-off line says "init-it not installed" when it is missing.
+- **Engine adapter:** downgrade to `Experimental: Engine declined the host hooks (PR #727, 2026-10-29)` in the README hosts table, the hero alt text and `hosts/engine/README.md`. The adapter code stays, untouched. A redesign as a squad import onto Engine's `pipeline_definition` road belongs to Engine's consolidation program, not to do-it 1.1 (decision <abbr class="gl" title="Decision 2 (`plan/DECISIONS.md`)">D2</abbr>).
+- **Release hygiene:** tag prompt-it `v1.0.0` from the commit its plugin.json became 1.0.0, or pin 0.2.1 (decision <abbr class="gl" title="Decision 3 (`plan/DECISIONS.md`)">D3</abbr>). Remove reconcile-it's duplicate script (1.0.1). `check-pins` also fails when a pin has no matching tag on the remote. Marketplace `ref` pinning is decision <abbr class="gl" title="Decision 4 (`plan/DECISIONS.md`)">D4</abbr>.
+
+## E. Claim ledger with source tiers (<abbr>F6</abbr>; TRUST 3.1, 3.3, 3.4) — new, in plan-it
+
+The ledger is the one new artifact. It lives where analysis is authored (plan-it), and review-it reads it.
+
+- **Format:** `audit/claims.md`, a markdown table `ID | Claim | Tier | Source`, as in this package. An optional `claims.json` twin is generated from it, never hand-written.
+- **Tiers (closed enum):** `live@<date>`, `code`, `git`, `generated`, `durable-doc`, `program-doc`, `transcript`, `local`, `pointer`. `code`/`git` sources must name a repo and sha (in the ledger header or the row) and a path.
+- **Fact rule:** a row whose only tier is `program-doc`, `transcript` or `pointer` must say so in the claim text ("the study says…", "the session reports…") or be marked `UNVERIFIED`.
+- **Counts:** a claim containing a number of things carries the list (inline or a linked file) and the counting rule. `gate-check claims` flags a digit-plus-plural-noun claim with neither.
+- **Evidence against:** when the request contains the owner's hypothesis, the findings doc has a section "Evidence against the hypothesis" before any section that confirms it. This is guidance plus a lint: the doc has the heading, or no claim uses "confirms".
+- **Gate:** `gate-check claims <ledger>` checks the tier enum, sources present, the sha/path rule, the fact rule and the count rule. Decision-grade packages (<abbr class="gl" title="Decision 6 (`plan/DECISIONS.md`)">D6</abbr>) must pass it before <abbr class="gl" title="plan-it's plan-review gate, where the owner reviews every default">G4</abbr>.
+
+## F. Grounding preflight (<abbr>F6</abbr>, TRUST 3.2, <abbr>L8</abbr>) — extends plan-it Phase 3 and `preflight`
+
+`gate-check preflight` gains two probes:
+
+1. **Behind remote.** For each repo the run reads, compare `HEAD` and the working tree with `origin/<default>` after a fetch. If the checkout is behind, it warns and records the remote sha the run must read. The KICKOFF "0. Pinning" block uses the remote sha.
+2. **Shipped layers.** The run writes `research/SHIPPED-LAYERS.md`: the last N weeks of `0-done/` entries, the session-ledger cards and the decision registers (ADRs, CONTRACT rulings), each with a one-line "what it shipped". A proposal in `02` that adds a road, layer or registry must cite the shipped layer it extends, or state "none applies" with a reason. `gate-check handoff` checks that the file exists and is non-empty for size M and L.
+
+## G. Audit mode in review-it (<abbr>F6</abbr>, TRUST 3.5) — new mode, routes to existing subagents
+
+`/review-it --audit <claims.md>` runs the chain the owner built by hand in `grokbot-plan`:
+
+```
+ledger ──► AUDITOR (a different model from the author, primary sources only, sees no conclusions)
+             │ per-claim verdicts TRUE/PARTIAL/FALSE/STALE/UNVERIFIABLE + corrections
+             ▼
+         OMBUDSMAN (checks the auditor's non-TRUE verdicts + a sample of TRUE ones)
+             │ UPHELD / AMENDED / OVERTURNED per finding
+             ▼
+         SAFE-TO-PUBLISH list + DO-NOT-PUBLISH list  → the author rewrites from SAFE only
+```
+
+Audit-chain states (core-logic model; failure states included):
+
+| State | Event | Next |
+|---|---|---|
+| LEDGER_READY | auditor dispatched | AUDITING |
+| AUDITING | verdict file written, all rows covered | AUDITED |
+| AUDITING | verdict file missing or rows uncovered (FAIL) | AUDIT_RETRY |
+| AUDIT_RETRY | re-dispatched once with the missing rows | AUDITING |
+| AUDIT_RETRY | second failure (ESCALATE) | ESCALATED_TO_OWNER |
+| AUDITED | ombudsman dispatched | ADJUDICATING |
+| ADJUDICATING | rulings written | ADJUDICATED |
+| ADJUDICATING | ombudsman overturns ≥ 1 TRUE verdict (PARTIAL trust) | REAUDIT_SAMPLE |
+| REAUDIT_SAMPLE | auditor re-checks the overturned class | ADJUDICATING |
+| ADJUDICATED | SAFE list emitted | PUBLISHABLE |
+| any | owner aborts (ABORT) | ABORTED, nothing published (ROLLBACK: the artifact keeps its last published version) |
+
+- **Stakes sizing (<abbr>D6</abbr>):** decision-grade = backs an owner decision or a plan freeze → the full chain. Everything else → ledger + `gate-check claims`, no auditor.
+- **Models:** the auditor must be a different model from the author (recorded in the verdict file); the ombudsman is Opus. The tier policy needs a written reason for each <abbr class="gl" title="Gate tiers (resumable-test-gates)">T1</abbr> spawn.
+- **Cost line:** the verdict file records the tokens per role, so the owner sees what a decision-grade audit costs.
+
+## H. resumable-test-gates (planned elsewhere) — coupling only
+
+See `docs/01` <abbr class="gl" title="Finding">F8</abbr>. Rules for merging the two packages at <abbr>G4</abbr>:
+
+1. One release, do-it 1.1.0, if both are ready; otherwise trust ships as 1.1.0 and test gates as 1.2.0 (decision <abbr class="gl" title="Decision 7 (`plan/DECISIONS.md`)">D7</abbr>).
+2. The spine source files are disjoint (`stopgate.mjs`/`state.mjs` here; `settings.mjs`, a new gates module and pipelines there). The generated `core/spine/do-it.mjs` is rebuilt **after** each merge, never merged by hand.
+3. The `gates` settings key belongs to resumable-test-gates. This package adds no settings key.
+4. <abbr class="gl" title="Epic">S1</abbr> reads `CLAUDE_CODE_SESSION_ID` in `cli.mjs`, which resumable-test-gates does not touch.
+
+## I. Host isolation (<abbr class="gl" title="Finding">F10</abbr>, <abbr>R3</abbr>) — epic <abbr class="gl" title="Epic">E1</abbr>, moves code, no new key
+
+The core knows two state stores, `local-fs` and `git-branch`. Any other backend is declared by a host in `hosts/<name>/adapter.manifest.json` (`state_store: "<relative module>"`) and loaded from there. Settings keep `state.backend`; the options object keyed by the backend name is passed to the host unread and validated by the host's own schema, so existing `state.engine.blobs` files stay valid and no key is added (<abbr class="gl" title="Governance rule 8 (CONTRACT §4)">G-8</abbr>).
+
+```
+core/state-stores/index.mjs ──openStore({backend})──► local-fs | git-branch
+                                   │ other backend
+                                   ▼
+                     hosts/<name>/adapter.manifest.json ──state_store──► hosts/<name>/state-store/*.mjs
+                                   │ missing host
+                                   ▼
+                     DRIVER_UNKNOWN "<backend>: host <name> not installed"
+```
+
+Host tables (README, SKILL) are generated from the manifests' `level` and `server_side`. The <abbr class="gl" title="do-it's existing rule &quot;core names no harness&quot;">G-12</abbr> scan gains `engine` and covers `core/` and `scripts/`; `hosts/` and `plugins/do-it/` (the Claude Code package) are exempt. Proof of isolation is behavioural, not textual: with `hosts/engine/` deleted, every core suite passes (<abbr class="gl" title="Test case of epic E1">T-E1-02</abbr>).
+
+## J. doc-it 0.1.0 and its consumers (<abbr class="gl" title="Decision 11 (`plan/DECISIONS.md`)">D11</abbr>, <abbr class="gl" title="resumable-test-gates default">R4</abbr>) — epics <abbr class="gl" title="Epic">K1</abbr>, <abbr class="gl" title="Epic">K2</abbr>
+
+doc-it owns the documentation rules; every other plugin calls it and keeps no copy (<abbr class="gl" title="Governance rule 10 (CONTRACT §4)">G-10</abbr>).
+
+```
+conclude-it Step 0 / S4 ──► doc-it check archive  ──► JSON + exit 0/1/2
+conclude-it Step 2       ──► doc-it check expiry   ──► report only
+plan-it preflight (V1)   ──► doc-it check checkout ──► exit 1 when behind
+plan-it ledger (L1)      ──┐
+review-it --audit (Q1)   ──┴► doc-it tiers --json
+any consumer, doc-it missing ──► "[skip] doc-it not installed: <check>", never PASS (D14)
+```
+
+build-it keeps `status-write close` because it writes the board; doc-it only reads. 0.1.0 checks <abbr class="gl" title="doc-it standard rule">DS-3</abbr>, <abbr class="gl" title="doc-it standard rule">DS-4</abbr>, <abbr class="gl" title="doc-it standard rule">DS-6</abbr> and the board-age half of <abbr class="gl" title="doc-it standard rule">DS-2</abbr> (`stale_active`); <abbr class="gl" title="doc-it standard rule">DS-1</abbr>, <abbr class="gl" title="doc-it standard rule">DS-5</abbr>, <abbr class="gl" title="doc-it standard rule">DS-7</abbr> ship as written rules (<abbr class="gl" title="Decision 12 (`plan/DECISIONS.md`)">D12</abbr>).
+
+</script></div></details>
+<p class="footer">html-blocks=0</p>
+<script>
+// Theme toggle: auto → light → dark → auto. Persists per-viewer (try/catch — storage may be blocked).
+(function(){
+  const btn=document.getElementById("theme-toggle"), lab=document.getElementById("theme-label");
+  const order=["auto","light","dark"]; let cur="auto";
+  try{ cur=localStorage.getItem("report-theme")||"auto" }catch(e){}
+  function apply(v){
+    cur=v; lab.textContent=v;
+    if(v==="auto"){ document.documentElement.removeAttribute("data-theme"); }
+    else{ document.documentElement.setAttribute("data-theme",v); }
+    try{ localStorage.setItem("report-theme",v) }catch(e){}
+  }
+  apply(cur);
+  btn.addEventListener("click",()=>apply(order[(order.indexOf(cur)+1)%order.length]));
+})();
+// Copy-to-clipboard: client-side navigator.clipboard, try/catch — API may be unavailable.
+document.querySelectorAll(".copy-btn").forEach(function(btn){
+  btn.addEventListener("click", function(){
+    var pre = btn.previousElementSibling;
+    var text = pre ? pre.textContent : "";
+    try{
+      navigator.clipboard.writeText(text);
+    }catch(e){
+      var note = document.createElement("p");
+      note.className = "warn"; note.textContent = "select the text above";
+      btn.parentNode.insertBefore(note, btn.nextSibling);
+    }
+  });
+});
+</script>
+<script>
+/* MDPARSER-START */
+
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function isSafeUrl(u){
+  var url=String(u).trim();
+  if(url.indexOf('"')!==-1||url.indexOf("'")!==-1) return false;
+  if(/^(https?:|mailto:|#)/i.test(url)) return true;
+  return !/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(url);
+}
+function inline(s){
+  return s
+    .replace(/`([^`]+)`/g,function(m,c){return "<code>"+c+"</code>"})
+    .replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>")
+    .replace(/\*([^*]+)\*/g,"<em>$1</em>")
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g,function(m,label,url){
+      return isSafeUrl(url) ? '<a href="'+esc(url)+'">'+label+'</a>' : label;
+    });
+}
+function md(src){
+  var abbrs=[];
+  var protectedSrc=src.replace(/<abbr\b[^>]*>[\s\S]*?<\/abbr>/gi,function(m){abbrs.push(m);return "\u0001ABBR"+(abbrs.length-1)+"\u0001"});
+  var lines=esc(protectedSrc).split("\n"), out=[], inCode=false, inList=false, inOList=false, inQuote=false, i=0;
+  function closeAll(){
+    if(inList){out.push("</ul>");inList=false}
+    if(inOList){out.push("</ol>");inOList=false}
+    if(inQuote){out.push("</blockquote>");inQuote=false}
+  }
+  while(i<lines.length){
+    var raw=lines[i];
+    if(raw.indexOf("```")===0){closeAll();out.push(inCode?"</pre>":"<pre>");inCode=!inCode;i++;continue}
+    if(inCode){out.push(raw);i++;continue}
+    if(/^\s*\|.*\|\s*$/.test(raw) && i+1<lines.length && /^\s*\|[\s\-:|]+\|\s*$/.test(lines[i+1])){
+      closeAll();
+      var cells=function(r){return r.trim().replace(/^\||\|$/g,"").split("|").map(function(c){return inline(c.trim())})};
+      out.push('<div class="overflow"><table><tr>'+cells(raw).map(function(c){return "<th>"+c+"</th>"}).join("")+"</tr>");
+      i+=2;
+      while(i<lines.length && /^\s*\|.*\|\s*$/.test(lines[i])){
+        out.push("<tr>"+cells(lines[i]).map(function(c){return "<td>"+c+"</td>"}).join("")+"</tr>"); i++;
+      }
+      out.push("</table></div>"); continue;
+    }
+    var l=raw, m;
+    if(/^\s*$/.test(l)){closeAll();i++;continue}
+    if(/^---+\s*$/.test(l)){closeAll();out.push("<hr>");i++;continue}
+    if(m=l.match(/^(#{1,4})\s+(.*)/)){closeAll();var h=m[1].length;out.push("<h"+h+">"+inline(m[2])+"</h"+h+">");i++;continue}
+    if(m=l.match(/^\s*&gt;\s?(.*)/)){if(!inQuote){closeAll();out.push("<blockquote>");inQuote=true}out.push("<p>"+inline(m[1])+"</p>");i++;continue}
+    if(m=l.match(/^\s*[-*]\s+(.*)/)){
+      if(inQuote){out.push("</blockquote>");inQuote=false}
+      if(inOList){out.push("</ol>");inOList=false}
+      if(!inList){out.push("<ul>");inList=true}
+      out.push("<li>"+inline(m[1])+"</li>");i++;continue;
+    }
+    if(m=l.match(/^\s*(\d+)\.\s+(.*)/)){
+      if(inQuote){out.push("</blockquote>");inQuote=false}
+      if(inList){out.push("</ul>");inList=false}
+      if(!inOList){out.push("<ol>");inOList=true}
+      out.push("<li>"+inline(m[2])+"</li>");i++;continue;
+    }
+    closeAll();out.push("<p>"+inline(l)+"</p>");i++;
+  }
+  closeAll(); if(inCode)out.push("</pre>");
+  var result=out.join("\n");
+  result=result.replace(/\u0001ABBR(\d+)\u0001/g,function(m,idx){return abbrs[Number(idx)]});
+  return result;
+}
+
+/* MDPARSER-END */
+document.querySelectorAll('script[type="text/markdown"]').forEach(function(s){
+  var d=document.createElement("div"); d.innerHTML=md(s.textContent.trim());
+  s.parentNode.replaceChild(d,s);
+});
+</script>
+
+</main></body>
+</html>
