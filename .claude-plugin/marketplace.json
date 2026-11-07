@@ -101,6 +101,34 @@
       },
       "homepage": "https://github.com/DevOtts/parallel-lifecycle",
       "license": "MIT"
+    },
+    {
+      "name": "init-it",
+      "source": {
+        "source": "github",
+        "repo": "DevOtts/init-it"
+      },
+      "version": "0.1.0",
+      "author": {
+        "name": "DevOtts",
+        "url": "https://github.com/DevOtts"
+      },
+      "homepage": "https://github.com/DevOtts/init-it",
+      "license": "MIT"
+    },
+    {
+      "name": "doc-it",
+      "source": {
+        "source": "github",
+        "repo": "DevOtts/doc-it"
+      },
+      "version": "0.1.0",
+      "author": {
+        "name": "DevOtts",
+        "url": "https://github.com/DevOtts"
+      },
+      "homepage": "https://github.com/DevOtts/doc-it",
+      "license": "MIT"
     }
   ]
 }

@@ -200,7 +200,8 @@ for (const [id, host] of [['T-R2-12', 'codex'], ['T-R2-13', 'opencode']]) {
     assert.equal(r.status, 0, r.stdout + r.stderr);
     const lines = r.stdout.split('\n').filter((l) => l.startsWith('npx skills add'));
     assert.deepEqual(lines, REQUIRED.map((n) => `npx skills add DevOtts/${n} -a ${host}`));
-    assert.doesNotMatch(r.stdout, /parallel-lifecycle|deploy-it|reconcile-it/);
+    // K2-04: optional companions are listed, marked optional, and never in the required set.
+    assert.doesNotMatch(r.stdout.split('\n').filter((l) => !l.startsWith('optional:')).join('\n'), /parallel-lifecycle|deploy-it|reconcile-it/);
     const written = readdirSync(work).filter((f) => f !== '.do-it');
     assert.deepEqual(written, []);
   });
