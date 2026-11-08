@@ -140,7 +140,9 @@ test('T-S1-05 two runs, each with open rows: the owner sees and parks only its o
   assert.doesNotMatch(pack.questions[0].text, /R2|R3/);
 });
 
-test('T-S1-05b rows without a run_id never gate a hook stop; an explicit stop still counts them', () => {
+// Narrowed by proposed amendment A9 (CP-03 R3-S1-M6): an unattributed row counts only for a legacy run (no
+// owner object), on every path. A 1.1 run is neither held nor finished by a 1.0.x row it may not close.
+test('T-S1-05b rows without a run_id never gate a 1.1 run on either stop path; an explicit stop of a legacy run still counts them', () => {
   const repo = mkRepo();
   const id = start(repo, 'sess-A');
   board(repo, [row('OLD-1', null)]);
@@ -148,7 +150,12 @@ test('T-S1-05b rows without a run_id never gate a hook stop; an explicit stop st
   assert.equal(hook.out.outcome, 'STOP_ALLOWED', hook.stdout);
   assert.equal(hook.out.owned, true);
   const explicit = real(repo, ['gate', 'stop', '--run', id]);
-  assert.equal(explicit.out.outcome, 'STOP_REFUSED');
+  assert.equal(explicit.out.outcome, 'STOP_ALLOWED', 'the same rule as the hook: ' + explicit.stdout);
+  const legacy = start(repo, 'sess-L');
+  editState(repo, legacy, (st) => { delete st.owner; });
+  const old = real(repo, ['gate', 'stop', '--run', legacy]);
+  assert.equal(old.out.outcome, 'STOP_REFUSED', 'a legacy run still answers for the 1.0.x rows');
+  assert.deepEqual(old.out.open, ['OLD-1']);
 });
 
 test('T-S1-05c rows seeded by the spine carry the run_id', () => {

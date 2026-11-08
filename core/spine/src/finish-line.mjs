@@ -60,8 +60,10 @@ export function finishLineUpsert(fl, id, patch, runId, adopt) {
   return row;
 }
 
-// The rows one run answers for. A hook stop is strict: rows without a run_id (older boards, other
-// runs) never gate it. An explicit `gate stop` also counts unattributed rows, as 1.0.x did.
+// The rows one run answers for: its own, plus unattributed rows of an older board only when the run may
+// adopt them. Every caller passes adoptsUnattributed(state), the same rule seeding uses: next, status,
+// handoff, conclude and both stop paths (CP-03 R3-S1-M6). A 1.1 run therefore never answers for, and is
+// never held by, a 1.0.x row that `record` would refuse to let it close; a legacy run still counts them.
 export function rowsForRun(fl, runId, includeUnattributed) {
   return { rows: fl.rows.filter((r) => r.run_id === runId || (includeUnattributed && !r.run_id)) };
 }

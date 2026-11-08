@@ -94,7 +94,7 @@ export function cmdNext(ctx, args) {
   if (state.status === 'PARKED') return { outcome: 'NEXT', exit: 3, run_id: runId, action: 'NONE', reason: 'parked' };
   if (state.status === 'NEEDS_HUMAN') return { outcome: 'NEXT', exit: 2, run_id: runId, action: 'NONE', reason: 'needs_human' };
   if (state.status === 'BLOCKED') {
-    const fl = rowsForRun(readFinishLine(ctx), runId, true);
+    const fl = rowsForRun(readFinishLine(ctx), runId, adoptsUnattributed(state));
     return { outcome: 'BLOCKED', exit: 3, run_id: runId, action: 'NONE', reason: 'blocked', board: renderBoard(fl) };
   }
 
@@ -110,8 +110,10 @@ export function cmdNext(ctx, args) {
   }
 
   const board = readFinishLine(ctx);
-  // this run's rows only (plus unattributed rows from older boards): another run's rows never decide it
-  const fl = rowsForRun(board, runId, true);
+  // this run's rows only: another run's rows never decide it, and an unattributed row of an older board counts
+  // only for a legacy run, the one run that may adopt it (CP-03 R3-S1-M6, the same rule as seeding)
+  const adopt = adoptsUnattributed(state);
+  const fl = rowsForRun(board, runId, adopt);
   if (state.slices.length) {
     const out = nextSlice(ctx, state, runId);
     if (out) return out;
@@ -124,7 +126,7 @@ export function cmdNext(ctx, args) {
 
   const wave = nextWave(ctx, state, runId, board);
   if (wave.out) return wave.out;
-  fl.rows = rowsForRun(board, runId, true).rows;
+  fl.rows = rowsForRun(board, runId, adopt).rows;
   if (wave.pipe) {
     if (!openRows(fl).length) return { outcome: 'FINISH_LINE_REACHED', exit: 0, run_id: runId, action: 'NONE', board: renderBoard(fl) };
     return none(runId, 'waiting', { board: renderBoard(fl) });

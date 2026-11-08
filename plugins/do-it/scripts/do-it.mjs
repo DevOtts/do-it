@@ -399,7 +399,7 @@ function cmdStatus(ctx, args) {
     stop_refusals: state.stop_refusals,
     run_verdict: state.run_verdict === undefined ? null : state.run_verdict,
     last_take_over: takeOvers(state).pop() || null,
-    board: renderBoard(rowsForRun(readFinishLine(ctx), runId, true)),
+    board: renderBoard(rowsForRun(readFinishLine(ctx), runId, adoptsUnattributed(state))),
     stale_tmp_removed: removed,
     unreadable_runs: unreadableRuns(ctx),
   };
@@ -468,7 +468,7 @@ function gateConclude(ctx, args) {
   const state = loadState(ctx, runId);
   const reverified = verifyEvidence(ctx, runId, state);
   const ledger = readLedger(ctx, runId);
-  const fl = rowsForRun(readFinishLine(ctx), runId, true);
+  const fl = rowsForRun(readFinishLine(ctx), runId, adoptsUnattributed(state));
   const reasons = [];
 
   const inLedger = new Set(ledger.rows.map((r) => r.row));
@@ -730,8 +730,10 @@ function finishLineUpsert(fl, id, patch, runId, adopt) {
   return row;
 }
 
-// The rows one run answers for. A hook stop is strict: rows without a run_id (older boards, other
-// runs) never gate it. An explicit `gate stop` also counts unattributed rows, as 1.0.x did.
+// The rows one run answers for: its own, plus unattributed rows of an older board only when the run may
+// adopt them. Every caller passes adoptsUnattributed(state), the same rule seeding uses: next, status,
+// handoff, conclude and both stop paths (CP-03 R3-S1-M6). A 1.1 run therefore never answers for, and is
+// never held by, a 1.0.x row that `record` would refuse to let it close; a legacy run still counts them.
 function rowsForRun(fl, runId, includeUnattributed) {
   return { rows: fl.rows.filter((r) => r.run_id === runId || (includeUnattributed && !r.run_id)) };
 }
@@ -981,7 +983,7 @@ function cmdHandoff(ctx, args) {
 
   const { files, missing } = collectStateFiles(ctx, runId, state);
   if (missing.length) throw fail('HANDOFF_PATH_INVALID', 1, { run_id: runId, missing });
-  const board = renderBoard(rowsForRun(readFinishLine(ctx), runId, true));
+  const board = renderBoard(rowsForRun(readFinishLine(ctx), runId, adoptsUnattributed(state)));
   const events = lastEvents(ctx, runId, HANDOFF_EVENTS);
   let text = renderHandoff(ctx, state, files, board, events);
   if (text.length > HANDOFF_MAX_CHARS) text = renderHandoff(ctx, state, files, board.slice(0, 1200), events.map((e) => e.slice(0, 200))).slice(0, HANDOFF_MAX_CHARS);
@@ -1559,7 +1561,7 @@ function cmdNext(ctx, args) {
   if (state.status === 'PARKED') return { outcome: 'NEXT', exit: 3, run_id: runId, action: 'NONE', reason: 'parked' };
   if (state.status === 'NEEDS_HUMAN') return { outcome: 'NEXT', exit: 2, run_id: runId, action: 'NONE', reason: 'needs_human' };
   if (state.status === 'BLOCKED') {
-    const fl = rowsForRun(readFinishLine(ctx), runId, true);
+    const fl = rowsForRun(readFinishLine(ctx), runId, adoptsUnattributed(state));
     return { outcome: 'BLOCKED', exit: 3, run_id: runId, action: 'NONE', reason: 'blocked', board: renderBoard(fl) };
   }
 
@@ -1575,8 +1577,10 @@ function cmdNext(ctx, args) {
   }
 
   const board = readFinishLine(ctx);
-  // this run's rows only (plus unattributed rows from older boards): another run's rows never decide it
-  const fl = rowsForRun(board, runId, true);
+  // this run's rows only: another run's rows never decide it, and an unattributed row of an older board counts
+  // only for a legacy run, the one run that may adopt it (CP-03 R3-S1-M6, the same rule as seeding)
+  const adopt = adoptsUnattributed(state);
+  const fl = rowsForRun(board, runId, adopt);
   if (state.slices.length) {
     const out = nextSlice(ctx, state, runId);
     if (out) return out;
@@ -1589,7 +1593,7 @@ function cmdNext(ctx, args) {
 
   const wave = nextWave(ctx, state, runId, board);
   if (wave.out) return wave.out;
-  fl.rows = rowsForRun(board, runId, true).rows;
+  fl.rows = rowsForRun(board, runId, adopt).rows;
   if (wave.pipe) {
     if (!openRows(fl).length) return { outcome: 'FINISH_LINE_REACHED', exit: 0, run_id: runId, action: 'NONE', board: renderBoard(fl) };
     return none(runId, 'waiting', { board: renderBoard(fl) });
@@ -3439,7 +3443,7 @@ function explicitStop(ctx, f) {
   if (NON_GATING_STATUSES.includes(state.status)) {
     return allowed({ owned: true, run_id: runId, status: state.status, reason: 'run is ' + state.status + ', it does not gate', stop_refusals: state.stop_refusals });
   }
-  const fl = rowsForRun(readFinishLine(ctx), runId, true);
+  const fl = rowsForRun(readFinishLine(ctx), runId, adoptsUnattributed(state));
   const open = openRows(fl);
   const board = renderBoard(fl);
   if (!open.length) return allowed({ owned: true, run_id: runId, reason: 'no open rows for this run', stop_refusals: state.stop_refusals, board });
@@ -3520,18 +3524,18 @@ function hookStopIn(ctx, scope) {
     const top = readable[0];
     return allowed({ owned: true, run_id: top.id, status: top.state.status, reason: 'run is ' + top.state.status + ', it does not gate', stop_refusals: top.state.stop_refusals, ...extra });
   }
-  // a hook stop is strict: only rows tagged with the run's id gate it
+  // the same row rule as every view: an owned (1.1) run answers only for rows tagged with its id
   const board = readFinishLine(ctx);
   const withOpen = [];
   for (const g of gating) {
-    const fl = rowsForRun(board, g.id, false);
+    const fl = rowsForRun(board, g.id, adoptsUnattributed(g.state));
     const open = openRows(fl);
     if (open.length) withOpen.push({ ...g, fl, open });
   }
   if (!withOpen.length) {
     const top = gating[0];
     const ids = gating.map((g) => g.id);
-    return allowed({ owned: true, run_id: top.id, runs: ids, reason: 'no open rows for ' + (ids.length > 1 ? 'any owned run' : 'this run'), stop_refusals: top.state.stop_refusals, board: renderBoard(rowsForRun(board, top.id, false)), ...extra });
+    return allowed({ owned: true, run_id: top.id, runs: ids, reason: 'no open rows for ' + (ids.length > 1 ? 'any owned run' : 'this run'), stop_refusals: top.state.stop_refusals, board: renderBoard(rowsForRun(board, top.id, adoptsUnattributed(top.state))), ...extra });
   }
   const patience = loadSettings(ctx, []).values.stop_gate.patience;
   const refused = [];

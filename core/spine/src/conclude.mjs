@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { fail } from './errors.mjs';
 import { appendEvent } from './events.mjs';
-import { readFinishLine, rowsForRun } from './finish-line.mjs';
+import { adoptsUnattributed, readFinishLine, rowsForRun } from './finish-line.mjs';
 import { readJsonIfExists } from './fs-atomic.mjs';
 import { readLedger } from './ledger.mjs';
 import { loadState, selectRunId, takeOvers, writeState } from './state.mjs';
@@ -21,7 +21,7 @@ export function gateConclude(ctx, args) {
   const state = loadState(ctx, runId);
   const reverified = verifyEvidence(ctx, runId, state);
   const ledger = readLedger(ctx, runId);
-  const fl = rowsForRun(readFinishLine(ctx), runId, true);
+  const fl = rowsForRun(readFinishLine(ctx), runId, adoptsUnattributed(state));
   const reasons = [];
 
   const inLedger = new Set(ledger.rows.map((r) => r.row));

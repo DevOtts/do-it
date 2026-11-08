@@ -229,7 +229,8 @@ test('T-S3-11 G-13 conclude refuses an unaccounted row [REAL]', () => {
   const repo = mkRepo();
   const runId = startRun(repo, real);
   put(repo, 'proof/out.txt', 'ok');
-  const open = (id) => ({ id, kind: 'dod', state: 'OPEN', evidence: null, owner_question: null, reason: null, archived_to: null });
+  // the run's own rows carry its id: a 1.1 run never answers for an unattributed row (CP-03 R3-S1-M6)
+  const open = (id) => ({ id, kind: 'dod', state: 'OPEN', evidence: null, owner_question: null, reason: null, archived_to: null, run_id: runId });
   writeJson(path.join(repo.doIt, 'finish-line.json'), { rows: [open('DOD-1'), open('DOD-2')] });
   assert.equal(record(real, repo, 'results/r1.json', result(runId, { verdicts: [verdictRow('DOD-1')] })).code, 0);
   const c = real(repo, ['gate', 'conclude']);

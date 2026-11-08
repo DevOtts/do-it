@@ -5,7 +5,7 @@ import cp from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
-import { mkRepo, real, readJson, runDirOf, writeJson } from '../helpers.mjs';
+import { mkRepo, real, readJson, runDirOf, sha256Bytes, writeJson } from '../helpers.mjs';
 
 function start(repo, session, cwd) {
   const r = real(repo, ['start', '--preset', 'feature', '--request', 'ship ' + session, '--session', session], null, cwd);
@@ -144,4 +144,59 @@ test('CP03 R3-S1-H7 the registry records start, resume and take-over; stale entr
   const names = fs.readdirSync(path.join(repo.home, '.do-it', 'sessions'));
   assert.ok(names.every((n) => /^[A-Za-z0-9._-]+\.json$/.test(n)), names.join(','));
   assert.equal(b.code, 0);
+});
+
+// R3-S1-M6: one unattributed OPEN row of a 1.0.x board; B's own 10 rows set DONE.
+function closeAllOf(repo, runId) {
+  const f = path.join(repo.doIt, 'finish-line.json');
+  const fl = readJson(f);
+  fs.writeFileSync(path.join(repo.dir, 'ev.txt'), 'x\n');
+  for (const r of fl.rows) if (r.run_id === runId) { r.state = 'DONE'; r.evidence = 'ev.txt'; }
+  writeJson(f, fl);
+}
+const legacyRow = { id: 'old-slice-T-9', kind: 'dod', state: 'OPEN', evidence: null, owner_question: null, reason: null, archived_to: null };
+
+test('CP03 R3-S1-M6 on a 1.0.x board with an open legacy row a 1.1 run reaches FINISH_LINE_REACHED and CONCLUDED', () => {
+  const repo = mkRepo();
+  writeJson(path.join(repo.doIt, 'finish-line.json'), { rows: [legacyRow] });
+  const b = start(repo, 'sess-B');
+  assert.equal(real(repo, ['next', '--run', b]).code, 0);
+  closeAllOf(repo, b);
+  const hook = hookStop(repo, 'sess-B');
+  assert.equal(hook.out.outcome, 'STOP_ALLOWED', hook.stdout);
+  const n = real(repo, ['next', '--run', b]);
+  assert.equal(n.out.outcome, 'FINISH_LINE_REACHED', n.stdout);
+  const ex = real(repo, ['gate', 'stop', '--run', b]);
+  assert.equal(ex.out.outcome, 'STOP_ALLOWED', 'views and gate agree: ' + ex.stdout);
+  const st = real(repo, ['status', '--run', b]);
+  assert.match(st.out.board, /FINISH LINE: 10 of 10 closed/);
+  assert.doesNotMatch(st.out.board, /old-slice-T-9/);
+  const h = real(repo, ['handoff', '--run', b]);
+  assert.doesNotMatch(fs.readFileSync(path.join(runDirOf(repo, b), 'handoff.md'), 'utf8'), /old-slice-T-9/, h.stdout);
+  for (const s of ['BUILDING', 'VERIFYING', 'CONCLUDING']) real(repo, ['gate', 'advance', '--run', b, '--to', s]);
+  const c = real(repo, ['gate', 'conclude', '--run', b]);
+  assert.equal(c.out.outcome, 'CONCLUDED', c.stdout);
+  // the legacy row is untouched
+  assert.deepEqual(readJson(path.join(repo.doIt, 'finish-line.json')).rows.find((r) => r.id === 'old-slice-T-9'), legacyRow);
+});
+
+test('CP03 R3-S1-M6 a legacy run (no owner) still counts the old row in next, explicit stop and conclude', () => {
+  const repo = mkRepo();
+  writeJson(path.join(repo.doIt, 'finish-line.json'), { rows: [legacyRow] });
+  const l = start(repo, 'sess-L');
+  const file = path.join(runDirOf(repo, l), 'state.json');
+  const st = readJson(file);
+  delete st.owner;
+  fs.writeFileSync(file, JSON.stringify(st, null, 2) + '\n');
+  fs.writeFileSync(path.join(runDirOf(repo, l), '.state.sha256'), sha256Bytes(fs.readFileSync(file)) + '\n');
+  real(repo, ['next', '--run', l]);
+  closeAllOf(repo, l);
+  assert.notEqual(real(repo, ['next', '--run', l]).out.outcome, 'FINISH_LINE_REACHED');
+  const ex = real(repo, ['gate', 'stop', '--run', l]);
+  assert.equal(ex.out.outcome, 'STOP_REFUSED');
+  assert.ok(ex.out.open.includes('old-slice-T-9'));
+  assert.match(real(repo, ['status', '--run', l]).out.board, /old-slice-T-9/);
+  const c = real(repo, ['gate', 'conclude', '--run', l]);
+  assert.equal(c.out.outcome, 'CONCLUDE_REFUSED');
+  assert.deepEqual(c.out.ids, ['old-slice-T-9']);
 });

@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import { appendEvent, eventsPath } from './events.mjs';
 import { CliError, fail } from './errors.mjs';
-import { openRows, readFinishLine, renderBoard, rowsForRun, rowsSignature } from './finish-line.mjs';
+import { adoptsUnattributed, openRows, readFinishLine, renderBoard, rowsForRun, rowsSignature } from './finish-line.mjs';
 import { packAppend } from './pack.mjs';
 import { cleanSessionId } from './session.mjs';
 import { sessionHomes } from './sessions.mjs';
@@ -70,7 +70,7 @@ function explicitStop(ctx, f) {
   if (NON_GATING_STATUSES.includes(state.status)) {
     return allowed({ owned: true, run_id: runId, status: state.status, reason: 'run is ' + state.status + ', it does not gate', stop_refusals: state.stop_refusals });
   }
-  const fl = rowsForRun(readFinishLine(ctx), runId, true);
+  const fl = rowsForRun(readFinishLine(ctx), runId, adoptsUnattributed(state));
   const open = openRows(fl);
   const board = renderBoard(fl);
   if (!open.length) return allowed({ owned: true, run_id: runId, reason: 'no open rows for this run', stop_refusals: state.stop_refusals, board });
@@ -151,18 +151,18 @@ function hookStopIn(ctx, scope) {
     const top = readable[0];
     return allowed({ owned: true, run_id: top.id, status: top.state.status, reason: 'run is ' + top.state.status + ', it does not gate', stop_refusals: top.state.stop_refusals, ...extra });
   }
-  // a hook stop is strict: only rows tagged with the run's id gate it
+  // the same row rule as every view: an owned (1.1) run answers only for rows tagged with its id
   const board = readFinishLine(ctx);
   const withOpen = [];
   for (const g of gating) {
-    const fl = rowsForRun(board, g.id, false);
+    const fl = rowsForRun(board, g.id, adoptsUnattributed(g.state));
     const open = openRows(fl);
     if (open.length) withOpen.push({ ...g, fl, open });
   }
   if (!withOpen.length) {
     const top = gating[0];
     const ids = gating.map((g) => g.id);
-    return allowed({ owned: true, run_id: top.id, runs: ids, reason: 'no open rows for ' + (ids.length > 1 ? 'any owned run' : 'this run'), stop_refusals: top.state.stop_refusals, board: renderBoard(rowsForRun(board, top.id, false)), ...extra });
+    return allowed({ owned: true, run_id: top.id, runs: ids, reason: 'no open rows for ' + (ids.length > 1 ? 'any owned run' : 'this run'), stop_refusals: top.state.stop_refusals, board: renderBoard(rowsForRun(board, top.id, adoptsUnattributed(top.state))), ...extra });
   }
   const patience = loadSettings(ctx, []).values.stop_gate.patience;
   const refused = [];
