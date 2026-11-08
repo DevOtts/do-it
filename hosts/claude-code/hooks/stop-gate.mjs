@@ -10,15 +10,17 @@ import { join } from 'node:path';
 import { callSpine, readStdinJson } from './_spine.mjs';
 
 const input = readStdinJson();
+// a blank or whitespace session id is no session (CP-03 S1-L2)
+const sessionId = typeof input.session_id === 'string' && input.session_id.trim() ? input.session_id.trim() : null;
 const cwd = input.cwd || process.cwd();
 const dir = join(process.env.DO_IT_HOME || cwd, '.do-it', 'host-claude-code');
 const file = join(dir, 'stop-refusals.json');
-const key = input.session_id || 'session';
+const key = sessionId || 'session';
 
 const load = () => { try { return JSON.parse(readFileSync(file, 'utf8')); } catch { return {}; } };
 const save = (n) => { mkdirSync(dir, { recursive: true }); writeFileSync(file, JSON.stringify({ ...load(), [key]: n })); };
 
-const { json } = callSpine(['gate', 'stop', ...(input.session_id ? ['--session', input.session_id] : []), '--cwd', cwd, '--json'], cwd);
+const { json } = callSpine(['gate', 'stop', ...(sessionId ? ['--session', sessionId] : []), '--cwd', cwd, '--json'], cwd);
 const outcome = json && json.outcome;
 const patience = Number(json?.patience ?? process.env.DO_IT_STOP_PATIENCE ?? 3);
 

@@ -21,7 +21,7 @@ import { redactInit, redactText } from './redact.mjs';
 import { cmdResume } from './resume.mjs';
 import { redactFlushEvents } from './secrets.mjs';
 import { route } from './router.mjs';
-import { resolveSessionId } from './session.mjs';
+import { resolveSession } from './session.mjs';
 import { loadSettings } from './settings.mjs';
 import { gateStop } from './stopgate.mjs';
 import { advanceRunStatus, loadState, newRunId, newState, runDir, selectRunId, unreadableRuns, writeState } from './state.mjs';
@@ -135,13 +135,14 @@ export function cmdStart(ctx, args) {
   if (typeof f.request !== 'string' || !f.request.trim()) throw fail('USAGE', 1, { message: 'start requires --request "<text>"' });
   const settings = loadSettings(ctx, args.sets);
   const runId = newRunId(ctx);
+  const session = resolveSession(ctx, f);
   const size = f.size === undefined ? null : (/^\d+$/.test(String(f.size)) ? Number(f.size) : String(f.size));
   const state = newState(ctx, runId, {
     preset: typeof f.preset === 'string' ? f.preset : null,
     request: f.request,
     size,
     host: typeof f.host === 'string' ? f.host : settings.values.host.driver,
-    owner: { session_id: resolveSessionId(ctx, f), cwd: ctx.cwd },
+    owner: { session_id: session.id, cwd: ctx.cwd },
   });
   const routed = state.preset ? null : route(f.request);
   if (routed && routed.preset) {
@@ -154,7 +155,10 @@ export function cmdStart(ctx, args) {
   if (routed && routed.preset) {
     appendEvent(ctx, runId, { event: 'route', stage: state.stage, host: state.host, verdict: routed.preset, detail: { rule: routed.rule, model_call: false } });
   }
-  return { outcome: 'STARTED', exit: 0, run_id: runId, status: state.status, preset: state.preset, root: ctx.root, home: ctx.home };
+  const out = { outcome: 'STARTED', exit: 0, run_id: runId, status: state.status, preset: state.preset, root: ctx.root, home: ctx.home };
+  // an explicit id outranks the host's live one (2.1); say so, since only the recorded id is gated
+  if (session.conflict) out.session_conflict = session.conflict;
+  return out;
 }
 
 export function cmdStatus(ctx, args) {

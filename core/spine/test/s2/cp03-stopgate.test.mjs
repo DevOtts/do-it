@@ -167,3 +167,31 @@ test('CP03 S1-M1 a tampered newer run does not hide an older, valid active run o
   assert.equal(open.out.reason, 'state unreadable');
   assert.deepEqual([...open.out.unreadable].sort(), [a1, a2].sort());
 });
+
+test('CP03 S1-L2 a blank or whitespace session id is absent: never recorded, never matched', () => {
+  const repo = mkRepo();
+  const owner = (id) => readJson(path.join(runDirOf(repo, id), 'state.json')).owner.session_id;
+  const flag = real(repo, ['start', '--request', 'x', '--session', '  ']);
+  assert.equal(owner(flag.out.run_id), null, '--session "  " records nothing');
+  const env = real(repo, ['start', '--request', 'y'], { DO_IT_SESSION_ID: ' ', DO_IT_SESSION_ENV: 'HOST_SID', HOST_SID: 'host-1' });
+  assert.equal(owner(env.out.run_id), 'host-1', 'a blank export falls through to the host variable');
+  const hostBlank = real(repo, ['start', '--request', 'z'], { DO_IT_SESSION_ENV: 'HOST_SID', HOST_SID: '   ' });
+  assert.equal(owner(hostBlank.out.run_id), null);
+  // a hook stop with a blank session is a hook with no session: the cwd fallback gates the session-less run
+  const r2 = mkRepo();
+  const id = real(r2, ['start', '--request', 'x', '--session', ' ']).out.run_id;
+  writeJson(flFile(r2), { rows: [{ id: 'R1', kind: 'dod', state: 'OPEN', evidence: null, run_id: id }] });
+  const stop = real(r2, ['gate', 'stop', '--session', '   ', '--cwd', r2.dir]);
+  assert.equal(stop.out.outcome, 'STOP_REFUSED', stop.stdout);
+  assert.equal(stop.out.run_id, id);
+});
+
+test('CP03 S1-L1 precedence stays --session, DO_IT_SESSION_ID, host variable; start reports the conflict', () => {
+  const repo = mkRepo();
+  const r = real(repo, ['start', '--request', 'x'], { DO_IT_SESSION_ID: 'stale-old', DO_IT_SESSION_ENV: 'HOST_SID', HOST_SID: 'real-A' });
+  assert.equal(r.code, 0, r.stdout);
+  assert.equal(readJson(path.join(runDirOf(repo, r.out.run_id), 'state.json')).owner.session_id, 'stale-old');
+  assert.deepEqual(r.out.session_conflict, { recorded: 'stale-old', host: 'real-A' }, 'the stale export is reported');
+  const same = real(repo, ['start', '--request', 'y'], { DO_IT_SESSION_ID: 'real-A', DO_IT_SESSION_ENV: 'HOST_SID', HOST_SID: 'real-A' });
+  assert.equal(same.out.session_conflict, undefined);
+});

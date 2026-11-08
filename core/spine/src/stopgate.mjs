@@ -3,6 +3,7 @@ import { appendEvent, eventsPath } from './events.mjs';
 import { CliError, fail } from './errors.mjs';
 import { openRows, readFinishLine, renderBoard, rowsForRun, rowsSignature } from './finish-line.mjs';
 import { packAppend } from './pack.mjs';
+import { cleanSessionId } from './session.mjs';
 import { loadSettings } from './settings.mjs';
 import { NON_GATING_STATUSES, loadState, selectRunId, selectScopedRunId, writeState } from './state.mjs';
 
@@ -34,7 +35,7 @@ function logUnreadableOnce(ctx, runId, detail) {
 // A gated run refuses up to `patience` times without progress; the next call parks that run only.
 export function gateStop(ctx, args) {
   const f = args.flags;
-  const scope = { session: typeof f.session === 'string' && f.session ? f.session : null, cwd: typeof f.cwd === 'string' ? f.cwd : null };
+  const scope = { session: cleanSessionId(f.session), cwd: typeof f.cwd === 'string' ? f.cwd : null };
   const hook = !f.run && !!(scope.session || scope.cwd);
   let runId;
   let state;

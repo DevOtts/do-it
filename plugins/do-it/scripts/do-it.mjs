@@ -351,13 +351,14 @@ function cmdStart(ctx, args) {
   if (typeof f.request !== 'string' || !f.request.trim()) throw fail('USAGE', 1, { message: 'start requires --request "<text>"' });
   const settings = loadSettings(ctx, args.sets);
   const runId = newRunId(ctx);
+  const session = resolveSession(ctx, f);
   const size = f.size === undefined ? null : (/^\d+$/.test(String(f.size)) ? Number(f.size) : String(f.size));
   const state = newState(ctx, runId, {
     preset: typeof f.preset === 'string' ? f.preset : null,
     request: f.request,
     size,
     host: typeof f.host === 'string' ? f.host : settings.values.host.driver,
-    owner: { session_id: resolveSessionId(ctx, f), cwd: ctx.cwd },
+    owner: { session_id: session.id, cwd: ctx.cwd },
   });
   const routed = state.preset ? null : route(f.request);
   if (routed && routed.preset) {
@@ -370,7 +371,10 @@ function cmdStart(ctx, args) {
   if (routed && routed.preset) {
     appendEvent(ctx, runId, { event: 'route', stage: state.stage, host: state.host, verdict: routed.preset, detail: { rule: routed.rule, model_call: false } });
   }
-  return { outcome: 'STARTED', exit: 0, run_id: runId, status: state.status, preset: state.preset, root: ctx.root, home: ctx.home };
+  const out = { outcome: 'STARTED', exit: 0, run_id: runId, status: state.status, preset: state.preset, root: ctx.root, home: ctx.home };
+  // an explicit id outranks the host's live one (2.1); say so, since only the recorded id is gated
+  if (session.conflict) out.session_conflict = session.conflict;
+  return out;
 }
 
 function cmdStatus(ctx, args) {
@@ -2757,15 +2761,28 @@ function redactFlushEvents(ctx, result) {
 // ---- session.mjs ----
 // Which session is calling? Core names no host (R3): the host layer says which environment
 // variables carry its session id by exporting DO_IT_SESSION_ENV (comma-separated names).
-// Order: --session, then DO_IT_SESSION_ID, then the first named variable that is set.
-function resolveSessionId(ctx, flags) {
-  if (flags && typeof flags.session === 'string' && flags.session) return flags.session;
+// Precedence (CONTRACT 2.1, unchanged): --session, then DO_IT_SESSION_ID, then the first named host
+// variable that is set. An explicit id therefore outranks the host's live id, so a stale
+// DO_IT_SESSION_ID export would bind the run to a session no hook ever reports; `start` says so in
+// `session_conflict` (CP-03 S1-L1). A blank or whitespace-only value counts as absent and is never
+// recorded (CP-03 S1-L2).
+function cleanSessionId(v) {
+  return typeof v === 'string' && v.trim() ? v.trim() : null;
+}
+
+function resolveSession(ctx, flags) {
   const env = ctx.env || {};
-  if (env.DO_IT_SESSION_ID) return env.DO_IT_SESSION_ID;
+  let host = null;
   for (const name of String(env.DO_IT_SESSION_ENV || '').split(',').map((s) => s.trim()).filter(Boolean)) {
-    if (env[name]) return env[name];
+    host = cleanSessionId(env[name]);
+    if (host) break;
   }
-  return null;
+  const id = cleanSessionId(flags && flags.session) || cleanSessionId(env.DO_IT_SESSION_ID) || host;
+  return { id, host, conflict: id && host && id !== host ? { recorded: id, host } : null };
+}
+
+function resolveSessionId(ctx, flags) {
+  return resolveSession(ctx, flags).id;
 }
 
 // ---- settings.mjs ----
@@ -3214,7 +3231,7 @@ function logUnreadableOnce(ctx, runId, detail) {
 // A gated run refuses up to `patience` times without progress; the next call parks that run only.
 function gateStop(ctx, args) {
   const f = args.flags;
-  const scope = { session: typeof f.session === 'string' && f.session ? f.session : null, cwd: typeof f.cwd === 'string' ? f.cwd : null };
+  const scope = { session: cleanSessionId(f.session), cwd: typeof f.cwd === 'string' ? f.cwd : null };
   const hook = !f.run && !!(scope.session || scope.cwd);
   let runId;
   let state;
