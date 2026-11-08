@@ -53,7 +53,9 @@ export function cmdResume(ctx, args) {
     });
   }
   const rebind = () => {
-    const prev = was || { session_id: null, cwd: ctx.cwd };
+    // a legacy run (no owner object) keeps adopting its 1.0.x rows after it is bound to a session, or it would
+    // re-seed its pipeline and start again at intake (CP-03 R3-L7)
+    const prev = was || { session_id: null, cwd: ctx.cwd, adopted_legacy: true };
     if (!session || prev.session_id === session) return null;
     const reason = foreign ? 'take_over' : 'resume';
     state.owner = { ...prev, session_id: session, history: [...(Array.isArray(prev.history) ? prev.history : []), { session_id: prev.session_id || null, until: ctx.now(), reason }] };

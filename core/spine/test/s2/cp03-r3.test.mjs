@@ -4,8 +4,13 @@ import assert from 'node:assert/strict';
 import cp from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { test } from 'node:test';
+import { after, test } from 'node:test';
 import { mkRepo, real, readJson, runDirOf, sha256Bytes, writeJson } from '../helpers.mjs';
+
+// temp repos, their user homes and sibling folders are removed when the file is done
+const made = [];
+const mk = (o) => { const r = mkRepo(o); made.push(r.dir, r.home); return r; };
+after(() => { for (const d of made) for (const x of [d, d + '-Y', d + '-plain']) fs.rmSync(x, { recursive: true, force: true }); });
 
 function start(repo, session, cwd) {
   const r = real(repo, ['start', '--preset', 'feature', '--request', 'ship ' + session, '--session', session], null, cwd);
@@ -16,7 +21,7 @@ const hookStop = (repo, session, cwd) => real(repo, ['gate', 'stop', '--session'
 const statusOf = (repo, id) => readJson(path.join(runDirOf(repo, id), 'state.json')).status;
 
 test('CP03 R3-S1-H6 gate advance never reaches DONE: the run stays gated with its rows open', () => {
-  const repo = mkRepo();
+  const repo = mk();
   const a = start(repo, 'sess-A');
   assert.equal(real(repo, ['next', '--run', a]).code, 0);
   for (const s of ['BUILDING', 'VERIFYING', 'CONCLUDING']) {
@@ -36,7 +41,7 @@ test('CP03 R3-S1-H6 gate advance never reaches DONE: the run stays gated with it
 });
 
 test('CP03 R3-S1-H6 gate advance refuses every non-gating status, naming its owning command', () => {
-  const repo = mkRepo();
+  const repo = mk();
   const a = start(repo, 'sess-A');
   real(repo, ['next', '--run', a]);
   assert.equal(real(repo, ['gate', 'advance', '--run', a, '--to', 'BUILDING']).out.outcome, 'ADVANCED');
@@ -55,7 +60,7 @@ test('CP03 R3-S1-H6 gate advance refuses every non-gating status, naming its own
 });
 
 test('CP03 R3-S1-H6 gate escalate starts only from a run that already waits on the owner, and needs an open question', () => {
-  const repo = mkRepo();
+  const repo = mk();
   const a = start(repo, 'sess-A');
   real(repo, ['next', '--run', a]);
   real(repo, ['gate', 'advance', '--run', a, '--to', 'BUILDING']);
@@ -95,7 +100,7 @@ function sibling(repo, name) {
 }
 
 test('CP03 R3-S1-H7 a stop from a sibling repo or a non-git folder still finds the session\'s run', () => {
-  const repo = mkRepo({ commit: true });
+  const repo = mk({ commit: true });
   const a = start(repo, 'sess-A');
   assert.equal(real(repo, ['next', '--run', a]).code, 0);
   const y = sibling(repo, 'Y');
@@ -116,7 +121,7 @@ test('CP03 R3-S1-H7 a stop from a sibling repo or a non-git folder still finds t
 });
 
 test('CP03 R3-S1-H7 the registry records start, resume and take-over; stale entries are pruned', () => {
-  const repo = mkRepo({ commit: true });
+  const repo = mk({ commit: true });
   const regFile = (s) => path.join(repo.home, '.do-it', 'sessions', s + '.json');
   const a = start(repo, 'sess-A');
   real(repo, ['next', '--run', a]);
@@ -157,7 +162,7 @@ function closeAllOf(repo, runId) {
 const legacyRow = { id: 'old-slice-T-9', kind: 'dod', state: 'OPEN', evidence: null, owner_question: null, reason: null, archived_to: null };
 
 test('CP03 R3-S1-M6 on a 1.0.x board with an open legacy row a 1.1 run reaches FINISH_LINE_REACHED and CONCLUDED', () => {
-  const repo = mkRepo();
+  const repo = mk();
   writeJson(path.join(repo.doIt, 'finish-line.json'), { rows: [legacyRow] });
   const b = start(repo, 'sess-B');
   assert.equal(real(repo, ['next', '--run', b]).code, 0);
@@ -181,7 +186,7 @@ test('CP03 R3-S1-M6 on a 1.0.x board with an open legacy row a 1.1 run reaches F
 });
 
 test('CP03 R3-S1-M6 a legacy run (no owner) still counts the old row in next, explicit stop and conclude', () => {
-  const repo = mkRepo();
+  const repo = mk();
   writeJson(path.join(repo.doIt, 'finish-line.json'), { rows: [legacyRow] });
   const l = start(repo, 'sess-L');
   const file = path.join(runDirOf(repo, l), 'state.json');
@@ -199,4 +204,30 @@ test('CP03 R3-S1-M6 a legacy run (no owner) still counts the old row in next, ex
   const c = real(repo, ['gate', 'conclude', '--run', l]);
   assert.equal(c.out.outcome, 'CONCLUDE_REFUSED');
   assert.deepEqual(c.out.ids, ['old-slice-T-9']);
+});
+
+test('CP03 R3-L7 a legacy run re-bound by resume keeps adopting its 1.0.x rows and does not restart at intake', () => {
+  const repo = mk();
+  const flFile = path.join(repo.doIt, 'finish-line.json');
+  const probe = start(repo, 'probe');
+  real(repo, ['next', '--run', probe]);
+  const ids = readJson(flFile).rows.map((r) => r.id);
+  fs.rmSync(runDirOf(repo, probe), { recursive: true, force: true });
+  writeJson(flFile, { rows: ids.map((id) => ({ id, kind: 'wave', state: id !== 'verify' ? 'DONE' : 'OPEN', evidence: 'legacy', owner_question: null, reason: null, archived_to: null })) });
+  const l = start(repo, 'sess-L');
+  const file = path.join(runDirOf(repo, l), 'state.json');
+  const st = readJson(file);
+  delete st.owner;
+  fs.writeFileSync(file, JSON.stringify(st, null, 2) + '\n');
+  fs.writeFileSync(path.join(runDirOf(repo, l), '.state.sha256'), sha256Bytes(fs.readFileSync(file)) + '\n');
+  const r = real(repo, ['resume', '--session', 'sess-N', '--run', l]);
+  assert.equal(r.out.outcome, 'REBOUND', r.stdout);
+  assert.equal(r.out.owner.adopted_legacy, true);
+  const n = real(repo, ['next', '--run', l]);
+  assert.equal(n.out.wave, 'verify', 'carries on where the 1.0.x run was: ' + n.stdout);
+  assert.equal(readJson(flFile).rows.length, ids.length, 'nothing re-seeded');
+  // its new owner is gated by the open legacy row, on the hook path too (fails closed)
+  const h = hookStop(repo, 'sess-N');
+  assert.equal(h.out.outcome, 'STOP_REFUSED', h.stdout);
+  assert.deepEqual(h.out.open, ['verify']);
 });

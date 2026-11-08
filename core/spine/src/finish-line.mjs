@@ -29,8 +29,11 @@ export function writeFinishLine(ctx, fl) {
 // existed has none. Only a legacy run (state with no owner object, written by 1.0.x) may adopt such a
 // row; a 1.1 run never does, or a 1.0.x board's rows would stand in for the run's own and it would
 // seed nothing (CP-03 R2-S1-H3). `adopt` is false unless the caller passes adoptsUnattributed(state).
+// A legacy run that `resume` later bound to a session keeps adopting (owner.adopted_legacy, CP-03 R3-L7).
 export function adoptsUnattributed(state) {
-  return !!state && !(state.owner && typeof state.owner === 'object');
+  if (!state) return false;
+  const o = state.owner;
+  return !(o && typeof o === 'object') || o.adopted_legacy === true;
 }
 
 export function findRow(fl, id, runId, adopt) {

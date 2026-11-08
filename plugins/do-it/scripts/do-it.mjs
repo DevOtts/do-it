@@ -699,8 +699,11 @@ function writeFinishLine(ctx, fl) {
 // existed has none. Only a legacy run (state with no owner object, written by 1.0.x) may adopt such a
 // row; a 1.1 run never does, or a 1.0.x board's rows would stand in for the run's own and it would
 // seed nothing (CP-03 R2-S1-H3). `adopt` is false unless the caller passes adoptsUnattributed(state).
+// A legacy run that `resume` later bound to a session keeps adopting (owner.adopted_legacy, CP-03 R3-L7).
 function adoptsUnattributed(state) {
-  return !!state && !(state.owner && typeof state.owner === 'object');
+  if (!state) return false;
+  const o = state.owner;
+  return !(o && typeof o === 'object') || o.adopted_legacy === true;
 }
 
 function findRow(fl, id, runId, adopt) {
@@ -2557,7 +2560,9 @@ function cmdResume(ctx, args) {
     });
   }
   const rebind = () => {
-    const prev = was || { session_id: null, cwd: ctx.cwd };
+    // a legacy run (no owner object) keeps adopting its 1.0.x rows after it is bound to a session, or it would
+    // re-seed its pipeline and start again at intake (CP-03 R3-L7)
+    const prev = was || { session_id: null, cwd: ctx.cwd, adopted_legacy: true };
     if (!session || prev.session_id === session) return null;
     const reason = foreign ? 'take_over' : 'resume';
     state.owner = { ...prev, session_id: session, history: [...(Array.isArray(prev.history) ? prev.history : []), { session_id: prev.session_id || null, until: ctx.now(), reason }] };
