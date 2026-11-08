@@ -14,13 +14,14 @@ function start(repo, session, extra) {
 }
 
 // Rewrite state.json the way the spine would, keeping its sidecar digest valid.
-function editStatus(repo, runId, status) {
+function editState(repo, runId, fn) {
   const file = path.join(runDirOf(repo, runId), 'state.json');
   const st = readJson(file);
-  st.status = status;
+  fn(st);
   fs.writeFileSync(file, JSON.stringify(st, null, 2) + '\n');
   fs.writeFileSync(path.join(runDirOf(repo, runId), '.state.sha256'), sha(file) + '\n');
 }
+const editStatus = (repo, runId, status) => editState(repo, runId, (st) => { st.status = status; });
 
 const flFile = (repo) => path.join(repo.doIt, 'finish-line.json');
 const hookStop = (repo, session) => real(repo, ['gate', 'stop', '--session', session, '--cwd', repo.dir]);
@@ -137,4 +138,32 @@ test('CP03 S1-H2 a session that owns nothing gets OWNED_BY_OTHER_SESSION naming 
   assert.ok(ev, 'the takeover is an event');
   assert.equal(ev.detail.from, 'sess-A');
   assert.equal(ev.detail.to, 'sess-B');
+});
+
+test('CP03 S1-M1 a tampered newer run does not hide an older, valid active run of the same owner', () => {
+  const repo = mkRepo();
+  const a1 = startNoPreset(repo, 'sess-A');
+  const a2 = startNoPreset(repo, 'sess-A');
+  editState(repo, a2, (st) => { st.created_at = '2999-01-01T00:00:00.000Z'; }); // a2 is certainly the newer run
+  writeJson(flFile(repo), { rows: [{ id: 'R1', kind: 'dod', state: 'OPEN', evidence: null, run_id: a1 }] });
+  // the attack: one byte appended to the newer run's state.json (still parses, digest no longer matches)
+  fs.appendFileSync(path.join(runDirOf(repo, a2), 'state.json'), ' ');
+  const r = hookStop(repo, 'sess-A');
+  assert.equal(r.out.outcome, 'STOP_REFUSED', r.stdout);
+  assert.equal(r.out.owned, true);
+  assert.equal(r.out.run_id, a1, 'the readable active run gates');
+  assert.deepEqual(r.out.open, ['R1']);
+  assert.deepEqual(r.out.unreadable, [a2], 'the unreadable run is named');
+  const events = fs.readFileSync(path.join(runDirOf(repo, a2), 'events.jsonl'), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
+  assert.ok(events.some((e) => e.event === 'stop_gate_state_unreadable'), 'the unreadable run is logged');
+  // once the readable run no longer gates, the stop is allowed; the fail-open applies to the bad run alone
+  editStatus(repo, a1, 'PARKED');
+  const ok = hookStop(repo, 'sess-A');
+  assert.equal(ok.out.outcome, 'STOP_ALLOWED', ok.stdout);
+  // every owned run unreadable: fail open, as CONTRACT 3.1 says
+  fs.appendFileSync(path.join(runDirOf(repo, a1), 'state.json'), ' ');
+  const open = hookStop(repo, 'sess-A');
+  assert.equal(open.out.outcome, 'STOP_ALLOWED', open.stdout);
+  assert.equal(open.out.reason, 'state unreadable');
+  assert.deepEqual([...open.out.unreadable].sort(), [a1, a2].sort());
 });

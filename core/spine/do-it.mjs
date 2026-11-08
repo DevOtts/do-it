@@ -3217,9 +3217,12 @@ function gateStop(ctx, args) {
   const scope = { session: typeof f.session === 'string' && f.session ? f.session : null, cwd: typeof f.cwd === 'string' ? f.cwd : null };
   const hook = !f.run && !!(scope.session || scope.cwd);
   let runId;
+  let state;
+  const skipped = [];
   const owned = true; // an explicit stop names its run; a hook reaches here only for a run it owns
   if (!hook) {
     runId = selectRunId(ctx, f);
+    state = loadState(ctx, runId);
   } else {
     const scoped = selectScopedRunId(ctx, scope);
     if (!scoped.run) {
@@ -3229,26 +3232,32 @@ function gateStop(ctx, args) {
       }
       return allowed({ owned: false, reason: scoped.legacy ? 'legacy run has no owner' : 'no run is owned by this session or cwd' });
     }
-    runId = scoped.run;
-  }
-  let state;
-  try {
-    state = loadState(ctx, runId);
-  } catch (e) {
-    if (hook && e instanceof CliError && ['STATE_TAMPERED', 'STATE_INVALID'].includes(e.outcome)) {
-      logUnreadableOnce(ctx, runId, { fail_open: true, cause: e.outcome });
-      return allowed({ owned: true, run_id: runId, reason: 'state unreadable', state_error: e.outcome });
+    // Fail open only for the run whose state is unreadable (CP-03 S1-M1): log it and gate on the next
+    // owned run, in the same rank order (gating first, newest first). Allowed only when none is readable.
+    for (const c of scoped.ranked) {
+      try {
+        state = loadState(ctx, c.id);
+        runId = c.id;
+        break;
+      } catch (e) {
+        if (!(e instanceof CliError && ['STATE_TAMPERED', 'STATE_INVALID'].includes(e.outcome))) throw e;
+        logUnreadableOnce(ctx, c.id, { fail_open: true, cause: e.outcome });
+        skipped.push({ run_id: c.id, state_error: e.outcome });
+      }
     }
-    throw e;
+    if (!state) {
+      return allowed({ owned: true, run_id: skipped[0].run_id, reason: 'state unreadable', state_error: skipped[0].state_error, unreadable: skipped.map((x) => x.run_id) });
+    }
   }
+  const extra = skipped.length ? { unreadable: skipped.map((x) => x.run_id) } : {};
   if (NON_GATING_STATUSES.includes(state.status)) {
-    return allowed({ owned, run_id: runId, status: state.status, reason: 'run is ' + state.status + ', it does not gate', stop_refusals: state.stop_refusals });
+    return allowed({ owned, run_id: runId, status: state.status, reason: 'run is ' + state.status + ', it does not gate', stop_refusals: state.stop_refusals, ...extra });
   }
   const fl = rowsForRun(readFinishLine(ctx), runId, !hook);
   const open = openRows(fl);
   const board = renderBoard(fl);
   if (!open.length) {
-    return allowed({ owned, run_id: runId, reason: 'no open rows for this run', stop_refusals: state.stop_refusals, board });
+    return allowed({ owned, run_id: runId, reason: 'no open rows for this run', stop_refusals: state.stop_refusals, board, ...extra });
   }
   const patience = loadSettings(ctx, []).values.stop_gate.patience;
   const sig = rowsSignature(fl);
@@ -3271,13 +3280,13 @@ function gateStop(ctx, args) {
     state.status = 'PARKED';
     writeState(ctx, state);
     appendEvent(ctx, runId, { event: 'stop_parked', stage: state.stage, host: state.host, verdict: 'PARKED', detail: { from, open: ids } });
-    return { outcome: 'PARKED', exit: 2, owned, run_id: runId, status: 'PARKED', open: ids, board };
+    return { outcome: 'PARKED', exit: 2, owned, run_id: runId, status: 'PARKED', open: ids, board, ...extra };
   }
   state.stop_refusals += 1;
   state.gates.stop_gate = { sig };
   writeState(ctx, state);
   appendEvent(ctx, runId, { event: 'stop_refused', stage: state.stage, host: state.host, verdict: 'STOP_REFUSED', detail: { refusals: state.stop_refusals, open: open.map((r) => r.id) } });
-  throw fail('STOP_REFUSED', 1, { owned, run_id: runId, reason: 'finish-line rows are still open', stop_refusals: state.stop_refusals, patience, open: open.map((r) => r.id), board });
+  throw fail('STOP_REFUSED', 1, { owned, run_id: runId, reason: 'finish-line rows are still open', stop_refusals: state.stop_refusals, patience, open: open.map((r) => r.id), board, ...extra });
 }
 
 // ---- verdict-file.mjs ----
