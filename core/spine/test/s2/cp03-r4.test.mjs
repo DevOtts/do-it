@@ -1,10 +1,11 @@
 // CP-03 round 4 regressions for the stop gate (G-1, CONTRACT 3.1). Each test replays the adversarial
 // reviewer's commands through the built bundle and asserts a refusal.
 import assert from 'node:assert/strict';
+import cp from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { after, test } from 'node:test';
-import { mkRepo, real, readJson, runDirOf, writeJson } from '../helpers.mjs';
+import { BIN, mkRepo, real, readJson, runDirOf, writeJson } from '../helpers.mjs';
 
 const made = [];
 const mk = (o) => { const r = mkRepo(o); made.push(r.dir, r.home); return r; };
@@ -105,4 +106,81 @@ test('CP03 R4-S1-H8 legitimate callers keep working: needs_human with a question
   assert.equal(m.out.outcome, 'MIDRUN_QUESTION_REFUSED', m.stdout);
   assert.equal(statusOf(repo, b), 'BUILDING');
   assert.equal(hookStop(repo, 'S2').out.outcome, 'STOP_REFUSED');
+});
+
+// R4-S1-M8: the session registry is one file per run, so parallel starts never lose each other.
+const regDir = (repo, s, root) => path.join(root || path.join(repo.home, '.do-it'), 'sessions', s);
+const entries = (repo, s, root) => { try { return fs.readdirSync(regDir(repo, s, root)).filter((n) => n.endsWith('.json') && !n.startsWith('.')).map((n) => readJson(path.join(regDir(repo, s, root), n))); } catch { return []; } };
+
+function spawnAsync(argv, opts) {
+  return new Promise((resolve) => {
+    const c = cp.spawn(process.execPath, argv, opts);
+    let out = '';
+    c.stdout.on('data', (d) => { out += d; });
+    c.on('close', (code) => resolve({ code, out }));
+  });
+}
+
+function repoIn(parent, name, env) {
+  const dir = path.join(parent, name);
+  fs.mkdirSync(dir);
+  cp.execFileSync('git', ['init', '-q', '-b', 'main', dir]);
+  cp.execFileSync('git', ['config', 'user.email', 't@example.com'], { cwd: dir, env });
+  cp.execFileSync('git', ['config', 'user.name', 'T'], { cwd: dir, env });
+  return dir;
+}
+
+test('CP03 R4-S1-M8 8 parallel starts of one session give 8 registry entries, 20 times out of 20; each run is gated from the parent folder', async () => {
+  const base = mk({ commit: true });
+  const parent = path.join(base.home, 'par');
+  fs.mkdirSync(parent);
+  const userHome = path.join(base.home, 'uh');
+  const env = { ...base.env, DO_IT_USER_HOME: userHome };
+  const dirs = [];
+  for (let i = 0; i < 8; i++) dirs.push(repoIn(parent, 'R' + i, env));
+  const counts = [];
+  for (let t = 0; t < 20; t++) {
+    const session = 'race-' + t;
+    const outs = await Promise.all(dirs.map((d) => spawnAsync([BIN, 'start', '--preset', 'feature', '--request', 'race ' + t, '--session', session, '--json'], { cwd: d, env })));
+    for (const o of outs) {
+      assert.equal(o.code, 0, o.out);
+      assert.ok(!/session_registry_error/.test(o.out), o.out);
+    }
+    const ids = outs.map((o) => JSON.parse(o.out.trim().split('\n').pop()).run_id).sort();
+    const got = entries(base, session, userHome).map((e) => e.run_id).sort();
+    counts.push(got.length);
+    assert.deepEqual(got, ids, 'trial ' + t + ': every start kept its entry');
+  }
+  assert.deepEqual(counts, Array(20).fill(8));
+  // each run is gated from the parent folder (no repo): seed rows, then stop
+  const session = 'race-19';
+  for (const d of dirs) for (const id of fs.readdirSync(path.join(d, '.do-it', 'runs'))) {
+    const st = readJson(path.join(d, '.do-it', 'runs', id, 'state.json'));
+    if (st.owner && st.owner.session_id === session) assert.equal(real({ ...base, dir: d, env }, ['next', '--run', id], null, d).code, 0);
+  }
+  const stop = real({ ...base, env }, ['gate', 'stop', '--session', session, '--cwd', parent], null, parent);
+  assert.equal(stop.out.outcome, 'STOP_REFUSED', stop.stdout);
+  assert.equal(stop.out.refused_homes.length, 8, 'all 8 homes refuse');
+  fs.rmSync(parent, { recursive: true, force: true });
+});
+
+test('CP03 R4-S1-M8 the pre-release single-file registry is still read and migrated; pruning removes only the stale run\'s file', () => {
+  const repo = mk({ commit: true });
+  const a = start(repo, 'mig');
+  real(repo, ['next', '--run', a]);
+  const doIt = fs.realpathSync(repo.doIt);
+  // rewrite the registry in the old layout: sessions/mig.json with runs: [...], plus a dead entry
+  fs.rmSync(regDir(repo, 'mig'), { recursive: true });
+  writeJson(regDir(repo, 'mig') + '.json', { session_id: 'mig', runs: [{ run_id: a, home: doIt, root: fs.realpathSync(repo.dir) }, { run_id: 'r-gone', home: path.join(repo.home, 'nowhere', '.do-it') }] });
+  const y = path.join(repo.home, 'Y');
+  fs.mkdirSync(y);
+  const stop = hookStop(repo, 'mig', y);
+  assert.equal(stop.out.outcome, 'STOP_REFUSED', 'a legacy entry still gates: ' + stop.stdout);
+  assert.ok(!fs.existsSync(regDir(repo, 'mig') + '.json'), 'the old file is migrated away');
+  assert.deepEqual(entries(repo, 'mig').map((e) => e.run_id), [a], 'the live entry is carried over, the dead one is not');
+  // a second run of the session; when the first is concluded-away, only its own file goes
+  const b = start(repo, 'mig');
+  fs.rmSync(path.join(repo.doIt, 'runs', a), { recursive: true });
+  hookStop(repo, 'mig', y);
+  assert.deepEqual(entries(repo, 'mig').map((e) => e.run_id), [b]);
 });

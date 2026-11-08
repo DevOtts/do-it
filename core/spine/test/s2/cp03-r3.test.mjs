@@ -122,32 +122,33 @@ test('CP03 R3-S1-H7 a stop from a sibling repo or a non-git folder still finds t
 
 test('CP03 R3-S1-H7 the registry records start, resume and take-over; stale entries are pruned', () => {
   const repo = mk({ commit: true });
-  const regFile = (s) => path.join(repo.home, '.do-it', 'sessions', s + '.json');
+  // one file per run (R4-S1-M8): sessions/<session>/<run>.json
+  const regDir = (s, root) => path.join(root || path.join(repo.home, '.do-it'), 'sessions', s);
+  const entries = (s, root) => { try { return fs.readdirSync(regDir(s, root)).filter((n) => n.endsWith('.json')).map((n) => readJson(path.join(regDir(s, root), n))); } catch { return []; } };
   const a = start(repo, 'sess-A');
   real(repo, ['next', '--run', a]);
-  const reg = readJson(regFile('sess-A'));
-  assert.deepEqual(reg.runs.map((e) => [e.run_id, e.home]), [[a, fs.realpathSync(repo.doIt)]]);
+  assert.deepEqual(entries('sess-A').map((e) => [e.run_id, e.home]), [[a, fs.realpathSync(repo.doIt)]]);
   // DO_IT_USER_HOME moves the registry (tests and sandboxes)
   const alt = path.join(repo.home, 'alt');
   const b = real(repo, ['start', '--preset', 'feature', '--request', 'alt', '--session', 'sess-ALT'], { DO_IT_USER_HOME: alt });
-  assert.ok(fs.existsSync(path.join(alt, 'sessions', 'sess-ALT.json')));
-  assert.ok(!fs.existsSync(regFile('sess-ALT')));
+  assert.equal(entries('sess-ALT', alt).length, 1);
+  assert.equal(entries('sess-ALT').length, 0);
   // a take-over moves the run to the new session's list; the old entry is pruned on the next read
   const y = sibling(repo, 'Y');
   const t = real(repo, ['resume', '--session', 'sess-C', '--run', a, '--take-over']);
   assert.equal(t.out.outcome, 'TAKEN_OVER', t.stdout);
-  assert.deepEqual(readJson(regFile('sess-C')).runs.map((e) => e.run_id), [a]);
+  assert.deepEqual(entries('sess-C').map((e) => e.run_id), [a]);
   assert.equal(hookStop(repo, 'sess-C', y).out.outcome, 'STOP_REFUSED', 'the new owner is gated from the sibling');
   assert.equal(hookStop(repo, 'sess-A', y).out.outcome, 'STOP_ALLOWED', 'the old owner is not');
-  assert.ok(!fs.existsSync(regFile('sess-A')), 'the entry of a run sess-A no longer owns is pruned');
+  assert.equal(entries('sess-A').length, 0, 'the entry of a run sess-A no longer owns is pruned');
   // a run folder that is gone is pruned too
   fs.rmSync(path.join(repo.doIt, 'runs', a), { recursive: true });
   assert.equal(hookStop(repo, 'sess-C', y).out.outcome, 'STOP_ALLOWED');
-  assert.ok(!fs.existsSync(regFile('sess-C')));
+  assert.equal(entries('sess-C').length, 0);
   // an odd session id never becomes a path
   real(repo, ['start', '--preset', 'feature', '--request', 'odd', '--session', '../../x y']);
   const names = fs.readdirSync(path.join(repo.home, '.do-it', 'sessions'));
-  assert.ok(names.every((n) => /^[A-Za-z0-9._-]+\.json$/.test(n)), names.join(','));
+  assert.ok(names.every((n) => /^[A-Za-z0-9._-]+$/.test(n) && !/^\.+$/.test(n)), names.join(','));
   assert.equal(b.code, 0);
 });
 
