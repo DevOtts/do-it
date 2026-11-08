@@ -14,7 +14,7 @@ import { renderBoard, readFinishLine, rowsForRun } from './finish-line.mjs';
 import { cmdMeter } from './meter.mjs';
 import { cmdNext, gateRoute } from './next.mjs';
 import { gateBuild } from './readiness.mjs';
-import { cmdPack } from './pack.mjs';
+import { cmdPack, openPackQuestions } from './pack.mjs';
 import { cmdPark } from './park.mjs';
 import { cmdRecord } from './record.mjs';
 import { redactInit, redactText } from './redact.mjs';
@@ -196,8 +196,9 @@ export function cmdGate(ctx, args) {
     case 'stop': return gateStop(ctx, args);
     case 'route': return gateRoute(ctx, args);
     case 'ceiling': return gateCeiling(ctx, args);
+    case 'escalate': return gateEscalate(ctx, args);
     default:
-      throw fail('USAGE', 1, { message: 'gate needs a subcommand', subcommands: ['verify', 'conclude', 'advance', 'build', 'stop', 'route', 'ceiling'] });
+      throw fail('USAGE', 1, { message: 'gate needs a subcommand', subcommands: ['verify', 'conclude', 'advance', 'build', 'stop', 'route', 'ceiling', 'escalate'] });
   }
 }
 
@@ -208,4 +209,27 @@ export function gateAdvance(ctx, args) {
   const state = loadState(ctx, runId);
   const moved = advanceRunStatus(ctx, state, to);
   return { outcome: 'ADVANCED', exit: 0, run_id: runId, from: moved.from, status: moved.to };
+}
+
+// gate escalate --reason "<text>": hand a run that already waits on the owner (NEEDS_HUMAN, with an open
+// owner-pack question) or has FAILED over to the owner for good. It starts only from a status that already
+// does not gate a stop, so it never switches a gate off (CP-03 R3-S1-H6); the reason is kept in the event.
+export const ESCALATE_FROM = ['NEEDS_HUMAN', 'FAILED'];
+export function gateEscalate(ctx, args) {
+  const f = args.flags;
+  const reason = typeof f.reason === 'string' ? f.reason.trim() : '';
+  if (!reason) throw fail('USAGE', 1, { message: 'gate escalate requires --reason "<why the owner must take the run>"' });
+  const runId = selectRunId(ctx, f);
+  const state = loadState(ctx, runId);
+  if (!ESCALATE_FROM.includes(state.status)) {
+    throw fail('TRANSITION_REFUSED', 1, { from: state.status, to: 'ESCALATED', allowed_from: ESCALATE_FROM, message: 'gate escalate starts only from a run that already waits on the owner or has failed' });
+  }
+  if (state.status === 'NEEDS_HUMAN' && !openPackQuestions(ctx, runId).length) {
+    throw fail('TRANSITION_REFUSED', 1, { from: state.status, to: 'ESCALATED', message: 'no open owner-pack question: nothing hands the run to the owner' });
+  }
+  const from = state.status;
+  state.status = 'ESCALATED';
+  writeState(ctx, state);
+  appendEvent(ctx, runId, { event: 'escalated', stage: state.stage, host: state.host, verdict: 'ESCALATED', detail: { from, reason } });
+  return { outcome: 'ESCALATED', exit: 0, run_id: runId, from, status: 'ESCALATED', reason };
 }

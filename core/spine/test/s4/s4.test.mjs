@@ -5,6 +5,7 @@ import test from 'node:test';
 import { parseReply } from '../../src/reply.mjs';
 import { packAppend, packPath } from '../../src/pack.mjs';
 import { makeCtx } from '../../src/ctx.mjs';
+import { loadState, writeState } from '../../src/state.mjs';
 import { BIN, mkRepo, real, unit, readJson, readJsonl, runDirOf, sha, sha256Bytes, startRun, tmp, writeJson } from '../helpers.mjs';
 
 const CORPUS = JSON.parse(fs.readFileSync(new URL('../fixtures/replies.json', import.meta.url), 'utf8'));
@@ -21,12 +22,17 @@ function seed(repo, runId, questions) {
 }
 
 function events(repo, runId) { return readJsonl(path.join(runDirOf(repo, runId), 'events.jsonl')); }
+// Test setup: put the run in `status`. A gating status is reached with `gate advance`; a non-gating one
+// (NEEDS_HUMAN here) is entered only by its owning command (CP-03 R3-S1-H6), so the fixture writes it
+// through the spine's own state writer after the pack has its questions.
 function setStatus(repo, runId, status) {
-  for (const to of ['BUILDING', status]) {
-    if (to === 'BUILDING' && status === 'BUILDING') continue;
-    const r = unit(repo, ['gate', 'advance', '--to', to, '--run', runId]);
-    assert.equal(r.code, 0, r.stdout);
-  }
+  const r = unit(repo, ['gate', 'advance', '--to', 'BUILDING', '--run', runId]);
+  assert.equal(r.code, 0, r.stdout);
+  if (status === 'BUILDING') return;
+  const ctx = makeCtx({ cwd: repo.dir, env: repo.env });
+  const st = loadState(ctx, runId);
+  st.status = status;
+  writeState(ctx, st);
 }
 
 function setup(questions, opts) {

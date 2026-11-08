@@ -211,9 +211,31 @@ export const RUN_TRANSITIONS = {
   DONE: [],
 };
 
-// gate advance --to STATUS: a move along the M1 lifecycle, nothing else.
+// The command that owns each non-gating status (CP-03 R3-S1-H6). A run enters a status that does not gate a
+// stop only through the command that checks what that status claims: DONE through `gate conclude` (G-13:
+// every row accounted, no live worker, no pending wake, deploy legs re-verified), PARKED through `park` or
+// the stop gate at patience, NEEDS_HUMAN / AWAIT_RATIFY through an owner-pack question, BLOCKED / FAILED /
+// ESCALATED through `record` with a reason. `gate advance` never reaches one, or the agent the gate holds
+// could switch the gate off with two commands.
+export const NON_GATING_OWNERS = {
+  DONE: 'gate conclude',
+  PARKED: 'park (or the stop gate at patience)',
+  NEEDS_HUMAN: 'record (a needs_human result with its owner-pack questions)',
+  AWAIT_RATIFY: 'the owner pack / readiness (gate build)',
+  BLOCKED: 'record (a blocked result with a reason) or gate build on a blocked readiness',
+  FAILED: 'record (a failed result)',
+  ESCALATED: 'record (ladder or rollback), handoff at its cap, or gate escalate --reason from NEEDS_HUMAN or FAILED',
+};
+
+// gate advance --to STATUS: a move along the M1 lifecycle between statuses that gate, nothing else.
 export function advanceRunStatus(ctx, state, to) {
-  const allowed = RUN_TRANSITIONS[state.status] || [];
+  if (NON_GATING_STATUSES.includes(to)) {
+    throw fail('TRANSITION_REFUSED', 1, {
+      from: state.status, to, owner: NON_GATING_OWNERS[to],
+      message: to + ' does not gate a stop, so gate advance never enters it; only ' + NON_GATING_OWNERS[to] + ' does',
+    });
+  }
+  const allowed = (RUN_TRANSITIONS[state.status] || []).filter((s) => !NON_GATING_STATUSES.includes(s));
   if (!allowed.includes(to)) throw fail('TRANSITION_REFUSED', 1, { from: state.status, to, allowed });
   const from = state.status;
   state.status = to;

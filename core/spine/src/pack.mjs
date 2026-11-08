@@ -45,6 +45,15 @@ export function packAppend(ctx, runId, questions) {
 
 // The stop gate wrote its questions with source 'stop-gate'. Before that field existed it wrote this
 // exact sentence; the text is its own template, so it identifies the origin.
+// Questions still waiting on the owner: not withdrawn and not answered in answers.json.
+export function openPackQuestions(ctx, runId) {
+  const pack = readJsonIfExists(packPath(ctx, runId));
+  if (!pack || !Array.isArray(pack.questions)) return [];
+  const doc = readJsonIfExists(path.join(ctx.home, 'runs', runId, 'answers.json'));
+  const answered = new Set((doc && Array.isArray(doc.answers) ? doc.answers : []).map((a) => a.n));
+  return pack.questions.filter((q) => q.status !== 'withdrawn' && !answered.has(q.n));
+}
+
 export function isStopGateQuestion(q) {
   return q.source === 'stop-gate' || (q.source === undefined && q.kind === 'default' && /^The run stopped with \d+ open row\(s\) after \d+ refusals: /.test(q.text));
 }

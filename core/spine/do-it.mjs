@@ -412,8 +412,9 @@ function cmdGate(ctx, args) {
     case 'stop': return gateStop(ctx, args);
     case 'route': return gateRoute(ctx, args);
     case 'ceiling': return gateCeiling(ctx, args);
+    case 'escalate': return gateEscalate(ctx, args);
     default:
-      throw fail('USAGE', 1, { message: 'gate needs a subcommand', subcommands: ['verify', 'conclude', 'advance', 'build', 'stop', 'route', 'ceiling'] });
+      throw fail('USAGE', 1, { message: 'gate needs a subcommand', subcommands: ['verify', 'conclude', 'advance', 'build', 'stop', 'route', 'ceiling', 'escalate'] });
   }
 }
 
@@ -424,6 +425,29 @@ function gateAdvance(ctx, args) {
   const state = loadState(ctx, runId);
   const moved = advanceRunStatus(ctx, state, to);
   return { outcome: 'ADVANCED', exit: 0, run_id: runId, from: moved.from, status: moved.to };
+}
+
+// gate escalate --reason "<text>": hand a run that already waits on the owner (NEEDS_HUMAN, with an open
+// owner-pack question) or has FAILED over to the owner for good. It starts only from a status that already
+// does not gate a stop, so it never switches a gate off (CP-03 R3-S1-H6); the reason is kept in the event.
+const ESCALATE_FROM = ['NEEDS_HUMAN', 'FAILED'];
+function gateEscalate(ctx, args) {
+  const f = args.flags;
+  const reason = typeof f.reason === 'string' ? f.reason.trim() : '';
+  if (!reason) throw fail('USAGE', 1, { message: 'gate escalate requires --reason "<why the owner must take the run>"' });
+  const runId = selectRunId(ctx, f);
+  const state = loadState(ctx, runId);
+  if (!ESCALATE_FROM.includes(state.status)) {
+    throw fail('TRANSITION_REFUSED', 1, { from: state.status, to: 'ESCALATED', allowed_from: ESCALATE_FROM, message: 'gate escalate starts only from a run that already waits on the owner or has failed' });
+  }
+  if (state.status === 'NEEDS_HUMAN' && !openPackQuestions(ctx, runId).length) {
+    throw fail('TRANSITION_REFUSED', 1, { from: state.status, to: 'ESCALATED', message: 'no open owner-pack question: nothing hands the run to the owner' });
+  }
+  const from = state.status;
+  state.status = 'ESCALATED';
+  writeState(ctx, state);
+  appendEvent(ctx, runId, { event: 'escalated', stage: state.stage, host: state.host, verdict: 'ESCALATED', detail: { from, reason } });
+  return { outcome: 'ESCALATED', exit: 0, run_id: runId, from, status: 'ESCALATED', reason };
 }
 
 // ---- conclude.mjs ----
@@ -1624,6 +1648,15 @@ function packAppend(ctx, runId, questions) {
 
 // The stop gate wrote its questions with source 'stop-gate'. Before that field existed it wrote this
 // exact sentence; the text is its own template, so it identifies the origin.
+// Questions still waiting on the owner: not withdrawn and not answered in answers.json.
+function openPackQuestions(ctx, runId) {
+  const pack = readJsonIfExists(packPath(ctx, runId));
+  if (!pack || !Array.isArray(pack.questions)) return [];
+  const doc = readJsonIfExists(path.join(ctx.home, 'runs', runId, 'answers.json'));
+  const answered = new Set((doc && Array.isArray(doc.answers) ? doc.answers : []).map((a) => a.n));
+  return pack.questions.filter((q) => q.status !== 'withdrawn' && !answered.has(q.n));
+}
+
 function isStopGateQuestion(q) {
   return q.source === 'stop-gate' || (q.source === undefined && q.kind === 'default' && /^The run stopped with \d+ open row\(s\) after \d+ refusals: /.test(q.text));
 }
@@ -3225,9 +3258,31 @@ const RUN_TRANSITIONS = {
   DONE: [],
 };
 
-// gate advance --to STATUS: a move along the M1 lifecycle, nothing else.
+// The command that owns each non-gating status (CP-03 R3-S1-H6). A run enters a status that does not gate a
+// stop only through the command that checks what that status claims: DONE through `gate conclude` (G-13:
+// every row accounted, no live worker, no pending wake, deploy legs re-verified), PARKED through `park` or
+// the stop gate at patience, NEEDS_HUMAN / AWAIT_RATIFY through an owner-pack question, BLOCKED / FAILED /
+// ESCALATED through `record` with a reason. `gate advance` never reaches one, or the agent the gate holds
+// could switch the gate off with two commands.
+const NON_GATING_OWNERS = {
+  DONE: 'gate conclude',
+  PARKED: 'park (or the stop gate at patience)',
+  NEEDS_HUMAN: 'record (a needs_human result with its owner-pack questions)',
+  AWAIT_RATIFY: 'the owner pack / readiness (gate build)',
+  BLOCKED: 'record (a blocked result with a reason) or gate build on a blocked readiness',
+  FAILED: 'record (a failed result)',
+  ESCALATED: 'record (ladder or rollback), handoff at its cap, or gate escalate --reason from NEEDS_HUMAN or FAILED',
+};
+
+// gate advance --to STATUS: a move along the M1 lifecycle between statuses that gate, nothing else.
 function advanceRunStatus(ctx, state, to) {
-  const allowed = RUN_TRANSITIONS[state.status] || [];
+  if (NON_GATING_STATUSES.includes(to)) {
+    throw fail('TRANSITION_REFUSED', 1, {
+      from: state.status, to, owner: NON_GATING_OWNERS[to],
+      message: to + ' does not gate a stop, so gate advance never enters it; only ' + NON_GATING_OWNERS[to] + ' does',
+    });
+  }
+  const allowed = (RUN_TRANSITIONS[state.status] || []).filter((s) => !NON_GATING_STATUSES.includes(s));
   if (!allowed.includes(to)) throw fail('TRANSITION_REFUSED', 1, { from: state.status, to, allowed });
   const from = state.status;
   state.status = to;
