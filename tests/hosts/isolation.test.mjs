@@ -64,6 +64,9 @@ test('T-E1-02 every core suite still passes without the engine host', () => {
   const files = walk(path.join(copy, 'core')).map((f) => path.relative(copy, f)).sort();
   assert.ok(files.length >= 15, 'found ' + files.length + ' core test files');
   assert.ok(files.includes('core/state-stores/tests/n2.test.mjs') && files.includes('core/spine/test/s2/settings-host.test.mjs'));
+  // The env is inherited, so with DO_IT_PILOT_DOIT set this also runs T-S1-06 [REAL] on the pilot. That case
+  // asserts the contract's intent (no run gates, at least the four original categories), not a run count, so
+  // a pilot that gains runs does not turn this case red (CP-03 R2-L11).
   const r = cp.spawnSync(process.execPath, ['--test', ...files], { cwd: copy, encoding: 'utf8', maxBuffer: 1 << 28, env: cleanEnv() });
   const tail = (r.stdout || '').split('\n').filter((l) => /^# (tests|pass|fail|skipped)/.test(l)).join(' ');
   assert.equal(r.status, 0, tail + '\n' + (r.stdout || '').split('\n').filter((l) => /^\s*not ok/.test(l)).slice(0, 8).join('\n'));
