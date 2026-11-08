@@ -14,7 +14,7 @@ import { adoptsUnattributed, renderBoard, readFinishLine, rowsForRun } from './f
 import { cmdMeter } from './meter.mjs';
 import { cmdNext, gateRoute } from './next.mjs';
 import { gateBuild } from './readiness.mjs';
-import { cmdPack, openPackQuestions } from './pack.mjs';
+import { cmdPack, openPackQuestions, packAppend } from './pack.mjs';
 import { cmdPark } from './park.mjs';
 import { cmdRecord } from './record.mjs';
 import { redactInit, redactText } from './redact.mjs';
@@ -228,12 +228,33 @@ export function gateEscalate(ctx, args) {
   if (!ESCALATE_FROM.includes(state.status)) {
     throw fail('TRANSITION_REFUSED', 1, { from: state.status, to: 'ESCALATED', allowed_from: ESCALATE_FROM, message: 'gate escalate starts only from a run that already waits on the owner or has failed' });
   }
-  if (state.status === 'NEEDS_HUMAN' && !openPackQuestions(ctx, runId).length) {
+  const open = openPackQuestions(ctx, runId);
+  if (state.status === 'NEEDS_HUMAN' && !open.length) {
     throw fail('TRANSITION_REFUSED', 1, { from: state.status, to: 'ESCALATED', message: 'no open owner-pack question: nothing hands the run to the owner' });
+  }
+  // CP-03 R4-S1-H8: ESCALATED is terminal, so the owner must find it waiting in the pack. From FAILED with no
+  // open question, the reason itself becomes one (and the failure's recorded cause goes with it).
+  let question = null;
+  if (state.status === 'FAILED' && !open.length) {
+    const cause = state.status_reason && state.status_reason.status === 'FAILED' ? state.status_reason.reason : null;
+    const added = packAppend(ctx, runId, [{
+      kind: 'escalation',
+      source: 'gate-escalate',
+      text: 'The run failed and was escalated to you: ' + reason + (cause ? ' (recorded cause: ' + cause + ')' : '') + '. Restart it, or close it with its open rows as residuals?',
+      options: ['restart run', 'close with residuals'],
+      recommendation: 'restart run',
+      default: null,
+      reversible: true,
+    }]);
+    if (!added.length && !openPackQuestions(ctx, runId).length) {
+      throw fail('TRANSITION_REFUSED', 1, { from: state.status, to: 'ESCALATED', message: 'the escalation question could not be written to the owner pack' });
+    }
+    question = added.length ? added[0].n : null;
   }
   const from = state.status;
   state.status = 'ESCALATED';
+  state.status_reason = { status: 'ESCALATED', reason, stage: state.stage, at: ctx.now() };
   writeState(ctx, state);
-  appendEvent(ctx, runId, { event: 'escalated', stage: state.stage, host: state.host, verdict: 'ESCALATED', detail: { from, reason } });
-  return { outcome: 'ESCALATED', exit: 0, run_id: runId, from, status: 'ESCALATED', reason };
+  appendEvent(ctx, runId, { event: 'escalated', stage: state.stage, host: state.host, verdict: 'ESCALATED', detail: { from, reason, ...(question ? { question } : {}) } });
+  return { outcome: 'ESCALATED', exit: 0, run_id: runId, from, status: 'ESCALATED', reason, ...(question ? { pack_question: question } : {}) };
 }

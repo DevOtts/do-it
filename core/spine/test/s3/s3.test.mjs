@@ -175,10 +175,17 @@ test('T-S3-07 exit_code must mirror status', () => {
 
 test('T-S3-08 all six statuses record with the mirrored code', () => {
   const expectRun = { ok: 'INTAKE', failed: 'FAILED', needs_human: 'NEEDS_HUMAN', blocked: 'BLOCKED', usage_limit: 'PARKED', context_reset: 'INTAKE' };
+  // CP-03 R4-S1-H8: the three statuses that end the stop gate carry what they claim (a reason, a question)
+  const extra = {
+    failed: { reason: 'the build step exited non-zero on every retry' },
+    blocked: { reason: 'owner gate: the production flag is not set' },
+    needs_human: { pending_human: { questions_path: 'results/q.json' } },
+  };
   for (const status of Object.keys(EXIT)) {
     const repo = mkRepo();
     const runId = startRun(repo, unit);
-    const r = record(unit, repo, 'results/r.json', result(runId, { status }));
+    writeJson(path.join(repo.dir, 'results', 'q.json'), { questions: [{ kind: 'ratify', text: 'Ship the plan?', options: ['yes', 'no'], recommendation: 'yes', default: 'yes', reversible: true }] });
+    const r = record(unit, repo, 'results/r.json', result(runId, { status, ...(extra[status] || {}) }));
     assert.equal(r.out.outcome, 'RECORDED', status);
     assert.equal(r.code, EXIT[status], status);
     assert.equal(stateOf(repo, runId).status, expectRun[status], status);

@@ -220,10 +220,10 @@ export const RUN_TRANSITIONS = {
 export const NON_GATING_OWNERS = {
   DONE: 'gate conclude',
   PARKED: 'park (or the stop gate at patience)',
-  NEEDS_HUMAN: 'record (a needs_human result with its owner-pack questions)',
+  NEEDS_HUMAN: 'record (a needs_human result with at least one owner-pack question)',
   AWAIT_RATIFY: 'the owner pack / readiness (gate build)',
   BLOCKED: 'record (a blocked result with a reason) or gate build on a blocked readiness',
-  FAILED: 'record (a failed result)',
+  FAILED: 'record (a failed result with a reason)',
   ESCALATED: 'record (ladder or rollback), handoff at its cap, or gate escalate --reason from NEEDS_HUMAN or FAILED',
 };
 

@@ -10,7 +10,7 @@ import { sha256Bytes } from './hash.mjs';
 import { escalationQuestion, ladderEscalated } from './ladder.mjs';
 import { ledgerUpsert, readLedger, writeLedger } from './ledger.mjs';
 import { legsLookRolledBack, planDeploy, staleLegsAfterRollback } from './legs.mjs';
-import { packAppend } from './pack.mjs';
+import { openPackQuestions, packAppend, packPath } from './pack.mjs';
 import { loadSchemaFile, validateSchema } from './schema.mjs';
 import { loadState, selectRunId, writeState } from './state.mjs';
 import { CHECKPOINT_ROW_PREFIX } from './readiness.mjs';
@@ -278,8 +278,23 @@ export function planRecord(ctx, runId, state, result) {
       reason = blockReason(result);
       if (!reason) throw fail('BLOCK_REASON_REQUIRED', 1, { slice_id: slice.id, message: 'a BLOCKED slice needs a reason' });
     }
+    // CP-03 R4-S1-H8: a run-level result that takes the run to BLOCKED or FAILED switches the stop gate off
+    // (both are non-gating, CONTRACT 3.1), so it must say why. The reason is kept in state and in the event.
+    let runReason = null;
+    if (!slice && (result.status === 'blocked' || result.status === 'failed')) {
+      runReason = result.status === 'blocked' ? blockReason(result) : failReason(result);
+      if (!runReason) {
+        const code = result.status === 'blocked' ? 'BLOCK_REASON_REQUIRED' : 'FAIL_REASON_REQUIRED';
+        throw fail(code, 1, { slice_id: null, status: result.status, message: 'a run-level ' + result.status + ' result needs a non-empty reason: it ends the stop gate for this run' });
+      }
+    }
     applyStatusToState(next, result);
     next.stage = result.stage;
+    if (runReason) {
+      next.status_reason = { status: next.status, reason: runReason, stage: result.stage, at: now };
+      plan.events.push({ event: result.status === 'blocked' ? 'run_blocked' : 'run_failed', stage: result.stage, verdict: next.status, detail: { reason: runReason } });
+      plan.extra.reason = runReason;
+    }
     if (slice && outcome === 'RECORDED') {
       const sl = planSliceOutcome(plan, next, result, slice, reason);
       if (sl) { outcome = sl.outcome; exit = sl.exit; }
@@ -288,7 +303,8 @@ export function planRecord(ctx, runId, state, result) {
 
   // A BLOCKED slice (owner-gate) also routes its question into the owner pack (R4 T-R4-19, B10).
   if ((result.status === 'needs_human' || result.status === 'blocked') && result.pending_human && result.pending_human.questions_path) {
-    const qs = readQuestionsFile(ctx, result.pending_human.questions_path);
+    // a question with no text is no question: the pack would drop it (packAppend), so it decides nothing
+    const qs = readQuestionsFile(ctx, result.pending_human.questions_path).filter((q) => q && typeof q.text === 'string' && q.text.trim());
     const midrun = result.status === 'needs_human' && !isDeploy && state.status === 'BUILDING' ? qs.filter((q) => q && q.kind !== 'owner-gate') : [];
     if (midrun.length) {
       // G-8: no question to the owner mid-run; the recommendation decides and the end report shows it.
@@ -306,6 +322,15 @@ export function planRecord(ctx, runId, state, result) {
       plan.questions.push(...qs);
     }
   }
+  // CP-03 R4-S1-H8: NEEDS_HUMAN does not gate a stop, so a result enters it only when it hands the owner
+  // something to answer: at least one question of this call is (or already is) open in the owner pack.
+  // G-8 keeps autonomy: from BUILDING a mid-run question becomes a default and the run never gets here.
+  if (next.status === 'NEEDS_HUMAN' && state.status !== 'NEEDS_HUMAN' && !questionsLandOpen(ctx, runId, plan.questions)) {
+    throw fail('NEEDS_HUMAN_WITHOUT_QUESTION', 1, {
+      slice_id: result.slice_id || null,
+      message: 'a needs_human result must bring at least one owner-pack question (pending_human.questions_path); with none, nothing waits on the owner and the run would leave the stop gate',
+    });
+  }
   if (result.run_verdict !== undefined && result.run_verdict !== null) plan.extra.reported_run_verdict = result.run_verdict;
   plan.outcome = outcome;
   plan.exit = exit;
@@ -317,6 +342,24 @@ export function blockReason(result) {
   if (typeof result.reason === 'string' && result.reason.trim()) return result.reason.trim();
   const v = (result.verdicts || []).find((x) => x.verdict === 'BLOCKED' && typeof x.evidence === 'string' && x.evidence.trim());
   return v ? v.evidence.trim() : null;
+}
+
+// A run-level failure names its cause: the result's reason, else the evidence of a verdict that did not verify.
+export function failReason(result) {
+  if (typeof result.reason === 'string' && result.reason.trim()) return result.reason.trim();
+  const v = (result.verdicts || []).find((x) => x.verdict !== 'VERIFIED' && typeof x.evidence === 'string' && x.evidence.trim());
+  return v ? v.evidence.trim() : null;
+}
+
+// True when at least one of `questions` will be open in the run's owner pack once appended: a new text
+// (packAppend adds it), or a text already there that is neither withdrawn nor answered.
+export function questionsLandOpen(ctx, runId, questions) {
+  const valid = (questions || []).filter((q) => q && typeof q.text === 'string' && q.text.trim());
+  if (!valid.length) return false;
+  const pack = readJsonIfExists(packPath(ctx, runId));
+  const have = pack && Array.isArray(pack.questions) ? pack.questions.filter((x) => x.status !== 'withdrawn') : [];
+  const open = new Set(openPackQuestions(ctx, runId).map((x) => x.text));
+  return valid.some((q) => !have.some((x) => x.text === q.text) || open.has(q.text));
 }
 
 // Slice-attached results (D14, CONTRACT M1): FAILED, ESCALATED, BLOCKED and the
