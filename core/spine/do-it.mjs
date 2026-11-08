@@ -341,7 +341,11 @@ function cliMain(argv, opts) {
     if (result.root === undefined) result.root = ctx.root;
     if (result.home === undefined) result.home = ctx.home;
   }
-  const stdout = redactText(json ? JSON.stringify(result) + '\n' : renderHuman(result));
+  // CP-03 R4-L4: redact after the outcome is decided. Every free-text field is redacted; the protocol
+  // fields (outcome, exit) are the spine's own words and are never rewritten, so no secret value can turn
+  // a STOP_REFUSED into something a host reads as "allowed".
+  const shown = { ...redactValue(result), outcome: result.outcome, exit };
+  const stdout = json ? JSON.stringify(shown) + '\n' : renderHuman(shown);
   if (ctx) redactFlushEvents(ctx, result);
   return { exit, stdout };
 }
@@ -2441,8 +2445,19 @@ const REDACT_MIN_LENGTH = 6;
 const REDACT_VALUES = new Map();
 const REDACT_HITS = new Set();
 
+// CP-03 R4-L4: words of the spine's own protocol are never secrets. A planted secret file whose value is a
+// run status or a gate outcome would otherwise rewrite state.json ("status":"[REDACTED:x]", which then
+// fails its checks) or a gate answer, and switch the stop gate off. Run statuses are the state schema's
+// enum (a drift test keeps this list equal to it); the outcomes are the ones a host maps.
+const PROTOCOL_WORDS = new Set([
+  'INTAKE', 'PLANNING', 'AWAIT_RATIFY', 'BUILDING', 'VERIFYING', 'REVIEWING', 'FIXING', 'DEPLOYING', 'PROVING', 'CONCLUDING', 'DONE',
+  'NEEDS_HUMAN', 'PARKED', 'BLOCKED', 'FAILED', 'PARTIAL_FAILURE', 'ROLLED_BACK', 'ESCALATED',
+  'STOP_REFUSED', 'STOP_ALLOWED',
+]);
+
 function redactAdd(name, value) {
   if (typeof value !== 'string' || value.length < REDACT_MIN_LENGTH) return;
+  if (PROTOCOL_WORDS.has(value.trim())) return;
   const forms = [value];
   const escaped = JSON.stringify(value).slice(1, -1);
   if (escaped !== value) forms.push(escaped);
@@ -2465,6 +2480,18 @@ function redactText(text) {
     out = out.split(form).join('[REDACTED:' + name + ']');
   }
   return out;
+}
+
+// Redacts every string of a JSON value (keys too), leaving the structure as it is.
+function redactValue(v) {
+  if (typeof v === 'string') return redactText(v);
+  if (Array.isArray(v)) return v.map(redactValue);
+  if (v && typeof v === 'object') {
+    const out = {};
+    for (const [k, x] of Object.entries(v)) out[redactText(k)] = redactValue(x);
+    return out;
+  }
+  return v;
 }
 
 // Names the project declares: READINESS credentials and .env.example NAME= lines.

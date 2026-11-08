@@ -275,3 +275,36 @@ test('CP03 R4-S1-M7 another home that cannot be evaluated is listed in unreadabl
     fs.chmodSync(yRun, 0o755);
   }
 });
+
+// R4-L4: redaction never rewrites the protocol fields.
+test('CP03 R4-L4 a .secrets value equal to STOP_REFUSED (or a status word) never redacts the outcome or the state', () => {
+  const repo = mk({ commit: true });
+  const a = start(repo, 'sec');
+  assert.equal(real(repo, ['next', '--run', a]).code, 0);
+  fs.mkdirSync(path.join(repo.dir, '.secrets'));
+  fs.writeFileSync(path.join(repo.dir, '.secrets', 'token'), 'STOP_REFUSED\n');
+  fs.writeFileSync(path.join(repo.dir, '.secrets', 'other'), 'BUILDING');
+  fs.writeFileSync(path.join(repo.dir, '.secrets', 'real'), 'sk-live-0123456789abcdef');
+  const r = hookStop(repo, 'sec');
+  assert.equal(r.code, 1, r.stdout);
+  assert.equal(r.out.outcome, 'STOP_REFUSED', r.stdout);
+  assert.ok(!/REDACTED:token/.test(r.stdout), r.stdout);
+  // a status word is never treated as a secret, so state.json keeps its status and stays readable
+  assert.equal(real(repo, ['gate', 'advance', '--run', a, '--to', 'BUILDING']).out.outcome, 'ADVANCED');
+  assert.equal(statusOf(repo, a), 'BUILDING');
+  assert.equal(real(repo, ['status', '--run', a]).out.status, 'BUILDING');
+  assert.equal(hookStop(repo, 'sec').out.outcome, 'STOP_REFUSED');
+  // a real secret in a free-text field is still redacted
+  writeJson(path.join(repo.dir, 'results', 'b.json'), res(a, { status: 'blocked', exit_code: 3, reason: 'the key sk-live-0123456789abcdef was revoked' }));
+  const b = real(repo, ['record', '--run', a, '--result', 'results/b.json']);
+  assert.equal(b.out.outcome, 'RECORDED', b.stdout);
+  assert.equal(b.out.reason, 'the key [REDACTED:real] was revoked');
+  assert.ok(!fs.readFileSync(path.join(runDirOf(repo, a), 'state.json'), 'utf8').includes('sk-live-'));
+});
+
+test('CP03 R4-L4 the protocol words cover every run status of the state schema', async () => {
+  const { PROTOCOL_WORDS } = await import('../../src/redact.mjs');
+  const schema = readJson(path.join(path.dirname(BIN), '..', 'schemas', 'do-it-state.1.schema.json'));
+  for (const s of schema.properties.status.enum) assert.ok(PROTOCOL_WORDS.has(s), s);
+  for (const s of ['STOP_REFUSED', 'STOP_ALLOWED']) assert.ok(PROTOCOL_WORDS.has(s), s);
+});

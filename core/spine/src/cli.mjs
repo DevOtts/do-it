@@ -17,7 +17,7 @@ import { gateBuild } from './readiness.mjs';
 import { cmdPack, openPackQuestions, packAppend } from './pack.mjs';
 import { cmdPark } from './park.mjs';
 import { cmdRecord } from './record.mjs';
-import { redactInit, redactText } from './redact.mjs';
+import { redactInit, redactValue } from './redact.mjs';
 import { cmdResume } from './resume.mjs';
 import { redactFlushEvents } from './secrets.mjs';
 import { route } from './router.mjs';
@@ -126,7 +126,11 @@ export function cliMain(argv, opts) {
     if (result.root === undefined) result.root = ctx.root;
     if (result.home === undefined) result.home = ctx.home;
   }
-  const stdout = redactText(json ? JSON.stringify(result) + '\n' : renderHuman(result));
+  // CP-03 R4-L4: redact after the outcome is decided. Every free-text field is redacted; the protocol
+  // fields (outcome, exit) are the spine's own words and are never rewritten, so no secret value can turn
+  // a STOP_REFUSED into something a host reads as "allowed".
+  const shown = { ...redactValue(result), outcome: result.outcome, exit };
+  const stdout = json ? JSON.stringify(shown) + '\n' : renderHuman(shown);
   if (ctx) redactFlushEvents(ctx, result);
   return { exit, stdout };
 }
