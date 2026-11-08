@@ -263,21 +263,35 @@ test('T-S1-10 a non-owner hits the hook 5 times: no park, no pack question, the 
 test('T-S1-12 resume re-binds the run to the new session with a history entry', () => {
   const repo = mkRepo();
   const id = start(repo, 'sess-old');
-  const r = real(repo, ['resume'], { DO_IT_SESSION_ID: 'sess-new' });
+  // CP-03 S1-H2: a run another session owns is never taken silently; after /clear the caller says so
+  const silent = real(repo, ['resume'], { DO_IT_SESSION_ID: 'sess-new' });
+  assert.equal(silent.out.outcome, 'OWNED_BY_OTHER_SESSION', silent.stdout);
+  assert.equal(silent.out.owner_session, 'sess-old');
+  const r = real(repo, ['resume', '--run', id, '--take-over'], { DO_IT_SESSION_ID: 'sess-new' });
   assert.equal(r.code, 0, r.stdout);
-  assert.equal(r.out.outcome, 'REBOUND');
+  assert.equal(r.out.outcome, 'TAKEN_OVER');
+  assert.equal(r.out.previous_owner, 'sess-old');
   const owner = readJson(path.join(runDirOf(repo, id), 'state.json')).owner;
   assert.equal(owner.session_id, 'sess-new');
   assert.equal(owner.history.length, 1);
   assert.equal(owner.history[0].session_id, 'sess-old');
+  assert.equal(owner.history[0].reason, 'take_over');
   assert.ok(owner.history[0].until);
   // the same session again is not a rebind
   assert.equal(real(repo, ['resume'], { DO_IT_SESSION_ID: 'sess-new' }).out.outcome, 'NOT_PARKED');
   // a parked run is un-parked and re-bound in one call
   editState(repo, id, (st) => { st.status = 'PARKED'; });
-  const p = real(repo, ['resume', '--force'], { DO_IT_SESSION_ID: 'sess-third' });
+  assert.equal(real(repo, ['resume', '--force'], { DO_IT_SESSION_ID: 'sess-third' }).out.outcome, 'OWNED_BY_OTHER_SESSION');
+  const p = real(repo, ['resume', '--run', id, '--take-over', '--force'], { DO_IT_SESSION_ID: 'sess-third' });
   assert.equal(p.out.outcome, 'RESUMED', p.stdout);
+  assert.equal(p.out.taken_over, true);
   const o2 = readJson(path.join(runDirOf(repo, id), 'state.json')).owner;
   assert.equal(o2.session_id, 'sess-third');
   assert.equal(o2.history.length, 2);
+  // a run with no session re-binds without --take-over: no live session loses its gate
+  const free = mkRepo();
+  const fid = start(free, null);
+  const fr = real(free, ['resume'], { DO_IT_SESSION_ID: 'sess-any' });
+  assert.equal(fr.out.outcome, 'REBOUND', fr.stdout);
+  assert.equal(readJson(path.join(runDirOf(free, fid), 'state.json')).owner.session_id, 'sess-any');
 });

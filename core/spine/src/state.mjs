@@ -122,8 +122,9 @@ function cwdInside(ownerCwd, cwd) {
 // owner.session_id. A hook that names a session matches on that id only. The cwd is a fallback
 // only for a host that gave no session and a run that has none (a run whose session is null).
 // A run with no owner object (state written before ownership existed) is never owned.
-// Returns { run, owned, status, legacy, unreadable }: the newest owned run that still gates (else the
-// newest owned run), the count of legacy runs, and the ids whose state.json cannot be parsed.
+// Returns { run, owned, status, legacy, unreadable, ranked }: the newest owned run that still gates (else the
+// newest owned run), the count of legacy runs, the ids whose state.json cannot be parsed, and every owned
+// run ranked the same way ({ id, created, status }).
 export function selectScopedRunId(ctx, scope) {
   const owned = [];
   const unreadable = [];
@@ -138,10 +139,12 @@ export function selectScopedRunId(ctx, scope) {
     else if (!o.session_id && o.cwd && scope.cwd) mine = cwdInside(o.cwd, scope.cwd);
     if (mine) owned.push({ id, created: st.created_at || '', status: st.status });
   }
-  const newest = (rows) => rows.sort((a, b) => (a.created === b.created ? (a.id < b.id ? 1 : -1) : (a.created < b.created ? 1 : -1)))[0];
+  owned.sort((a, b) => (a.created === b.created ? (a.id < b.id ? 1 : -1) : (a.created < b.created ? 1 : -1)));
   const gating = owned.filter((r) => !NON_GATING_STATUSES.includes(r.status));
-  const pick = gating.length ? newest(gating) : (owned.length ? newest(owned) : null);
-  return { run: pick ? pick.id : null, owned: !!pick, status: pick ? pick.status : null, legacy, unreadable };
+  // ranked: every owned run, the gating ones first, each group newest first
+  const ranked = [...gating, ...owned.filter((r) => NON_GATING_STATUSES.includes(r.status))];
+  const pick = ranked[0] || null;
+  return { run: pick ? pick.id : null, owned: !!pick, status: pick ? pick.status : null, legacy, unreadable, ranked };
 }
 
 // Runs whose state.json fails the same checks loadState makes, reported without side effects.

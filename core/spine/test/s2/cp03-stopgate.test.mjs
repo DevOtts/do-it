@@ -4,13 +4,22 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
-import { mkRepo, real, readJson, runDirOf, writeJson } from '../helpers.mjs';
+import { mkRepo, real, readJson, runDirOf, sha, writeJson } from '../helpers.mjs';
 import { autoClosePackages, finishLineUpsert, hasRow, rowsForRun } from '../../src/finish-line.mjs';
 
 function start(repo, session, extra) {
   const r = real(repo, ['start', '--preset', 'feature', '--request', 'ship ' + session, '--session', session, ...(extra || [])]);
   assert.equal(r.code, 0, r.stdout);
   return r.out.run_id;
+}
+
+// Rewrite state.json the way the spine would, keeping its sidecar digest valid.
+function editStatus(repo, runId, status) {
+  const file = path.join(runDirOf(repo, runId), 'state.json');
+  const st = readJson(file);
+  st.status = status;
+  fs.writeFileSync(file, JSON.stringify(st, null, 2) + '\n');
+  fs.writeFileSync(path.join(runDirOf(repo, runId), '.state.sha256'), sha(file) + '\n');
 }
 
 const flFile = (repo) => path.join(repo.doIt, 'finish-line.json');
@@ -71,4 +80,61 @@ test('CP03 S1-H1 two plans with the same slice ids: rows, lookups and package au
   assert.equal(old.rows[0].run_id, 'run-A');
   finishLineUpsert(old, 'R1', {}, 'run-B');
   assert.equal(old.rows.length, 2);
+});
+
+function startNoPreset(repo, session) {
+  const r = real(repo, ['start', '--request', 'req ' + session, '--session', session]);
+  assert.equal(r.code, 0, r.stdout);
+  return r.out.run_id;
+}
+
+test('CP03 S1-H2 resume with no --run never takes another session\'s newer active run', () => {
+  const repo = mkRepo();
+  const b = startNoPreset(repo, 'sess-B');
+  editStatus(repo, b, 'PARKED');
+  const a = startNoPreset(repo, 'sess-A'); // newest, active
+  writeJson(flFile(repo), { rows: [{ id: 'R1', kind: 'dod', state: 'OPEN', evidence: null, run_id: a }] });
+  // the attack: B resumes with no --run
+  const r = real(repo, ['resume', '--session', 'sess-B', '--force']);
+  assert.equal(r.code, 0, r.stdout);
+  assert.equal(r.out.run_id, b, 'B is told its own run, not A\'s newer one');
+  assert.equal(r.out.outcome, 'RESUMED');
+  const ownerA = readJson(path.join(runDirOf(repo, a), 'state.json')).owner;
+  assert.equal(ownerA.session_id, 'sess-A', 'A stays owner');
+  assert.ok(!ownerA.history, 'no history entry on A\'s run');
+  const ha = hookStop(repo, 'sess-A');
+  assert.equal(ha.out.outcome, 'STOP_REFUSED', ha.stdout);
+  assert.equal(ha.out.owned, true);
+  assert.equal(ha.out.run_id, a);
+  const hb = hookStop(repo, 'sess-B');
+  assert.notEqual(hb.out.run_id, a, 'B is never gated by A\'s rows');
+});
+
+test('CP03 S1-H2 a session that owns nothing gets OWNED_BY_OTHER_SESSION naming the owner; --take-over is explicit and logged', () => {
+  const repo = mkRepo();
+  const a = startNoPreset(repo, 'sess-A');
+  const before = fs.readFileSync(path.join(runDirOf(repo, a), 'state.json'), 'utf8');
+  const r = real(repo, ['resume', '--session', 'sess-B']);
+  assert.equal(r.code, 1, r.stdout);
+  assert.equal(r.out.outcome, 'OWNED_BY_OTHER_SESSION');
+  assert.equal(r.out.run_id, a);
+  assert.equal(r.out.owner_session, 'sess-A');
+  assert.match(r.out.message, /--take-over/);
+  assert.equal(fs.readFileSync(path.join(runDirOf(repo, a), 'state.json'), 'utf8'), before, 'nothing written');
+  // an explicit --run is not enough either
+  assert.equal(real(repo, ['resume', '--session', 'sess-B', '--run', a]).out.outcome, 'OWNED_BY_OTHER_SESSION');
+  // --take-over must name the run
+  assert.equal(real(repo, ['resume', '--session', 'sess-B', '--take-over']).out.outcome, 'USAGE');
+  const t = real(repo, ['resume', '--session', 'sess-B', '--run', a, '--take-over']);
+  assert.equal(t.code, 0, t.stdout);
+  assert.equal(t.out.outcome, 'TAKEN_OVER');
+  assert.equal(t.out.previous_owner, 'sess-A');
+  const owner = readJson(path.join(runDirOf(repo, a), 'state.json')).owner;
+  assert.equal(owner.session_id, 'sess-B');
+  assert.deepEqual(owner.history.map((h) => [h.session_id, h.reason]), [['sess-A', 'take_over']]);
+  const events = fs.readFileSync(path.join(runDirOf(repo, a), 'events.jsonl'), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
+  const ev = events.find((e) => e.event === 'owner_taken_over');
+  assert.ok(ev, 'the takeover is an event');
+  assert.equal(ev.detail.from, 'sess-A');
+  assert.equal(ev.detail.to, 'sess-B');
 });

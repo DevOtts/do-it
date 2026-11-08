@@ -4,7 +4,7 @@ do-it is the conductor above the *-it family. The spine (`do-it` CLI) is the onl
 
 ## How to run
 
-1. Start or resume a run: `node core/spine/do-it.mjs start --request "<request>"` (or `resume`). The run is owned by the session that starts it: the host passes its session id, or give `--session <id>`. After a `/clear`, `resume` re-binds the run to the new session.
+1. Start or resume a run: `node core/spine/do-it.mjs start --request "<request>"` (or `resume`). The run is owned by the session that starts it: the host passes its session id, or give `--session <id>`. `resume` with no `--run` picks only a run this session owns. After a `/clear` the session id is new: run `resume --run <id> --take-over` to re-bind your run to it (plain `resume` refuses with `OWNED_BY_OTHER_SESSION` and names the run). Never take over a run another live session is working on.
 2. Ask the spine for the next step: `do-it next`. Spawn the named persona at the named tier.
 3. Record every result with `do-it record`; close each stage with `do-it gate`.
 4. Human questions go into the single owner pack; never ask mid-run. Answer with `do-it answer`.

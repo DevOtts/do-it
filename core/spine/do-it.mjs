@@ -244,7 +244,7 @@ function gateCeiling(ctx, args) {
 }
 
 // ---- cli.mjs ----
-const BOOL_FLAGS = new Set(['json', 'migrate', 'install', 'secrets', 'append', 'force', 'finalize', 'help', 'version', 'verbose', 'dry-run']);
+const BOOL_FLAGS = new Set(['json', 'migrate', 'install', 'secrets', 'append', 'force', 'finalize', 'help', 'version', 'verbose', 'dry-run', 'take-over']);
 const COMMANDS = ['init', 'start', 'next', 'record', 'gate', 'answer', 'handoff', 'resume', 'park', 'pack', 'status', 'meter', 'doctor'];
 
 function parseArgs(argv) {
@@ -2453,28 +2453,66 @@ function parseReply(text, questions) {
 }
 
 // ---- resume.mjs ----
+// Statuses a run never leaves (FAILED can go back to BUILDING): re-binding one hands over nothing that gates.
+const TERMINAL = ['DONE', 'ESCALATED'];
+
+// Which run does `resume` with no --run mean? Never "the newest run in the repo" (CP-03 S1-H2): the
+// caller's own runs first (a parked one before the rest), then a run with no session inside the caller's
+// cwd. Only when the caller owns nothing does it look at the newest run, and the ownership check below
+// refuses that one when another session owns it. A caller with no session id never re-binds anything.
+function pickRun(ctx, flags, session) {
+  if (flags.run || !session) return selectRunId(ctx, flags);
+  const mine = selectScopedRunId(ctx, { session, cwd: ctx.cwd }).ranked;
+  if (mine.length) return (mine.find((r) => r.status === 'PARKED') || mine[0]).id;
+  const unowned = selectScopedRunId(ctx, { session: null, cwd: ctx.cwd }).ranked;
+  if (unowned.length) return (unowned.find((r) => r.status === 'PARKED') || unowned[0]).id;
+  return selectRunId(ctx, flags);
+}
+
 // resume works from a fresh process using state alone. It clears a ceiling block
 // (after a handoff exists) or un-parks a parked run, re-queues RUNNING slices
 // without counting an attempt, and re-reads every VERIFIED row by hash.
+//
+// Ownership (CP-03 S1-H2, CONTRACT 3.1 / S1-00): the session that resumes owns the run from then on.
+// A run whose recorded session is another, non-null id is re-bound only with an explicit
+// `--run <id> --take-over` (the takeover is kept in owner.history and logged as `owner_taken_over`);
+// without it resume refuses with OWNED_BY_OTHER_SESSION and names the owner. Nothing on disk tells a
+// session that ended (/clear) from one that is still running, so the caller must say so. A run with no
+// session, a legacy run, or a terminal one re-binds without --take-over: no live session loses a gate.
 function cmdResume(ctx, args) {
-  const runId = selectRunId(ctx, args.flags);
+  const f = args.flags;
+  const session = resolveSessionId(ctx, f);
+  const takeOver = !!f['take-over'];
+  if (takeOver && typeof f.run !== 'string') throw fail('USAGE', 1, { message: 'resume --take-over needs --run <id>: a takeover names the run it takes' });
+  const runId = pickRun(ctx, f, session);
   const state = loadState(ctx, runId);
-  const force = !!args.flags.force;
+  const force = !!f.force;
   const ceilingHeld = state.ceiling === 'BLOCKED';
-  // The session that resumes owns the run from now on (after /clear the id is new). The old id is kept.
-  const session = resolveSessionId(ctx, args.flags);
+  const was = state.owner && typeof state.owner === 'object' ? state.owner : null;
+  const foreign = !!(session && was && was.session_id && was.session_id !== session);
+  if (foreign && !takeOver && !TERMINAL.includes(state.status)) {
+    throw fail('OWNED_BY_OTHER_SESSION', 1, {
+      run_id: runId, status: state.status, owner_session: was.session_id, session,
+      message: 'run ' + runId + ' is owned by session ' + was.session_id + '. If that session has ended (after /clear), take the run over with: resume --run ' + runId + ' --take-over',
+    });
+  }
   const rebind = () => {
-    const was = state.owner && typeof state.owner === 'object' ? state.owner : { session_id: null, cwd: ctx.cwd };
-    if (!session || was.session_id === session) return null;
-    state.owner = { ...was, session_id: session, history: [...(Array.isArray(was.history) ? was.history : []), { session_id: was.session_id || null, until: ctx.now(), reason: 'resume' }] };
-    return { from: was.session_id || null, to: session };
+    const prev = was || { session_id: null, cwd: ctx.cwd };
+    if (!session || prev.session_id === session) return null;
+    const reason = foreign ? 'take_over' : 'resume';
+    state.owner = { ...prev, session_id: session, history: [...(Array.isArray(prev.history) ? prev.history : []), { session_id: prev.session_id || null, until: ctx.now(), reason }] };
+    return { from: prev.session_id || null, to: session, taken_over: foreign };
   };
+  const logRebind = (moved) => appendEvent(ctx, runId, {
+    event: moved.taken_over ? 'owner_taken_over' : 'owner_rebound', stage: state.stage, host: state.host,
+    verdict: moved.taken_over ? 'TAKEN_OVER' : 'REBOUND', detail: moved,
+  });
   if (state.status !== 'PARKED' && !ceilingHeld) {
     const moved = rebind();
     if (!moved) throw fail('NOT_PARKED', 1, { run_id: runId, status: state.status });
     writeState(ctx, state);
-    appendEvent(ctx, runId, { event: 'owner_rebound', stage: state.stage, host: state.host, verdict: 'REBOUND', detail: moved });
-    return { outcome: 'REBOUND', exit: 0, run_id: runId, status: state.status, owner: state.owner };
+    logRebind(moved);
+    return { outcome: moved.taken_over ? 'TAKEN_OVER' : 'REBOUND', exit: 0, run_id: runId, status: state.status, owner: state.owner, previous_owner: moved.from };
   }
 
   if (state.status === 'PARKED') {
@@ -2502,12 +2540,13 @@ function cmdResume(ctx, args) {
   state.park = null;
   const rebound = rebind();
   writeState(ctx, state);
-  if (rebound) appendEvent(ctx, runId, { event: 'owner_rebound', stage: state.stage, host: state.host, verdict: 'REBOUND', detail: rebound });
+  if (rebound) logRebind(rebound);
   const wake = consumeWake(ctx, runId);
   appendEvent(ctx, runId, { event: 'run_resumed', stage: state.stage, host: state.host, verdict: 'RESUMED', detail: { from, requeued, reopened, warnings: changed.length, forced: force, ceiling_cleared: ceilingHeld } });
   return {
     outcome: 'RESUMED', exit: 0, run_id: runId, status: state.status, requeued, reopened, warnings: changed.length,
     changed: changed.map((c) => c.row), wake: wake ? wake.status : null, ceiling: state.ceiling || null, owner: state.owner || null,
+    previous_owner: rebound ? rebound.from : undefined, taken_over: rebound ? rebound.taken_over : undefined,
   };
 }
 
@@ -3064,8 +3103,9 @@ function cwdInside(ownerCwd, cwd) {
 // owner.session_id. A hook that names a session matches on that id only. The cwd is a fallback
 // only for a host that gave no session and a run that has none (a run whose session is null).
 // A run with no owner object (state written before ownership existed) is never owned.
-// Returns { run, owned, status, legacy, unreadable }: the newest owned run that still gates (else the
-// newest owned run), the count of legacy runs, and the ids whose state.json cannot be parsed.
+// Returns { run, owned, status, legacy, unreadable, ranked }: the newest owned run that still gates (else the
+// newest owned run), the count of legacy runs, the ids whose state.json cannot be parsed, and every owned
+// run ranked the same way ({ id, created, status }).
 function selectScopedRunId(ctx, scope) {
   const owned = [];
   const unreadable = [];
@@ -3080,10 +3120,12 @@ function selectScopedRunId(ctx, scope) {
     else if (!o.session_id && o.cwd && scope.cwd) mine = cwdInside(o.cwd, scope.cwd);
     if (mine) owned.push({ id, created: st.created_at || '', status: st.status });
   }
-  const newest = (rows) => rows.sort((a, b) => (a.created === b.created ? (a.id < b.id ? 1 : -1) : (a.created < b.created ? 1 : -1)))[0];
+  owned.sort((a, b) => (a.created === b.created ? (a.id < b.id ? 1 : -1) : (a.created < b.created ? 1 : -1)));
   const gating = owned.filter((r) => !NON_GATING_STATUSES.includes(r.status));
-  const pick = gating.length ? newest(gating) : (owned.length ? newest(owned) : null);
-  return { run: pick ? pick.id : null, owned: !!pick, status: pick ? pick.status : null, legacy, unreadable };
+  // ranked: every owned run, the gating ones first, each group newest first
+  const ranked = [...gating, ...owned.filter((r) => NON_GATING_STATUSES.includes(r.status))];
+  const pick = ranked[0] || null;
+  return { run: pick ? pick.id : null, owned: !!pick, status: pick ? pick.status : null, legacy, unreadable, ranked };
 }
 
 // Runs whose state.json fails the same checks loadState makes, reported without side effects.
