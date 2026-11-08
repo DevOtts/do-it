@@ -4,6 +4,7 @@ import { readJsonIfExists } from './fs-atomic.mjs';
 import { handoffWritten } from './ceiling.mjs';
 import { parkPath } from './park.mjs';
 import { resolveSessionId } from './session.mjs';
+import { registerSessionRun } from './sessions.mjs';
 import { loadState, selectRunId, selectScopedRunId, writeState } from './state.mjs';
 import { verifyEvidence } from './verify.mjs';
 import { consumeWake } from './wake.mjs';
@@ -67,7 +68,8 @@ export function cmdResume(ctx, args) {
     if (!moved) throw fail('NOT_PARKED', 1, { run_id: runId, status: state.status });
     writeState(ctx, state);
     logRebind(moved);
-    return { outcome: moved.taken_over ? 'TAKEN_OVER' : 'REBOUND', exit: 0, run_id: runId, status: state.status, owner: state.owner, previous_owner: moved.from };
+    const regErr = registerSessionRun(ctx, session, runId);
+    return { outcome: moved.taken_over ? 'TAKEN_OVER' : 'REBOUND', exit: 0, run_id: runId, status: state.status, owner: state.owner, previous_owner: moved.from, ...(regErr ? { session_registry_error: regErr } : {}) };
   }
 
   if (state.status === 'PARKED') {
@@ -96,11 +98,15 @@ export function cmdResume(ctx, args) {
   const rebound = rebind();
   writeState(ctx, state);
   if (rebound) logRebind(rebound);
+  // the resuming session owns the run now (or still does): record its home for the stop gate (R3-S1-H7)
+  const owner = state.owner && typeof state.owner === 'object' ? state.owner.session_id : null;
+  const regErr = owner ? registerSessionRun(ctx, owner, runId) : null;
   const wake = consumeWake(ctx, runId);
   appendEvent(ctx, runId, { event: 'run_resumed', stage: state.stage, host: state.host, verdict: 'RESUMED', detail: { from, requeued, reopened, warnings: changed.length, forced: force, ceiling_cleared: ceilingHeld } });
   return {
     outcome: 'RESUMED', exit: 0, run_id: runId, status: state.status, requeued, reopened, warnings: changed.length,
     changed: changed.map((c) => c.row), wake: wake ? wake.status : null, ceiling: state.ceiling || null, owner: state.owner || null,
     previous_owner: rebound ? rebound.from : undefined, taken_over: rebound ? rebound.taken_over : undefined,
+    ...(regErr ? { session_registry_error: regErr } : {}),
   };
 }

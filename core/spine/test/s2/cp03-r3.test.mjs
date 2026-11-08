@@ -1,6 +1,7 @@
 // CP-03 round 3 regressions for the stop gate (G-1, CONTRACT 3.1). Each test replays the adversarial
 // reviewer's commands through the built bundle and asserts a refusal.
 import assert from 'node:assert/strict';
+import cp from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
@@ -81,4 +82,66 @@ test('CP03 R3-S1-H6 gate escalate starts only from a run that already waits on t
   assert.equal(real(repo, ['record', '--run', b, '--result', 'results/rb.json']).code, 2);
   writeJson(path.join(runDirOf(repo, b), 'answers.json'), { answers: [{ n: 1, answer: 'no' }] });
   assert.equal(real(repo, ['gate', 'escalate', '--run', b, '--reason', 'no reply at all']).out.outcome, 'TRANSITION_REFUSED');
+});
+
+// R3-S1-H7: a run started in repo X is found by a stop made from repo Y or from a folder that is no repo.
+function sibling(repo, name) {
+  const dir = path.join(path.dirname(repo.dir), path.basename(repo.dir) + '-' + name);
+  fs.mkdirSync(dir);
+  if (name !== 'plain') {
+    cp.execFileSync('git', ['init', '-q', '-b', 'main', dir]);
+  }
+  return fs.realpathSync(dir);
+}
+
+test('CP03 R3-S1-H7 a stop from a sibling repo or a non-git folder still finds the session\'s run', () => {
+  const repo = mkRepo({ commit: true });
+  const a = start(repo, 'sess-A');
+  assert.equal(real(repo, ['next', '--run', a]).code, 0);
+  const y = sibling(repo, 'Y');
+  const plain = sibling(repo, 'plain');
+  assert.equal(hookStop(repo, 'sess-A').out.outcome, 'STOP_REFUSED');
+  for (const cwd of [y, plain]) {
+    const r = hookStop(repo, 'sess-A', cwd);
+    assert.equal(r.code, 1, cwd + ': ' + r.stdout);
+    assert.equal(r.out.outcome, 'STOP_REFUSED');
+    assert.equal(r.out.run_id, a);
+    assert.equal(r.out.run_home, fs.realpathSync(repo.doIt), 'the refusal names the home of the run');
+    assert.ok(r.out.homes.length === 2);
+  }
+  assert.equal(statusOf(repo, a), 'INTAKE');
+  assert.ok(!fs.existsSync(path.join(y, '.do-it', 'runs')), 'nothing is started in the sibling');
+  // another session from the sibling is not gated by sess-A's run
+  assert.equal(hookStop(repo, 'sess-B', y).out.outcome, 'STOP_ALLOWED');
+});
+
+test('CP03 R3-S1-H7 the registry records start, resume and take-over; stale entries are pruned', () => {
+  const repo = mkRepo({ commit: true });
+  const regFile = (s) => path.join(repo.home, '.do-it', 'sessions', s + '.json');
+  const a = start(repo, 'sess-A');
+  real(repo, ['next', '--run', a]);
+  const reg = readJson(regFile('sess-A'));
+  assert.deepEqual(reg.runs.map((e) => [e.run_id, e.home]), [[a, fs.realpathSync(repo.doIt)]]);
+  // DO_IT_USER_HOME moves the registry (tests and sandboxes)
+  const alt = path.join(repo.home, 'alt');
+  const b = real(repo, ['start', '--preset', 'feature', '--request', 'alt', '--session', 'sess-ALT'], { DO_IT_USER_HOME: alt });
+  assert.ok(fs.existsSync(path.join(alt, 'sessions', 'sess-ALT.json')));
+  assert.ok(!fs.existsSync(regFile('sess-ALT')));
+  // a take-over moves the run to the new session's list; the old entry is pruned on the next read
+  const y = sibling(repo, 'Y');
+  const t = real(repo, ['resume', '--session', 'sess-C', '--run', a, '--take-over']);
+  assert.equal(t.out.outcome, 'TAKEN_OVER', t.stdout);
+  assert.deepEqual(readJson(regFile('sess-C')).runs.map((e) => e.run_id), [a]);
+  assert.equal(hookStop(repo, 'sess-C', y).out.outcome, 'STOP_REFUSED', 'the new owner is gated from the sibling');
+  assert.equal(hookStop(repo, 'sess-A', y).out.outcome, 'STOP_ALLOWED', 'the old owner is not');
+  assert.ok(!fs.existsSync(regFile('sess-A')), 'the entry of a run sess-A no longer owns is pruned');
+  // a run folder that is gone is pruned too
+  fs.rmSync(path.join(repo.doIt, 'runs', a), { recursive: true });
+  assert.equal(hookStop(repo, 'sess-C', y).out.outcome, 'STOP_ALLOWED');
+  assert.ok(!fs.existsSync(regFile('sess-C')));
+  // an odd session id never becomes a path
+  real(repo, ['start', '--preset', 'feature', '--request', 'odd', '--session', '../../x y']);
+  const names = fs.readdirSync(path.join(repo.home, '.do-it', 'sessions'));
+  assert.ok(names.every((n) => /^[A-Za-z0-9._-]+\.json$/.test(n)), names.join(','));
+  assert.equal(b.code, 0);
 });

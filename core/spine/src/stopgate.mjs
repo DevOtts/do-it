@@ -4,6 +4,8 @@ import { CliError, fail } from './errors.mjs';
 import { openRows, readFinishLine, renderBoard, rowsForRun, rowsSignature } from './finish-line.mjs';
 import { packAppend } from './pack.mjs';
 import { cleanSessionId } from './session.mjs';
+import { sessionHomes } from './sessions.mjs';
+import { realpathSafe } from './ctx.mjs';
 import { loadSettings } from './settings.mjs';
 import { NON_GATING_STATUSES, loadState, selectRunId, selectScopedRunId, writeState } from './state.mjs';
 
@@ -89,6 +91,38 @@ export function gateStop(ctx, args) {
   const hook = !f.run && !!(scope.session || scope.cwd);
   if (!hook) return explicitStop(ctx, f);
 
+  // CP-03 R3-S1-H7: the session's runs may live in other repos than the cwd's. Every home the session
+  // registered a run in is gated as well as the cwd's, with the same rule; any refusal refuses the stop.
+  const here = realpathSafe(ctx.home);
+  const homes = [{ ctx, home: here }];
+  for (const h of sessionHomes(ctx, scope.session)) {
+    if (h.home !== here) homes.push({ ctx: { ...ctx, home: h.home, root: h.root }, home: h.home });
+  }
+  if (homes.length === 1) return hookStopIn(ctx, scope);
+  const answers = [];
+  for (const h of homes) {
+    try {
+      answers.push({ home: h.home, out: hookStopIn(h.ctx, scope) });
+    } catch (e) {
+      if (!(e instanceof CliError && e.outcome === 'STOP_REFUSED')) throw e;
+      answers.push({ home: h.home, refused: e });
+    }
+  }
+  const searched = answers.map((a) => a.home);
+  const refused = answers.filter((a) => a.refused);
+  if (refused.length) {
+    const first = refused[0];
+    const boards = refused.map((a) => (refused.length > 1 ? 'home ' + a.home + '\n' : '') + (a.refused.extra.board || ''));
+    throw fail('STOP_REFUSED', 1, { ...first.refused.extra, run_home: first.home, board: boards.join('\n\n'), refused_homes: refused.map((a) => a.home), homes: searched });
+  }
+  const parked = answers.find((a) => a.out.outcome === 'PARKED');
+  if (parked) return { ...parked.out, run_home: parked.home, homes: searched };
+  const pick = answers.find((a) => a.out.owned) || answers[0];
+  return { ...pick.out, run_home: pick.home, homes: searched };
+}
+
+// The hook-path rule inside one home (CONTRACT 3.1).
+function hookStopIn(ctx, scope) {
   const scoped = selectScopedRunId(ctx, scope);
   if (!scoped.run) {
     if (scoped.unreadable.length) {

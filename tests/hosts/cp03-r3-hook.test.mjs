@@ -115,3 +115,19 @@ for (const H of HOOKS) {
     assert.ok(!fs.existsSync(path.join(dir, '.do-it', 'runs', a, 'park.json')), 'no park record that says the opposite of what happened');
   });
 }
+
+for (const H of HOOKS) {
+  const which = path.relative(ROOT, H);
+  test(`CP03 R3-S1-H7 the hook refuses from repo X, a sibling repo Y and the non-git parent folder (${which})`, () => {
+    const w = world();
+    const x = repo(w, 'X');
+    const y = repo(w, 'Y');
+    const a = startRun(w, x, 'sess-A');
+    for (const cwd of [x, y, w.parent]) {
+      const r = hook(w, H, 'sess-A', cwd);
+      assert.equal(r.code, 2, `stop from ${cwd} must be refused: ${r.stderr}`);
+    }
+    assert.equal(state(x, a).status, 'INTAKE');
+    assert.ok(!fs.existsSync(path.join(y, '.do-it', 'host-claude-code')), 'the hook writes nothing in Y');
+  });
+}

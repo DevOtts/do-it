@@ -372,6 +372,9 @@ function cmdStart(ctx, args) {
     appendEvent(ctx, runId, { event: 'route', stage: state.stage, host: state.host, verdict: routed.preset, detail: { rule: routed.rule, model_call: false } });
   }
   const out = { outcome: 'STARTED', exit: 0, run_id: runId, status: state.status, preset: state.preset, root: ctx.root, home: ctx.home };
+  // the stop gate finds this run from any cwd the session stops in (CP-03 R3-S1-H7)
+  const regErr = registerSessionRun(ctx, session.id, runId);
+  if (regErr) out.session_registry_error = regErr;
   // an explicit id outranks the host's live one (2.1); say so, since only the recorded id is gated
   if (session.conflict) out.session_conflict = session.conflict;
   return out;
@@ -2565,7 +2568,8 @@ function cmdResume(ctx, args) {
     if (!moved) throw fail('NOT_PARKED', 1, { run_id: runId, status: state.status });
     writeState(ctx, state);
     logRebind(moved);
-    return { outcome: moved.taken_over ? 'TAKEN_OVER' : 'REBOUND', exit: 0, run_id: runId, status: state.status, owner: state.owner, previous_owner: moved.from };
+    const regErr = registerSessionRun(ctx, session, runId);
+    return { outcome: moved.taken_over ? 'TAKEN_OVER' : 'REBOUND', exit: 0, run_id: runId, status: state.status, owner: state.owner, previous_owner: moved.from, ...(regErr ? { session_registry_error: regErr } : {}) };
   }
 
   if (state.status === 'PARKED') {
@@ -2594,12 +2598,16 @@ function cmdResume(ctx, args) {
   const rebound = rebind();
   writeState(ctx, state);
   if (rebound) logRebind(rebound);
+  // the resuming session owns the run now (or still does): record its home for the stop gate (R3-S1-H7)
+  const owner = state.owner && typeof state.owner === 'object' ? state.owner.session_id : null;
+  const regErr = owner ? registerSessionRun(ctx, owner, runId) : null;
   const wake = consumeWake(ctx, runId);
   appendEvent(ctx, runId, { event: 'run_resumed', stage: state.stage, host: state.host, verdict: 'RESUMED', detail: { from, requeued, reopened, warnings: changed.length, forced: force, ceiling_cleared: ceilingHeld } });
   return {
     outcome: 'RESUMED', exit: 0, run_id: runId, status: state.status, requeued, reopened, warnings: changed.length,
     changed: changed.map((c) => c.row), wake: wake ? wake.status : null, ceiling: state.ceiling || null, owner: state.owner || null,
     previous_owner: rebound ? rebound.from : undefined, taken_over: rebound ? rebound.taken_over : undefined,
+    ...(regErr ? { session_registry_error: regErr } : {}),
   };
 }
 
@@ -2832,6 +2840,84 @@ function resolveSession(ctx, flags) {
 
 function resolveSessionId(ctx, flags) {
   return resolveSession(ctx, flags).id;
+}
+
+// ---- sessions.mjs ----
+// Session registry (CP-03 R3-S1-H7). A session can start a run in one repo and stop while its cwd is in
+// another repo, or in a folder that is no repo at all. The stop gate keys on the session owning the run
+// (CONTRACT 3.1 row 1), not on the cwd, so `start`, `resume` and a take-over record where each run lives:
+//   <user do-it home>/sessions/<session id>.json  ->  { session_id, runs: [{ run_id, home, root }] }
+// The user do-it home is DO_IT_USER_HOME when set (tests), else <HOME>/.do-it. `gate stop --session` looks in
+// every home on that list as well as the cwd's. An entry whose home or run is gone, whose run is over
+// (DONE, ESCALATED) or now belongs to another session is pruned when the list is read.
+const OVER = ['DONE', 'ESCALATED'];
+
+function userDoItHome(ctx) {
+  const env = ctx.env || {};
+  return env.DO_IT_USER_HOME ? path.resolve(ctx.cwd, env.DO_IT_USER_HOME) : path.join(ctx.userHome, '.do-it');
+}
+
+// A session id becomes a file name as is when it is a plain name, else by digest (never a path).
+function sessionFile(ctx, sessionId) {
+  const name = /^[A-Za-z0-9._-]{1,128}$/.test(sessionId) && !/^\.+$/.test(sessionId) ? sessionId : 'h-' + sha256Bytes(sessionId).slice(0, 32);
+  return path.join(userDoItHome(ctx), 'sessions', name + '.json');
+}
+
+function readList(file) {
+  const doc = readJsonIfExists(file);
+  return doc && Array.isArray(doc.runs) ? doc.runs.filter((e) => e && typeof e.run_id === 'string' && typeof e.home === 'string') : [];
+}
+
+// Records that `runId`, in ctx's home, is owned by `sessionId`. Returns null, or the error text when the
+// registry could not be written (the caller reports it: the run then gates only from its own repo).
+function registerSessionRun(ctx, sessionId, runId) {
+  if (!sessionId) return null;
+  try {
+    const file = sessionFile(ctx, sessionId);
+    const home = realpathSafe(ctx.home);
+    const runs = readList(file).filter((e) => !(e.run_id === runId && realpathSafe(e.home) === home));
+    runs.push({ run_id: runId, home, root: realpathSafe(ctx.root) });
+    atomicWriteJson(file, { session_id: sessionId, runs });
+    return null;
+  } catch (e) {
+    return String(e && e.message ? e.message : e);
+  }
+}
+
+function liveEntry(e, sessionId) {
+  try {
+    const st = JSON.parse(fs.readFileSync(path.join(e.home, 'runs', e.run_id, 'state.json'), 'utf8'));
+    if (!st || OVER.includes(st.status)) return false;
+    const o = st.owner;
+    return !!(o && typeof o === 'object' && o.session_id === sessionId);
+  } catch (err) {
+    // a run that is there but unreadable stays listed: the gate reports it, it does not forget it
+    return fs.existsSync(path.join(e.home, 'runs', e.run_id, 'state.json'));
+  }
+}
+
+// Every home that holds a live run of `sessionId`, pruning stale entries. Returns [{ home, root }].
+function sessionHomes(ctx, sessionId) {
+  if (!sessionId) return [];
+  const file = sessionFile(ctx, sessionId);
+  const all = readList(file);
+  if (!all.length) return [];
+  const keep = all.filter((e) => liveEntry(e, sessionId));
+  if (keep.length !== all.length) {
+    try {
+      if (keep.length) atomicWriteJson(file, { session_id: sessionId, runs: keep });
+      else fs.rmSync(file, { force: true });
+    } catch { /* pruning is best effort; the live entries are still used */ }
+  }
+  const seen = new Set();
+  const out = [];
+  for (const e of keep) {
+    const home = realpathSafe(e.home);
+    if (seen.has(home)) continue;
+    seen.add(home);
+    out.push({ home, root: typeof e.root === 'string' ? e.root : path.dirname(home) });
+  }
+  return out;
 }
 
 // ---- settings.mjs ----
@@ -3374,6 +3460,38 @@ function gateStop(ctx, args) {
   const hook = !f.run && !!(scope.session || scope.cwd);
   if (!hook) return explicitStop(ctx, f);
 
+  // CP-03 R3-S1-H7: the session's runs may live in other repos than the cwd's. Every home the session
+  // registered a run in is gated as well as the cwd's, with the same rule; any refusal refuses the stop.
+  const here = realpathSafe(ctx.home);
+  const homes = [{ ctx, home: here }];
+  for (const h of sessionHomes(ctx, scope.session)) {
+    if (h.home !== here) homes.push({ ctx: { ...ctx, home: h.home, root: h.root }, home: h.home });
+  }
+  if (homes.length === 1) return hookStopIn(ctx, scope);
+  const answers = [];
+  for (const h of homes) {
+    try {
+      answers.push({ home: h.home, out: hookStopIn(h.ctx, scope) });
+    } catch (e) {
+      if (!(e instanceof CliError && e.outcome === 'STOP_REFUSED')) throw e;
+      answers.push({ home: h.home, refused: e });
+    }
+  }
+  const searched = answers.map((a) => a.home);
+  const refused = answers.filter((a) => a.refused);
+  if (refused.length) {
+    const first = refused[0];
+    const boards = refused.map((a) => (refused.length > 1 ? 'home ' + a.home + '\n' : '') + (a.refused.extra.board || ''));
+    throw fail('STOP_REFUSED', 1, { ...first.refused.extra, run_home: first.home, board: boards.join('\n\n'), refused_homes: refused.map((a) => a.home), homes: searched });
+  }
+  const parked = answers.find((a) => a.out.outcome === 'PARKED');
+  if (parked) return { ...parked.out, run_home: parked.home, homes: searched };
+  const pick = answers.find((a) => a.out.owned) || answers[0];
+  return { ...pick.out, run_home: pick.home, homes: searched };
+}
+
+// The hook-path rule inside one home (CONTRACT 3.1).
+function hookStopIn(ctx, scope) {
   const scoped = selectScopedRunId(ctx, scope);
   if (!scoped.run) {
     if (scoped.unreadable.length) {

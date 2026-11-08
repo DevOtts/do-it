@@ -22,6 +22,7 @@ import { cmdResume } from './resume.mjs';
 import { redactFlushEvents } from './secrets.mjs';
 import { route } from './router.mjs';
 import { resolveSession } from './session.mjs';
+import { registerSessionRun } from './sessions.mjs';
 import { loadSettings } from './settings.mjs';
 import { gateStop } from './stopgate.mjs';
 import { advanceRunStatus, loadState, newRunId, newState, runDir, selectRunId, takeOvers, unreadableRuns, writeState } from './state.mjs';
@@ -156,6 +157,9 @@ export function cmdStart(ctx, args) {
     appendEvent(ctx, runId, { event: 'route', stage: state.stage, host: state.host, verdict: routed.preset, detail: { rule: routed.rule, model_call: false } });
   }
   const out = { outcome: 'STARTED', exit: 0, run_id: runId, status: state.status, preset: state.preset, root: ctx.root, home: ctx.home };
+  // the stop gate finds this run from any cwd the session stops in (CP-03 R3-S1-H7)
+  const regErr = registerSessionRun(ctx, session.id, runId);
+  if (regErr) out.session_registry_error = regErr;
   // an explicit id outranks the host's live one (2.1); say so, since only the recorded id is gated
   if (session.conflict) out.session_conflict = session.conflict;
   return out;
