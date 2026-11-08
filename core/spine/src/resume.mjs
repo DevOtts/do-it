@@ -83,7 +83,7 @@ export function cmdResume(ctx, args) {
   for (const s of state.slices) {
     if (s.status === 'RUNNING') { s.status = 'READY'; requeued.push(s.id); }
   }
-  const changed = verifyEvidence(ctx, runId);
+  const changed = verifyEvidence(ctx, runId, state);
   const reopened = [];
   for (const c of changed) {
     const s = state.slices.find((x) => x.id === c.row);

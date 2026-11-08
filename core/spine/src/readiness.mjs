@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fail } from './errors.mjs';
 import { appendEvent } from './events.mjs';
-import { findRow, finishLineUpsert, hasRow, readFinishLine, writeFinishLine } from './finish-line.mjs';
+import { adoptsUnattributed, findRow, finishLineUpsert, hasRow, readFinishLine, writeFinishLine } from './finish-line.mjs';
 import { sha256Bytes } from './hash.mjs';
 import { loadSchemaFile, validateSchema } from './schema.mjs';
 import { resolveCredentials } from './secrets.mjs';
@@ -141,7 +141,7 @@ export function seedCheckpoints(state, fl, data) {
   };
   for (const c of block.checkpoints) {
     const id = CHECKPOINT_ROW_PREFIX + c.id;
-    if (!hasRow(fl, id, state.run_id)) finishLineUpsert(fl, id, { kind: 'package' }, state.run_id);
+    if (!hasRow(fl, id, state.run_id, adoptsUnattributed(state))) finishLineUpsert(fl, id, { kind: 'package' }, state.run_id, adoptsUnattributed(state));
   }
   return block.count;
 }
@@ -186,23 +186,24 @@ export function gateBuild(ctx, args) {
     const from = state.status;
     state.status = 'BLOCKED';
     writeState(ctx, state);
-    finishLineUpsert(fl, CRED_ROW_ID, { kind: 'package', state: 'BLOCKED', reason, evidence: null }, runId);
+    finishLineUpsert(fl, CRED_ROW_ID, { kind: 'package', state: 'BLOCKED', reason, evidence: null }, runId, adoptsUnattributed(state));
     writeFinishLine(ctx, fl);
     appendEvent(ctx, runId, { event: 'build_blocked', stage: state.stage, host: state.host, verdict: 'CREDENTIAL_MISSING', detail: { from, credentials: missing.map((m) => m.name), provider } });
     return { outcome: 'BLOCKED', exit: 3, run_id: runId, status: 'BLOCKED', reason, missing: missing.map((m) => m.name), provider };
   }
   const from = state.status;
+  const adopt = adoptsUnattributed(state);
   seedSlices(state, v.data);
   const checkpoints = seedCheckpoints(state, fl, v.data);
   state.gates.build = { approved: true, owner: 'readiness', date: now, readiness_sha256: v.sha256 };
   state.status = 'BUILDING';
   writeState(ctx, state);
   for (const s of state.slices) {
-    if (!hasRow(fl, s.id, runId)) finishLineUpsert(fl, s.id, { kind: 'package' }, runId);
+    if (!hasRow(fl, s.id, runId, adopt)) finishLineUpsert(fl, s.id, { kind: 'package' }, runId, adopt);
   }
-  const credRow = findRow(fl, CRED_ROW_ID, runId);
+  const credRow = findRow(fl, CRED_ROW_ID, runId, adopt);
   if (credRow && credRow.state === 'BLOCKED') {
-    finishLineUpsert(fl, CRED_ROW_ID, { state: 'DONE', reason: null, evidence: path.relative(ctx.repo, readinessPath(ctx)) }, runId);
+    finishLineUpsert(fl, CRED_ROW_ID, { state: 'DONE', reason: null, evidence: path.relative(ctx.repo, readinessPath(ctx)) }, runId, adopt);
   }
   writeFinishLine(ctx, fl);
   appendEvent(ctx, runId, { event: 'build_approved', stage: state.stage, host: state.host, verdict: 'READINESS_OK', detail: { from, readiness_sha256: v.sha256, slices: state.slices.length, review_checkpoints: checkpoints } });

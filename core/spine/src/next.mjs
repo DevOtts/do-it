@@ -1,6 +1,6 @@
 import { appendEvent } from './events.mjs';
 import { fail } from './errors.mjs';
-import { findRow, finishLineUpsert, hasRow, openRows, readFinishLine, renderBoard, rowClosed, rowsForRun, writeFinishLine } from './finish-line.mjs';
+import { adoptsUnattributed, findRow, finishLineUpsert, hasRow, openRows, readFinishLine, renderBoard, rowClosed, rowsForRun, writeFinishLine } from './finish-line.mjs';
 import { ladderRetry, RETRY_REASON } from './ladder.mjs';
 import { loadPipeline } from './pipeline.mjs';
 import { CLASS_TIER, rereadReadiness } from './readiness.mjs';
@@ -47,12 +47,14 @@ export function nextSlice(ctx, state, runId) {
 export function nextWave(ctx, state, runId, fl) {
   const pipe = loadPipeline(ctx, state.preset);
   if (!pipe || !pipe.steps.length) return { pipe: null };
+  // a 1.1 run seeds and reads only its own rows; a 1.0.x board's rows with the same step ids are not its own
+  const adopt = adoptsUnattributed(state);
   let seeded = false;
   for (const st of pipe.steps) {
-    if (!hasRow(fl, st.id, runId)) { finishLineUpsert(fl, st.id, { kind: 'wave' }, runId); seeded = true; }
+    if (!hasRow(fl, st.id, runId, adopt)) { finishLineUpsert(fl, st.id, { kind: 'wave' }, runId, adopt); seeded = true; }
   }
   if (seeded) writeFinishLine(ctx, fl);
-  const rowOf = (id) => findRow(fl, id, runId);
+  const rowOf = (id) => findRow(fl, id, runId, adopt);
   for (const st of pipe.steps) {
     const row = rowOf(st.id);
     if (row.state !== 'OPEN') continue;

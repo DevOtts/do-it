@@ -4,7 +4,7 @@ import path from 'node:path';
 import { fail } from './errors.mjs';
 import { appendEvent } from './events.mjs';
 import { resolveEvidence } from './evidence.mjs';
-import { autoClosePackages, finishLineUpsert, readFinishLine, writeFinishLine } from './finish-line.mjs';
+import { adoptsUnattributed, autoClosePackages, finishLineUpsert, readFinishLine, writeFinishLine } from './finish-line.mjs';
 import { atomicWrite, atomicWriteJson, readJsonIfExists } from './fs-atomic.mjs';
 import { sha256Bytes } from './hash.mjs';
 import { escalationQuestion, ladderEscalated } from './ladder.mjs';
@@ -108,8 +108,9 @@ export function applyJournal(ctx, j, allowFault) {
   if (!fs.existsSync(copy)) atomicWrite(copy, j.result_text);
   if (j.fl_ops.length) {
     const fl = readFinishLine(ctx);
-    for (const op of j.fl_ops) finishLineUpsert(fl, op.id, op.patch, runId);
-    autoClosePackages(fl);
+    const adopt = adoptsUnattributed(j.next_state);
+    for (const op of j.fl_ops) finishLineUpsert(fl, op.id, op.patch, runId, adopt);
+    autoClosePackages(fl, adopt ? runId : null);
     writeFinishLine(ctx, fl);
   }
   if (j.questions.length) packAppend(ctx, runId, j.questions);

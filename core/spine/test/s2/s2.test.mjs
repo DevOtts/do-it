@@ -187,7 +187,7 @@ test('T-S2-09 next returns waves in dependency order', () => {
   const repo = mkRepo();
   const id = startRun(repo, unit, ['--preset', 'waves']);
   const env = { DO_IT_PIPELINES: PIPES };
-  writeJson(flFile(repo), { rows: [flRow('w1', 'OPEN', { kind: 'wave' }), flRow('w2', 'OPEN', { kind: 'wave' }), flRow('w3', 'OPEN', { kind: 'wave' })] });
+  writeJson(flFile(repo), { rows: [flRow('w1', 'OPEN', { kind: 'wave', run_id: id }), flRow('w2', 'OPEN', { kind: 'wave', run_id: id }), flRow('w3', 'OPEN', { kind: 'wave', run_id: id })] });
   let n = unit(repo, ['next'], env);
   assert.equal(n.out.wave, 'w1');
   assert.equal(n.out.tier, 'T2');
@@ -304,7 +304,7 @@ test('T-S2-15 BLOCKED outcome parks only its own slice', () => {
   const repo = mkRepo();
   const id = startRun(repo, unit);
   setState(repo, id, (st) => { st.status = 'BUILDING'; st.slices.push(slice('a'), slice('b')); });
-  writeJson(flFile(repo), { rows: [flRow('a'), flRow('b')] });
+  writeJson(flFile(repo), { rows: [flRow('a', 'OPEN', { run_id: id }), flRow('b', 'OPEN', { run_id: id })] });
   const empty = record(unit, repo, result(id, { status: 'blocked', slice_id: 'a', reason: '  ' }), 'e');
   assert.equal(empty.code, 1);
   assert.equal(empty.out.outcome, 'BLOCK_REASON_REQUIRED');

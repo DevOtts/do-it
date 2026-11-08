@@ -75,12 +75,76 @@ test('CP03 S1-H1 two plans with the same slice ids: rows, lookups and package au
   assert.equal(pkg('run-A').state, 'DONE', 'A\'s package closes on A\'s case row');
   assert.equal(pkg('run-B').state, 'OPEN', 'B\'s package stays open: its own case row is open');
   assert.deepEqual(rowsForRun(fl, 'run-B', false).rows.map((r) => r.state), ['OPEN', 'OPEN']);
-  // an older board's unattributed row is adopted by the first run that touches it, then belongs to it
+  // an older board's unattributed row is adopted only by a legacy run (adopt=true), then belongs to it
   const old = { rows: [{ id: 'R1', kind: 'dod', state: 'OPEN', evidence: null }] };
-  finishLineUpsert(old, 'R1', { state: 'OPEN' }, 'run-A');
+  finishLineUpsert(old, 'R1', { state: 'OPEN' }, 'run-A', true);
   assert.equal(old.rows[0].run_id, 'run-A');
-  finishLineUpsert(old, 'R1', {}, 'run-B');
+  finishLineUpsert(old, 'R1', {}, 'run-B', true);
   assert.equal(old.rows.length, 2);
+});
+
+// The board a 1.0.x run leaves behind: every step id of the preset, no run_id, all DONE except `verify`.
+function legacyFeatureBoard(repo, allDone) {
+  const probe = start(repo, 'probe');
+  assert.equal(real(repo, ['next', '--run', probe]).out.wave, 'intake');
+  const ids = readJson(flFile(repo)).rows.map((r) => r.id);
+  assert.equal(ids.length, 10, 'the feature preset has 10 steps: ' + ids.join(','));
+  fs.rmSync(runDirOf(repo, probe), { recursive: true, force: true }); // the 1.0.x run is gone; its rows stay
+  writeJson(flFile(repo), { rows: ids.map((id) => ({ id, kind: 'wave', state: allDone || id !== 'verify' ? 'DONE' : 'OPEN', evidence: 'legacy', owner_question: null, reason: null, archived_to: null })) });
+  return ids;
+}
+
+test('CP03 R2-S1-H3 a 1.1 run on a 1.0.x board seeds its own rows, starts at intake, and its owner is refused', () => {
+  const repo = mkRepo();
+  const ids = legacyFeatureBoard(repo, false);
+  // the reviewer's replay: start, next, hook stop
+  const b = start(repo, 'sess-B');
+  const n = real(repo, ['next', '--run', b]);
+  assert.equal(n.out.wave, 'intake', 'the new run does not follow the old run\'s row states: ' + n.stdout);
+  const rows = readJson(flFile(repo)).rows;
+  assert.deepEqual(rows.filter((r) => r.run_id === b).map((r) => r.id), ids, 'B seeded its own 10 rows');
+  assert.equal(rows.filter((r) => !r.run_id).length, 10, 'the legacy rows are left as they were, unadopted');
+  assert.ok(rows.filter((r) => !r.run_id).every((r) => r.id === 'verify' ? r.state === 'OPEN' : r.state === 'DONE'));
+  const stop = hookStop(repo, 'sess-B');
+  assert.equal(stop.code, 1, stop.stdout);
+  assert.equal(stop.out.outcome, 'STOP_REFUSED');
+  assert.equal(stop.out.owned, true);
+  assert.equal(stop.out.run_id, b);
+  assert.deepEqual(stop.out.open, ids);
+  assert.match(stop.out.board, /0 of 10 closed/);
+});
+
+test('CP03 R2-S1-H3 a 1.0.x board with every row DONE does not make a new run\'s finish line reached', () => {
+  const repo = mkRepo();
+  legacyFeatureBoard(repo, true);
+  const b = start(repo, 'sess-B');
+  const n = real(repo, ['next', '--run', b]);
+  assert.notEqual(n.out.outcome, 'FINISH_LINE_REACHED', n.stdout);
+  assert.equal(n.out.wave, 'intake');
+  assert.equal(hookStop(repo, 'sess-B').out.outcome, 'STOP_REFUSED');
+});
+
+test('CP03 R2-S1-H3 a legacy run (no owner object) still adopts its own 1.0.x rows, as before', () => {
+  const repo = mkRepo();
+  const ids = legacyFeatureBoard(repo, false);
+  const l = start(repo, 'sess-L');
+  editState(repo, l, (st) => { delete st.owner; });
+  const n = real(repo, ['next', '--run', l]);
+  assert.equal(n.out.wave, 'verify', 'the 1.0.x run carries on where it was: ' + n.stdout);
+  const rows = readJson(flFile(repo)).rows;
+  assert.deepEqual(rows.map((r) => r.id), ids, 'nothing seeded: the legacy run reads the 1.0.x rows as its own');
+});
+
+test('CP03 R2-S1-H3 a 1.1 package never auto-closes on a 1.0.x case row; a legacy run\'s package still does', () => {
+  const fl = { rows: [
+    { id: 'S1', kind: 'package', state: 'OPEN', evidence: null, run_id: 'run-new' },
+    { id: 'T-S1-01', kind: 'dod', state: 'DONE', evidence: 'legacy' },
+  ] };
+  assert.equal(hasRow(fl, 'T-S1-01', 'run-new'), false, 'strict by default');
+  autoClosePackages(fl, null);
+  assert.equal(fl.rows[0].state, 'OPEN', 'the unattributed case row is not run-new\'s');
+  autoClosePackages(fl, 'run-new');
+  assert.equal(fl.rows[0].state, 'DONE', 'a legacy run may pair with its own unattributed case rows');
 });
 
 function startNoPreset(repo, session) {

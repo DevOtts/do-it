@@ -438,7 +438,7 @@ function computeRunVerdict(ledger, fl) {
 function gateConclude(ctx, args) {
   const runId = selectRunId(ctx, args.flags);
   const state = loadState(ctx, runId);
-  const reverified = verifyEvidence(ctx, runId);
+  const reverified = verifyEvidence(ctx, runId, state);
   const ledger = readLedger(ctx, runId);
   const fl = rowsForRun(readFinishLine(ctx), runId, true);
   const reasons = [];
@@ -667,22 +667,29 @@ function writeFinishLine(ctx, fl) {
 
 // A row's identity is (run_id, id): row ids are namespaced per run, so two runs of one preset (or two
 // plans with the same slice ids) each get their own rows (CP-03 S1-H1). A row written before run_id
-// existed has none; the first run that touches that id adopts it, as 1.0.x boards expect.
-function findRow(fl, id, runId) {
+// existed has none. Only a legacy run (state with no owner object, written by 1.0.x) may adopt such a
+// row; a 1.1 run never does, or a 1.0.x board's rows would stand in for the run's own and it would
+// seed nothing (CP-03 R2-S1-H3). `adopt` is false unless the caller passes adoptsUnattributed(state).
+function adoptsUnattributed(state) {
+  return !!state && !(state.owner && typeof state.owner === 'object');
+}
+
+function findRow(fl, id, runId, adopt) {
   const rid = runId || null;
   if (rid) {
     const own = fl.rows.find((r) => r.id === id && r.run_id === rid);
     if (own) return own;
+    if (!adopt) return null;
   }
   return fl.rows.find((r) => r.id === id && !r.run_id) || null;
 }
 
-function hasRow(fl, id, runId) {
-  return !!findRow(fl, id, runId);
+function hasRow(fl, id, runId, adopt) {
+  return !!findRow(fl, id, runId, adopt);
 }
 
-function finishLineUpsert(fl, id, patch, runId) {
-  let row = findRow(fl, id, runId);
+function finishLineUpsert(fl, id, patch, runId, adopt) {
+  let row = findRow(fl, id, runId, adopt);
   if (!row) {
     row = { id, kind: 'dod', state: 'OPEN', evidence: null, owner_question: null, reason: null, archived_to: null };
     if (runId) row.run_id = runId;
@@ -719,18 +726,21 @@ function rowClosed(row) {
 // A package row (a slice) closes by itself once every one of its case rows
 // (`T-<slice>-<n>`) is terminal: DONE when all are DONE, else BLOCKED naming the
 // ones that are not. A package with no case rows, or with one still open, is left alone.
-// Case rows count only for the package of the same run (rows are namespaced per run); a row with no
-// run_id (an older board) is unattributed and may pair with either.
-function sameRun(a, b) {
-  return !a.run_id || !b.run_id || a.run_id === b.run_id;
+// Case rows count only for the package of the same run (rows are namespaced per run). An unattributed
+// row (an older board) pairs only with an unattributed package, or with the legacy run named by
+// `legacyRunId` (the one run allowed to adopt it): a 1.1 package never closes on a 1.0.x case row.
+function sameRun(pkg, c, legacyRunId) {
+  if ((pkg.run_id || null) === (c.run_id || null)) return true;
+  if (!legacyRunId) return false;
+  return (!c.run_id && pkg.run_id === legacyRunId) || (!pkg.run_id && c.run_id === legacyRunId);
 }
 
-function autoClosePackages(fl) {
+function autoClosePackages(fl, legacyRunId) {
   const closed = [];
   for (const pkg of fl.rows) {
     if (pkg.kind !== 'package' || pkg.state !== 'OPEN' || pkg.id.includes(':')) continue;
     const re = new RegExp('^T-' + pkg.id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '-\\d');
-    const cases = fl.rows.filter((r) => r.kind === 'dod' && sameRun(r, pkg) && re.test(r.id));
+    const cases = fl.rows.filter((r) => r.kind === 'dod' && sameRun(pkg, r, legacyRunId) && re.test(r.id));
     if (!cases.length || !cases.every(rowTerminal)) continue;
     const notDone = cases.filter((r) => r.state !== 'DONE');
     if (notDone.length) {
@@ -1473,12 +1483,14 @@ function nextSlice(ctx, state, runId) {
 function nextWave(ctx, state, runId, fl) {
   const pipe = loadPipeline(ctx, state.preset);
   if (!pipe || !pipe.steps.length) return { pipe: null };
+  // a 1.1 run seeds and reads only its own rows; a 1.0.x board's rows with the same step ids are not its own
+  const adopt = adoptsUnattributed(state);
   let seeded = false;
   for (const st of pipe.steps) {
-    if (!hasRow(fl, st.id, runId)) { finishLineUpsert(fl, st.id, { kind: 'wave' }, runId); seeded = true; }
+    if (!hasRow(fl, st.id, runId, adopt)) { finishLineUpsert(fl, st.id, { kind: 'wave' }, runId, adopt); seeded = true; }
   }
   if (seeded) writeFinishLine(ctx, fl);
-  const rowOf = (id) => findRow(fl, id, runId);
+  const rowOf = (id) => findRow(fl, id, runId, adopt);
   for (const st of pipe.steps) {
     const row = rowOf(st.id);
     if (row.state !== 'OPEN') continue;
@@ -1876,7 +1888,7 @@ function seedCheckpoints(state, fl, data) {
   };
   for (const c of block.checkpoints) {
     const id = CHECKPOINT_ROW_PREFIX + c.id;
-    if (!hasRow(fl, id, state.run_id)) finishLineUpsert(fl, id, { kind: 'package' }, state.run_id);
+    if (!hasRow(fl, id, state.run_id, adoptsUnattributed(state))) finishLineUpsert(fl, id, { kind: 'package' }, state.run_id, adoptsUnattributed(state));
   }
   return block.count;
 }
@@ -1921,23 +1933,24 @@ function gateBuild(ctx, args) {
     const from = state.status;
     state.status = 'BLOCKED';
     writeState(ctx, state);
-    finishLineUpsert(fl, CRED_ROW_ID, { kind: 'package', state: 'BLOCKED', reason, evidence: null }, runId);
+    finishLineUpsert(fl, CRED_ROW_ID, { kind: 'package', state: 'BLOCKED', reason, evidence: null }, runId, adoptsUnattributed(state));
     writeFinishLine(ctx, fl);
     appendEvent(ctx, runId, { event: 'build_blocked', stage: state.stage, host: state.host, verdict: 'CREDENTIAL_MISSING', detail: { from, credentials: missing.map((m) => m.name), provider } });
     return { outcome: 'BLOCKED', exit: 3, run_id: runId, status: 'BLOCKED', reason, missing: missing.map((m) => m.name), provider };
   }
   const from = state.status;
+  const adopt = adoptsUnattributed(state);
   seedSlices(state, v.data);
   const checkpoints = seedCheckpoints(state, fl, v.data);
   state.gates.build = { approved: true, owner: 'readiness', date: now, readiness_sha256: v.sha256 };
   state.status = 'BUILDING';
   writeState(ctx, state);
   for (const s of state.slices) {
-    if (!hasRow(fl, s.id, runId)) finishLineUpsert(fl, s.id, { kind: 'package' }, runId);
+    if (!hasRow(fl, s.id, runId, adopt)) finishLineUpsert(fl, s.id, { kind: 'package' }, runId, adopt);
   }
-  const credRow = findRow(fl, CRED_ROW_ID, runId);
+  const credRow = findRow(fl, CRED_ROW_ID, runId, adopt);
   if (credRow && credRow.state === 'BLOCKED') {
-    finishLineUpsert(fl, CRED_ROW_ID, { state: 'DONE', reason: null, evidence: path.relative(ctx.repo, readinessPath(ctx)) }, runId);
+    finishLineUpsert(fl, CRED_ROW_ID, { state: 'DONE', reason: null, evidence: path.relative(ctx.repo, readinessPath(ctx)) }, runId, adopt);
   }
   writeFinishLine(ctx, fl);
   appendEvent(ctx, runId, { event: 'build_approved', stage: state.stage, host: state.host, verdict: 'READINESS_OK', detail: { from, readiness_sha256: v.sha256, slices: state.slices.length, review_checkpoints: checkpoints } });
@@ -2037,8 +2050,9 @@ function applyJournal(ctx, j, allowFault) {
   if (!fs.existsSync(copy)) atomicWrite(copy, j.result_text);
   if (j.fl_ops.length) {
     const fl = readFinishLine(ctx);
-    for (const op of j.fl_ops) finishLineUpsert(fl, op.id, op.patch, runId);
-    autoClosePackages(fl);
+    const adopt = adoptsUnattributed(j.next_state);
+    for (const op of j.fl_ops) finishLineUpsert(fl, op.id, op.patch, runId, adopt);
+    autoClosePackages(fl, adopt ? runId : null);
     writeFinishLine(ctx, fl);
   }
   if (j.questions.length) packAppend(ctx, runId, j.questions);
@@ -2532,7 +2546,7 @@ function cmdResume(ctx, args) {
   for (const s of state.slices) {
     if (s.status === 'RUNNING') { s.status = 'READY'; requeued.push(s.id); }
   }
-  const changed = verifyEvidence(ctx, runId);
+  const changed = verifyEvidence(ctx, runId, state);
   const reopened = [];
   for (const c of changed) {
     const s = state.slices.find((x) => x.id === c.row);
@@ -3376,7 +3390,7 @@ function parseVerdict(text, id) {
 // ---- verify.mjs ----
 // Re-read the world: recompute every VERIFIED row's evidence hash (never mtime).
 // A changed or missing file downgrades the row and reopens its finish-line row.
-function verifyEvidence(ctx, runId) {
+function verifyEvidence(ctx, runId, state) {
   const ledger = readLedger(ctx, runId);
   const changed = [];
   const now = ctx.now();
@@ -3393,8 +3407,9 @@ function verifyEvidence(ctx, runId) {
   if (changed.length) {
     writeLedger(ctx, ledger);
     const fl = readFinishLine(ctx);
+    const adopt = adoptsUnattributed(state || loadState(ctx, runId));
     for (const c of changed) {
-      if (hasRow(fl, c.row, runId)) finishLineUpsert(fl, c.row, { state: 'OPEN', evidence: null, reason: 'evidence_changed' }, runId);
+      if (hasRow(fl, c.row, runId, adopt)) finishLineUpsert(fl, c.row, { state: 'OPEN', evidence: null, reason: 'evidence_changed' }, runId, adopt);
       appendEvent(ctx, runId, { event: 'evidence_changed', verdict: 'IMPLEMENTED-NOT-VERIFIED', detail: { row: c.row, reason: c.reason } });
     }
     writeFinishLine(ctx, fl);
@@ -3404,8 +3419,8 @@ function verifyEvidence(ctx, runId) {
 
 function gateVerify(ctx, args) {
   const runId = selectRunId(ctx, args.flags);
-  loadState(ctx, runId);
-  const changed = verifyEvidence(ctx, runId);
+  const state = loadState(ctx, runId);
+  const changed = verifyEvidence(ctx, runId, state);
   if (changed.length) throw fail('EVIDENCE_CHANGED', 1, { run_id: runId, rows: changed.map((c) => c.row), changed });
   const ledger = readLedger(ctx, runId);
   return { outcome: 'VERIFY_OK', exit: 0, run_id: runId, checked: ledger.rows.filter((r) => r.verdict === 'VERIFIED').length };

@@ -57,7 +57,8 @@ test('T-FR-04 an explicit "Final verdict:" line wins over earlier verdict lines'
 
 function seedBoard(repo, rows) {
   writeJson(path.join(repo.doIt, 'finish-line.json'), {
-    rows: rows.map(([id, kind, state, extra]) => ({ id, kind, state, evidence: null, owner_question: null, reason: null, archived_to: null, ...(extra || {}) })),
+    // rows carry the run's id: a 1.1 run never adopts an unattributed row (CP-03 R2-S1-H3)
+    rows: rows.map(([id, kind, state, extra]) => ({ id, kind, state, evidence: null, owner_question: null, reason: null, archived_to: null, ...(repo.runId ? { run_id: repo.runId } : {}), ...(extra || {}) })),
   });
 }
 function evFile(repo) {

@@ -19,7 +19,7 @@ export function computeRunVerdict(ledger, fl) {
 export function gateConclude(ctx, args) {
   const runId = selectRunId(ctx, args.flags);
   const state = loadState(ctx, runId);
-  const reverified = verifyEvidence(ctx, runId);
+  const reverified = verifyEvidence(ctx, runId, state);
   const ledger = readLedger(ctx, runId);
   const fl = rowsForRun(readFinishLine(ctx), runId, true);
   const reasons = [];
