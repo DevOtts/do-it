@@ -31,6 +31,21 @@ function logUnreadableOnce(ctx, runId, detail) {
   logQuiet(ctx, runId, { event: 'stop_gate_state_unreadable', stage: null, verdict: 'STATE_ERROR', detail });
 }
 
+const DEFAULT_PATIENCE = 3;
+
+function refuseUnreadableBoard(ctx, gating, patience, error, extra) {
+  const id = 'finish-line.json unreadable';
+  const refused = [];
+  const parked = [];
+  for (const g of gating) {
+    const r = refuseOrPark(ctx, g.id, g.state, { rows: [] }, [{ id }], patience);
+    (r.parked ? parked : refused).push({ id: g.id, refusals: r.refusals });
+  }
+  const board = 'FINISH LINE: unreadable (' + error + ')';
+  if (!refused.length) return { outcome: 'PARKED', exit: 2, owned: true, run_id: parked[0].id, status: 'PARKED', open: [id], board, board_error: error, ...extra };
+  throw fail('STOP_REFUSED', 1, { owned: true, run_id: refused[0].id, reason: 'finish-line.json cannot be read, so the open rows are unknown: ' + error, stop_refusals: refused[0].refusals, patience, open: [id], board, board_error: error, ...(gating.length > 1 ? { runs: gating.map((g) => g.id) } : {}), ...extra });
+}
+
 // One run's refusal bookkeeping: the patience counter resets when its rows changed since the last stop;
 // at patience the run is parked with one owner-pack question. Returns { parked, ids, refusals }.
 function refuseOrPark(ctx, runId, state, fl, open, patience) {
@@ -93,32 +108,49 @@ export function gateStop(ctx, args) {
 
   // CP-03 R3-S1-H7: the session's runs may live in other repos than the cwd's. Every home the session
   // registered a run in is gated as well as the cwd's, with the same rule; any refusal refuses the stop.
+  // CP-03 R4-S1-M7: a registry that cannot be read is reported (registry_unreadable) and leaves the cwd-only
+  // rule; another home that cannot be evaluated is reported (unreadable_homes) and fails open for that home
+  // alone. The cwd's own home is always evaluated, and its answer (a refusal above all) stands.
   const here = realpathSafe(ctx.home);
-  const homes = [{ ctx, home: here }];
-  for (const h of sessionHomes(ctx, scope.session)) {
-    if (h.home !== here) homes.push({ ctx: { ...ctx, home: h.home, root: h.root }, home: h.home });
+  const reg = sessionHomes(ctx, scope.session);
+  const notes = reg.errors.length ? { registry_unreadable: reg.errors } : {};
+  const homes = [{ ctx, home: here, own: true }];
+  for (const h of reg.homes) {
+    if (h.home !== here) homes.push({ ctx: { ...ctx, home: h.home, root: h.root }, home: h.home, own: false });
   }
-  if (homes.length === 1) return hookStopIn(ctx, scope);
+  if (homes.length === 1) return withNotes(() => hookStopIn(ctx, scope), notes);
   const answers = [];
+  const unreadableHomes = [];
   for (const h of homes) {
     try {
       answers.push({ home: h.home, out: hookStopIn(h.ctx, scope) });
     } catch (e) {
-      if (!(e instanceof CliError && e.outcome === 'STOP_REFUSED')) throw e;
-      answers.push({ home: h.home, refused: e });
+      if (e instanceof CliError && e.outcome === 'STOP_REFUSED') { answers.push({ home: h.home, refused: e }); continue; }
+      if (h.own) throw addNotes(e, notes);
+      unreadableHomes.push({ home: h.home, error: String(e && e.message ? e.message : e) });
     }
   }
-  const searched = answers.map((a) => a.home);
+  if (unreadableHomes.length) notes.unreadable_homes = unreadableHomes;
+  const searched = homes.map((h) => h.home);
   const refused = answers.filter((a) => a.refused);
   if (refused.length) {
     const first = refused[0];
     const boards = refused.map((a) => (refused.length > 1 ? 'home ' + a.home + '\n' : '') + (a.refused.extra.board || ''));
-    throw fail('STOP_REFUSED', 1, { ...first.refused.extra, run_home: first.home, board: boards.join('\n\n'), refused_homes: refused.map((a) => a.home), homes: searched });
+    throw fail('STOP_REFUSED', 1, { ...first.refused.extra, run_home: first.home, board: boards.join('\n\n'), refused_homes: refused.map((a) => a.home), homes: searched, ...notes });
   }
   const parked = answers.find((a) => a.out.outcome === 'PARKED');
-  if (parked) return { ...parked.out, run_home: parked.home, homes: searched };
+  if (parked) return { ...parked.out, run_home: parked.home, homes: searched, ...notes };
   const pick = answers.find((a) => a.out.owned) || answers[0];
-  return { ...pick.out, run_home: pick.home, homes: searched };
+  return { ...pick.out, run_home: pick.home, homes: searched, ...notes };
+}
+
+function addNotes(e, notes) {
+  if (e instanceof CliError && Object.keys(notes).length) e.extra = { ...e.extra, ...notes };
+  return e;
+}
+
+function withNotes(fn, notes) {
+  try { return { ...fn(), ...notes }; } catch (e) { throw addNotes(e, notes); }
 }
 
 // The hook-path rule inside one home (CONTRACT 3.1).
@@ -151,8 +183,15 @@ function hookStopIn(ctx, scope) {
     const top = readable[0];
     return allowed({ owned: true, run_id: top.id, status: top.state.status, reason: 'run is ' + top.state.status + ', it does not gate', stop_refusals: top.state.stop_refusals, ...extra });
   }
+  // CP-03 R4-S1-M7 (and R4-L9): a board that cannot be read is no proof the rows are closed, so every
+  // gating run here is refused with that reason (fail closed), counting patience like any refusal.
+  let patience;
+  try { patience = loadSettings(ctx, []).values.stop_gate.patience; } catch { patience = DEFAULT_PATIENCE; }
+  let board;
+  try { board = readFinishLine(ctx); } catch (e) {
+    return refuseUnreadableBoard(ctx, gating, patience, String(e && e.message ? e.message : e), extra);
+  }
   // the same row rule as every view: an owned (1.1) run answers only for rows tagged with its id
-  const board = readFinishLine(ctx);
   const withOpen = [];
   for (const g of gating) {
     const fl = rowsForRun(board, g.id, adoptsUnattributed(g.state));
@@ -164,7 +203,6 @@ function hookStopIn(ctx, scope) {
     const ids = gating.map((g) => g.id);
     return allowed({ owned: true, run_id: top.id, runs: ids, reason: 'no open rows for ' + (ids.length > 1 ? 'any owned run' : 'this run'), stop_refusals: top.state.stop_refusals, board: renderBoard(rowsForRun(board, top.id, adoptsUnattributed(top.state))), ...extra });
   }
-  const patience = loadSettings(ctx, []).values.stop_gate.patience;
   const refused = [];
   const parked = [];
   const openByRun = {};

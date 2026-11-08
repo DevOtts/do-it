@@ -61,20 +61,28 @@ function migrateLegacy(ctx, sessionId, skip) {
   fs.rmSync(file, { force: true });
 }
 
-// Every entry of the session: [{ run_id, home, root, file }].
+// Every entry of the session: { entries: [{ run_id, home, root, file }], errors: [{ file, error }] }.
+// CP-03 R4-S1-M7: a registry file that cannot be read or parsed is reported, never thrown, so one bad file
+// cannot take the gate down for the session's other runs (or for the cwd's own run).
 function readEntries(ctx, sessionId) {
   const out = [];
-  for (const e of readLegacy(legacySessionFile(ctx, sessionId))) out.push({ ...e, file: null });
+  const errors = [];
+  const note = (file, e) => errors.push({ file, error: String(e && e.code ? e.code + ': ' + e.message : (e && e.message) || e) });
+  const legacy = legacySessionFile(ctx, sessionId);
+  try { for (const e of readLegacy(legacy)) out.push({ ...e, file: null }); } catch (e) { note(legacy, e); }
   const dir = sessionDir(ctx, sessionId);
   let names = [];
-  try { names = fs.readdirSync(dir); } catch (e) { if (e.code !== 'ENOENT') throw e; }
+  try { names = fs.readdirSync(dir); } catch (e) { if (e.code !== 'ENOENT') note(dir, e); }
   for (const n of names.sort()) {
     if (n.startsWith('.') || !n.endsWith('.json')) continue; // temp files of a write in flight
     const file = path.join(dir, n);
-    const doc = readJsonIfExists(file);
-    if (isEntry(doc)) out.push({ run_id: doc.run_id, home: doc.home, root: doc.root, file });
+    try {
+      const doc = readJsonIfExists(file);
+      if (isEntry(doc)) out.push({ run_id: doc.run_id, home: doc.home, root: doc.root, file });
+      else if (doc !== null) note(file, new Error('not a registry entry'));
+    } catch (e) { note(file, e); }
   }
-  return out;
+  return { entries: out, errors };
 }
 
 // Records that `runId`, in ctx's home, is owned by `sessionId`. Returns null, or the error text when the
@@ -102,11 +110,18 @@ function liveEntry(e, sessionId) {
   }
 }
 
-// Every home that holds a live run of `sessionId`, pruning stale entries. Returns [{ home, root }].
+// Every home that holds a live run of `sessionId`, pruning stale entries.
+// Returns { homes: [{ home, root }], errors: [{ file, error }] }; it never throws (R4-S1-M7).
 export function sessionHomes(ctx, sessionId) {
-  if (!sessionId) return [];
-  const all = readEntries(ctx, sessionId);
-  if (!all.length) return [];
+  if (!sessionId) return { homes: [], errors: [] };
+  let all;
+  let errors;
+  try {
+    ({ entries: all, errors } = readEntries(ctx, sessionId));
+  } catch (e) {
+    return { homes: [], errors: [{ file: sessionDir(ctx, sessionId), error: String(e && e.message ? e.message : e) }] };
+  }
+  if (!all.length) return { homes: [], errors };
   const keep = all.filter((e) => liveEntry(e, sessionId));
   const stale = all.filter((e) => !keep.includes(e));
   // pruning is best effort and touches only the stale run's own file; the live entries are still used
@@ -117,12 +132,12 @@ export function sessionHomes(ctx, sessionId) {
     try { migrateLegacy(ctx, sessionId, skip); } catch { /* still read next time */ }
   }
   const seen = new Set();
-  const out = [];
+  const homes = [];
   for (const e of keep) {
     const home = realpathSafe(e.home);
     if (seen.has(home)) continue;
     seen.add(home);
-    out.push({ home, root: typeof e.root === 'string' ? e.root : path.dirname(home) });
+    homes.push({ home, root: typeof e.root === 'string' ? e.root : path.dirname(home) });
   }
-  return out;
+  return { homes, errors };
 }

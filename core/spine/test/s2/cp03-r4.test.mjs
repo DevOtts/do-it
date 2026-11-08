@@ -184,3 +184,94 @@ test('CP03 R4-S1-M8 the pre-release single-file registry is still read and migra
   hookStop(repo, 'mig', y);
   assert.deepEqual(entries(repo, 'mig').map((e) => e.run_id), [b]);
 });
+
+// R4-S1-M7: a broken registry, or a broken other home, never opens the gate for the cwd's own run.
+test('CP03 R4-S1-M7 a garbled, directory or unreadable registry is reported; the cwd run stays refused', () => {
+  const repo = mk({ commit: true });
+  const userHome = path.join(repo.home, 'uh');
+  const env = { DO_IT_USER_HOME: userHome };
+  const a = start(repo, 'reg-1', null, env);
+  assert.equal(real(repo, ['next', '--run', a], env).code, 0);
+  // many stops without progress follow: keep patience out of the way (it is tested in T-S1-05/10)
+  writeJson(path.join(repo.doIt, 'settings.json'), { stop_gate: { patience: 50 } });
+  assert.equal(hookStop(repo, 'reg-1', null, env).out.outcome, 'STOP_REFUSED');
+  const legacy = path.join(userHome, 'sessions', 'reg-1.json');
+  const dir = path.join(userHome, 'sessions', 'reg-1');
+  const check = (label) => {
+    const r = hookStop(repo, 'reg-1', null, env);
+    assert.equal(r.code, 1, label + ': ' + r.stdout);
+    assert.equal(r.out.outcome, 'STOP_REFUSED', label);
+    assert.equal(r.out.run_id, a, label);
+    assert.ok(Array.isArray(r.out.registry_unreadable) && r.out.registry_unreadable.length, label + ' is reported: ' + r.stdout);
+    return r;
+  };
+  // the reviewer's three, on the pre-release file name
+  fs.writeFileSync(legacy, '{"session_id":"reg-1","runs":[');
+  check('garbled legacy file');
+  fs.rmSync(legacy); fs.mkdirSync(legacy);
+  check('legacy path is a directory');
+  fs.rmSync(legacy, { recursive: true }); fs.writeFileSync(legacy, '{}'); fs.chmodSync(legacy, 0o000);
+  check('legacy file chmod 000');
+  fs.chmodSync(legacy, 0o644); fs.rmSync(legacy);
+  // the same on the per-run layout
+  const own = fs.readdirSync(dir).filter((n) => n.endsWith('.json'))[0];
+  fs.writeFileSync(path.join(dir, 'r-bad.json'), '{"session_id":"reg-1","run_id":');
+  check('garbled run file');
+  fs.rmSync(path.join(dir, 'r-bad.json'));
+  fs.chmodSync(dir, 0o000);
+  check('session folder chmod 000');
+  fs.chmodSync(dir, 0o755);
+  fs.renameSync(dir, dir + '.moved'); fs.writeFileSync(dir, 'x');
+  check('session folder replaced by a file');
+  fs.rmSync(dir); fs.renameSync(dir + '.moved', dir);
+  assert.ok(fs.existsSync(path.join(dir, own)));
+});
+
+test('CP03 R4-S1-M7 another home that cannot be evaluated is listed in unreadable_homes; a garbled board there fails closed', () => {
+  const repo = mk({ commit: true });
+  const userHome = path.join(repo.home, 'uh');
+  const env = { DO_IT_USER_HOME: userHome };
+  const a = start(repo, 'xh-1', null, env);
+  assert.equal(real(repo, ['next', '--run', a], env).code, 0);
+  // home Y: a second repo with a run of the same session
+  const yDir = path.join(repo.home, 'Y');
+  fs.mkdirSync(yDir);
+  cp.execFileSync('git', ['init', '-q', '-b', 'main', yDir]);
+  const y = { ...repo, dir: yDir, doIt: path.join(yDir, '.do-it') };
+  const b = start(y, 'xh-1', yDir, env);
+  assert.equal(real(y, ['next', '--run', b], env, yDir).code, 0);
+  // the reviewer's case: Y's finish-line.json garbled -> the stop from X is still refused
+  const yfl = path.join(yDir, '.do-it', 'finish-line.json');
+  const good = fs.readFileSync(yfl, 'utf8');
+  fs.writeFileSync(yfl, '<<<<<<< HEAD\n' + good);
+  let r = hookStop(repo, 'xh-1', null, env);
+  assert.equal(r.out.outcome, 'STOP_REFUSED', r.stdout);
+  assert.equal(r.out.run_id, a, 'the cwd run answers first');
+  assert.ok(r.out.refused_homes.includes(fs.realpathSync(y.doIt)), 'a garbled board fails closed for its own run too');
+  // close every row of X's run: X allows, Y (garbled board) still refuses, so the stop is refused
+  const xfl = path.join(repo.doIt, 'finish-line.json');
+  const fl = readJson(xfl);
+  fs.writeFileSync(path.join(repo.dir, 'ev.txt'), 'x\n');
+  for (const row of fl.rows) if (row.run_id === a) { row.state = 'DONE'; row.evidence = 'ev.txt'; }
+  writeJson(xfl, fl);
+  r = hookStop(repo, 'xh-1', null, env);
+  assert.equal(r.out.outcome, 'STOP_REFUSED', r.stdout);
+  assert.equal(r.out.run_id, b);
+  assert.match(r.out.reason, /finish-line\.json cannot be read/);
+  // Y's home throws while being evaluated (its run folder is read-only, so the refusal cannot be counted):
+  // it is reported, and does not stop X from being gated
+  fs.writeFileSync(yfl, good);
+  for (const row of fl.rows) if (row.run_id === a) { row.state = 'OPEN'; row.evidence = null; }
+  writeJson(xfl, fl);
+  const yRun = path.join(yDir, '.do-it', 'runs', b);
+  fs.chmodSync(yRun, 0o555);
+  try {
+    r = hookStop(repo, 'xh-1', null, env);
+    assert.equal(r.out.outcome, 'STOP_REFUSED', r.stdout);
+    assert.equal(r.out.run_id, a);
+    assert.equal(r.out.unreadable_homes.length, 1, r.stdout);
+    assert.equal(r.out.unreadable_homes[0].home, fs.realpathSync(y.doIt));
+  } finally {
+    fs.chmodSync(yRun, 0o755);
+  }
+});
