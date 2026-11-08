@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fail } from './errors.mjs';
 import { appendEvent } from './events.mjs';
-import { finishLineUpsert, readFinishLine, writeFinishLine } from './finish-line.mjs';
+import { findRow, finishLineUpsert, hasRow, readFinishLine, writeFinishLine } from './finish-line.mjs';
 import { sha256Bytes } from './hash.mjs';
 import { loadSchemaFile, validateSchema } from './schema.mjs';
 import { resolveCredentials } from './secrets.mjs';
@@ -141,7 +141,7 @@ export function seedCheckpoints(state, fl, data) {
   };
   for (const c of block.checkpoints) {
     const id = CHECKPOINT_ROW_PREFIX + c.id;
-    if (!fl.rows.some((r) => r.id === id)) finishLineUpsert(fl, id, { kind: 'package' }, state.run_id);
+    if (!hasRow(fl, id, state.run_id)) finishLineUpsert(fl, id, { kind: 'package' }, state.run_id);
   }
   return block.count;
 }
@@ -198,9 +198,9 @@ export function gateBuild(ctx, args) {
   state.status = 'BUILDING';
   writeState(ctx, state);
   for (const s of state.slices) {
-    if (!fl.rows.some((r) => r.id === s.id)) finishLineUpsert(fl, s.id, { kind: 'package' }, runId);
+    if (!hasRow(fl, s.id, runId)) finishLineUpsert(fl, s.id, { kind: 'package' }, runId);
   }
-  const credRow = fl.rows.find((r) => r.id === CRED_ROW_ID);
+  const credRow = findRow(fl, CRED_ROW_ID, runId);
   if (credRow && credRow.state === 'BLOCKED') {
     finishLineUpsert(fl, CRED_ROW_ID, { state: 'DONE', reason: null, evidence: path.relative(ctx.repo, readinessPath(ctx)) }, runId);
   }

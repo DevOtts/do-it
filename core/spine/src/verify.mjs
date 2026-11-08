@@ -1,7 +1,7 @@
 import { fail } from './errors.mjs';
 import { appendEvent } from './events.mjs';
 import { resolveEvidence } from './evidence.mjs';
-import { finishLineUpsert, readFinishLine, writeFinishLine } from './finish-line.mjs';
+import { finishLineUpsert, hasRow, readFinishLine, writeFinishLine } from './finish-line.mjs';
 import { readLedger, writeLedger } from './ledger.mjs';
 import { loadState, selectRunId } from './state.mjs';
 // Re-read the world: recompute every VERIFIED row's evidence hash (never mtime).
@@ -24,7 +24,7 @@ export function verifyEvidence(ctx, runId) {
     writeLedger(ctx, ledger);
     const fl = readFinishLine(ctx);
     for (const c of changed) {
-      if (fl.rows.some((r) => r.id === c.row)) finishLineUpsert(fl, c.row, { state: 'OPEN', evidence: null, reason: 'evidence_changed' }, runId);
+      if (hasRow(fl, c.row, runId)) finishLineUpsert(fl, c.row, { state: 'OPEN', evidence: null, reason: 'evidence_changed' }, runId);
       appendEvent(ctx, runId, { event: 'evidence_changed', verdict: 'IMPLEMENTED-NOT-VERIFIED', detail: { row: c.row, reason: c.reason } });
     }
     writeFinishLine(ctx, fl);

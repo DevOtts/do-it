@@ -1,6 +1,6 @@
 import { appendEvent } from './events.mjs';
 import { fail } from './errors.mjs';
-import { finishLineUpsert, openRows, readFinishLine, renderBoard, rowClosed, writeFinishLine } from './finish-line.mjs';
+import { findRow, finishLineUpsert, hasRow, openRows, readFinishLine, renderBoard, rowClosed, rowsForRun, writeFinishLine } from './finish-line.mjs';
 import { ladderRetry, RETRY_REASON } from './ladder.mjs';
 import { loadPipeline } from './pipeline.mjs';
 import { CLASS_TIER, rereadReadiness } from './readiness.mjs';
@@ -49,14 +49,14 @@ export function nextWave(ctx, state, runId, fl) {
   if (!pipe || !pipe.steps.length) return { pipe: null };
   let seeded = false;
   for (const st of pipe.steps) {
-    if (!fl.rows.some((r) => r.id === st.id)) { finishLineUpsert(fl, st.id, { kind: 'wave' }, runId); seeded = true; }
+    if (!hasRow(fl, st.id, runId)) { finishLineUpsert(fl, st.id, { kind: 'wave' }, runId); seeded = true; }
   }
   if (seeded) writeFinishLine(ctx, fl);
-  const rowOf = (id) => fl.rows.find((r) => r.id === id);
+  const rowOf = (id) => findRow(fl, id, runId);
   for (const st of pipe.steps) {
     const row = rowOf(st.id);
     if (row.state !== 'OPEN') continue;
-    if (!st.needs.every((n) => rowClosed(rowOf(n)))) continue;
+    if (!st.needs.every((n) => { const r = rowOf(n); return !!r && rowClosed(r); })) continue;
     const type = st.type || 'persona';
     const klass = st.class || STEP_CLASS[type] || 'implementation';
     return {
@@ -92,7 +92,7 @@ export function cmdNext(ctx, args) {
   if (state.status === 'PARKED') return { outcome: 'NEXT', exit: 3, run_id: runId, action: 'NONE', reason: 'parked' };
   if (state.status === 'NEEDS_HUMAN') return { outcome: 'NEXT', exit: 2, run_id: runId, action: 'NONE', reason: 'needs_human' };
   if (state.status === 'BLOCKED') {
-    const fl = readFinishLine(ctx);
+    const fl = rowsForRun(readFinishLine(ctx), runId, true);
     return { outcome: 'BLOCKED', exit: 3, run_id: runId, action: 'NONE', reason: 'blocked', board: renderBoard(fl) };
   }
 
@@ -107,7 +107,9 @@ export function cmdNext(ctx, args) {
     };
   }
 
-  const fl = readFinishLine(ctx);
+  const board = readFinishLine(ctx);
+  // this run's rows only (plus unattributed rows from older boards): another run's rows never decide it
+  const fl = rowsForRun(board, runId, true);
   if (state.slices.length) {
     const out = nextSlice(ctx, state, runId);
     if (out) return out;
@@ -118,8 +120,9 @@ export function cmdNext(ctx, args) {
     return none(runId, 'awaiting_verification', { board: renderBoard(fl) });
   }
 
-  const wave = nextWave(ctx, state, runId, fl);
+  const wave = nextWave(ctx, state, runId, board);
   if (wave.out) return wave.out;
+  fl.rows = rowsForRun(board, runId, true).rows;
   if (wave.pipe) {
     if (!openRows(fl).length) return { outcome: 'FINISH_LINE_REACHED', exit: 0, run_id: runId, action: 'NONE', board: renderBoard(fl) };
     return none(runId, 'waiting', { board: renderBoard(fl) });

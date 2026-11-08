@@ -10,7 +10,7 @@ import { appendEvent } from './events.mjs';
 import { cleanStaleTmp } from './fs-atomic.mjs';
 import { cmdHandoff } from './handoff.mjs';
 import { cmdInit } from './init.mjs';
-import { renderBoard, readFinishLine } from './finish-line.mjs';
+import { renderBoard, readFinishLine, rowsForRun } from './finish-line.mjs';
 import { cmdMeter } from './meter.mjs';
 import { cmdNext, gateRoute } from './next.mjs';
 import { gateBuild } from './readiness.mjs';
@@ -175,7 +175,7 @@ export function cmdStatus(ctx, args) {
     handoffs: state.handoffs,
     stop_refusals: state.stop_refusals,
     run_verdict: state.run_verdict === undefined ? null : state.run_verdict,
-    board: renderBoard(readFinishLine(ctx)),
+    board: renderBoard(rowsForRun(readFinishLine(ctx), runId, true)),
     stale_tmp_removed: removed,
     unreadable_runs: unreadableRuns(ctx),
   };

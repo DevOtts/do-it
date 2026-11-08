@@ -391,7 +391,7 @@ function cmdStatus(ctx, args) {
     handoffs: state.handoffs,
     stop_refusals: state.stop_refusals,
     run_verdict: state.run_verdict === undefined ? null : state.run_verdict,
-    board: renderBoard(readFinishLine(ctx)),
+    board: renderBoard(rowsForRun(readFinishLine(ctx), runId, true)),
     stale_tmp_removed: removed,
     unreadable_runs: unreadableRuns(ctx),
   };
@@ -436,7 +436,7 @@ function gateConclude(ctx, args) {
   const state = loadState(ctx, runId);
   const reverified = verifyEvidence(ctx, runId);
   const ledger = readLedger(ctx, runId);
-  const fl = readFinishLine(ctx);
+  const fl = rowsForRun(readFinishLine(ctx), runId, true);
   const reasons = [];
 
   const inLedger = new Set(ledger.rows.map((r) => r.row));
@@ -661,9 +661,24 @@ function writeFinishLine(ctx, fl) {
   atomicWriteJson(finishLinePath(ctx), fl);
 }
 
-// A row carries the run that wrote it (`run_id`); a row written before that existed has none.
+// A row's identity is (run_id, id): row ids are namespaced per run, so two runs of one preset (or two
+// plans with the same slice ids) each get their own rows (CP-03 S1-H1). A row written before run_id
+// existed has none; the first run that touches that id adopts it, as 1.0.x boards expect.
+function findRow(fl, id, runId) {
+  const rid = runId || null;
+  if (rid) {
+    const own = fl.rows.find((r) => r.id === id && r.run_id === rid);
+    if (own) return own;
+  }
+  return fl.rows.find((r) => r.id === id && !r.run_id) || null;
+}
+
+function hasRow(fl, id, runId) {
+  return !!findRow(fl, id, runId);
+}
+
 function finishLineUpsert(fl, id, patch, runId) {
-  let row = fl.rows.find((r) => r.id === id);
+  let row = findRow(fl, id, runId);
   if (!row) {
     row = { id, kind: 'dod', state: 'OPEN', evidence: null, owner_question: null, reason: null, archived_to: null };
     if (runId) row.run_id = runId;
@@ -700,12 +715,18 @@ function rowClosed(row) {
 // A package row (a slice) closes by itself once every one of its case rows
 // (`T-<slice>-<n>`) is terminal: DONE when all are DONE, else BLOCKED naming the
 // ones that are not. A package with no case rows, or with one still open, is left alone.
+// Case rows count only for the package of the same run (rows are namespaced per run); a row with no
+// run_id (an older board) is unattributed and may pair with either.
+function sameRun(a, b) {
+  return !a.run_id || !b.run_id || a.run_id === b.run_id;
+}
+
 function autoClosePackages(fl) {
   const closed = [];
   for (const pkg of fl.rows) {
     if (pkg.kind !== 'package' || pkg.state !== 'OPEN' || pkg.id.includes(':')) continue;
     const re = new RegExp('^T-' + pkg.id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '-\\d');
-    const cases = fl.rows.filter((r) => r.kind === 'dod' && re.test(r.id));
+    const cases = fl.rows.filter((r) => r.kind === 'dod' && sameRun(r, pkg) && re.test(r.id));
     if (!cases.length || !cases.every(rowTerminal)) continue;
     const notDone = cases.filter((r) => r.state !== 'DONE');
     if (notDone.length) {
@@ -917,7 +938,7 @@ function cmdHandoff(ctx, args) {
 
   const { files, missing } = collectStateFiles(ctx, runId, state);
   if (missing.length) throw fail('HANDOFF_PATH_INVALID', 1, { run_id: runId, missing });
-  const board = renderBoard(readFinishLine(ctx));
+  const board = renderBoard(rowsForRun(readFinishLine(ctx), runId, true));
   const events = lastEvents(ctx, runId, HANDOFF_EVENTS);
   let text = renderHandoff(ctx, state, files, board, events);
   if (text.length > HANDOFF_MAX_CHARS) text = renderHandoff(ctx, state, files, board.slice(0, 1200), events.map((e) => e.slice(0, 200))).slice(0, HANDOFF_MAX_CHARS);
@@ -1450,14 +1471,14 @@ function nextWave(ctx, state, runId, fl) {
   if (!pipe || !pipe.steps.length) return { pipe: null };
   let seeded = false;
   for (const st of pipe.steps) {
-    if (!fl.rows.some((r) => r.id === st.id)) { finishLineUpsert(fl, st.id, { kind: 'wave' }, runId); seeded = true; }
+    if (!hasRow(fl, st.id, runId)) { finishLineUpsert(fl, st.id, { kind: 'wave' }, runId); seeded = true; }
   }
   if (seeded) writeFinishLine(ctx, fl);
-  const rowOf = (id) => fl.rows.find((r) => r.id === id);
+  const rowOf = (id) => findRow(fl, id, runId);
   for (const st of pipe.steps) {
     const row = rowOf(st.id);
     if (row.state !== 'OPEN') continue;
-    if (!st.needs.every((n) => rowClosed(rowOf(n)))) continue;
+    if (!st.needs.every((n) => { const r = rowOf(n); return !!r && rowClosed(r); })) continue;
     const type = st.type || 'persona';
     const klass = st.class || STEP_CLASS[type] || 'implementation';
     return {
@@ -1493,7 +1514,7 @@ function cmdNext(ctx, args) {
   if (state.status === 'PARKED') return { outcome: 'NEXT', exit: 3, run_id: runId, action: 'NONE', reason: 'parked' };
   if (state.status === 'NEEDS_HUMAN') return { outcome: 'NEXT', exit: 2, run_id: runId, action: 'NONE', reason: 'needs_human' };
   if (state.status === 'BLOCKED') {
-    const fl = readFinishLine(ctx);
+    const fl = rowsForRun(readFinishLine(ctx), runId, true);
     return { outcome: 'BLOCKED', exit: 3, run_id: runId, action: 'NONE', reason: 'blocked', board: renderBoard(fl) };
   }
 
@@ -1508,7 +1529,9 @@ function cmdNext(ctx, args) {
     };
   }
 
-  const fl = readFinishLine(ctx);
+  const board = readFinishLine(ctx);
+  // this run's rows only (plus unattributed rows from older boards): another run's rows never decide it
+  const fl = rowsForRun(board, runId, true);
   if (state.slices.length) {
     const out = nextSlice(ctx, state, runId);
     if (out) return out;
@@ -1519,8 +1542,9 @@ function cmdNext(ctx, args) {
     return none(runId, 'awaiting_verification', { board: renderBoard(fl) });
   }
 
-  const wave = nextWave(ctx, state, runId, fl);
+  const wave = nextWave(ctx, state, runId, board);
   if (wave.out) return wave.out;
+  fl.rows = rowsForRun(board, runId, true).rows;
   if (wave.pipe) {
     if (!openRows(fl).length) return { outcome: 'FINISH_LINE_REACHED', exit: 0, run_id: runId, action: 'NONE', board: renderBoard(fl) };
     return none(runId, 'waiting', { board: renderBoard(fl) });
@@ -1848,7 +1872,7 @@ function seedCheckpoints(state, fl, data) {
   };
   for (const c of block.checkpoints) {
     const id = CHECKPOINT_ROW_PREFIX + c.id;
-    if (!fl.rows.some((r) => r.id === id)) finishLineUpsert(fl, id, { kind: 'package' }, state.run_id);
+    if (!hasRow(fl, id, state.run_id)) finishLineUpsert(fl, id, { kind: 'package' }, state.run_id);
   }
   return block.count;
 }
@@ -1905,9 +1929,9 @@ function gateBuild(ctx, args) {
   state.status = 'BUILDING';
   writeState(ctx, state);
   for (const s of state.slices) {
-    if (!fl.rows.some((r) => r.id === s.id)) finishLineUpsert(fl, s.id, { kind: 'package' }, runId);
+    if (!hasRow(fl, s.id, runId)) finishLineUpsert(fl, s.id, { kind: 'package' }, runId);
   }
-  const credRow = fl.rows.find((r) => r.id === CRED_ROW_ID);
+  const credRow = findRow(fl, CRED_ROW_ID, runId);
   if (credRow && credRow.state === 'BLOCKED') {
     finishLineUpsert(fl, CRED_ROW_ID, { state: 'DONE', reason: null, evidence: path.relative(ctx.repo, readinessPath(ctx)) }, runId);
   }
@@ -3302,7 +3326,7 @@ function verifyEvidence(ctx, runId) {
     writeLedger(ctx, ledger);
     const fl = readFinishLine(ctx);
     for (const c of changed) {
-      if (fl.rows.some((r) => r.id === c.row)) finishLineUpsert(fl, c.row, { state: 'OPEN', evidence: null, reason: 'evidence_changed' }, runId);
+      if (hasRow(fl, c.row, runId)) finishLineUpsert(fl, c.row, { state: 'OPEN', evidence: null, reason: 'evidence_changed' }, runId);
       appendEvent(ctx, runId, { event: 'evidence_changed', verdict: 'IMPLEMENTED-NOT-VERIFIED', detail: { row: c.row, reason: c.reason } });
     }
     writeFinishLine(ctx, fl);

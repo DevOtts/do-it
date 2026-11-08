@@ -24,9 +24,24 @@ export function writeFinishLine(ctx, fl) {
   atomicWriteJson(finishLinePath(ctx), fl);
 }
 
-// A row carries the run that wrote it (`run_id`); a row written before that existed has none.
+// A row's identity is (run_id, id): row ids are namespaced per run, so two runs of one preset (or two
+// plans with the same slice ids) each get their own rows (CP-03 S1-H1). A row written before run_id
+// existed has none; the first run that touches that id adopts it, as 1.0.x boards expect.
+export function findRow(fl, id, runId) {
+  const rid = runId || null;
+  if (rid) {
+    const own = fl.rows.find((r) => r.id === id && r.run_id === rid);
+    if (own) return own;
+  }
+  return fl.rows.find((r) => r.id === id && !r.run_id) || null;
+}
+
+export function hasRow(fl, id, runId) {
+  return !!findRow(fl, id, runId);
+}
+
 export function finishLineUpsert(fl, id, patch, runId) {
-  let row = fl.rows.find((r) => r.id === id);
+  let row = findRow(fl, id, runId);
   if (!row) {
     row = { id, kind: 'dod', state: 'OPEN', evidence: null, owner_question: null, reason: null, archived_to: null };
     if (runId) row.run_id = runId;
@@ -63,12 +78,18 @@ export function rowClosed(row) {
 // A package row (a slice) closes by itself once every one of its case rows
 // (`T-<slice>-<n>`) is terminal: DONE when all are DONE, else BLOCKED naming the
 // ones that are not. A package with no case rows, or with one still open, is left alone.
+// Case rows count only for the package of the same run (rows are namespaced per run); a row with no
+// run_id (an older board) is unattributed and may pair with either.
+function sameRun(a, b) {
+  return !a.run_id || !b.run_id || a.run_id === b.run_id;
+}
+
 export function autoClosePackages(fl) {
   const closed = [];
   for (const pkg of fl.rows) {
     if (pkg.kind !== 'package' || pkg.state !== 'OPEN' || pkg.id.includes(':')) continue;
     const re = new RegExp('^T-' + pkg.id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '-\\d');
-    const cases = fl.rows.filter((r) => r.kind === 'dod' && re.test(r.id));
+    const cases = fl.rows.filter((r) => r.kind === 'dod' && sameRun(r, pkg) && re.test(r.id));
     if (!cases.length || !cases.every(rowTerminal)) continue;
     const notDone = cases.filter((r) => r.state !== 'DONE');
     if (notDone.length) {
