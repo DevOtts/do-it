@@ -395,6 +395,7 @@ function cmdStatus(ctx, args) {
     handoffs: state.handoffs,
     stop_refusals: state.stop_refusals,
     run_verdict: state.run_verdict === undefined ? null : state.run_verdict,
+    last_take_over: takeOvers(state).pop() || null,
     board: renderBoard(rowsForRun(readFinishLine(ctx), runId, true)),
     stale_tmp_removed: removed,
     unreadable_runs: unreadableRuns(ctx),
@@ -473,9 +474,10 @@ function gateConclude(ctx, args) {
   state.run_verdict = runVerdict;
   state.stage = 'conclude-it';
   writeState(ctx, state);
-  appendEvent(ctx, runId, { event: 'concluded', stage: 'conclude-it', host: state.host, verdict: runVerdict });
+  const taken = takeOvers(state);
+  appendEvent(ctx, runId, { event: 'concluded', stage: 'conclude-it', host: state.host, verdict: runVerdict, ...(taken.length ? { detail: { take_overs: taken } } : {}) });
   const residuals = ledger.rows.filter((r) => r.verdict !== 'VERIFIED').map((r) => r.row);
-  return { outcome: 'CONCLUDED', exit: 0, run_id: runId, status: 'DONE', run_verdict: runVerdict, residuals, reverified: reverified.map((c) => c.row) };
+  return { outcome: 'CONCLUDED', exit: 0, run_id: runId, status: 'DONE', run_verdict: runVerdict, residuals, reverified: reverified.map((c) => c.row), take_overs: taken };
 }
 
 // ---- ctx.mjs ----
@@ -3176,6 +3178,21 @@ function unreadableRuns(ctx) {
     } catch { bad.push(id); }
   }
   return bad;
+}
+
+// Every explicit take-over of the run (resume --run <id> --take-over), oldest first: { from, to, at }.
+// owner.history records the session that was replaced and when; the next entry (or the current owner)
+// is the session that took over. `status` shows the last one and `conclude` lists them (CP-03 R2-L1).
+function takeOvers(state) {
+  const o = state && state.owner && typeof state.owner === 'object' ? state.owner : null;
+  const h = o && Array.isArray(o.history) ? o.history : [];
+  const out = [];
+  h.forEach((e, i) => {
+    if (!e || e.reason !== 'take_over') return;
+    const next = h[i + 1];
+    out.push({ from: e.session_id || null, to: next ? (next.session_id || null) : (o.session_id || null), at: e.until || null });
+  });
+  return out;
 }
 
 // Raw read for callers that only need to know whether a run is in flight.

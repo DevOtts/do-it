@@ -339,3 +339,22 @@ test('CP03 R2-L10 a copied run folder with the same run_id is refused, never mis
   assert.deepEqual(r.out.unreadable, [copy], 'the copy is named unreadable');
   assert.ok(real(repo, ['status', '--run', a]).out.unreadable_runs.includes(copy));
 });
+
+test('CP03 R2-L1 a take-over shows in status and is listed by conclude', () => {
+  const repo = mkRepo();
+  const a = startNoPreset(repo, 'sess-A');
+  assert.equal(real(repo, ['status', '--run', a]).out.last_take_over, null, 'no take-over yet');
+  const t = real(repo, ['resume', '--session', 'sess-B', '--run', a, '--take-over']);
+  assert.equal(t.out.outcome, 'TAKEN_OVER', t.stdout);
+  const st = real(repo, ['status', '--run', a]);
+  assert.equal(st.code, 0, st.stdout);
+  assert.equal(st.out.last_take_over.from, 'sess-A');
+  assert.equal(st.out.last_take_over.to, 'sess-B');
+  assert.ok(st.out.last_take_over.at);
+  const t2 = real(repo, ['resume', '--session', 'sess-C', '--run', a, '--take-over']);
+  assert.equal(t2.out.outcome, 'TAKEN_OVER', t2.stdout);
+  assert.deepEqual([real(repo, ['status', '--run', a]).out.last_take_over].map((x) => [x.from, x.to]), [['sess-B', 'sess-C']]);
+  const c = real(repo, ['gate', 'conclude', '--run', a]);
+  assert.equal(c.code, 0, c.stdout);
+  assert.deepEqual(c.out.take_overs.map((x) => [x.from, x.to]), [['sess-A', 'sess-B'], ['sess-B', 'sess-C']]);
+});

@@ -24,7 +24,7 @@ import { route } from './router.mjs';
 import { resolveSession } from './session.mjs';
 import { loadSettings } from './settings.mjs';
 import { gateStop } from './stopgate.mjs';
-import { advanceRunStatus, loadState, newRunId, newState, runDir, selectRunId, unreadableRuns, writeState } from './state.mjs';
+import { advanceRunStatus, loadState, newRunId, newState, runDir, selectRunId, takeOvers, unreadableRuns, writeState } from './state.mjs';
 import { gateVerify } from './verify.mjs';
 import { DO_IT_VERSION } from './version.mjs';
 
@@ -179,6 +179,7 @@ export function cmdStatus(ctx, args) {
     handoffs: state.handoffs,
     stop_refusals: state.stop_refusals,
     run_verdict: state.run_verdict === undefined ? null : state.run_verdict,
+    last_take_over: takeOvers(state).pop() || null,
     board: renderBoard(rowsForRun(readFinishLine(ctx), runId, true)),
     stale_tmp_removed: removed,
     unreadable_runs: unreadableRuns(ctx),

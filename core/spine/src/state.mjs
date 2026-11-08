@@ -166,6 +166,21 @@ export function unreadableRuns(ctx) {
   return bad;
 }
 
+// Every explicit take-over of the run (resume --run <id> --take-over), oldest first: { from, to, at }.
+// owner.history records the session that was replaced and when; the next entry (or the current owner)
+// is the session that took over. `status` shows the last one and `conclude` lists them (CP-03 R2-L1).
+export function takeOvers(state) {
+  const o = state && state.owner && typeof state.owner === 'object' ? state.owner : null;
+  const h = o && Array.isArray(o.history) ? o.history : [];
+  const out = [];
+  h.forEach((e, i) => {
+    if (!e || e.reason !== 'take_over') return;
+    const next = h[i + 1];
+    out.push({ from: e.session_id || null, to: next ? (next.session_id || null) : (o.session_id || null), at: e.until || null });
+  });
+  return out;
+}
+
 // Raw read for callers that only need to know whether a run is in flight.
 export function peekRunStatus(ctx, runId) {
   try {

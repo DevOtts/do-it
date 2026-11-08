@@ -4,7 +4,7 @@ import { appendEvent } from './events.mjs';
 import { readFinishLine, rowsForRun } from './finish-line.mjs';
 import { readJsonIfExists } from './fs-atomic.mjs';
 import { readLedger } from './ledger.mjs';
-import { loadState, selectRunId, writeState } from './state.mjs';
+import { loadState, selectRunId, takeOvers, writeState } from './state.mjs';
 import { verifyEvidence } from './verify.mjs';
 
 // G-13: close only with every row accounted, no live worker, no pending wake.
@@ -54,7 +54,8 @@ export function gateConclude(ctx, args) {
   state.run_verdict = runVerdict;
   state.stage = 'conclude-it';
   writeState(ctx, state);
-  appendEvent(ctx, runId, { event: 'concluded', stage: 'conclude-it', host: state.host, verdict: runVerdict });
+  const taken = takeOvers(state);
+  appendEvent(ctx, runId, { event: 'concluded', stage: 'conclude-it', host: state.host, verdict: runVerdict, ...(taken.length ? { detail: { take_overs: taken } } : {}) });
   const residuals = ledger.rows.filter((r) => r.verdict !== 'VERIFIED').map((r) => r.row);
-  return { outcome: 'CONCLUDED', exit: 0, run_id: runId, status: 'DONE', run_verdict: runVerdict, residuals, reverified: reverified.map((c) => c.row) };
+  return { outcome: 'CONCLUDED', exit: 0, run_id: runId, status: 'DONE', run_verdict: runVerdict, residuals, reverified: reverified.map((c) => c.row), take_overs: taken };
 }
