@@ -3094,6 +3094,8 @@ function loadState(ctx, runId) {
   try { state = JSON.parse(bytes.toString('utf8')); } catch { throw tamperFail(ctx, runId, 'unparseable'); }
   const errors = validateSchema(loadSchemaFile('do-it-state.1.schema.json'), state);
   if (errors.length) throw tamperFail(ctx, runId, 'schema_invalid');
+  // a run folder holds only its own run: a copied runs/<id>z with the same run_id is not that run (CP-03 R2-L10)
+  if (state.run_id !== runId) throw tamperFail(ctx, runId, 'run_id_mismatch');
   return state;
 }
 
@@ -3170,6 +3172,7 @@ function unreadableRuns(ctx) {
       if (sidecar !== sha256Bytes(bytes)) throw new Error('digest');
       const st = JSON.parse(bytes.toString('utf8'));
       if (validateSchema(loadSchemaFile('do-it-state.1.schema.json'), st).length) throw new Error('schema');
+      if (st.run_id !== id) throw new Error('run_id');
     } catch { bad.push(id); }
   }
   return bad;

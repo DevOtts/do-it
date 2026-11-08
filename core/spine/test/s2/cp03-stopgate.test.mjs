@@ -321,3 +321,21 @@ test('CP03 R2-S1-H4 several owned runs with open rows: refused naming each run, 
   assert.equal(last.out.run_id, a2);
   assert.equal(hookStop(repo, 'sess-A').out.outcome, 'STOP_ALLOWED');
 });
+
+test('CP03 R2-L10 a copied run folder with the same run_id is refused, never mistaken for the run', () => {
+  const repo = mkRepo();
+  const a = startNoPreset(repo, 'sess-A');
+  writeJson(flFile(repo), { rows: [{ id: 'R1', kind: 'dod', state: 'OPEN', evidence: null, owner_question: null, reason: null, archived_to: null, run_id: a }] });
+  // the attack: cp -r runs/<A> runs/<A>z (state.json and its sidecar copied, digest still valid; z sorts last and wins a tie)
+  const copy = a + 'z';
+  fs.cpSync(runDirOf(repo, a), runDirOf(repo, copy), { recursive: true });
+  const st = real(repo, ['status', '--run', copy]);
+  assert.equal(st.code, 1, st.stdout);
+  assert.equal(st.out.outcome, 'STATE_TAMPERED');
+  assert.equal(st.out.reason, 'run_id_mismatch');
+  const r = hookStop(repo, 'sess-A');
+  assert.equal(r.out.outcome, 'STOP_REFUSED', r.stdout);
+  assert.equal(r.out.run_id, a, 'the real run gates');
+  assert.deepEqual(r.out.unreadable, [copy], 'the copy is named unreadable');
+  assert.ok(real(repo, ['status', '--run', a]).out.unreadable_runs.includes(copy));
+});
