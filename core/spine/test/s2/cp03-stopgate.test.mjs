@@ -259,3 +259,65 @@ test('CP03 S1-L1 precedence stays --session, DO_IT_SESSION_ID, host variable; st
   const same = real(repo, ['start', '--request', 'y'], { DO_IT_SESSION_ID: 'real-A', DO_IT_SESSION_ENV: 'HOST_SID', HOST_SID: 'real-A' });
   assert.equal(same.out.session_conflict, undefined);
 });
+
+test('CP03 R2-S1-H4 a newer owned run with no open rows does not hide an older owned active run that has some', () => {
+  const repo = mkRepo();
+  // the reviewer's replay
+  const a1 = start(repo, 'sess-A');
+  assert.equal(real(repo, ['next', '--run', a1]).out.wave, 'intake'); // 10 OPEN rows
+  const a2 = startNoPreset(repo, 'sess-A'); // INTAKE, no rows
+  editState(repo, a2, (st) => { st.created_at = '2999-01-01T00:00:00.000Z'; }); // a2 is certainly the newer run
+  const r = hookStop(repo, 'sess-A');
+  assert.equal(r.code, 1, r.stdout);
+  assert.equal(r.out.outcome, 'STOP_REFUSED');
+  assert.equal(r.out.owned, true);
+  assert.equal(r.out.run_id, a1, 'the older run with open rows gates');
+  assert.ok(r.out.open.includes('intake'));
+  // a newer run still VERIFYING with every row closed hides nothing either
+  const ev = path.join(repo.dir, 'ev.txt');
+  fs.writeFileSync(ev, 'x\n');
+  const fl = readJson(flFile(repo));
+  fl.rows.push({ id: 'V1', kind: 'dod', state: 'DONE', evidence: 'ev.txt', owner_question: null, reason: null, archived_to: null, run_id: a2 });
+  writeJson(flFile(repo), fl);
+  editStatus(repo, a2, 'VERIFYING');
+  const v = hookStop(repo, 'sess-A');
+  assert.equal(v.out.outcome, 'STOP_REFUSED', v.stdout);
+  assert.equal(v.out.run_id, a1);
+  // the owner's stop is allowed only once no owned active run has an open row
+  editStatus(repo, a1, 'PARKED');
+  assert.equal(hookStop(repo, 'sess-A').out.outcome, 'STOP_ALLOWED');
+});
+
+test('CP03 R2-S1-H4 several owned runs with open rows: refused naming each run, patience and parking are per run', () => {
+  const repo = mkRepo();
+  const a1 = startNoPreset(repo, 'sess-A');
+  const a2 = startNoPreset(repo, 'sess-A');
+  editState(repo, a2, (st) => { st.created_at = '2999-01-01T00:00:00.000Z'; });
+  const row = (id, run) => ({ id, kind: 'dod', state: 'OPEN', evidence: null, owner_question: null, reason: null, archived_to: null, run_id: run });
+  writeJson(flFile(repo), { rows: [row('R1', a1), row('R2', a2)] });
+  const s1 = hookStop(repo, 'sess-A');
+  assert.equal(s1.out.outcome, 'STOP_REFUSED', s1.stdout);
+  assert.deepEqual(s1.out.open_by_run, { [a2]: ['R2'], [a1]: ['R1'] }, 'the open rows are grouped per run');
+  assert.deepEqual([...s1.out.runs].sort(), [a1, a2].sort());
+  assert.match(s1.out.board, new RegExp('run ' + a1));
+  assert.match(s1.out.board, new RegExp('run ' + a2));
+  assert.equal(hookStop(repo, 'sess-A').out.outcome, 'STOP_REFUSED');
+  // a2 makes progress (its rows change), so only a2's patience restarts
+  writeJson(flFile(repo), { rows: [row('R1', a1), row('R2', a2), row('R3', a2)] });
+  assert.equal(hookStop(repo, 'sess-A').out.outcome, 'STOP_REFUSED'); // a1: 3, a2: 1
+  const s4 = hookStop(repo, 'sess-A');
+  assert.equal(s4.out.outcome, 'STOP_REFUSED', 'a2 still gates: ' + s4.stdout);
+  assert.equal(s4.out.run_id, a2);
+  assert.deepEqual(s4.out.parked, [a1], 'a1 reached patience and was parked alone');
+  const status = (id) => readJson(path.join(runDirOf(repo, id), 'state.json')).status;
+  assert.equal(status(a1), 'PARKED');
+  assert.equal(status(a2), 'INTAKE');
+  assert.ok(fs.existsSync(path.join(runDirOf(repo, a1), 'owner-pack.json')));
+  assert.ok(!fs.existsSync(path.join(runDirOf(repo, a2), 'owner-pack.json')), 'a2 got no pack question');
+  // a2 alone now: two more refusals, then a2 parks too
+  assert.deepEqual(hookStop(repo, 'sess-A').out.open, ['R2', 'R3']);
+  const last = hookStop(repo, 'sess-A');
+  assert.equal(last.out.outcome, 'PARKED', last.stdout);
+  assert.equal(last.out.run_id, a2);
+  assert.equal(hookStop(repo, 'sess-A').out.outcome, 'STOP_ALLOWED');
+});

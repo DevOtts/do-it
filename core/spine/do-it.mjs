@@ -3239,63 +3239,14 @@ function logUnreadableOnce(ctx, runId, detail) {
   logQuiet(ctx, runId, { event: 'stop_gate_state_unreadable', stage: null, verdict: 'STATE_ERROR', detail });
 }
 
-// G-1 (1.1): a hook stop is gated only by an active run owned by the hook's session. Everyone else is
-// allowed, and the answer says whether the run was theirs (`owned`) and why they may stop (`reason`).
-// An explicit `gate stop` (no session and cwd, or --run) gates the run it names, as before.
-// A gated run refuses up to `patience` times without progress; the next call parks that run only.
-function gateStop(ctx, args) {
-  const f = args.flags;
-  const scope = { session: cleanSessionId(f.session), cwd: typeof f.cwd === 'string' ? f.cwd : null };
-  const hook = !f.run && !!(scope.session || scope.cwd);
-  let runId;
-  let state;
-  const skipped = [];
-  const owned = true; // an explicit stop names its run; a hook reaches here only for a run it owns
-  if (!hook) {
-    runId = selectRunId(ctx, f);
-    state = loadState(ctx, runId);
-  } else {
-    const scoped = selectScopedRunId(ctx, scope);
-    if (!scoped.run) {
-      if (scoped.unreadable.length) {
-        for (const id of scoped.unreadable) logUnreadableOnce(ctx, id, { fail_open: true });
-        return allowed({ owned: false, reason: 'state unreadable', unreadable: scoped.unreadable });
-      }
-      return allowed({ owned: false, reason: scoped.legacy ? 'legacy run has no owner' : 'no run is owned by this session or cwd' });
-    }
-    // Fail open only for the run whose state is unreadable (CP-03 S1-M1): log it and gate on the next
-    // owned run, in the same rank order (gating first, newest first). Allowed only when none is readable.
-    for (const c of scoped.ranked) {
-      try {
-        state = loadState(ctx, c.id);
-        runId = c.id;
-        break;
-      } catch (e) {
-        if (!(e instanceof CliError && ['STATE_TAMPERED', 'STATE_INVALID'].includes(e.outcome))) throw e;
-        logUnreadableOnce(ctx, c.id, { fail_open: true, cause: e.outcome });
-        skipped.push({ run_id: c.id, state_error: e.outcome });
-      }
-    }
-    if (!state) {
-      return allowed({ owned: true, run_id: skipped[0].run_id, reason: 'state unreadable', state_error: skipped[0].state_error, unreadable: skipped.map((x) => x.run_id) });
-    }
-  }
-  const extra = skipped.length ? { unreadable: skipped.map((x) => x.run_id) } : {};
-  if (NON_GATING_STATUSES.includes(state.status)) {
-    return allowed({ owned, run_id: runId, status: state.status, reason: 'run is ' + state.status + ', it does not gate', stop_refusals: state.stop_refusals, ...extra });
-  }
-  const fl = rowsForRun(readFinishLine(ctx), runId, !hook);
-  const open = openRows(fl);
-  const board = renderBoard(fl);
-  if (!open.length) {
-    return allowed({ owned, run_id: runId, reason: 'no open rows for this run', stop_refusals: state.stop_refusals, board, ...extra });
-  }
-  const patience = loadSettings(ctx, []).values.stop_gate.patience;
+// One run's refusal bookkeeping: the patience counter resets when its rows changed since the last stop;
+// at patience the run is parked with one owner-pack question. Returns { parked, ids, refusals }.
+function refuseOrPark(ctx, runId, state, fl, open, patience) {
+  const ids = open.map((r) => r.id);
   const sig = rowsSignature(fl);
   const prev = state.gates.stop_gate;
   if (prev && prev.sig !== sig) state.stop_refusals = 0;
   if (state.stop_refusals >= patience) {
-    const ids = open.map((r) => r.id);
     packAppend(ctx, runId, [{
       kind: 'default',
       source: 'stop-gate',
@@ -3311,13 +3262,106 @@ function gateStop(ctx, args) {
     state.status = 'PARKED';
     writeState(ctx, state);
     appendEvent(ctx, runId, { event: 'stop_parked', stage: state.stage, host: state.host, verdict: 'PARKED', detail: { from, open: ids } });
-    return { outcome: 'PARKED', exit: 2, owned, run_id: runId, status: 'PARKED', open: ids, board, ...extra };
+    return { parked: true, ids, refusals: 0 };
   }
   state.stop_refusals += 1;
   state.gates.stop_gate = { sig };
   writeState(ctx, state);
-  appendEvent(ctx, runId, { event: 'stop_refused', stage: state.stage, host: state.host, verdict: 'STOP_REFUSED', detail: { refusals: state.stop_refusals, open: open.map((r) => r.id) } });
-  throw fail('STOP_REFUSED', 1, { owned, run_id: runId, reason: 'finish-line rows are still open', stop_refusals: state.stop_refusals, patience, open: open.map((r) => r.id), board, ...extra });
+  appendEvent(ctx, runId, { event: 'stop_refused', stage: state.stage, host: state.host, verdict: 'STOP_REFUSED', detail: { refusals: state.stop_refusals, open: ids } });
+  return { parked: false, ids, refusals: state.stop_refusals };
+}
+
+// An explicit `gate stop --run <id>` (or no session and no cwd): gates the run it names, as before.
+function explicitStop(ctx, f) {
+  const runId = selectRunId(ctx, f);
+  const state = loadState(ctx, runId);
+  if (NON_GATING_STATUSES.includes(state.status)) {
+    return allowed({ owned: true, run_id: runId, status: state.status, reason: 'run is ' + state.status + ', it does not gate', stop_refusals: state.stop_refusals });
+  }
+  const fl = rowsForRun(readFinishLine(ctx), runId, true);
+  const open = openRows(fl);
+  const board = renderBoard(fl);
+  if (!open.length) return allowed({ owned: true, run_id: runId, reason: 'no open rows for this run', stop_refusals: state.stop_refusals, board });
+  const patience = loadSettings(ctx, []).values.stop_gate.patience;
+  const r = refuseOrPark(ctx, runId, state, fl, open, patience);
+  if (r.parked) return { outcome: 'PARKED', exit: 2, owned: true, run_id: runId, status: 'PARKED', open: r.ids, board };
+  throw fail('STOP_REFUSED', 1, { owned: true, run_id: runId, reason: 'finish-line rows are still open', stop_refusals: r.refusals, patience, open: r.ids, board });
+}
+
+// G-1 (1.1): a hook stop is gated by EVERY active run owned by the hook's session (CONTRACT 3.1 row 1
+// applies to each owned active run; CP-03 R2-S1-H4: a second, newer run with no open rows must not hide
+// an older one that has some). Everyone else is allowed, and the answer says whether a run was theirs
+// (`owned`) and why they may stop (`reason`). An unreadable run is logged and skipped; the hook fails open
+// only when no owned run is readable (S1-M1). Each gated run counts its own patience and is parked alone.
+function gateStop(ctx, args) {
+  const f = args.flags;
+  const scope = { session: cleanSessionId(f.session), cwd: typeof f.cwd === 'string' ? f.cwd : null };
+  const hook = !f.run && !!(scope.session || scope.cwd);
+  if (!hook) return explicitStop(ctx, f);
+
+  const scoped = selectScopedRunId(ctx, scope);
+  if (!scoped.run) {
+    if (scoped.unreadable.length) {
+      for (const id of scoped.unreadable) logUnreadableOnce(ctx, id, { fail_open: true });
+      return allowed({ owned: false, reason: 'state unreadable', unreadable: scoped.unreadable });
+    }
+    return allowed({ owned: false, reason: scoped.legacy ? 'legacy run has no owner' : 'no run is owned by this session or cwd' });
+  }
+  const readable = [];
+  const skipped = [];
+  for (const c of scoped.ranked) {
+    try {
+      readable.push({ id: c.id, state: loadState(ctx, c.id) });
+    } catch (e) {
+      if (!(e instanceof CliError && ['STATE_TAMPERED', 'STATE_INVALID'].includes(e.outcome))) throw e;
+      logUnreadableOnce(ctx, c.id, { fail_open: true, cause: e.outcome });
+      skipped.push({ run_id: c.id, state_error: e.outcome });
+    }
+  }
+  if (!readable.length) {
+    return allowed({ owned: true, run_id: skipped[0].run_id, reason: 'state unreadable', state_error: skipped[0].state_error, unreadable: skipped.map((x) => x.run_id) });
+  }
+  const extra = skipped.length ? { unreadable: skipped.map((x) => x.run_id) } : {};
+  const gating = readable.filter((r) => !NON_GATING_STATUSES.includes(r.state.status));
+  if (!gating.length) {
+    const top = readable[0];
+    return allowed({ owned: true, run_id: top.id, status: top.state.status, reason: 'run is ' + top.state.status + ', it does not gate', stop_refusals: top.state.stop_refusals, ...extra });
+  }
+  // a hook stop is strict: only rows tagged with the run's id gate it
+  const board = readFinishLine(ctx);
+  const withOpen = [];
+  for (const g of gating) {
+    const fl = rowsForRun(board, g.id, false);
+    const open = openRows(fl);
+    if (open.length) withOpen.push({ ...g, fl, open });
+  }
+  if (!withOpen.length) {
+    const top = gating[0];
+    const ids = gating.map((g) => g.id);
+    return allowed({ owned: true, run_id: top.id, runs: ids, reason: 'no open rows for ' + (ids.length > 1 ? 'any owned run' : 'this run'), stop_refusals: top.state.stop_refusals, board: renderBoard(rowsForRun(board, top.id, false)), ...extra });
+  }
+  const patience = loadSettings(ctx, []).values.stop_gate.patience;
+  const refused = [];
+  const parked = [];
+  const openByRun = {};
+  const boards = [];
+  for (const w of withOpen) {
+    const r = refuseOrPark(ctx, w.id, w.state, w.fl, w.open, patience);
+    openByRun[w.id] = r.ids;
+    boards.push((withOpen.length > 1 ? 'run ' + w.id + '\n' : '') + renderBoard(w.fl));
+    (r.parked ? parked : refused).push({ id: w.id, refusals: r.refusals });
+  }
+  const many = withOpen.length > 1 ? { runs: withOpen.map((w) => w.id), open_by_run: openByRun } : {};
+  const text = boards.join('\n\n');
+  if (!refused.length) {
+    const first = parked[0].id;
+    return { outcome: 'PARKED', exit: 2, owned: true, run_id: first, status: 'PARKED', open: openByRun[first], board: text, ...many, ...(withOpen.length > 1 ? { parked: parked.map((p) => p.id) } : {}), ...extra };
+  }
+  const first = refused[0];
+  throw fail('STOP_REFUSED', 1, {
+    owned: true, run_id: first.id, reason: 'finish-line rows are still open', stop_refusals: first.refusals, patience,
+    open: openByRun[first.id], board: text, ...many, ...(parked.length ? { parked: parked.map((p) => p.id) } : {}), ...extra,
+  });
 }
 
 // ---- verdict-file.mjs ----
