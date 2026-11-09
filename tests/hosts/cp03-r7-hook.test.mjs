@@ -134,3 +134,43 @@ test('CP03 R7-S1-M14 a result file above the state cap is refused before any wri
   assert.ok(!fs.existsSync(path.join(runDir, 'record.journal.json')));
   for (const H of HOOKS) assert.equal(hook(w, H, 'res', X).code, 2);
 });
+
+// R7-S1-L5: once the state write holds the refusal, an events.jsonl or an owner-pack.json that cannot be
+// written (a FIFO here) no longer opens the stop for its own run.
+const NO_FIFO = process.platform === 'win32' || cp.spawnSync('mkfifo', ['--help']).error ? 'mkfifo is not available' : false;
+function withFifo(file, fn) {
+  const kept = fs.existsSync(file) ? file + '.kept' : null;
+  if (kept) fs.renameSync(file, kept);
+  cp.execFileSync('mkfifo', [file]);
+  try { return fn(); } finally {
+    fs.rmSync(file, { force: true });
+    if (kept) fs.renameSync(kept, file);
+  }
+}
+
+test('CP03 R7-S1-L5 a run whose events log or owner pack cannot be written still refuses its own stop', { skip: NO_FIFO, timeout: 120000 }, () => {
+  const w = world();
+  const X = repo(w, 'X');
+  const id = startRun(w, X, 'ev');
+  const runDir = path.join(X, '.do-it', 'runs', id);
+  const status = () => JSON.parse(fs.readFileSync(path.join(runDir, 'state.json'), 'utf8')).status;
+  withFifo(path.join(runDir, 'events.jsonl'), () => {
+    const g = sp(w, X, ['gate', 'stop', '--session', 'ev', '--cwd', X]);
+    assert.equal(g.out && g.out.outcome, 'STOP_REFUSED', g.stdout);
+    assert.ok(g.out.unwritable.some((u) => u.run_id === id && u.refused === true && /ENOTREG|ENXIO/.test(u.error)), g.stdout);
+    for (const H of HOOKS) assert.equal(hook(w, H, 'ev', X).code, 2, path.relative(ROOT, H));
+  });
+  // patience reached and the park cannot be written: a plain refusal, never an allow, and the run is not parked
+  writeJson(path.join(X, '.do-it', 'settings.json'), { stop_gate: { patience: 1 } });
+  withFifo(path.join(runDir, 'owner-pack.json'), () => {
+    for (const H of HOOKS) {
+      const h = hook(w, H, 'ev', X);
+      assert.equal(h.code, 2, `${path.relative(ROOT, H)}: ${h.stderr}`);
+    }
+    assert.equal(status(), 'INTAKE');
+  });
+  // the FIFO gone, the park goes through as before
+  const p = hook(w, HOOKS[0], 'ev', X);
+  assert.ok([0, 2].includes(p.code));
+  assert.equal(status(), 'PARKED');
+});

@@ -41,4 +41,9 @@ if (overflow) {
 }
 // CP-03 R5-S1-M10: a spine that gave no answer (timeout, crash) still fails open, but says so
 if (!outcome) process.stderr.write('do-it stop gate: the spine gave no answer, so this stop is allowed unchecked.\n');
+// CP-03 R7-S1-L5: a stop allowed because a run's refusal could not be written says so
+const lost = json && Array.isArray(json.unwritable) ? json.unwritable.filter((u) => u && !u.refused) : [];
+if (outcome === 'STOP_ALLOWED' && lost.length) {
+  process.stderr.write('do-it stop gate: this stop is allowed because the refusal could not be written for: ' + lost.map((u) => String(u.run_id) + ' (' + String(u.error) + ')').join('; ') + '\n');
+}
 process.exit(0);

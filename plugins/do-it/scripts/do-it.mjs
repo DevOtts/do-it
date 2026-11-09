@@ -3908,6 +3908,7 @@ function eachRefusal(ctx, runs, fn, unwritable) {
       unwritable.push({ run_id: w.id, error: errText(e) });
       continue;
     }
+    if (r.logError) unwritable.push({ run_id: w.id, error: r.logError, refused: true });
     (r.parked ? parked : refused).push({ id: w.id, refusals: r.refusals, ids: r.ids });
   }
   return { refused, parked };
@@ -3931,32 +3932,42 @@ function refuseOrPark(ctx, runId, state, fl, open, patience) {
   const sig = rowsSignature(fl);
   const prev = state.gates.stop_gate;
   if (prev && prev.sig !== sig) state.stop_refusals = 0;
+  // CP-03 R7-S1-L5: once the state write holds the refusal, a log line or a park that cannot be written
+  // never turns it into an allow. A park that fails is a plain refusal; a lost event is reported in log_error.
+  let logError = null;
+  const logEvent = (row) => { try { appendEvent(ctx, runId, row); } catch (e) { logError = errText(e); } };
+  let parkError = null;
+  const text = 'The run stopped with ' + ids.length + ' open row(s) after ' + patience + ' refusals: ' + ids.join(', ') + '. Resume the run or close it with the open rows as residuals?';
   if (state.stop_refusals >= patience) {
-    const text = 'The run stopped with ' + ids.length + ' open row(s) after ' + patience + ' refusals: ' + ids.join(', ') + '. Resume the run or close it with the open rows as residuals?';
-    packAppend(ctx, runId, [{
-      kind: 'default',
-      source: 'stop-gate',
-      text,
-      options: ['resume run', 'close with residuals'],
-      recommendation: 'resume run',
-      default: 'resume run',
-      reversible: true,
-    }]);
+    try {
+      packAppend(ctx, runId, [{
+        kind: 'default',
+        source: 'stop-gate',
+        text,
+        options: ['resume run', 'close with residuals'],
+        recommendation: 'resume run',
+        default: 'resume run',
+        reversible: true,
+      }]);
+    } catch (e) { parkError = errText(e); }
+  }
+  if (state.stop_refusals >= patience && !parkError) {
     state.stop_refusals = 0;
     state.gates.stop_gate = { sig };
     const from = state.status;
     state.status = 'PARKED';
     writeState(ctx, state);
     // CP-03 R5-S1-H10: the event is the gate's own mark on the question (pack withdraw trusts nothing else)
-    const q = openPackQuestions(ctx, runId).find((x) => x.text === text);
-    appendEvent(ctx, runId, { event: 'stop_parked', stage: state.stage, host: state.host, verdict: 'PARKED', detail: { from, open: ids, ...(q ? { question: q.n } : {}) } });
-    return { parked: true, ids, refusals: 0 };
+    let q = null;
+    try { q = openPackQuestions(ctx, runId).find((x) => x.text === text); } catch { /* the park stands */ }
+    logEvent({ event: 'stop_parked', stage: state.stage, host: state.host, verdict: 'PARKED', detail: { from, open: ids, ...(q ? { question: q.n } : {}) } });
+    return { parked: true, ids, refusals: 0, logError };
   }
   state.stop_refusals += 1;
   state.gates.stop_gate = { sig };
   writeState(ctx, state);
-  appendEvent(ctx, runId, { event: 'stop_refused', stage: state.stage, host: state.host, verdict: 'STOP_REFUSED', detail: { refusals: state.stop_refusals, open: ids } });
-  return { parked: false, ids, refusals: state.stop_refusals };
+  logEvent({ event: 'stop_refused', stage: state.stage, host: state.host, verdict: 'STOP_REFUSED', detail: { refusals: state.stop_refusals, open: ids, ...(parkError ? { park_error: parkError } : {}) } });
+  return { parked: false, ids, refusals: state.stop_refusals, logError: logError || parkError };
 }
 
 // An explicit `gate stop --run <id>` (or no session and no cwd): gates the run it names, as before.
