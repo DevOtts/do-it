@@ -2,6 +2,7 @@
 // and the stop gate's run scope.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
 import { mkRepo, real, unit, readJson, runDirOf, sha, startRun, writeJson } from '../helpers.mjs';
@@ -152,6 +153,10 @@ test('T-FR-10 a run started without a session is owned by its cwd for a host tha
   seedBoard(repo, [['T-1', 'dod', 'OPEN', { run_id: s.out.run_id }]]);
   assert.equal(real(repo, ['gate', 'stop', '--cwd', repo.dir]).out.outcome, 'STOP_REFUSED');
   assert.equal(real(repo, ['gate', 'stop', '--session', 'x', '--cwd', repo.dir]).out.outcome, 'STOP_ALLOWED', 'a host that gives a session never falls back to the cwd');
-  assert.equal(real(repo, ['gate', 'stop', '--cwd', '/tmp']).out.outcome, 'STOP_ALLOWED');
+  // a private folder, not /tmp: /tmp/.do-it is shared by every process on the machine (CP-03 R6 suite flake)
+  const other = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), 'dit-fr10-'));
+  try {
+    assert.equal(real(repo, ['gate', 'stop', '--cwd', other]).out.outcome, 'STOP_ALLOWED');
+  } finally { fs.rmSync(other, { recursive: true, force: true }); }
 });
 
