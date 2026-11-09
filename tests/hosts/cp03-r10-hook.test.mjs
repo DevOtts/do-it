@@ -120,3 +120,36 @@ test('CP03 R10-S1-M17 park, answer "resume run", resume, park again with the sam
   assert.equal(evs[1].detail.question, open[0].n, 'the second stop_parked event names the new question');
   assert.equal(statusOf(X, id).status, 'PARKED');
 });
+
+async function unit() {
+  const pack = await import(path.join(ROOT, 'core', 'spine', 'src', 'pack.mjs'));
+  const ev = await import(path.join(ROOT, 'core', 'spine', 'src', 'events.mjs'));
+  const home = tmp('dit-r10-unit-');
+  const ctx = { home, root: home, cwd: home, repo: home, env: {}, now: () => '2026-11-09T00:00:00.000Z' };
+  const runId = 'r-1';
+  fs.mkdirSync(path.join(home, 'runs', runId), { recursive: true });
+  const gateQ = (rows) => ({ kind: 'default', source: 'stop-gate', text: 'The run stopped with ' + rows.length + ' open row(s) after 1 refusals: ' + rows.join(', ') + '. Resume the run or close it with the open rows as residuals?', options: ['resume run', 'close with residuals'] });
+  const mark = (n) => ev.appendEvent(ctx, runId, { event: 'stop_parked', stage: null, verdict: 'PARKED', detail: { from: 'BUILDING', open: ['x'], question: n } });
+  return { pack, ctx, runId, home, gateQ, mark };
+}
+
+test('CP03 R10 L-d a park that reuses the open gate question brings its text up to the current rows', async () => {
+  const { pack, ctx, runId, gateQ, mark } = await unit();
+  const [q1] = pack.packAppend(ctx, runId, [gateQ(['aaaaaa'])], { stopGate: true });
+  mark(q1.n);
+  const now = gateQ(['aaaaaa', 'bbbbbb']);
+  assert.equal(pack.packAppend(ctx, runId, [now], { stopGate: true }).length, 0, 'the open gate question is reused');
+  const open = pack.openPackQuestions(ctx, runId);
+  assert.equal(open.length, 1);
+  assert.equal(open[0].n, q1.n);
+  assert.equal(open[0].text, now.text, 'the reused question names the current rows');
+  // a stage question that a forged event points at is never rewritten
+  const [stage] = pack.packAppend(ctx, runId, [{ text: 'Which region?' }]);
+  const f = pack.packPath(ctx, runId);
+  const doc = JSON.parse(fs.readFileSync(f, 'utf8'));
+  doc.questions.find((x) => x.n === q1.n).status = 'withdrawn';
+  fs.writeFileSync(f, JSON.stringify(doc));
+  mark(stage.n);
+  assert.equal(pack.packAppend(ctx, runId, [gateQ(['cccccc'])], { stopGate: true }).length, 0);
+  assert.equal(pack.openPackQuestions(ctx, runId).find((x) => x.n === stage.n).text, 'Which region?');
+});

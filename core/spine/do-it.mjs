@@ -1803,7 +1803,19 @@ function packAppend(ctx, runId, questions, opts) {
   // answered): once the owner answered a park, the next park with the same rows asks again.
   const stop = !!(opts && opts.stopGate);
   const open = stop ? openOf(ctx, runId, pack) : null;
-  if (stop && openStopGateQuestion(ctx, runId, pack, open)) return added;
+  const held = stop ? openStopGateQuestion(ctx, runId, pack, open) : null;
+  if (held) {
+    // CP-03 R10 L-d: the park reuses the gate's open question; its text is brought up to the current rows.
+    // Only a row that is still the gate's own sentence is rewritten (an event can be forged, a text cannot).
+    const q = questions[0];
+    const row = pack.questions.find((x) => x.n === held.n);
+    if (row && q && typeof q.text === 'string' && STOP_GATE_TEXT.test(q.text) && STOP_GATE_TEXT.test(row.text) && row.text !== q.text && row.text !== redactJsonValues(q.text)) {
+      row.text = q.text;
+      pack.pack_id = packIdOf(pack.questions);
+      atomicWriteJson(file, pack);
+    }
+    return added;
+  }
   for (const q of questions) {
     if (!q || typeof q.text !== 'string' || !q.text.trim()) continue;
     const stored = redactJsonValues(q.text);
