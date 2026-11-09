@@ -730,6 +730,15 @@ function readFinishLine(ctx, opts) {
     }
     return { rows: [] };
   }
+  // CP-03 R6-S1-L3: on the stop path every row must be a row (an object with a string id and state); a null or
+  // a number in rows is as unknown as a garbled board, never an INTERNAL_ERROR or an empty board
+  if (opts && opts.strict) {
+    const bad = fl.rows.findIndex((r) => !r || typeof r !== 'object' || Array.isArray(r) || typeof r.id !== 'string' || typeof r.state !== 'string');
+    if (bad !== -1) {
+      const error = 'EBOARD: row ' + bad + ' is not an object with a string id and state in ' + file;
+      throw fail('FINISH_LINE_UNREADABLE', 1, { file, error, message: 'finish-line.json cannot be read (' + error + '); restore it from git or fix it by hand, then run the command again' });
+    }
+  }
   return fl;
 }
 

@@ -43,3 +43,16 @@ test('CP03 R6-S1-L1 a placeholder or invisible slice reason is no reason: the sl
   const st = stateOf(repo, a);
   if (st.status === 'BLOCKED') assert.match(st.status_reason.reason, /\(STALE_HEAD\)$/);
 });
+test('CP03 R6-S1-L3 a board whose rows are not rows refuses the stop as unreadable, never INTERNAL_ERROR or allowed', () => {
+  const repo = mk();
+  patient(repo);
+  start(repo, 'r6l3-s');
+  const fl = path.join(repo.doIt, 'finish-line.json');
+  for (const rows of [[null], [1, 2], ['T-1'], [[]], [{ id: 'T-1' }], [{ state: 'OPEN' }], [{ id: 7, state: 'OPEN' }]]) {
+    fs.writeFileSync(fl, JSON.stringify({ rows }));
+    const g = hookStop(repo, 'r6l3-s');
+    assert.equal(g.out.outcome, 'STOP_REFUSED', JSON.stringify(rows) + ' ' + g.stdout);
+    assert.match(g.out.board_error, /^EBOARD: row 0 /);
+  }
+});
+
