@@ -23,11 +23,16 @@ export function packAppend(ctx, runId, questions, opts) {
   const file = packPath(ctx, runId);
   const pack = readJsonIfExists(file) || { pack_id: null, run_id: runId, questions: [], created_at: ctx.now() };
   const added = [];
-  if (opts && opts.stopGate && openStopGateQuestion(ctx, runId, pack)) return added;
+  // CP-03 R10-S1-M17: the gate's own question is deduped only against OPEN questions (not withdrawn, not
+  // answered): once the owner answered a park, the next park with the same rows asks again.
+  const stop = !!(opts && opts.stopGate);
+  const open = stop ? openOf(ctx, runId, pack) : null;
+  if (stop && openStopGateQuestion(ctx, runId, pack, open)) return added;
   for (const q of questions) {
     if (!q || typeof q.text !== 'string' || !q.text.trim()) continue;
     const stored = redactJsonValues(q.text);
-    if (pack.questions.some((x) => (x.text === q.text || x.text === stored) && x.status !== 'withdrawn')) continue;
+    const same = (x) => x.text === q.text || x.text === stored;
+    if (stop ? open.some(same) : pack.questions.some((x) => same(x) && x.status !== 'withdrawn')) continue;
     const n = pack.questions.reduce((m, x) => Math.max(m, x.n), 0) + 1;
     const row = {
       n,
@@ -86,10 +91,11 @@ export function stopGateMarks(ctx, runId) {
 }
 
 // The run's open (not withdrawn, not answered) question that the stop gate itself wrote, or null.
-export function openStopGateQuestion(ctx, runId, pack) {
+// `open` (optional): the run's open questions, already read.
+export function openStopGateQuestion(ctx, runId, pack, open) {
   const marks = stopGateMarks(ctx, runId);
   if (!marks.numbers.size && !marks.openLists.size) return null;
-  const open = pack ? openOf(ctx, runId, pack) : openPackQuestions(ctx, runId);
+  if (!open) open = pack ? openOf(ctx, runId, pack) : openPackQuestions(ctx, runId);
   return open.find((q) => isStopGateQuestion(q, marks)) || null;
 }
 
