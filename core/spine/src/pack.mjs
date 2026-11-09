@@ -4,6 +4,7 @@ import { fail } from './errors.mjs';
 import { appendEvent, eventsPath } from './events.mjs';
 import { BULK_READ_CAP, atomicWriteJson, readJsonIfExists, readText } from './fs-atomic.mjs';
 import { canonicalJson, sha256Bytes } from './hash.mjs';
+import { redactJsonValues } from './redact.mjs';
 import { listRunIds, loadState } from './state.mjs';
 
 export function packPath(ctx, runId) {
@@ -15,13 +16,18 @@ export function packIdOf(questions) {
 }
 
 // Stages only append questions; numbering is stable and duplicates by text are ignored (ruling D7).
-export function packAppend(ctx, runId, questions) {
+// CP-03 R9-S1-M16: the pack is stored redacted, so a text is compared both as given and as it is stored.
+// opts.stopGate (the gate's own park question only): nothing is added while the run already has an open
+// question the gate wrote (stopGateMarks), so a park that is retried never asks the owner twice.
+export function packAppend(ctx, runId, questions, opts) {
   const file = packPath(ctx, runId);
   const pack = readJsonIfExists(file) || { pack_id: null, run_id: runId, questions: [], created_at: ctx.now() };
   const added = [];
+  if (opts && opts.stopGate && openStopGateQuestion(ctx, runId, pack)) return added;
   for (const q of questions) {
     if (!q || typeof q.text !== 'string' || !q.text.trim()) continue;
-    if (pack.questions.some((x) => x.text === q.text && x.status !== 'withdrawn')) continue;
+    const stored = redactJsonValues(q.text);
+    if (pack.questions.some((x) => (x.text === q.text || x.text === stored) && x.status !== 'withdrawn')) continue;
     const n = pack.questions.reduce((m, x) => Math.max(m, x.n), 0) + 1;
     const row = {
       n,
@@ -45,7 +51,10 @@ export function packAppend(ctx, runId, questions) {
 
 // Questions still waiting on the owner: not withdrawn and not answered in answers.json.
 export function openPackQuestions(ctx, runId) {
-  const pack = readJsonIfExists(packPath(ctx, runId));
+  return openOf(ctx, runId, readJsonIfExists(packPath(ctx, runId)));
+}
+
+function openOf(ctx, runId, pack) {
   if (!pack || !Array.isArray(pack.questions)) return [];
   const doc = readJsonIfExists(path.join(ctx.home, 'runs', runId, 'answers.json'));
   const answered = new Set((doc && Array.isArray(doc.answers) ? doc.answers : []).map((a) => a.n));
@@ -74,6 +83,14 @@ export function stopGateMarks(ctx, runId) {
     else if (Array.isArray(ev.detail.open)) openLists.add(ev.detail.open.join(', '));
   }
   return { numbers, openLists };
+}
+
+// The run's open (not withdrawn, not answered) question that the stop gate itself wrote, or null.
+export function openStopGateQuestion(ctx, runId, pack) {
+  const marks = stopGateMarks(ctx, runId);
+  if (!marks.numbers.size && !marks.openLists.size) return null;
+  const open = pack ? openOf(ctx, runId, pack) : openPackQuestions(ctx, runId);
+  return open.find((q) => isStopGateQuestion(q, marks)) || null;
 }
 
 export function isStopGateQuestion(q, marks) {

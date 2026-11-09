@@ -2,13 +2,14 @@ import fs from 'node:fs';
 import { appendEvent, eventsPath } from './events.mjs';
 import { CliError, fail } from './errors.mjs';
 import { adoptsUnattributed, openRows, readFinishLine, renderBoard, rowsForRun, rowsSignature } from './finish-line.mjs';
-import { openPackQuestions, packAppend } from './pack.mjs';
+import { openPackQuestions, openStopGateQuestion, packAppend } from './pack.mjs';
+import { redactJsonValues } from './redact.mjs';
 import { cleanSessionId } from './session.mjs';
 import { sessionHomes } from './sessions.mjs';
 import { realpathSafe } from './ctx.mjs';
 import { STATE_READ_CAP, readRegularFile } from './fs-atomic.mjs';
 import { loadSettings } from './settings.mjs';
-import { NON_GATING_STATUSES, loadState, selectRunId, selectScopedRunId, writeState } from './state.mjs';
+import { NON_GATING_STATUSES, loadState, selectRunId, selectScopedRunId, stateBytes, writeState } from './state.mjs';
 
 function allowed(extra) {
   return { outcome: 'STOP_ALLOWED', exit: 0, ...extra };
@@ -100,6 +101,10 @@ function refuseOrPark(ctx, runId, state, fl, open, patience) {
   };
   const text = 'The run stopped with ' + ids.length + ' open row(s) after ' + patience + ' refusals: ' + ids.join(', ') + '. Resume the run or close it with the open rows as residuals?';
   if (state.stop_refusals >= patience) {
+    // CP-03 R9-S1-M16: the park is test-serialised (schema, cap as written) before its question reaches the
+    // pack. A park that could not be written adds nothing and stays a plain refusal, uncounted.
+    const would = { ...state, stop_refusals: 0, gates: { ...state.gates, stop_gate: { sig } }, status: 'PARKED', updated_at: ctx.now() };
+    try { stateBytes(ctx, would); } catch (e) { return uncounted(e); }
     try {
       packAppend(ctx, runId, [{
         kind: 'default',
@@ -109,7 +114,7 @@ function refuseOrPark(ctx, runId, state, fl, open, patience) {
         recommendation: 'resume run',
         default: 'resume run',
         reversible: true,
-      }]);
+      }], { stopGate: true });
     } catch (e) { parkError = errText(e); }
   }
   if (state.stop_refusals >= patience && !parkError) {
@@ -120,7 +125,10 @@ function refuseOrPark(ctx, runId, state, fl, open, patience) {
     try { writeState(ctx, state); } catch (e) { return uncounted(e); }
     // CP-03 R5-S1-H10: the event is the gate's own mark on the question (pack withdraw trusts nothing else)
     let q = null;
-    try { q = openPackQuestions(ctx, runId).find((x) => x.text === text); } catch { /* the park stands */ }
+    try {
+      const stored = redactJsonValues(text);
+      q = openPackQuestions(ctx, runId).find((x) => x.text === text || x.text === stored) || openStopGateQuestion(ctx, runId);
+    } catch { /* the park stands */ }
     logEvent({ event: 'stop_parked', stage: state.stage, host: state.host, verdict: 'PARKED', detail: { from, open: ids, ...(q ? { question: q.n } : {}) } });
     return { parked: true, ids, refusals: 0, logError };
   }

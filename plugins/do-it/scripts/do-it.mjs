@@ -1792,13 +1792,18 @@ function packIdOf(questions) {
 }
 
 // Stages only append questions; numbering is stable and duplicates by text are ignored (ruling D7).
-function packAppend(ctx, runId, questions) {
+// CP-03 R9-S1-M16: the pack is stored redacted, so a text is compared both as given and as it is stored.
+// opts.stopGate (the gate's own park question only): nothing is added while the run already has an open
+// question the gate wrote (stopGateMarks), so a park that is retried never asks the owner twice.
+function packAppend(ctx, runId, questions, opts) {
   const file = packPath(ctx, runId);
   const pack = readJsonIfExists(file) || { pack_id: null, run_id: runId, questions: [], created_at: ctx.now() };
   const added = [];
+  if (opts && opts.stopGate && openStopGateQuestion(ctx, runId, pack)) return added;
   for (const q of questions) {
     if (!q || typeof q.text !== 'string' || !q.text.trim()) continue;
-    if (pack.questions.some((x) => x.text === q.text && x.status !== 'withdrawn')) continue;
+    const stored = redactJsonValues(q.text);
+    if (pack.questions.some((x) => (x.text === q.text || x.text === stored) && x.status !== 'withdrawn')) continue;
     const n = pack.questions.reduce((m, x) => Math.max(m, x.n), 0) + 1;
     const row = {
       n,
@@ -1822,7 +1827,10 @@ function packAppend(ctx, runId, questions) {
 
 // Questions still waiting on the owner: not withdrawn and not answered in answers.json.
 function openPackQuestions(ctx, runId) {
-  const pack = readJsonIfExists(packPath(ctx, runId));
+  return openOf(ctx, runId, readJsonIfExists(packPath(ctx, runId)));
+}
+
+function openOf(ctx, runId, pack) {
   if (!pack || !Array.isArray(pack.questions)) return [];
   const doc = readJsonIfExists(path.join(ctx.home, 'runs', runId, 'answers.json'));
   const answered = new Set((doc && Array.isArray(doc.answers) ? doc.answers : []).map((a) => a.n));
@@ -1851,6 +1859,14 @@ function stopGateMarks(ctx, runId) {
     else if (Array.isArray(ev.detail.open)) openLists.add(ev.detail.open.join(', '));
   }
   return { numbers, openLists };
+}
+
+// The run's open (not withdrawn, not answered) question that the stop gate itself wrote, or null.
+function openStopGateQuestion(ctx, runId, pack) {
+  const marks = stopGateMarks(ctx, runId);
+  if (!marks.numbers.size && !marks.openLists.size) return null;
+  const open = pack ? openOf(ctx, runId, pack) : openPackQuestions(ctx, runId);
+  return open.find((q) => isStopGateQuestion(q, marks)) || null;
 }
 
 function isStopGateQuestion(q, marks) {
@@ -3637,13 +3653,22 @@ function newState(ctx, runId, fields) {
   };
 }
 
+// The bytes writeState would write, after the same checks (schema, then the read cap measured as written,
+// after redaction). Nothing touches disk. CP-03 R9-S1-M16: the stop gate test-serialises a park with it
+// before it adds the park question to the owner pack.
+function stateBytes(ctx, state) {
+  const errors = validateSchema(loadSchemaFile('do-it-state.1.schema.json'), state);
+  if (errors.length) throw fail('STATE_INVALID', 1, { errors });
+  const bytes = jsonBytes(state);
+  assertWithinCap(path.join(runDir(ctx, state.run_id), 'state.json'), bytes.length, STATE_READ_CAP);
+  return bytes;
+}
+
 // Validate, then temp-fsync-rename state.json and its .state.sha256 sidecar.
 function writeState(ctx, state) {
   state.updated_at = ctx.now();
-  const errors = validateSchema(loadSchemaFile('do-it-state.1.schema.json'), state);
-  if (errors.length) throw fail('STATE_INVALID', 1, { errors });
+  const bytes = stateBytes(ctx, state);
   const dir = runDir(ctx, state.run_id);
-  const bytes = jsonBytes(state);
   const fault = ctx.env.DO_IT_FAULT === 'after_tmp';
   atomicWrite(path.join(dir, 'state.json'), bytes, { faultAfterTmp: fault, cap: STATE_READ_CAP });
   atomicWrite(path.join(dir, '.state.sha256'), sha256Bytes(bytes) + '\n');
@@ -3970,6 +3995,10 @@ function refuseOrPark(ctx, runId, state, fl, open, patience) {
   };
   const text = 'The run stopped with ' + ids.length + ' open row(s) after ' + patience + ' refusals: ' + ids.join(', ') + '. Resume the run or close it with the open rows as residuals?';
   if (state.stop_refusals >= patience) {
+    // CP-03 R9-S1-M16: the park is test-serialised (schema, cap as written) before its question reaches the
+    // pack. A park that could not be written adds nothing and stays a plain refusal, uncounted.
+    const would = { ...state, stop_refusals: 0, gates: { ...state.gates, stop_gate: { sig } }, status: 'PARKED', updated_at: ctx.now() };
+    try { stateBytes(ctx, would); } catch (e) { return uncounted(e); }
     try {
       packAppend(ctx, runId, [{
         kind: 'default',
@@ -3979,7 +4008,7 @@ function refuseOrPark(ctx, runId, state, fl, open, patience) {
         recommendation: 'resume run',
         default: 'resume run',
         reversible: true,
-      }]);
+      }], { stopGate: true });
     } catch (e) { parkError = errText(e); }
   }
   if (state.stop_refusals >= patience && !parkError) {
@@ -3990,7 +4019,10 @@ function refuseOrPark(ctx, runId, state, fl, open, patience) {
     try { writeState(ctx, state); } catch (e) { return uncounted(e); }
     // CP-03 R5-S1-H10: the event is the gate's own mark on the question (pack withdraw trusts nothing else)
     let q = null;
-    try { q = openPackQuestions(ctx, runId).find((x) => x.text === text); } catch { /* the park stands */ }
+    try {
+      const stored = redactJsonValues(text);
+      q = openPackQuestions(ctx, runId).find((x) => x.text === text || x.text === stored) || openStopGateQuestion(ctx, runId);
+    } catch { /* the park stands */ }
     logEvent({ event: 'stop_parked', stage: state.stage, host: state.host, verdict: 'PARKED', detail: { from, open: ids, ...(q ? { question: q.n } : {}) } });
     return { parked: true, ids, refusals: 0, logError };
   }

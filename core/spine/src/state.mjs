@@ -4,7 +4,7 @@ import path from 'node:path';
 import { realpathSafe } from './ctx.mjs';
 import { fail } from './errors.mjs';
 import { appendEvent } from './events.mjs';
-import { REGISTRY_READ_CAP, STATE_READ_CAP, atomicWrite, jsonBytes, readRegularFile, readText } from './fs-atomic.mjs';
+import { REGISTRY_READ_CAP, STATE_READ_CAP, assertWithinCap, atomicWrite, jsonBytes, readRegularFile, readText } from './fs-atomic.mjs';
 import { sha256Bytes } from './hash.mjs';
 import { loadSchemaFile, validateSchema } from './schema.mjs';
 
@@ -40,13 +40,22 @@ export function newState(ctx, runId, fields) {
   };
 }
 
+// The bytes writeState would write, after the same checks (schema, then the read cap measured as written,
+// after redaction). Nothing touches disk. CP-03 R9-S1-M16: the stop gate test-serialises a park with it
+// before it adds the park question to the owner pack.
+export function stateBytes(ctx, state) {
+  const errors = validateSchema(loadSchemaFile('do-it-state.1.schema.json'), state);
+  if (errors.length) throw fail('STATE_INVALID', 1, { errors });
+  const bytes = jsonBytes(state);
+  assertWithinCap(path.join(runDir(ctx, state.run_id), 'state.json'), bytes.length, STATE_READ_CAP);
+  return bytes;
+}
+
 // Validate, then temp-fsync-rename state.json and its .state.sha256 sidecar.
 export function writeState(ctx, state) {
   state.updated_at = ctx.now();
-  const errors = validateSchema(loadSchemaFile('do-it-state.1.schema.json'), state);
-  if (errors.length) throw fail('STATE_INVALID', 1, { errors });
+  const bytes = stateBytes(ctx, state);
   const dir = runDir(ctx, state.run_id);
-  const bytes = jsonBytes(state);
   const fault = ctx.env.DO_IT_FAULT === 'after_tmp';
   atomicWrite(path.join(dir, 'state.json'), bytes, { faultAfterTmp: fault, cap: STATE_READ_CAP });
   atomicWrite(path.join(dir, '.state.sha256'), sha256Bytes(bytes) + '\n');
