@@ -217,7 +217,8 @@ function hookStopIn(ctx, scope) {
   try { patience = loadSettings(ctx, []).values.stop_gate.patience; } catch { patience = DEFAULT_PATIENCE; }
   let board;
   try { board = readFinishLine(ctx); } catch (e) {
-    return refuseUnreadableBoard(ctx, gating, patience, String(e && e.message ? e.message : e), extra, unwritable);
+    const why = e instanceof CliError && e.extra && e.extra.error ? e.extra.error : String(e && e.message ? e.message : e);
+    return refuseUnreadableBoard(ctx, gating, patience, why, extra, unwritable);
   }
   // the same row rule as every view: an owned (1.1) run answers only for rows tagged with its id
   const withOpen = [];

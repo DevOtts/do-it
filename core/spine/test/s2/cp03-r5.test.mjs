@@ -319,3 +319,20 @@ test('CP03 R5-S1-L1 a placeholder or invisible reason is no reason: blocked and 
   writeJson(r, res(a, { status: 'blocked', exit_code: 3, reason: 'STALE_HEAD' }));
   assert.equal(real(repo, ['record', '--run', a, '--result', 'results/r.json']).out.outcome, 'RECORDED');
 });
+
+test('CP03 R5-S1-L4 after a garbled board parks the run, resume and next name the unreadable board instead of INTERNAL_ERROR', () => {
+  const repo = mk();
+  writeJson(path.join(repo.doIt, 'settings.json'), { stop_gate: { patience: 1 } });
+  const a = start(repo, 'l4-s');
+  const fl = path.join(repo.doIt, 'finish-line.json');
+  fs.writeFileSync(fl, '<<<<<<< HEAD\n' + fs.readFileSync(fl, 'utf8'));
+  assert.equal(hookStop(repo, 'l4-s').out.outcome, 'STOP_REFUSED');
+  const p = hookStop(repo, 'l4-s');
+  assert.equal(p.out.outcome, 'PARKED', p.stdout);
+  assert.equal(real(repo, ['resume', '--run', a, '--session', 'l4-s']).out.outcome, 'RESUMED');
+  const n = real(repo, ['next', '--run', a]);
+  assert.equal(n.code, 1);
+  assert.equal(n.out.outcome, 'FINISH_LINE_UNREADABLE', n.stdout);
+  assert.match(n.out.message, /restore it from git/);
+  assert.doesNotMatch(n.stdout, /<<<<<<</, 'the board\'s content is not quoted');
+});

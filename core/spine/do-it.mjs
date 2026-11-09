@@ -712,8 +712,15 @@ function finishLinePath(ctx) {
   return path.join(ctx.home, 'finish-line.json');
 }
 
+// CP-03 R5-S1-L4: a board that cannot be read is a named refusal (FINISH_LINE_UNREADABLE, with the file and
+// the cause, never its content), not an INTERNAL_ERROR, so `next` after a park tells the agent what to fix.
 function readFinishLine(ctx) {
-  const fl = readJsonRegular(finishLinePath(ctx), STATE_READ_CAP);
+  const file = finishLinePath(ctx);
+  let fl;
+  try { fl = readJsonRegular(file, STATE_READ_CAP); } catch (e) {
+    const error = String(e && e.code ? e.code + ': ' + e.message : (e && e.message) || e);
+    throw fail('FINISH_LINE_UNREADABLE', 1, { file, error, message: 'finish-line.json cannot be read (' + error + '); restore it from git or fix it by hand, then run the command again' });
+  }
   if (!fl || !Array.isArray(fl.rows)) return { rows: [] };
   return fl;
 }
@@ -3967,7 +3974,8 @@ function hookStopIn(ctx, scope) {
   try { patience = loadSettings(ctx, []).values.stop_gate.patience; } catch { patience = DEFAULT_PATIENCE; }
   let board;
   try { board = readFinishLine(ctx); } catch (e) {
-    return refuseUnreadableBoard(ctx, gating, patience, String(e && e.message ? e.message : e), extra, unwritable);
+    const why = e instanceof CliError && e.extra && e.extra.error ? e.extra.error : String(e && e.message ? e.message : e);
+    return refuseUnreadableBoard(ctx, gating, patience, why, extra, unwritable);
   }
   // the same row rule as every view: an owned (1.1) run answers only for rows tagged with its id
   const withOpen = [];
