@@ -33,14 +33,30 @@ function logUnreadableOnce(ctx, runId, detail) {
 
 const DEFAULT_PATIENCE = 3;
 
-function refuseUnreadableBoard(ctx, gating, patience, error, extra) {
-  const id = 'finish-line.json unreadable';
+const errText = (e) => String(e && e.code ? e.code + ': ' + e.message : (e && e.message) || e);
+
+// CP-03 R5-S1-M9: one run whose refusal cannot be written (or whose state cannot be read for a reason other
+// than tampering) is reported and fails open for itself alone; every other run is still gated.
+function eachRefusal(ctx, runs, fn, unwritable) {
   const refused = [];
   const parked = [];
-  for (const g of gating) {
-    const r = refuseOrPark(ctx, g.id, g.state, { rows: [] }, [{ id }], patience);
-    (r.parked ? parked : refused).push({ id: g.id, refusals: r.refusals });
+  for (const w of runs) {
+    let r;
+    try { r = fn(w); } catch (e) {
+      unwritable.push({ run_id: w.id, error: errText(e) });
+      continue;
+    }
+    (r.parked ? parked : refused).push({ id: w.id, refusals: r.refusals, ids: r.ids });
   }
+  return { refused, parked };
+}
+
+function refuseUnreadableBoard(ctx, gating, patience, error, extra, unwritable) {
+  const id = 'finish-line.json unreadable';
+  const { refused, parked } = eachRefusal(ctx, gating, (g) => refuseOrPark(ctx, g.id, g.state, { rows: [] }, [{ id }], patience), unwritable);
+  const more = unwritable.length ? { unwritable } : {};
+  if (!refused.length && !parked.length) return allowed({ owned: true, run_id: gating[0].id, reason: 'the refusal could not be written for any gating run', ...extra, ...more });
+  extra = { ...extra, ...more };
   const board = 'FINISH LINE: unreadable (' + error + ')';
   if (!refused.length) return { outcome: 'PARKED', exit: 2, owned: true, run_id: parked[0].id, status: 'PARKED', open: [id], board, board_error: error, ...extra };
   throw fail('STOP_REFUSED', 1, { owned: true, run_id: refused[0].id, reason: 'finish-line.json cannot be read, so the open rows are unknown: ' + error, stop_refusals: refused[0].refusals, patience, open: [id], board, board_error: error, ...(gating.length > 1 ? { runs: gating.map((g) => g.id) } : {}), ...extra });
@@ -124,16 +140,22 @@ export function gateStop(ctx, args) {
   if (homes.length === 1) return withNotes(() => hookStopIn(ctx, scope), notes);
   const answers = [];
   const unreadableHomes = [];
+  let firstError = null;
   for (const h of homes) {
     try {
       answers.push({ home: h.home, out: hookStopIn(h.ctx, scope) });
     } catch (e) {
       if (e instanceof CliError && e.outcome === 'STOP_REFUSED') { answers.push({ home: h.home, refused: e }); continue; }
-      if (h.own) throw addNotes(e, notes);
-      unreadableHomes.push({ home: h.home, error: String(e && e.message ? e.message : e) });
+      // CP-03 R5-S1-M9: the cwd's home is reported like any other; it never hides the other homes' answers
+      if (!firstError) firstError = e;
+      unreadableHomes.push({ home: h.home, error: String(e && e.message ? e.message : e), ...(h.own ? { cwd_home: true } : {}) });
     }
   }
   if (unreadableHomes.length) notes.unreadable_homes = unreadableHomes;
+  if (!answers.length) throw addNotes(firstError, notes);
+  // every home's write errors are reported, whichever home's answer is shown
+  const unwritable = answers.flatMap((a) => ((a.out || (a.refused && a.refused.extra) || {}).unwritable || []).map((u) => ({ ...u, home: a.home })));
+  if (unwritable.length) notes.unwritable = unwritable;
   const searched = homes.map((h) => h.home);
   const refused = answers.filter((a) => a.refused);
   if (refused.length) {
@@ -168,13 +190,15 @@ function hookStopIn(ctx, scope) {
   }
   const readable = [];
   const skipped = [];
+  const unwritable = [];
   for (const c of scoped.ranked) {
     try {
       readable.push({ id: c.id, state: loadState(ctx, c.id) });
     } catch (e) {
-      if (!(e instanceof CliError && ['STATE_TAMPERED', 'STATE_INVALID'].includes(e.outcome))) throw e;
-      logUnreadableOnce(ctx, c.id, { fail_open: true, cause: e.outcome });
-      skipped.push({ run_id: c.id, state_error: e.outcome });
+      // CP-03 R5-S1-M9: any read error (EACCES, EISDIR, ...) skips this run alone, like a tampered state
+      const cause = e instanceof CliError ? e.outcome : (e && e.code) || 'STATE_ERROR';
+      logUnreadableOnce(ctx, c.id, { fail_open: true, cause });
+      skipped.push({ run_id: c.id, state_error: cause });
     }
   }
   if (!readable.length) {
@@ -192,7 +216,7 @@ function hookStopIn(ctx, scope) {
   try { patience = loadSettings(ctx, []).values.stop_gate.patience; } catch { patience = DEFAULT_PATIENCE; }
   let board;
   try { board = readFinishLine(ctx); } catch (e) {
-    return refuseUnreadableBoard(ctx, gating, patience, String(e && e.message ? e.message : e), extra);
+    return refuseUnreadableBoard(ctx, gating, patience, String(e && e.message ? e.message : e), extra, unwritable);
   }
   // the same row rule as every view: an owned (1.1) run answers only for rows tagged with its id
   const withOpen = [];
@@ -206,15 +230,18 @@ function hookStopIn(ctx, scope) {
     const ids = gating.map((g) => g.id);
     return allowed({ owned: true, run_id: top.id, runs: ids, reason: 'no open rows for ' + (ids.length > 1 ? 'any owned run' : 'this run'), stop_refusals: top.state.stop_refusals, board: renderBoard(rowsForRun(board, top.id, adoptsUnattributed(top.state))), ...extra });
   }
-  const refused = [];
-  const parked = [];
   const openByRun = {};
   const boards = [];
+  const { refused, parked } = eachRefusal(ctx, withOpen, (w) => refuseOrPark(ctx, w.id, w.state, w.fl, w.open, patience), unwritable);
   for (const w of withOpen) {
-    const r = refuseOrPark(ctx, w.id, w.state, w.fl, w.open, patience);
+    const r = refused.find((x) => x.id === w.id) || parked.find((x) => x.id === w.id);
+    if (!r) continue;
     openByRun[w.id] = r.ids;
     boards.push((withOpen.length > 1 ? 'run ' + w.id + '\n' : '') + renderBoard(w.fl));
-    (r.parked ? parked : refused).push({ id: w.id, refusals: r.refusals });
+  }
+  if (unwritable.length) extra.unwritable = unwritable;
+  if (!refused.length && !parked.length) {
+    return allowed({ owned: true, run_id: withOpen[0].id, reason: 'the refusal could not be written for any run with open rows', ...extra });
   }
   const many = withOpen.length > 1 ? { runs: withOpen.map((w) => w.id), open_by_run: openByRun } : {};
   const text = boards.join('\n\n');

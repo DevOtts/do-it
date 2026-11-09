@@ -1,6 +1,7 @@
 // CP-03 round 5 regressions for the stop gate (G-1, CONTRACT 3.1). Each test replays the adversarial
 // reviewer's commands through the built bundle and asserts a refusal.
 import assert from 'node:assert/strict';
+import cp from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { after, test } from 'node:test';
@@ -20,6 +21,13 @@ const hookStop = (repo, session, cwd, env) => real(repo, ['gate', 'stop', '--ses
 const stateOf = (repo, id) => readJson(path.join(runDirOf(repo, id), 'state.json'));
 const res = (a, o) => ({ schema: 'it-result/1', stage: 'build-it', run_id: a, slice_id: null, verdicts: [], ...o });
 const advance = (repo, a, ...to) => { for (const s of to) assert.equal(real(repo, ['gate', 'advance', '--run', a, '--to', s]).out.outcome, 'ADVANCED', s); };
+// a git repo inside another test repo's folder, sharing its HOME (two homes of one session)
+function subRepo(parent, name) {
+  const dir = path.join(parent.dir, name);
+  fs.mkdirSync(dir);
+  cp.execFileSync('git', ['init', '-q', '-b', 'main', dir]);
+  return { dir, home: parent.home, env: parent.env, doIt: path.join(dir, '.do-it') };
+}
 const patient = (repo) => writeJson(path.join(repo.doIt, 'settings.json'), { stop_gate: { patience: 50 } });
 
 test('CP03 R5-S1-H9 a deploy-legs result never takes a run to FAILED without a reason or out of order; the hook keeps refusing', () => {
@@ -155,4 +163,38 @@ test('CP03 R5-S1-H10 pack withdraw never removes the last open question of a NEE
   assert.equal(openQs(repo, a).length, 1, 'the last open question stays');
   // without --run, nothing else to withdraw: refused the same way
   assert.equal(real(repo, ['pack', 'withdraw', '--by', 'stop-gate']).out.outcome, 'PACK_WITHDRAW_REFUSED');
+});
+
+test('CP03 R5-S1-M9 a run whose refusal cannot be written never opens the stop for the other runs of its home or for other homes', () => {
+  // two homes, one session: A open in X, B open in Y; X's run folder read-only
+  const parent = mk();
+  const env = { DO_IT_USER_HOME: path.join(parent.home, 'uh') };
+  const x = subRepo(parent, 'X');
+  const y = subRepo(parent, 'Y');
+  for (const r of [x, y]) patient(r);
+  const a = start(x, 'xo-s', x.dir, env);
+  start(y, 'xo-s', y.dir, env);
+  const ra = runDirOf(x, a);
+  fs.chmodSync(ra, 0o555);
+  try {
+    const g = hookStop(x, 'xo-s', x.dir, env);
+    assert.equal(g.out.outcome, 'STOP_REFUSED', g.stdout);
+    assert.deepEqual(g.out.refused_homes, [fs.realpathSync(y.doIt)], g.stdout);
+    assert.equal(g.out.unwritable[0].run_id, a, 'the write error is reported');
+    assert.match(g.out.unwritable[0].error, /EACCES/);
+  } finally { fs.chmodSync(ra, 0o755); }
+
+  // same home: A1 older and open, A2 newer and open, A2 read-only
+  const repo = mk();
+  patient(repo);
+  const a1 = start(repo, 'sh-s');
+  const a2 = start(repo, 'sh-s');
+  const r2 = runDirOf(repo, a2);
+  fs.chmodSync(r2, 0o555);
+  try {
+    const g = hookStop(repo, 'sh-s');
+    assert.equal(g.out.outcome, 'STOP_REFUSED', g.stdout);
+    assert.equal(g.out.run_id, a1, 'the valid older run is refused');
+    assert.deepEqual(g.out.unwritable.map((u) => u.run_id), [a2]);
+  } finally { fs.chmodSync(r2, 0o755); }
 });

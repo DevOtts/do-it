@@ -92,4 +92,28 @@ for (const H of HOOKS) {
     assert.equal(sp(w, dir, ['pack', 'withdraw', '--by', 'stop-gate', '--run', a]).out.outcome, 'PACK_NOOP');
     assert.equal(hook(w, H, 'wd2-s', dir).code, 2);
   });
+
+  test(`CP03 R5-S1-M9 a read-only run folder never opens the hook for the other runs or homes (${which})`, () => {
+    const w = world();
+    w.env.DO_IT_USER_HOME = path.join(w.home, 'uh');
+    const x = repo(w, 'X');
+    const y = repo(w, 'Y');
+    for (const d of [x, y]) patient(d);
+    const a = startRun(w, x, 'xo-s');
+    startRun(w, y, 'xo-s');
+    const ra = path.join(x, '.do-it', 'runs', a);
+    fs.chmodSync(ra, 0o555);
+    try {
+      assert.equal(hook(w, H, 'xo-s', x).code, 2, 'from X: Y\'s run still refuses');
+    } finally { fs.chmodSync(ra, 0o755); }
+    const z = repo(w, 'Z');
+    patient(z);
+    startRun(w, z, 'sh-s');
+    const a2 = startRun(w, z, 'sh-s');
+    const r2 = path.join(z, '.do-it', 'runs', a2);
+    fs.chmodSync(r2, 0o555);
+    try {
+      assert.equal(hook(w, H, 'sh-s', z).code, 2, 'the older run of the same home still refuses');
+    } finally { fs.chmodSync(r2, 0o755); }
+  });
 }

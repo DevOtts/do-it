@@ -269,8 +269,10 @@ test('CP03 R4-S1-M7 another home that cannot be evaluated is listed in unreadabl
     r = hookStop(repo, 'xh-1', null, env);
     assert.equal(r.out.outcome, 'STOP_REFUSED', r.stdout);
     assert.equal(r.out.run_id, a);
-    assert.equal(r.out.unreadable_homes.length, 1, r.stdout);
-    assert.equal(r.out.unreadable_homes[0].home, fs.realpathSync(y.doIt));
+    // since R5-S1-M9 the error is contained per run: Y's run is reported as unwritable, with its home
+    assert.equal(r.out.unwritable.length, 1, r.stdout);
+    assert.equal(r.out.unwritable[0].home, fs.realpathSync(y.doIt));
+    assert.equal(r.out.unwritable[0].run_id, b);
   } finally {
     fs.chmodSync(yRun, 0o755);
   }
