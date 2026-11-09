@@ -10,7 +10,7 @@ Summary
 - B1 board truth: `status-write view --json` reports `stale`, and the fixture test `tests/status/b1-stale.test.mjs` proves a board that no longer matches its plan is shown as stale (X16).
 - K2 optional companions: init-it (D1, public, 0.1.0) and doc-it (D11, public, 0.1.0) are listed in `companions.json` and the marketplace as `required: false`. D14: when doc-it is missing, consumers print `[skip] doc-it not installed: <check>`, never report that check as PASS and never fail (X10 says how doc-it is found).
 - Pre-tag hardening: N1 dormant host settings (the 1.0.5 shape, `state.backend` local plus a dormant `state.<host>` block, stays valid in repo and installed layouts); drift guards for the bundle, the mirror and the version files.
-- Sibling pins: prompt-it 1.0.0, plan-it 5.3.0, build-it 4.2.0, review-it 2.2.0, conclude-it 2.2.0, parallel-lifecycle 1.0.0, deploy-it 1.0.0, reconcile-it 1.0.1, init-it 0.1.0, doc-it 0.1.0. Marketplace refs `v<version>` for every sibling it lists.
+- Sibling pins: prompt-it 1.0.0, plan-it 5.3.0, build-it 4.2.0, review-it 2.2.0, conclude-it 2.2.0, parallel-lifecycle 1.0.0, deploy-it 1.0.0, reconcile-it 1.0.1, init-it 0.1.0, doc-it 0.1.0. Marketplace refs `v<version>` for every sibling it lists (X4, D4, H1-04).
 - Proposed CONTRACT amendments A3 to A16 (proposed, owner-approved A9 to A12, X27): T-S1-05b legacy-only, the spine parks and the hook does not, `gate escalate --reason`, the per-session registry. A3 to A5 cover `resume --take-over`. The rest are proposals awaiting the owner.
 
 Detail: host integrations stay isolated under `hosts/` (epic E1, ruling R3, decision D2).
@@ -30,7 +30,8 @@ Detail: host integrations stay isolated under `hosts/` (epic E1, ruling R3, deci
 - Known limit (CP-03 R10 L-e): the gate trusts its own `stop_parked` events. A hand-written event that names a stage question makes the gate treat that question as its park question: a park then adds no question of its own, and `pack withdraw --by stop-gate` withdraws it. The stage question's text is never rewritten.
 - Known limit (CP-03 R10 L-f): a state write that fails on I/O (a read-only `state.json`, a disk filling between two writes) after the park question was added leaves one open park question on a run that is not parked. It is never more than one, and the next stop that can write parks the run and reuses it.
 - Known limit (CP-03 R4-S1-M7, R9 L-c): when the session registry cannot be written at `start`, the run gates only from its own cwd.
-- Headroom: `gate build` accepts a plan only when the state and the finish line it seeds are at most the state cap less 1 MiB (`STATE_ACCEPT_CAP`), measured as written (after redaction). `record` accepts a result file up to the same limit.
+- `doctor --install --dry-run` without `--host` reports the plan (`INSTALL_PLANNED`) and writes nothing (CP-04 part A, D1).
+- Headroom: `gate build` accepts a plan only when the state and the finish line it seeds are at most the state cap less 1 MiB (`STATE_ACCEPT_CAP`), measured as written (after redaction). `record` accepts a result file up to the same limit (CP-03 R8-S1-M15).
 
 ## 1.0.5
 Four frictions from the BCL r11 run (backlog note do-it-plugin-friction-from-bcl-r11).

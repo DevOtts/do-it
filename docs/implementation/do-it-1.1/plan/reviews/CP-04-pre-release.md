@@ -1,0 +1,118 @@
+# CP-04 pre-release review: do-it 1.1.0, part A (whole Test Contract before tag)
+
+checkpoint: CP-04
+verdict: PASS
+part: A (pre-tag); part B pending
+
+Reviewer: independent (built none of it), 2026-11-09 05:00 to 06:05 -03. Every case was re-run by me on fresh detached worktrees. The evidence ledger was read for context only.
+
+Refs under test:
+- do-it `release/1.1.0` @ 4e03818 (origin/main 9e04eab + `release: do-it 1.1.0`)
+- build-it origin/main 8e46f5f (4.2.0) · conclude-it 5eac030 (2.2.0) · plan-it 15b3e0e (5.3.0) · review-it 6cf6199 (2.2.0) · doc-it 9f339ef (0.1.0) · reconcile-it e1766f6 (1.0.1)
+- init-it tag v0.1.0 @ bfd4f00, freshly cloned from github.com/DevOtts/init-it (public, release v0.1.0 not draft)
+- Node v22.23.2. Env: DO_IT_PILOT_DOIT, DOC_IT_PILOT_HOME, DOC_IT_PILOT_EXPECT_UNCLOSED_SHA256, DO_IT_USER_HOME=<temp>, DOIT_STATUS_WRITE / DOC_IT_CLI / PLAN_IT_GATE_CHECK pointing into the origin/main worktrees above. CLAUDE_CODE_SESSION_ID was set, so T-S1-09 ran and did not skip.
+
+Counts: 55 cases. 52 PASS, 0 FAIL, 3 PART-B (T-K1-08, T-H1-03, and the network half of T-I1-02; the local half of T-I1-02 passes, so it is counted in PASS with that note). The judgement cases (T-Q1-01, T-Q1-04, T-K2-01) were judged on their artefacts and not re-dispatched to models.
+
+## Cases
+
+| Case | Verdict | Command (cwd = repo named) | Quoted output |
+|---|---|---|---|
+| T-S1-01 | PASS | do-it: `node --test core/spine/test/s2/stopgate-owner.test.mjs` | `ok 1 - T-S1-01 a session that does not own the run is allowed, owned:false; the owner is refused` (file: `# pass 12 # fail 0`) |
+| T-S1-02 | PASS | same | `ok 2 - T-S1-02 a run with session_id null is not gated for a session; the cwd fallback is only for a host that gives none` |
+| T-S1-03 | PASS | same | `ok 3 - T-S1-03 a run with no owner object is never gated from a hook; an explicit --run still gates` |
+| T-S1-04 | PASS | same | `ok 4 - T-S1-04 allow by exclusion: PARKED, NEEDS_HUMAN, AWAIT_RATIFY and the rest never gate; VERIFYING does` |
+| T-S1-05 | PASS | same | `ok 5 - T-S1-05 two runs, each with open rows: the owner sees and parks only its own run` (+ 05b, 05c ok) |
+| T-S1-06 [REAL] | PASS | do-it: `node --test core/spine/test/s2/stopgate-replay.test.mjs` (DO_IT_PILOT_DOIT set) | `ok 1 - T-S1-06 [REAL] a fresh session and the owning session both stop freely on a copy of the pilot board` `# pass 1 # skipped 0` |
+| T-S1-11 | PASS | do-it: `node --test core/spine/test/s2/pack-withdraw.test.mjs` | `ok 1 - T-S1-11 withdraw marks unanswered stop-gate questions, keeps answered and stage ones, and is idempotent` `# pass 4 # fail 0` |
+| T-S1-09 [REAL] | PASS (automated); live half re-run in part B | do-it: `node --test core/spine/test/s2/session-id.test.mjs` | `ok 1 - T-S1-09 [REAL] start records CLAUDE_CODE_SESSION_ID with no flag or export; resume after /clear re-binds` `# skipped 0`. See note S1-09 below. |
+| T-S1-10 | PASS | stopgate-owner.test.mjs | `ok 11 - T-S1-10 a non-owner hits the hook 5 times: no park, no pack question, the owner run is byte-identical` |
+| T-S1-08 | PASS | stopgate-owner.test.mjs | `ok 9 - T-S1-08 a corrupt state.json fails open with an event, and status reports the unreadable run` |
+| T-S1-07 | PASS | stopgate-owner.test.mjs | `ok 8 - T-S1-07 start records the host session and adds no settings key (G-8)` |
+| T-A1-03 | PASS | conclude-it: `node --test tests/ship-pipeline/s4.test.mjs` | `ok 1 - T-A1-03 S4 on a package with unverified tasks and no owner note: REJECTED, not moved, names the tasks` `# pass 6 # fail 0` |
+| T-A1-04 | PASS | same | `ok 3 - T-A1-04 S4 on a package without status.json: DENIED first, then CLOSEOUT (one row per piece) written and moved`; `ok 4 - … carried without a backlog path is refused` |
+| T-A1-06 | PASS | build-it: `node --test tests/status/close-partial-failure.test.mjs` | `ok 1 - T-A1-06 kill after freeze, before move: PARTIAL_FAILED; re-run completes the move; one close entry; never half-moved` `# pass 3` |
+| T-A1-07 | PASS | conclude-it: `node --test tests/ledger-card-archived.test.mjs` | `ok 1 - T-A1-07 ledger-card close --owner-note on an archived package (0-done/x, 0 of 4, closed: false): closed in place` `# pass 2` |
+| T-A1-05 | PASS | conclude-it: `node --test tests/ship-pipeline/step0-audit.test.mjs` | `ok 1 - … report lists them; zero files changed (git status clean)`; `ok 2 - T-A1-05 Step 0 on a home without doc-it: prints [skip] doc-it not installed and exits 0` `# pass 5` |
+| T-B1-01 | PASS | do-it: `node $DOIT_STATUS_WRITE validate --file docs/implementation/harness-status-tracking/status.json` | `valid` exit 0; `view --json`: `"counts":{…"verified":8}`, `"total":8`, claims `"by":"review-it"`, evidence `evidence/b1-review-it/ST-0n-review-it.md` (all 8 cite REAL-VERIFY.md; reviewer session 44a2d822… differs from REAL-VERIFY's session_01JnLKUMkP2oR4fCs3AHABRv) |
+| T-B1-02 | PASS (per X16) | do-it: `status-write view --json` + `node --test tests/status/b1-stale.test.mjs` | view: `"stale": false`; `ok 1 - T-B1-02 a commit 25 h newer than updated_at is flagged stale`, `ok 2 - … control: a commit 3 h newer than updated_at is not stale`. The contract's `recheck` refuses as X16 says: `recheck refused: …/plan.json is not committed at HEAD` |
+| T-I1-01 [REAL] | PASS (glob form, X20) | init-it @v0.1.0: `node --test 'test/**/*.test.mjs'` | `# tests 41 # pass 40 # fail 0 # skipped 1`; T-A-01..13, 16..20 present; T-A-14/15 live in conclude-it (file header says so) and pass in its suite. The literal `node --test test/` fails on Node 22 (`not ok 1 - test`), which is X20's case. The 1 skip is ADV-01c (see defect D5) |
+| T-I1-02 | PASS (local); network half PART-B | do-it: `node scripts/check-pins.mjs --marketplace`; `node --test 'tests/catalog/*.test.mjs'` | `No drift` exit 0; `ok 22 - T-I1-02 check-pins --marketplace passes with init-it and doc-it entries`; `ok 23 - T-I1-02 doctor --install --dry-run plans init-it 0.1.0 as optional on a clean home` |
+| T-K1-01 | PASS | doc-it: `node --test test/check-archive.test.mjs` | `ok 1 - T-K1-01 check archive lists done_unclosed and done_without_closeout, omits the clean one` `# pass 8 # fail 0` |
+| T-K1-02 [REAL] | PASS | doc-it: `node --test test/check-archive-consumer.test.mjs` (DOC_IT_PILOT_HOME + EXPECT sha set) | `ok 1 - T-K1-02 [REAL] check archive on a read-only copy of a consumer plan home: 3 done_unclosed, nothing written` `# skipped 0` |
+| T-K1-03 | PASS | doc-it: `node --test test/closeout.test.mjs` | `ok 1 - T-K1-03 carried row without a backlog link fails naming the row; complete one passes` `# pass 4` |
+| T-K1-04 | PASS | doc-it: `node --test test/config.test.mjs` | `ok 1 - T-K1-04 no config: check archive exits 2 "run doc-it init"; unmapped notes/ is reported unowned` `# pass 3` |
+| T-K1-05 | PASS | doc-it: `node --test test/check-checkout.test.mjs` | `ok 1 - T-K1-05 local main 3 behind remote: exit 1 naming both shas; then up to date: exit 0` |
+| T-K1-06 | PASS | doc-it: `node --test test/check-expiry.test.mjs` | `ok 1 - T-K1-06 verified 61 days old is listed, 10 days old is not; zero files changed` `# pass 3` |
+| T-K1-07 | PASS | doc-it: `node --test test/neutral.test.mjs` | `ok 1 - T-K1-07 no project name appears in any repo file (R3)`; `ok 2 - T-K1-07 SKILL has author fields and the DevOtts footer` `# pass 4` |
+| T-K1-08 [REAL] | PART-B | `node scripts/check-pins.mjs --marketplace` (local half) | Local: `No drift`; `ok 3 - K1-07 tiers --json prints the six tiers (also T-K1-08 local half)`. Install from tag `v0.1.0` cannot run: `gh api repos/DevOtts/doc-it/git/ref/tags/v0.1.0` → `Not Found (HTTP 404)` |
+| T-K2-01 | PASS (judgement, re-graded) | conclude-it: `node --test tests/doc-it/expiry-debrief.test.mjs`; then the eval's exact inputs in a temp repo: `node plugins/conclude-it/skills/conclude-it/scripts/debrief-doc-check.mjs --pages docs/reference/old.md,docs/reference/fresh.md --today 2026-11-06` | `ok 1 - T-K2-01 …`; `expired docs/reference/old.md: verified 2026-01-10 (300 days, limit 60)`; fresh and untouched-old not listed; `fact-kind homes (DS-1): not yet checked …`; `git status --porcelain` → 0 lines. Every `must` holds and no `must_not` occurs. SKILL.md:192-197 tells the host to copy the lines into the verdict and never bump `verified:`. No live conclude-it transcript (it writes to the owner's vault), same limit as evidence.md row 30 |
+| T-K2-02 | PASS | review-it/plugins/review-it: `node --test tests/audit/tiers.test.mjs` | `ok 1 - T-K2-02 3-row ledger: each row carries a tier from doc-it's enum; an unknown tier is refused` `# pass 2` |
+| T-K2-03 | PASS | `node --test 'tests/doc-it-missing/*.test.mjs'` in conclude-it, plan-it, review-it/plugins/review-it | conclude-it `ok 1 - T-K2-03 conclude-it without doc-it: every doc-it check prints the [skip] line, none PASS`; plan-it `# pass 4` (preflight + handoff); review-it `ok 1 - T-K2-03 review-it --audit without doc-it prints "[skip] doc-it not installed: tier enum" and no PASS for it` |
+| T-K2-04 | PASS | do-it: `node --test 'tests/readme/*.test.mjs'` | `ok 9 - T-K2-04 README family table lists doc-it and init-it as optional`; `ok 10 - T-K2-04 doctor --install --dry-run on a temp HOME lists doc-it as optional` (see defect D1 for the bare form) |
+| T-E1-01 | PASS | do-it: `node --test core/spine/test/s1/s1.test.mjs` | `ok 14 - T-E1-01 G-12 with the engine word: core/ and scripts/ have zero hits; a planted word fails naming the file (R3)` `# pass 17` |
+| T-E1-02 | PASS | do-it: `node --test tests/hosts/isolation.test.mjs` | `ok 2 - T-E1-02 openStore({backend:"engine"}) fails with DRIVER_UNKNOWN naming the missing host, no crash`; `ok 3 - … every core suite still passes without the engine host` `# pass 4` |
+| T-E1-03 | PASS | do-it: `node --test 'hosts/engine/state-store/tests/*.test.mjs'` | `ok 4 - T-E1-03 conformance against the engine store from hosts/engine/state-store: same pass count as at d38cedb`; `ok 5 - … loads the store through the manifest` `# pass 15` |
+| T-E1-04 | PASS | do-it: `node --test core/spine/test/s2/settings-host.test.mjs` | `ok 2 - T-E1-04 settings: state.<backend> validated by the host schema, no new core key (G-8)` `# pass 6 # fail 0` |
+| T-E1-05 | PASS | do-it: `node --test 'tests/readme/*.test.mjs'` | `ok 1 - T-E1-05 the host check passes on the repo and the Engine row reads Experimental`, `ok 3 - … a declined host listed as Supported fails the check (G-4)`, `ok 5 - … a host folder without a row fails the check`. Fails only after the plugin suite rewrote a tracked file; see defect D2 |
+| T-H1-01 | PASS | reconcile-it: `node --test 'tests/**/*.test.mjs'`; `git ls-files scripts/reconcile-it.mjs \| wc -l` | `ok 14 - T-H1-01 duplicate scripts/reconcile-it.mjs is removed from git and disk` `# pass 15`; ls-files → `0` |
+| T-H1-02 | PASS | do-it: `node --test 'tests/catalog/*.test.mjs'` | `ok 17 - T-H1-02 pin with no remote tag v<version> exits 1 naming the sibling and version` `# pass 26 # fail 0` |
+| T-H1-04 | PASS | plan-it: `node --test tests/plugin/skill-paths.test.mjs` | `ok 2 - T-H1-04 each documented plugin-root command path exists in a cache-shaped copy`; `ok 3 - … runs with --help and exits 0` `# pass 4` |
+| T-H1-03 | PART-B | — (attended install) | Needs the tags; none exist yet |
+| T-L1-01 | PASS | plan-it: `node scripts/gate-check.mjs claims tests/fixtures/claims/do-it-1.1.md` | `✓ …do-it-1.1.md: 38 row(s) — source, sha/path, count, tier enum and fact rules clean` `PASS — claim ledger` exit 0. The live ledger `do-it/docs/implementation/do-it-1.1/audit/claims.md` also passes (38 rows, exit 0). The contract's "24 rows" is from before the ledger grew to 38 |
+| T-L1-02 | PASS | plan-it: `node --test 'tests/claims/*.test.mjs'` | `ok 3 - T-L1-02 tier code with no sha anywhere: exit 1 naming the row and the sha/path rule` `# pass 26 # fail 0` |
+| T-L1-03 | PASS | same | `ok 7 - T-L1-03 '5 credential ways' with tier code and no list: exit 1 count rule` |
+| T-L1-04 | PASS | same | `ok 9 - T-L1-04 tier program-doc as plain fact: exit 1 fact rule; 'the study says' passes` |
+| T-L1-05 | PASS | same | `ok 10 - T-L1-05 findings doc 'your suspicion is confirmed' with no evidence-against heading: exit 1` |
+| T-V1-01 | PASS | plan-it: `node --test tests/preflight/behind-remote.test.mjs` | `ok 1 - T-V1-01 local main 3 behind its remote: probe WARN names the repo, local and remote sha; ENV-FACTS records the remote sha` `# pass 5` |
+| T-V1-02 | PASS | plan-it: `node --test tests/preflight/shipped-layers.test.mjs` | `ok 1 - T-V1-02 size M package without research/SHIPPED-LAYERS.md: handoff exit 1 naming the file` `# pass 9` |
+| T-V1-03 | PASS | same | `ok 3 - T-V1-03 02 doc proposes a new registry with no 'extends' citation: handoff exit 1 naming the section` |
+| T-Q1-01 [REAL] | PASS (judgement, artefacts) | review-it: `audit-chain.mjs status` on a copy of `audit/q1-judgement/T-Q1-01`; citation check with review-it's own `evidenceOk` | status: `PUBLISHED_UNBOUND: audit/SAFE.md, audit/audit-claude-sonnet-5-5.md, audit/ombudsman.md … has schema review-it/audit-chain/1, expected review-it/audit-chain/2` exit 1 (expected for schema 1). Audit file: 38/38 rows (C1–C38 ⊇ C1–C24), verdicts TRUE 35 / PARTIAL 2 / UNVERIFIABLE 1, `evidenceOk` refuses 0 of 38. Author opus-5-5 ≠ auditor sonnet-5-5. The recorded ledger sha 7efa070a… is the pre-X24 copy (only C34 reworded since, dated note in claims.md). Coherent |
+| T-Q1-02 | PASS | review-it/plugins/review-it: `node --test tests/audit/chain.test.mjs` | `ok 1 - T-Q1-02 auditor file missing 3 rows → AUDIT_RETRY_FAILED, one re-dispatch with those rows; second miss → ESCALATED_TO_OWNER, nothing published` `# pass 12 # fail 0` |
+| T-Q1-03 | PASS | same | `ok 3 - T-Q1-03 author model = auditor model → refused before dispatch (G-6)` |
+| T-Q1-04 | PASS (judgement, artefacts) | same `status` on a copy of `T-Q1-04` | `PUBLISHED_UNBOUND … schema review-it/audit-chain/1` (expected). ombudsman.md: `P3 \| code \| TRUE \| FALSE \| FALSE \| The auditor's evidence is from ca86985, not the claimed eed4dec … does not exist in 'eed4dec'`; `Re-audited classes (PARTIAL_TRUST): code`; SAFE.md: `DO-NOT-PUBLISH (1) - P3 (FALSE)`. Author sonnet-5-5, auditor haiku-5-5, ombudsman opus. The scripted path also passes: `ok 8 - T-Q1-04-path planted false TRUE: ombudsman overturns → PARTIAL_TRUST → … DO-NOT-PUBLISH` |
+| T-Q1-06 | PASS | chain.test.mjs | `ok 6 - T-Q1-06 owner aborts during ADJUDICATING → ABORTED; rollback keeps the last published version; no SAFE.md written` |
+| T-Q1-05 | PASS | chain.test.mjs | `ok 4 - T-Q1-05 --stakes routine → no subagent dispatched; only gate-check claims runs`; `ok 10 - T-Q1-05 (c) routine against the real plan-it gate-check claims` |
+
+### Note S1-09: is the live /clear evidence still valid after X25?
+Only half of it is. `evidence/T-S1-09/` (2026-11-07, commit 7ed35a4) shows `start` in a real Claude Code TUI recording `owner.session_id` = `$CLAUDE_CODE_SESSION_ID` (sid1 5b23dcf6…). That half still holds, because start did not change. The /clear half ran plain `resume --json` and got `"outcome":"REBOUND"`. Under X25 the same command now refuses with `OWNED_BY_OTHER_SESSION`; the automated test asserts this, and re-binding needs `resume --run <id> --take-over`. So the live resume half proves behaviour that no longer exists. The current path is proven only by the automated test, which runs the real SessionStart hook and the plugin CLI with the real session id. Part B must re-run run.exp live with `resume` (expect the refusal naming the run) and then `resume --run <id> --take-over` (expect REBOUND with one history entry). That re-run is also the X27 check that an unattended session recovers after /clear with no human input. SKILL.md:20 already says `run resume --run <id> --take-over … (plain resume refuses with OWNED_BY_OTHER_SESSION and names the run)`.
+
+## Suites (env above; all except the paid claude-code host suite)
+
+| Repo @ ref | Command | Result |
+|---|---|---|
+| do-it @4e03818 | `.taskstate/1.1/run-suites.sh <tree>` | spine 186/186, routing 24, pipelines 11, review-loop 23, personas 7, state-stores 13, _interface 18, codex 17, **opencode 17/18 (T-H3-04, env)**, engine 29 + 7 skip (X22 IMPLEMENTED-NOT-VERIFIED), engine state-store 15, plugin 15 + 2 skip, catalog 26, readme 32/32 (serial re-run), hosts 58/58 (serial re-run), status 2, e2e r4 25 + 1 skip (paid call, DOIT_REAL_CALLS unset) |
+| build-it @8e46f5f | `node --test 'tests/**/*.test.mjs'` | 218 tests, 217 pass, 0 fail, 1 skip (AT-21 lens-data-honesty) |
+| conclude-it @5eac030 | `node --test 'tests/**/*.test.mjs' 'plugins/**/*.test.mjs'` (npm test) | 92/92 |
+| plan-it @15b3e0e | `node --test 'tests/**/*.test.mjs'` | 128/128 |
+| review-it @6cf6199 | `node --test 'plugins/**/*.test.mjs'` | 77/77 |
+| doc-it @9f339ef | `node --test "test/*.test.mjs"` (npm test) | 50/50 |
+| reconcile-it @e1766f6 | `node --test tests/*.test.mjs` (npm test) | 15/15 |
+| init-it @v0.1.0 | `node --test 'test/**/*.test.mjs'` | 41: 40 pass, 1 skip (ADV-01c, D5) |
+
+Environmental items, each proven by one direct check:
+- opencode T-H3-04 `spawnSync opencode ETIMEDOUT`: `timeout 40 opencode models` → exit 124 after 40.0 s. `git diff v1.0.5 4e03818 -- hosts/opencode` touches only `adapter.manifest.json` (version 1.1.0 plus the `display`/`level`/`note` fields that E1-04 reads for the host table). No code or test changed since 1.0.5.
+- T-R1-14 (GitHub 504): the first readme run failed with `'https://github.com/DevOtts 504'` and the other DevOtts URLs. `curl -I https://github.com/DevOtts` → 504 at the same moment. The serial re-run later passed 32/32.
+- `check-pins --tags`: exit 1, `tags: do-it pinned 1.1.0 has no tag v1.1.0 on DevOtts/do-it` (and plan-it 5.3.0, build-it 4.2.0, review-it 2.2.0, conclude-it 2.2.0, reconcile-it 1.0.1, doc-it 0.1.0). `gh api …/git/ref/tags/v5.3.0` → 404. That is part B. init-it v0.1.0 exists.
+- hosts suite FIFO case `CP03 R6-S1-M13` failed once, when all seven repo suites ran in parallel. It passes in a serial re-run (58/58), so it is timing-sensitive under load.
+- tests/plugin T-R2-11 skipped with `network unreachable, recorded as unresolved`. The recorded error is really `fatal: Remote branch v5.3.0 not found in upstream origin`, a pre-tag condition, so it belongs to part B. See D2.
+
+## CONTRACT §6 checks (pre-tag)
+
+| Check | Result |
+|---|---|
+| `node scripts/check-pins.mjs --marketplace` | PASS: `No drift`, exit 0 |
+| CHANGELOG lists each change with its decision id | PASS with a LOW gap. The 1.1.0 section (dated 2026-11-09) carries ids on the epic lines (S1 D9/D10, E1 R3/D2, H1 G-3/D3/D4, B1 X16, K2 D1/D11/D14, amendments A3–A16/X27) and on every CP-03 fix line. Two bullets have no id: "Sibling pins: …" and "Headroom: `gate build` accepts a plan only when …" (D4) |
+| Each review checkpoint verdict file says PASS (build-it `checkpoints.mjs` readVerdict) | **FAIL on the release ref, PASS in the working copy.** `plan-read-origin-main/…/plan/reviews/`: CP-01 `{"state":"pass"}`, CP-02 `{"state":"pass"}`, CP-03 `{"state":"pass"}`. On the tree that will be tagged (4e03818): CP-01 `pass`, **CP-02 `{"state":"fail"}`** (the tracked file is an earlier round, `verdict: FAIL`), and **CP-03 `{"state":"missing"}`**. The PASS files exist only untracked (`?? docs/implementation/do-it-1.1/plan/reviews/` in plan-read-origin-main). See D3 |
+
+## Defects (none fails a case; D3 must be fixed before the tag)
+
+- **D3 (blocks the tag, §6).** The release tree carries a FAIL CP-02 verdict and no CP-03 or CP-04 file. Fix: copy `plan-read-origin-main/docs/implementation/do-it-1.1/plan/reviews/{CP-01-wave-w0.md,CP-02-wave-w1.md,CP-03-adversarial.md,CP-04-pre-release.md,cp03-*.md}` into `release/1.1.0` and commit. Then check that `readVerdict` returns `pass` for CP-01..CP-03 on that commit before tagging. Part B adds the final CP-04.
+- **D1 (MEDIUM, real side effect).** `do-it doctor --install --dry-run` without `--host` ignores `--dry-run` and installs the bin shim. In `core/spine/src/install.mjs` only `cmdInstallCompanions` reads `dry-run`. When I ran it in the release worktree it printed `OUTCOME: INSTALLED … path: /Users/macbook/.do-it/bin/do-it version: 1.1.0` and overwrote that file (mtime Nov 9 05:02:43). Owner: `~/.do-it/bin/do-it` is now the 1.1.0 build. Run `doctor --install` from the checkout you want if you need another version. Fix: the shim installer should honour `--dry-run` (print the planned dest and version and write nothing), or refuse unknown flag combinations. Add a test that `doctor --install --dry-run` on a temp HOME leaves `<HOME>/.do-it/bin` absent. The test for T-K2-04 passes only because it adds `--host codex`.
+- **D2 (LOW).** tests/plugin `r2.test.mjs` T-R2-11 runs a real marketplace install. When that install fails, it rewrites the tracked `tests/plugin/evidence/dependency-resolution.json` to `"outcome":"unresolved"` and skips, calling the cause "network unreachable" (the real cause was the missing tag v5.3.0). `scripts/check-readme.mjs` then reads that file, so T-E1-05 #1, T-R1-11 and T-R1-12 fail in any later readme run of the same tree. The suite result depends on test order and mutates a tracked file. Fix: write the observation to a temp or untracked path (or write only on `resolved`). Name the real cause in the skip message (`tag v<version> not found` ≠ network).
+- **D4 (LOW).** CHANGELOG 1.1.0 bullets "Sibling pins" and "Headroom" carry no decision id. Fix: append `(X4, D4, H1-04)` to the first and the CP-03 finding id that introduced `STATE_ACCEPT_CAP` to the second.
+- **D5 (LOW, init-it).** ADV-01c skips with `ledger-card not found at /Users/macbook/Workspace/Devotts/conclude-it/plugins/conclude-it/skills/conclude-it/scripts/ledger-card.mjs`. The path is hardcoded to a local checkout, so on any other machine the race test never runs. Fix: resolve ledger-card the same way as DOC_IT_CLI (env var, then plugin cache) and print IMPLEMENTED-NOT-VERIFIED when it is not found. Not part of T-I1-01's T-A cases.
+- Contract text drift (no fix needed in code): T-L1-01 says "24 rows" but the ledger has 38. T-I1-01's literal `node --test test/` fails on Node 22, which is X20. T-B1-02's `recheck` refuses, which is X16. Fold these into the proposed amendments v1.1-A1/A2.
+
+## Part B (pending, after tags)
+T-K1-08 marketplace install from `v0.1.0`; the network half of T-I1-02; T-H1-03 attended install; `check-pins --tags`; the T-R2-11 dependency-resolution install; the live T-S1-09 re-run with `--take-over` (X27).
