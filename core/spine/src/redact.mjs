@@ -56,6 +56,20 @@ export function redactValue(v) {
   return v;
 }
 
+// CP-03 R5-S1-L3: the spine's own JSON files (state.json, finish-line.json, events, packs, the registry) are
+// redacted value by value; keys are the spine's vocabulary and are never rewritten, so a planted secret equal
+// to "session_id" or "evidence" cannot break the file's shape.
+export function redactJsonValues(v) {
+  if (typeof v === 'string') return redactText(v);
+  if (Array.isArray(v)) return v.map(redactJsonValues);
+  if (v && typeof v === 'object') {
+    const out = {};
+    for (const [k, x] of Object.entries(v)) out[k] = redactJsonValues(x);
+    return out;
+  }
+  return v;
+}
+
 // Names the project declares: READINESS credentials and .env.example NAME= lines.
 export function redactDeclaredNames(ctx) {
   const names = new Set();

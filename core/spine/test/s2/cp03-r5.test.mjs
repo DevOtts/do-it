@@ -354,3 +354,33 @@ test('CP03 R5-S1-L2 a board that parses but has the wrong shape refuses the stop
   fs.rmSync(fl);
   assert.equal(hookStop(repo, 'l2-s').out.outcome, 'STOP_ALLOWED');
 });
+
+test('CP03 R5-S1-L3 a .secrets value equal to a JSON key (session_id, run_id, evidence) never rewrites a key of state.json or the board', () => {
+  for (const word of ['session_id', 'run_id', 'evidence']) {
+    const repo = mk();
+    patient(repo);
+    const a = start(repo, 'l3-s');
+    fs.mkdirSync(path.join(repo.dir, '.secrets'), { recursive: true });
+    fs.writeFileSync(path.join(repo.dir, '.secrets', 'k'), word);
+    for (let i = 0; i < 3; i++) {
+      const g = hookStop(repo, 'l3-s');
+      assert.equal(g.out.outcome, 'STOP_REFUSED', word + ' stop ' + i + ': ' + g.stdout);
+    }
+    const raw = fs.readFileSync(path.join(runDirOf(repo, a), 'state.json'), 'utf8');
+    assert.doesNotMatch(raw, /"\[REDACTED:k\]":/, word + ': no key is redacted');
+    assert.equal(real(repo, ['status', '--run', a]).code, 0, word + ': state still loads');
+    assert.doesNotMatch(fs.readFileSync(path.join(repo.doIt, 'finish-line.json'), 'utf8'), /"\[REDACTED:k\]":/);
+    assert.doesNotMatch(fs.readFileSync(path.join(runDirOf(repo, a), 'events.jsonl'), 'utf8'), /"\[REDACTED:k\]":/);
+  }
+  // a real secret in a value is still redacted in the file
+  const repo = mk();
+  const a = start(repo, 'l3-v');
+  advance(repo, a, 'BUILDING');
+  fs.mkdirSync(path.join(repo.dir, '.secrets'), { recursive: true });
+  fs.writeFileSync(path.join(repo.dir, '.secrets', 'real'), 'sk-live-0123456789abcdef');
+  writeJson(path.join(repo.dir, 'results', 'b.json'), res(a, { status: 'blocked', exit_code: 3, reason: 'the key sk-live-0123456789abcdef was revoked' }));
+  assert.equal(real(repo, ['record', '--run', a, '--result', 'results/b.json']).out.outcome, 'RECORDED');
+  const st = fs.readFileSync(path.join(runDirOf(repo, a), 'state.json'), 'utf8');
+  assert.doesNotMatch(st, /sk-live-0123456789abcdef/);
+  assert.match(st, /\[REDACTED:real\]/);
+});

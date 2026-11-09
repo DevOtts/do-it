@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fail } from './errors.mjs';
-import { redactText } from './redact.mjs';
+import { redactJsonValues, redactText } from './redact.mjs';
 
 export const TMP_PATTERN = /\.tmp-\d+-[0-9a-f]{8}$/;
 
@@ -29,13 +29,23 @@ export function atomicWrite(file, data, opts) {
   }
 }
 
+// JSON is redacted value by value (keys untouched, R5-S1-L3), then written as bytes so it is not redacted again.
+export function jsonBytes(value) {
+  return Buffer.from(JSON.stringify(redactJsonValues(value), null, 2) + '\n', 'utf8');
+}
+
 export function atomicWriteJson(file, value, opts) {
-  atomicWrite(file, JSON.stringify(value, null, 2) + '\n', opts);
+  atomicWrite(file, jsonBytes(value), opts);
 }
 
 export function appendLine(file, line) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.appendFileSync(file, redactText(line) + '\n');
+}
+
+export function appendJsonLine(file, value) {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.appendFileSync(file, JSON.stringify(redactJsonValues(value)) + '\n');
 }
 
 // CP-03 R5-S1-M10: a FIFO, a device or an endless file must never hang the spine. readRegularFile reads only a

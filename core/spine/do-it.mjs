@@ -644,7 +644,7 @@ function appendEvent(ctx, runId, fields) {
   const row = buildEventRow(ctx, runId, fields);
   const errors = validateSchema(loadSchemaFile('events.schema.json'), row);
   if (errors.length) throw fail('EVENT_INVALID', 1, { errors });
-  appendLine(eventsPath(ctx, runId), JSON.stringify(row));
+  appendJsonLine(eventsPath(ctx, runId), row);
   return row;
 }
 
@@ -902,13 +902,23 @@ function atomicWrite(file, data, opts) {
   }
 }
 
+// JSON is redacted value by value (keys untouched, R5-S1-L3), then written as bytes so it is not redacted again.
+function jsonBytes(value) {
+  return Buffer.from(JSON.stringify(redactJsonValues(value), null, 2) + '\n', 'utf8');
+}
+
 function atomicWriteJson(file, value, opts) {
-  atomicWrite(file, JSON.stringify(value, null, 2) + '\n', opts);
+  atomicWrite(file, jsonBytes(value), opts);
 }
 
 function appendLine(file, line) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.appendFileSync(file, redactText(line) + '\n');
+}
+
+function appendJsonLine(file, value) {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.appendFileSync(file, JSON.stringify(redactJsonValues(value)) + '\n');
 }
 
 // CP-03 R5-S1-M10: a FIFO, a device or an endless file must never hang the spine. readRegularFile reads only a
@@ -1517,7 +1527,7 @@ function cmdMeter(ctx, args) {
   if (input.extra !== undefined) row.extra = input.extra;
   const errors = validateSchema(loadSchemaFile('token-meter.schema.json'), row);
   if (errors.length) throw fail('METER_ROW_INVALID', 1, { errors });
-  appendLine(meterPath(ctx, runId), JSON.stringify(row));
+  appendJsonLine(meterPath(ctx, runId), row);
   return { outcome: 'METER_APPENDED', exit: 0, run_id: runId, row };
 }
 
@@ -2630,6 +2640,20 @@ function redactValue(v) {
   return v;
 }
 
+// CP-03 R5-S1-L3: the spine's own JSON files (state.json, finish-line.json, events, packs, the registry) are
+// redacted value by value; keys are the spine's vocabulary and are never rewritten, so a planted secret equal
+// to "session_id" or "evidence" cannot break the file's shape.
+function redactJsonValues(v) {
+  if (typeof v === 'string') return redactText(v);
+  if (Array.isArray(v)) return v.map(redactJsonValues);
+  if (v && typeof v === 'object') {
+    const out = {};
+    for (const [k, x] of Object.entries(v)) out[k] = redactJsonValues(x);
+    return out;
+  }
+  return v;
+}
+
 // Names the project declares: READINESS credentials and .env.example NAME= lines.
 function redactDeclaredNames(ctx) {
   const names = new Set();
@@ -3538,7 +3562,7 @@ function writeState(ctx, state) {
   const errors = validateSchema(loadSchemaFile('do-it-state.1.schema.json'), state);
   if (errors.length) throw fail('STATE_INVALID', 1, { errors });
   const dir = runDir(ctx, state.run_id);
-  const bytes = redactText(JSON.stringify(state, null, 2) + '\n');
+  const bytes = jsonBytes(state);
   const fault = ctx.env.DO_IT_FAULT === 'after_tmp';
   atomicWrite(path.join(dir, 'state.json'), bytes, { faultAfterTmp: fault });
   atomicWrite(path.join(dir, '.state.sha256'), sha256Bytes(bytes) + '\n');
