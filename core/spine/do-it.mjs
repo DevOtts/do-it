@@ -3709,11 +3709,17 @@ const NON_GATING_OWNERS = {
 // slice settle and deploy legs alike) and `gate build` (missing credential) call it before they write.
 const CAUSE_REQUIRED = { FAILED: 'FAIL_REASON_REQUIRED', BLOCKED: 'BLOCK_REASON_REQUIRED', NEEDS_HUMAN: 'NEEDS_HUMAN_WITHOUT_QUESTION' };
 
-// A reason is text with something in it: invisible and space characters are stripped first.
+// A reason is text with something in it: invisible and space characters are stripped first, and a
+// placeholder (".", "x", "n/a", "TODO", "-", ...) or text with fewer than 3 letters or digits is no reason
+// (CP-03 R5-S1-L1). A code such as STALE_HEAD or NO_CHANNEL_REACHED is a reason.
+const PLACEHOLDER_REASONS = new Set(['n/a', 'na', 'none', 'null', 'nil', 'todo', 'tbd', 'tba', 'fixme', 'wip', 'unknown', 'reason', 'no reason', 'xxx', 'xx', 'x', '?', '...', '-', '--', '.']);
 function cleanReason(text) {
   if (typeof text !== 'string') return null;
-  const t = text.replace(/[\p{White_Space}​-‍⁠﻿]+/gu, ' ').trim();
-  return t || null;
+  const t = text.replace(/[\p{White_Space}\u200B-\u200D\u2060\uFEFF\u00AD]+/gu, ' ').trim();
+  if (!t) return null;
+  if (PLACEHOLDER_REASONS.has(t.toLowerCase())) return null;
+  if ((t.match(/[\p{L}\p{N}]/gu) || []).length < 3) return null;
+  return t;
 }
 
 // Returns the reason to store (FAILED, BLOCKED) or null; throws the status's refusal code when the cause is missing.

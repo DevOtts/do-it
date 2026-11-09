@@ -54,7 +54,7 @@ test('CP03 R5-S1-H9 a deploy-legs result never takes a run to FAILED without a r
   assert.equal(hookStop(repo, 'dpi-s').out.outcome, 'STOP_REFUSED');
   // in DEPLOYING, a FAILED leg with no evidence and no reason is refused too
   advance(repo, a, 'VERIFYING', 'DEPLOYING');
-  for (const legs of [[{ leg: 'web', state: 'FAILED' }], [{ leg: 'web', state: 'FAILED', evidence: ' ​ ' }], [{ leg: 'web', state: 'NEEDS_HUMAN' }]]) {
+  for (const legs of [[{ leg: 'web', state: 'FAILED' }], [{ leg: 'web', state: 'FAILED', evidence: ' \u200B ' }], [{ leg: 'web', state: 'NEEDS_HUMAN' }]]) {
     writeJson(r, res(a, { stage: 'deploy-it', status: 'failed', exit_code: 1, legs }));
     out = real(repo, ['record', '--run', a, '--result', 'results/r.json']);
     assert.equal(out.code, 1, out.stdout);
@@ -298,4 +298,24 @@ test('CP03 R5-S1-M12 session ids that differ only in case never share or prune e
   assert.equal(g.out.outcome, 'STOP_REFUSED', g.stdout);
   assert.equal(g.out.run_id, b);
   assert.ok(fs.existsSync(path.join(sessions, sessionFolderName('CASE-SESS'), b + '.json')));
+});
+
+test('CP03 R5-S1-L1 a placeholder or invisible reason is no reason: blocked and failed are refused and the run keeps gating', () => {
+  const repo = mk();
+  patient(repo);
+  const a = start(repo, 'l1-s');
+  advance(repo, a, 'BUILDING');
+  const r = path.join(repo.dir, 'results', 'r.json');
+  for (const reason of ['.', 'x', 'n/a', 'TODO', '-', '\u200B', '\u200B\u200B ', 'ab']) {
+    for (const [status, exit_code, code] of [['blocked', 3, 'BLOCK_REASON_REQUIRED'], ['failed', 1, 'FAIL_REASON_REQUIRED']]) {
+      writeJson(r, res(a, { status, exit_code, reason }));
+      const out = real(repo, ['record', '--run', a, '--result', 'results/r.json']);
+      assert.equal(out.out.outcome, code, JSON.stringify(reason) + ' ' + out.stdout);
+      assert.equal(stateOf(repo, a).status, 'BUILDING');
+    }
+  }
+  assert.equal(hookStop(repo, 'l1-s').out.outcome, 'STOP_REFUSED');
+  // a short code is a reason
+  writeJson(r, res(a, { status: 'blocked', exit_code: 3, reason: 'STALE_HEAD' }));
+  assert.equal(real(repo, ['record', '--run', a, '--result', 'results/r.json']).out.outcome, 'RECORDED');
 });
