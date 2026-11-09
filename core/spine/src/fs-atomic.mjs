@@ -8,13 +8,18 @@ export const TMP_PATTERN = /\.tmp-\d+-[0-9a-f]{8}$/;
 
 // temp file in the same directory, fsync, rename. opts.faultAfterTmp is the
 // DO_IT_FAULT=after_tmp test hook: stop after the temp file is durable.
+// CP-03 R7-S1-M14: opts.cap refuses, before anything touches disk, a write the spine could not read back
+// through its own capped reader. The previous file stays intact and the error is STATE_TOO_LARGE.
 export function atomicWrite(file, data, opts) {
+  const buf = typeof data === 'string' ? Buffer.from(redactText(data), 'utf8') : data;
+  assertWithinCap(file, buf.length, opts && opts.cap);
   const dir = path.dirname(file);
   fs.mkdirSync(dir, { recursive: true });
   const tmp = path.join(dir, '.' + path.basename(file) + '.tmp-' + process.pid + '-' + crypto.randomBytes(4).toString('hex'));
   const fd = fs.openSync(tmp, 'w');
   try {
-    fs.writeSync(fd, typeof data === 'string' ? redactText(data) : data);
+    let off = 0;
+    while (off < buf.length) off += fs.writeSync(fd, buf, off, buf.length - off);
     fs.fsyncSync(fd);
   } finally {
     fs.closeSync(fd);
@@ -34,8 +39,16 @@ export function jsonBytes(value) {
   return Buffer.from(JSON.stringify(redactJsonValues(value), null, 2) + '\n', 'utf8');
 }
 
+// Every JSON file the spine writes is read back through readJsonIfExists/readJsonRegular, capped at
+// STATE_READ_CAP unless the caller names a tighter cap (the session registry: REGISTRY_READ_CAP).
 export function atomicWriteJson(file, value, opts) {
-  atomicWrite(file, jsonBytes(value), opts);
+  atomicWrite(file, jsonBytes(value), { cap: STATE_READ_CAP, ...(opts || {}) });
+}
+
+export function assertWithinCap(file, size, cap) {
+  if (cap && size > cap) {
+    throw fail('STATE_TOO_LARGE', 1, { file, bytes: size, cap, message: path.basename(file) + ' would be ' + size + ' bytes, above the ' + cap + '-byte read cap; nothing was written' });
+  }
 }
 
 // CP-03 R6-S1-M13: every append goes through appendRegular. Opening a FIFO for writing blocks until a reader

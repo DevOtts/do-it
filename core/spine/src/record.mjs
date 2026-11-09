@@ -5,7 +5,7 @@ import { fail } from './errors.mjs';
 import { appendEvent } from './events.mjs';
 import { resolveEvidence } from './evidence.mjs';
 import { adoptsUnattributed, autoClosePackages, finishLineUpsert, readFinishLine, writeFinishLine } from './finish-line.mjs';
-import { BULK_READ_CAP, atomicWrite, atomicWriteJson, readJsonIfExists, readRegularFile, readText } from './fs-atomic.mjs';
+import { BULK_READ_CAP, STATE_READ_CAP, atomicWrite, atomicWriteJson, readJsonIfExists, readRegularFile, readText } from './fs-atomic.mjs';
 import { sha256Bytes } from './hash.mjs';
 import { escalationQuestion, ladderEscalated } from './ladder.mjs';
 import { ledgerUpsert, readLedger, writeLedger } from './ledger.mjs';
@@ -50,7 +50,9 @@ export function cmdRecord(ctx, args) {
 
   const resultFile = path.resolve(ctx.cwd, f.result);
   let bytes;
-  try { bytes = readRegularFile(resultFile, BULK_READ_CAP); } catch (e) {
+  // CP-03 R7-S1-M14: a result is copied into the journal and the state, which are read back capped at
+  // STATE_READ_CAP, so a larger result is refused before anything is written.
+  try { bytes = readRegularFile(resultFile, STATE_READ_CAP); } catch (e) {
     throw fail('RESULT_UNREADABLE', 1, { file: f.result, message: e.message });
   }
   const resultSha = sha256Bytes(bytes);

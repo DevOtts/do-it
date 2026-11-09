@@ -129,7 +129,7 @@ function answerApply(ctx, runId, state, fullPack, f, hasReply) {
   const text = JSON.stringify(doc, null, 2) + '\n';
   const file = answersPath(ctx, runId);
   const before = fs.existsSync(file) ? readText(file) : null;
-  if (before !== text) atomicWrite(file, text);
+  if (before !== text) atomicWrite(file, text, { cap: STATE_READ_CAP });
   for (const n of added) {
     const a = have.get(n);
     emit(ctx, runId, state, a.source === 'default' ? 'default_applied' : 'answer_recorded', a.source, { n, answer: a.answer, source: a.source });
@@ -891,13 +891,18 @@ const TMP_PATTERN = /\.tmp-\d+-[0-9a-f]{8}$/;
 
 // temp file in the same directory, fsync, rename. opts.faultAfterTmp is the
 // DO_IT_FAULT=after_tmp test hook: stop after the temp file is durable.
+// CP-03 R7-S1-M14: opts.cap refuses, before anything touches disk, a write the spine could not read back
+// through its own capped reader. The previous file stays intact and the error is STATE_TOO_LARGE.
 function atomicWrite(file, data, opts) {
+  const buf = typeof data === 'string' ? Buffer.from(redactText(data), 'utf8') : data;
+  assertWithinCap(file, buf.length, opts && opts.cap);
   const dir = path.dirname(file);
   fs.mkdirSync(dir, { recursive: true });
   const tmp = path.join(dir, '.' + path.basename(file) + '.tmp-' + process.pid + '-' + crypto.randomBytes(4).toString('hex'));
   const fd = fs.openSync(tmp, 'w');
   try {
-    fs.writeSync(fd, typeof data === 'string' ? redactText(data) : data);
+    let off = 0;
+    while (off < buf.length) off += fs.writeSync(fd, buf, off, buf.length - off);
     fs.fsyncSync(fd);
   } finally {
     fs.closeSync(fd);
@@ -917,8 +922,16 @@ function jsonBytes(value) {
   return Buffer.from(JSON.stringify(redactJsonValues(value), null, 2) + '\n', 'utf8');
 }
 
+// Every JSON file the spine writes is read back through readJsonIfExists/readJsonRegular, capped at
+// STATE_READ_CAP unless the caller names a tighter cap (the session registry: REGISTRY_READ_CAP).
 function atomicWriteJson(file, value, opts) {
-  atomicWrite(file, jsonBytes(value), opts);
+  atomicWrite(file, jsonBytes(value), { cap: STATE_READ_CAP, ...(opts || {}) });
+}
+
+function assertWithinCap(file, size, cap) {
+  if (cap && size > cap) {
+    throw fail('STATE_TOO_LARGE', 1, { file, bytes: size, cap, message: path.basename(file) + ' would be ' + size + ' bytes, above the ' + cap + '-byte read cap; nothing was written' });
+  }
 }
 
 // CP-03 R6-S1-M13: every append goes through appendRegular. Opening a FIFO for writing blocks until a reader
@@ -2126,6 +2139,14 @@ function seedCheckpoints(state, fl, data) {
   return block.count;
 }
 
+function planTooLarge(state, fl) {
+  const stateBytes = jsonBytes(state).length;
+  if (stateBytes > STATE_READ_CAP) return { pointer: '/slices', message: 'the plan seeds a state of ' + stateBytes + ' bytes, above the ' + STATE_READ_CAP + '-byte state cap (' + state.slices.length + ' slices); split the plan' };
+  const flBytes = jsonBytes(fl).length;
+  if (flBytes > STATE_READ_CAP) return { pointer: '/slices', message: 'the plan seeds a finish line of ' + flBytes + ' bytes, above the ' + STATE_READ_CAP + '-byte cap; split the plan' };
+  return null;
+}
+
 function seedSlices(state, data) {
   if (state.slices.length || !Array.isArray(data.slices)) return;
   for (const s of data.slices) {
@@ -2180,7 +2201,6 @@ function gateBuild(ctx, args) {
   const checkpoints = seedCheckpoints(state, fl, v.data);
   state.gates.build = { approved: true, owner: 'readiness', date: now, readiness_sha256: v.sha256 };
   state.status = 'BUILDING';
-  writeState(ctx, state);
   for (const s of state.slices) {
     if (!hasRow(fl, s.id, runId, adopt)) finishLineUpsert(fl, s.id, { kind: 'package' }, runId, adopt);
   }
@@ -2188,6 +2208,14 @@ function gateBuild(ctx, args) {
   if (credRow && credRow.state === 'BLOCKED') {
     finishLineUpsert(fl, CRED_ROW_ID, { state: 'DONE', reason: null, evidence: path.relative(ctx.repo, readinessPath(ctx)) }, runId, adopt);
   }
+  // CP-03 R7-S1-M14: a plan whose seeded state or board would pass the spine's own read cap is refused
+  // before anything is written, so the run stays where it was (gated) and the error names the plan.
+  const tooBig = planTooLarge(state, fl);
+  if (tooBig) {
+    appendEvent(ctx, runId, { event: 'build_refused', stage: state.stage, host: state.host, verdict: 'READINESS_INVALID', detail: { errors: [tooBig] } });
+    throw fail('READINESS_INVALID', 1, { run_id: runId, status: from, file: readinessPath(ctx), errors: [tooBig] });
+  }
+  writeState(ctx, state);
   writeFinishLine(ctx, fl);
   appendEvent(ctx, runId, { event: 'build_approved', stage: state.stage, host: state.host, verdict: 'READINESS_OK', detail: { from, readiness_sha256: v.sha256, slices: state.slices.length, review_checkpoints: checkpoints } });
   return { outcome: 'READINESS_OK', exit: 0, run_id: runId, status: 'BUILDING', slices: state.slices.map((s) => s.id), review_checkpoints: checkpoints };
@@ -2228,7 +2256,9 @@ function cmdRecord(ctx, args) {
 
   const resultFile = path.resolve(ctx.cwd, f.result);
   let bytes;
-  try { bytes = readRegularFile(resultFile, BULK_READ_CAP); } catch (e) {
+  // CP-03 R7-S1-M14: a result is copied into the journal and the state, which are read back capped at
+  // STATE_READ_CAP, so a larger result is refused before anything is written.
+  try { bytes = readRegularFile(resultFile, STATE_READ_CAP); } catch (e) {
     throw fail('RESULT_UNREADABLE', 1, { file: f.result, message: e.message });
   }
   const resultSha = sha256Bytes(bytes);
@@ -3217,7 +3247,7 @@ function migrateLegacy(ctx, sessionId, skip) {
   for (const e of readLegacy(file, sessionId)) {
     if (skip && skip.has(e.run_id + '\0' + e.home)) continue;
     const f = runFile(ctx, sessionId, e.run_id);
-    if (!fs.existsSync(f)) atomicWriteJson(f, { session_id: sessionId, run_id: e.run_id, home: e.home, root: typeof e.root === 'string' ? e.root : path.dirname(e.home) });
+    if (!fs.existsSync(f)) atomicWriteJson(f, { session_id: sessionId, run_id: e.run_id, home: e.home, root: typeof e.root === 'string' ? e.root : path.dirname(e.home) }, { cap: REGISTRY_READ_CAP });
   }
   const doc = readRegistryJson(file);
   if (doc && doc.session_id === sessionId) fs.rmSync(file, { force: true });
@@ -3241,7 +3271,7 @@ function migrateOldDir(ctx, sessionId, skip) {
     if (!isEntry(doc) || doc.session_id !== sessionId) continue;
     if (!(skip && skip.has(doc.run_id + '\0' + doc.home))) {
       const to = runFile(ctx, sessionId, doc.run_id);
-      if (!fs.existsSync(to)) atomicWriteJson(to, { session_id: sessionId, run_id: doc.run_id, home: doc.home, root: typeof doc.root === 'string' ? doc.root : path.dirname(doc.home) });
+      if (!fs.existsSync(to)) atomicWriteJson(to, { session_id: sessionId, run_id: doc.run_id, home: doc.home, root: typeof doc.root === 'string' ? doc.root : path.dirname(doc.home) }, { cap: REGISTRY_READ_CAP });
     }
     fs.rmSync(from, { force: true });
   }
@@ -3287,7 +3317,7 @@ function readEntries(ctx, sessionId) {
 function registerSessionRun(ctx, sessionId, runId) {
   if (!sessionId) return null;
   try {
-    atomicWriteJson(runFile(ctx, sessionId, runId), { session_id: sessionId, run_id: runId, home: realpathSafe(ctx.home), root: realpathSafe(ctx.root) });
+    atomicWriteJson(runFile(ctx, sessionId, runId), { session_id: sessionId, run_id: runId, home: realpathSafe(ctx.home), root: realpathSafe(ctx.root) }, { cap: REGISTRY_READ_CAP });
     try { migrateLegacy(ctx, sessionId); } catch { /* the legacy file is still read */ }
     try { migrateOldDir(ctx, sessionId); } catch { /* the old folder is still read */ }
     return null;
@@ -3606,7 +3636,7 @@ function writeState(ctx, state) {
   const dir = runDir(ctx, state.run_id);
   const bytes = jsonBytes(state);
   const fault = ctx.env.DO_IT_FAULT === 'after_tmp';
-  atomicWrite(path.join(dir, 'state.json'), bytes, { faultAfterTmp: fault });
+  atomicWrite(path.join(dir, 'state.json'), bytes, { faultAfterTmp: fault, cap: STATE_READ_CAP });
   atomicWrite(path.join(dir, '.state.sha256'), sha256Bytes(bytes) + '\n');
   return state;
 }

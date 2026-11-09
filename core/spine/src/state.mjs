@@ -48,7 +48,7 @@ export function writeState(ctx, state) {
   const dir = runDir(ctx, state.run_id);
   const bytes = jsonBytes(state);
   const fault = ctx.env.DO_IT_FAULT === 'after_tmp';
-  atomicWrite(path.join(dir, 'state.json'), bytes, { faultAfterTmp: fault });
+  atomicWrite(path.join(dir, 'state.json'), bytes, { faultAfterTmp: fault, cap: STATE_READ_CAP });
   atomicWrite(path.join(dir, '.state.sha256'), sha256Bytes(bytes) + '\n');
   return state;
 }

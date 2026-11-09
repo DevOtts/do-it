@@ -76,7 +76,7 @@ function migrateLegacy(ctx, sessionId, skip) {
   for (const e of readLegacy(file, sessionId)) {
     if (skip && skip.has(e.run_id + '\0' + e.home)) continue;
     const f = runFile(ctx, sessionId, e.run_id);
-    if (!fs.existsSync(f)) atomicWriteJson(f, { session_id: sessionId, run_id: e.run_id, home: e.home, root: typeof e.root === 'string' ? e.root : path.dirname(e.home) });
+    if (!fs.existsSync(f)) atomicWriteJson(f, { session_id: sessionId, run_id: e.run_id, home: e.home, root: typeof e.root === 'string' ? e.root : path.dirname(e.home) }, { cap: REGISTRY_READ_CAP });
   }
   const doc = readRegistryJson(file);
   if (doc && doc.session_id === sessionId) fs.rmSync(file, { force: true });
@@ -100,7 +100,7 @@ function migrateOldDir(ctx, sessionId, skip) {
     if (!isEntry(doc) || doc.session_id !== sessionId) continue;
     if (!(skip && skip.has(doc.run_id + '\0' + doc.home))) {
       const to = runFile(ctx, sessionId, doc.run_id);
-      if (!fs.existsSync(to)) atomicWriteJson(to, { session_id: sessionId, run_id: doc.run_id, home: doc.home, root: typeof doc.root === 'string' ? doc.root : path.dirname(doc.home) });
+      if (!fs.existsSync(to)) atomicWriteJson(to, { session_id: sessionId, run_id: doc.run_id, home: doc.home, root: typeof doc.root === 'string' ? doc.root : path.dirname(doc.home) }, { cap: REGISTRY_READ_CAP });
     }
     fs.rmSync(from, { force: true });
   }
@@ -146,7 +146,7 @@ function readEntries(ctx, sessionId) {
 export function registerSessionRun(ctx, sessionId, runId) {
   if (!sessionId) return null;
   try {
-    atomicWriteJson(runFile(ctx, sessionId, runId), { session_id: sessionId, run_id: runId, home: realpathSafe(ctx.home), root: realpathSafe(ctx.root) });
+    atomicWriteJson(runFile(ctx, sessionId, runId), { session_id: sessionId, run_id: runId, home: realpathSafe(ctx.home), root: realpathSafe(ctx.root) }, { cap: REGISTRY_READ_CAP });
     try { migrateLegacy(ctx, sessionId); } catch { /* the legacy file is still read */ }
     try { migrateOldDir(ctx, sessionId); } catch { /* the old folder is still read */ }
     return null;

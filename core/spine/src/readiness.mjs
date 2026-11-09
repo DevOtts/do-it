@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { fail } from './errors.mjs';
 import { appendEvent } from './events.mjs';
-import { STATE_READ_CAP, readRegularFile } from './fs-atomic.mjs';
+import { STATE_READ_CAP, jsonBytes, readRegularFile } from './fs-atomic.mjs';
 import { adoptsUnattributed, findRow, finishLineUpsert, hasRow, readFinishLine, writeFinishLine } from './finish-line.mjs';
 import { sha256Bytes } from './hash.mjs';
 import { loadSchemaFile, validateSchema } from './schema.mjs';
@@ -148,6 +148,14 @@ export function seedCheckpoints(state, fl, data) {
   return block.count;
 }
 
+export function planTooLarge(state, fl) {
+  const stateBytes = jsonBytes(state).length;
+  if (stateBytes > STATE_READ_CAP) return { pointer: '/slices', message: 'the plan seeds a state of ' + stateBytes + ' bytes, above the ' + STATE_READ_CAP + '-byte state cap (' + state.slices.length + ' slices); split the plan' };
+  const flBytes = jsonBytes(fl).length;
+  if (flBytes > STATE_READ_CAP) return { pointer: '/slices', message: 'the plan seeds a finish line of ' + flBytes + ' bytes, above the ' + STATE_READ_CAP + '-byte cap; split the plan' };
+  return null;
+}
+
 export function seedSlices(state, data) {
   if (state.slices.length || !Array.isArray(data.slices)) return;
   for (const s of data.slices) {
@@ -202,7 +210,6 @@ export function gateBuild(ctx, args) {
   const checkpoints = seedCheckpoints(state, fl, v.data);
   state.gates.build = { approved: true, owner: 'readiness', date: now, readiness_sha256: v.sha256 };
   state.status = 'BUILDING';
-  writeState(ctx, state);
   for (const s of state.slices) {
     if (!hasRow(fl, s.id, runId, adopt)) finishLineUpsert(fl, s.id, { kind: 'package' }, runId, adopt);
   }
@@ -210,6 +217,14 @@ export function gateBuild(ctx, args) {
   if (credRow && credRow.state === 'BLOCKED') {
     finishLineUpsert(fl, CRED_ROW_ID, { state: 'DONE', reason: null, evidence: path.relative(ctx.repo, readinessPath(ctx)) }, runId, adopt);
   }
+  // CP-03 R7-S1-M14: a plan whose seeded state or board would pass the spine's own read cap is refused
+  // before anything is written, so the run stays where it was (gated) and the error names the plan.
+  const tooBig = planTooLarge(state, fl);
+  if (tooBig) {
+    appendEvent(ctx, runId, { event: 'build_refused', stage: state.stage, host: state.host, verdict: 'READINESS_INVALID', detail: { errors: [tooBig] } });
+    throw fail('READINESS_INVALID', 1, { run_id: runId, status: from, file: readinessPath(ctx), errors: [tooBig] });
+  }
+  writeState(ctx, state);
   writeFinishLine(ctx, fl);
   appendEvent(ctx, runId, { event: 'build_approved', stage: state.stage, host: state.host, verdict: 'READINESS_OK', detail: { from, readiness_sha256: v.sha256, slices: state.slices.length, review_checkpoints: checkpoints } });
   return { outcome: 'READINESS_OK', exit: 0, run_id: runId, status: 'BUILDING', slices: state.slices.map((s) => s.id), review_checkpoints: checkpoints };
