@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { REGISTRY_READ_CAP, readText } from './fs-atomic.mjs';
 
 // G-7: values the process knows are secrets never reach a file or an output.
 // The set lives for the process; every spine write and the final stdout pass through redactText.
@@ -74,11 +75,11 @@ export function redactJsonValues(v) {
 export function redactDeclaredNames(ctx) {
   const names = new Set();
   try {
-    const r = JSON.parse(fs.readFileSync(path.join(ctx.home, 'plan', 'READINESS.json'), 'utf8'));
+    const r = JSON.parse(readText(path.join(ctx.home, 'plan', 'READINESS.json')));
     for (const n of Array.isArray(r.credentials) ? r.credentials : []) if (typeof n === 'string' && n) names.add(n);
   } catch { /* no readiness yet */ }
   try {
-    for (const line of fs.readFileSync(path.join(ctx.home, '.env.example'), 'utf8').split(/\r?\n/)) {
+    for (const line of readText(path.join(ctx.home, '.env.example'), REGISTRY_READ_CAP).split(/\r?\n/)) {
       const m = /^([A-Za-z_][A-Za-z0-9_]*)=/.exec(line);
       if (m) names.add(m[1]);
     }
@@ -95,7 +96,7 @@ export function redactInit(ctx) {
     for (const n of fs.readdirSync(dir)) {
       const f = path.join(dir, n);
       const st = fs.statSync(f);
-      if (st.isFile() && st.size <= 65536) redactAdd(n, fs.readFileSync(f, 'utf8').replace(/\r?\n$/, ''));
+      if (st.isFile() && st.size <= 65536) redactAdd(n, readText(f, 65536).replace(/\r?\n$/, ''));
     }
   } catch { /* no .secrets */ }
   for (const n of redactDeclaredNames(ctx)) redactAdd(n, ctx.env[n]);

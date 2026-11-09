@@ -27,7 +27,7 @@ function packGuard(ctx, runId, pack) {
   const rec = readJsonIfExists(renderRecordPath(ctx, runId));
   let shown = rec ? rec.pack_id : null;
   if (rec && rec.file && fs.existsSync(rec.file) && fs.statSync(rec.file).isFile()) {
-    const text = fs.readFileSync(rec.file, 'utf8');
+    const text = readText(rec.file);
     const m = /name="pack-id" content="([0-9a-f]+)"/.exec(text) || /<!-- pack-id: ([0-9a-f]+) -->/.exec(text);
     if (m) shown = m[1];
   }
@@ -128,7 +128,7 @@ function answerApply(ctx, runId, state, fullPack, f, hasReply) {
   if (errors.length) throw fail('ANSWER_INVALID', 1, { errors });
   const text = JSON.stringify(doc, null, 2) + '\n';
   const file = answersPath(ctx, runId);
-  const before = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null;
+  const before = fs.existsSync(file) ? readText(file) : null;
   if (before !== text) atomicWrite(file, text);
   for (const n of added) {
     const a = have.get(n);
@@ -911,14 +911,33 @@ function atomicWriteJson(file, value, opts) {
   atomicWrite(file, jsonBytes(value), opts);
 }
 
-function appendLine(file, line) {
+// CP-03 R6-S1-M13: every append goes through appendRegular. Opening a FIFO for writing blocks until a reader
+// appears, which no timer inside the spine can break; O_NONBLOCK makes a reader-less FIFO fail with ENXIO at
+// once, and anything that is not a regular file (FIFO, device, socket, directory, symlink) is refused.
+function appendRegular(file, text) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.appendFileSync(file, redactText(line) + '\n');
+  let st = null;
+  try { st = fs.lstatSync(file); } catch (e) { if (e.code !== 'ENOENT') throw e; }
+  if (st && !st.isFile()) throw codedError('ENOTREG', 'not a regular file (' + fileKind(st) + '): ' + file);
+  const c = fs.constants;
+  const flags = c.O_WRONLY | c.O_APPEND | c.O_CREAT | (c.O_NONBLOCK || 0) | (c.O_NOFOLLOW || 0);
+  const fd = fs.openSync(file, flags, 0o666);
+  try {
+    if (!fs.fstatSync(fd).isFile()) throw codedError('ENOTREG', 'not a regular file: ' + file);
+    const buf = Buffer.from(text, 'utf8');
+    let off = 0;
+    while (off < buf.length) off += fs.writeSync(fd, buf, off, buf.length - off);
+  } finally {
+    fs.closeSync(fd);
+  }
+}
+
+function appendLine(file, line) {
+  appendRegular(file, redactText(line) + '\n');
 }
 
 function appendJsonLine(file, value) {
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.appendFileSync(file, JSON.stringify(redactJsonValues(value)) + '\n');
+  appendRegular(file, JSON.stringify(redactJsonValues(value)) + '\n');
 }
 
 // CP-03 R5-S1-M10: a FIFO, a device or an endless file must never hang the spine. readRegularFile reads only a
@@ -927,6 +946,8 @@ function appendJsonLine(file, value) {
 // Errors carry a code (ENOENT, ENOTREG, EFBIG, ...) and never quote the file's content.
 const REGISTRY_READ_CAP = 64 * 1024;
 const STATE_READ_CAP = 16 * 1024 * 1024;
+// files the spine hashes or copies whole (results, evidence, migrated files) and append-only logs
+const BULK_READ_CAP = 256 * 1024 * 1024;
 
 function fileKind(st) {
   if (st.isSymbolicLink()) return 'symlink';
@@ -976,10 +997,16 @@ function readJsonRegular(file, cap, opts) {
   try { return JSON.parse(bytes.toString('utf8')); } catch { throw codedError('EJSON', 'not valid JSON: ' + file); }
 }
 
+// CP-03 R6-S1-M13: the spine reads no file but through readRegularFile (a source lint holds this).
+function readText(file, cap) {
+  return readRegularFile(file, cap || STATE_READ_CAP).toString('utf8');
+}
+
+// null when absent; a parse error is a SyntaxError as before; a FIFO or a device is ENOTREG, never a hang.
 function readJsonIfExists(file) {
   let text;
   try {
-    text = fs.readFileSync(file, 'utf8');
+    text = readText(file, STATE_READ_CAP);
   } catch (e) {
     if (e.code === 'ENOENT') return null;
     throw e;
@@ -1037,7 +1064,7 @@ function resumeCommand(runId) {
 
 function lastEvents(ctx, runId, n) {
   let lines = [];
-  try { lines = fs.readFileSync(eventsPath(ctx, runId), 'utf8').split('\n').filter(Boolean); } catch { /* none yet */ }
+  try { lines = readText(eventsPath(ctx, runId), BULK_READ_CAP).split('\n').filter(Boolean); } catch { /* none yet */ }
   return lines.slice(-n).map((l) => (l.length > HANDOFF_EVENT_CLIP ? l.slice(0, HANDOFF_EVENT_CLIP) : l));
 }
 
@@ -1130,7 +1157,7 @@ function sha256Bytes(buf) {
 }
 
 function sha256File(file) {
-  return sha256Bytes(fs.readFileSync(file));
+  return sha256Bytes(readRegularFile(file, BULK_READ_CAP));
 }
 
 function canonicalJson(value) {
@@ -1154,7 +1181,7 @@ const GITIGNORE_LINES = ['.do-it/runs/', '.secrets/'];
 
 function writeIfDifferent(file, text) {
   let current = null;
-  try { current = fs.readFileSync(file, 'utf8'); } catch { /* absent */ }
+  try { current = readText(file); } catch { /* absent */ }
   if (current === text) return false;
   atomicWrite(file, text);
   return true;
@@ -1170,7 +1197,7 @@ function cmdInit(ctx, args) {
   let settings;
   let existed = fs.existsSync(settingsFile);
   if (existed) {
-    try { settings = JSON.parse(fs.readFileSync(settingsFile, 'utf8')); } catch (e) {
+    try { settings = JSON.parse(readText(settingsFile)); } catch (e) {
       throw fail('SETTINGS_INVALID', 1, { errors: [{ file: settingsFile, pointer: '', message: 'JSON parse error: ' + e.message }] });
     }
   } else {
@@ -1193,7 +1220,7 @@ function cmdInit(ctx, args) {
 
   const ignoreFile = path.join(ctx.repo, '.gitignore');
   let ignoreText = '';
-  try { ignoreText = fs.readFileSync(ignoreFile, 'utf8'); } catch { /* absent */ }
+  try { ignoreText = readText(ignoreFile); } catch { /* absent */ }
   const present = new Set(ignoreText.split(/\r?\n/).map((l) => l.trim()));
   const missing = GITIGNORE_LINES.filter((l) => !present.has(l));
   if (missing.length) {
@@ -1224,7 +1251,7 @@ function cmdInstall(ctx) {
   const binDir = ctx.env.DO_IT_BIN_DIR ? path.resolve(ctx.cwd, ctx.env.DO_IT_BIN_DIR) : path.join(ctx.userHome, '.do-it', 'bin');
   const dest = path.join(binDir, 'do-it');
   fs.mkdirSync(binDir, { recursive: true });
-  atomicWrite(dest, fs.readFileSync(source));
+  atomicWrite(dest, readRegularFile(source, BULK_READ_CAP));
   fs.chmodSync(dest, 0o755);
   let printed = '';
   try {
@@ -1242,7 +1269,7 @@ function loadCompanions(ctx) {
     path.join(ctx.root, 'core', 'companions.json'),
   ];
   for (const file of candidates) {
-    if (fs.existsSync(file)) return JSON.parse(fs.readFileSync(file, 'utf8'));
+    if (fs.existsSync(file)) return JSON.parse(readText(file));
   }
   throw fail('INSTALL_NO_COMPANIONS', 1, { message: 'core/companions.json not found', tried: candidates });
 }
@@ -1256,7 +1283,7 @@ function cmdInstallCompanions(ctx, args) {
   const required = loadCompanions(ctx).companions.filter((c) => c.required);
   const stateFile = path.join(ctx.home, 'companions-installed.json');
   let done = {};
-  try { done = JSON.parse(fs.readFileSync(stateFile, 'utf8')); } catch { done = {}; }
+  try { done = JSON.parse(readText(stateFile)); } catch { done = {}; }
   const have = new Set(done[host] || []);
   const cmdOf = (c) => ['skills', 'add', c.repo, '-a', host];
   const todo = required.filter((c) => !have.has(c.name));
@@ -1560,7 +1587,7 @@ function cmdMigrate(ctx) {
   }
   const manifestFile = path.join(ctx.home, 'migration.json');
   let manifest = { schema: 'do-it-migration/1', files: [] };
-  try { manifest = JSON.parse(fs.readFileSync(manifestFile, 'utf8')); } catch { /* first migration */ }
+  try { manifest = JSON.parse(readText(manifestFile)); } catch { /* first migration */ }
   const known = new Map(manifest.files.map((x) => [x.source, x]));
   const copied = [];
   for (const m of MIGRATION_MAP) {
@@ -1569,13 +1596,12 @@ function cmdMigrate(ctx) {
     for (const file of migrateWalk(base, '', [])) {
       const source = m.legacy + '/' + file.rel;
       const dest = '.do-it/' + m.dest + '/' + file.rel;
-      const bytes = fs.readFileSync(file.abs);
+      const bytes = readRegularFile(file.abs, BULK_READ_CAP);
       const sha = sha256Bytes(bytes);
       const prior = known.get(source);
       const destAbs = path.join(ctx.home, m.dest, file.rel);
       if (prior && prior.sha256 === sha && fs.existsSync(destAbs) && sha256File(destAbs) === sha) continue;
-      fs.mkdirSync(path.dirname(destAbs), { recursive: true });
-      fs.writeFileSync(destAbs, bytes);
+      atomicWrite(destAbs, bytes);
       const row = { source, dest, sha256: sha };
       known.set(source, row);
       copied.push(row);
@@ -1787,7 +1813,7 @@ function stopGateMarks(ctx, runId) {
   const numbers = new Set();
   const openLists = new Set();
   let lines = [];
-  try { lines = fs.readFileSync(eventsPath(ctx, runId), 'utf8').split('\n'); } catch { /* no events */ }
+  try { lines = readText(eventsPath(ctx, runId), BULK_READ_CAP).split('\n'); } catch { /* no events */ }
   for (const line of lines) {
     if (!line.includes('"stop_parked"')) continue;
     let ev;
@@ -1933,7 +1959,7 @@ function loadPipeline(ctx, preset) {
   if (!preset) return null;
   const file = pipelineFile(ctx, preset);
   if (!file) return null;
-  const doc = parseYamlLite(fs.readFileSync(file, 'utf8'));
+  const doc = parseYamlLite(readText(file));
   const raw = doc && Array.isArray(doc.steps) ? doc.steps : null;
   if (!raw) throw fail('PIPELINE_INVALID', 1, { file, message: 'a preset needs a steps list' });
   const ids = new Set();
@@ -1974,8 +2000,10 @@ function decisionList(decisions) {
 function checkReadiness(ctx) {
   const file = readinessPath(ctx);
   let bytes;
-  try { bytes = fs.readFileSync(file); } catch (e) {
+  try { bytes = readRegularFile(file, STATE_READ_CAP); } catch (e) {
     if (e.code === 'ENOENT') return { ok: false, outcome: 'READINESS_MISSING', extra: { file } };
+    // CP-03 R6-S1-M13: a FIFO, a device or an oversized file is an invalid verdict, never a hang
+    if (e.code === 'ENOTREG' || e.code === 'EFBIG') return { ok: false, outcome: 'READINESS_INVALID', extra: { file, errors: [{ pointer: '', message: e.message }] } };
     throw e;
   }
   let data;
@@ -2190,7 +2218,7 @@ function cmdRecord(ctx, args) {
 
   const resultFile = path.resolve(ctx.cwd, f.result);
   let bytes;
-  try { bytes = fs.readFileSync(resultFile); } catch (e) {
+  try { bytes = readRegularFile(resultFile, BULK_READ_CAP); } catch (e) {
     throw fail('RESULT_UNREADABLE', 1, { file: f.result, message: e.message });
   }
   const resultSha = sha256Bytes(bytes);
@@ -2281,7 +2309,7 @@ function checkpointVerdictProblem(ctx, state, row, r) {
     if (!want.includes(r.abs)) return 'evidence must be the checkpoint verdict file ' + cp.evidence + ', got ' + r.path;
   }
   let text;
-  try { text = fs.readFileSync(r.abs, 'utf8'); } catch (e) { return 'cannot read ' + r.path + ': ' + (e.code || e.message); }
+  try { text = readText(r.abs, BULK_READ_CAP); } catch (e) { return 'cannot read ' + r.path + ': ' + (e.code || e.message); }
   const v = parseVerdict(text, id);
   return v.state === 'pass' ? null : v.state + ': ' + v.reason;
 }
@@ -2551,7 +2579,7 @@ function planSliceOutcome(plan, next, result, slice, reason) {
 
 function readQuestionsFile(ctx, file) {
   try {
-    const j = JSON.parse(fs.readFileSync(path.resolve(ctx.repo, file), 'utf8'));
+    const j = JSON.parse(readText(path.resolve(ctx.repo, file)));
     const list = Array.isArray(j) ? j : (j && Array.isArray(j.questions) ? j.questions : []);
     return list;
   } catch {
@@ -2658,11 +2686,11 @@ function redactJsonValues(v) {
 function redactDeclaredNames(ctx) {
   const names = new Set();
   try {
-    const r = JSON.parse(fs.readFileSync(path.join(ctx.home, 'plan', 'READINESS.json'), 'utf8'));
+    const r = JSON.parse(readText(path.join(ctx.home, 'plan', 'READINESS.json')));
     for (const n of Array.isArray(r.credentials) ? r.credentials : []) if (typeof n === 'string' && n) names.add(n);
   } catch { /* no readiness yet */ }
   try {
-    for (const line of fs.readFileSync(path.join(ctx.home, '.env.example'), 'utf8').split(/\r?\n/)) {
+    for (const line of readText(path.join(ctx.home, '.env.example'), REGISTRY_READ_CAP).split(/\r?\n/)) {
       const m = /^([A-Za-z_][A-Za-z0-9_]*)=/.exec(line);
       if (m) names.add(m[1]);
     }
@@ -2679,7 +2707,7 @@ function redactInit(ctx) {
     for (const n of fs.readdirSync(dir)) {
       const f = path.join(dir, n);
       const st = fs.statSync(f);
-      if (st.isFile() && st.size <= 65536) redactAdd(n, fs.readFileSync(f, 'utf8').replace(/\r?\n$/, ''));
+      if (st.isFile() && st.size <= 65536) redactAdd(n, readText(f, 65536).replace(/\r?\n$/, ''));
     }
   } catch { /* no .secrets */ }
   for (const n of redactDeclaredNames(ctx)) redactAdd(n, ctx.env[n]);
@@ -3016,7 +3044,7 @@ function loadSchemaFile(name) {
   const here = path.dirname(fileURLToPath(import.meta.url));
   const file = path.join(here, '..', '..', 'schemas', name);
   if (!fs.existsSync(file)) throw fail('SCHEMA_NOT_FOUND', 1, { schema: name });
-  return JSON.parse(fs.readFileSync(file, 'utf8'));
+  return JSON.parse(readText(file));
 }
 
 // ---- secrets.mjs ----
@@ -3338,14 +3366,14 @@ function settingsHostSchema(ctx, name) {
   if (!dir) return { error: 'no host "' + name + '" is installed to validate state.' + name };
   let entry;
   try {
-    entry = JSON.parse(fs.readFileSync(path.join(dir, name, 'adapter.manifest.json'), 'utf8')).state_store;
+    entry = JSON.parse(readText(path.join(dir, name, 'adapter.manifest.json'))).state_store;
   } catch (e) {
     return { error: 'host "' + name + '" manifest is unreadable: ' + e.message };
   }
   if (!entry || !entry.settings_schema) return { error: 'host "' + name + '" declares no state_store.settings_schema for state.' + name };
   const file = path.join(dir, name, entry.settings_schema);
   try {
-    return { schema: JSON.parse(fs.readFileSync(file, 'utf8')) };
+    return { schema: JSON.parse(readText(file)) };
   } catch (e) {
     return { error: 'host "' + name + '" settings schema is unreadable: ' + e.message };
   }
@@ -3620,7 +3648,7 @@ function selectRunId(ctx, flags) {
   let best = null;
   for (const id of ids) {
     let created = '';
-    try { created = JSON.parse(fs.readFileSync(path.join(runDir(ctx, id), 'state.json'), 'utf8')).created_at || ''; } catch { /* tampered: still selectable */ }
+    try { created = JSON.parse(readText(path.join(runDir(ctx, id), 'state.json'))).created_at || ''; } catch { /* tampered: still selectable */ }
     if (!best || created > best.created || (created === best.created && id > best.id)) best = { id, created };
   }
   return best.id;
@@ -3670,8 +3698,8 @@ function unreadableRuns(ctx) {
   for (const id of listRunIds(ctx)) {
     const dir = runDir(ctx, id);
     try {
-      const bytes = fs.readFileSync(path.join(dir, 'state.json'));
-      const sidecar = fs.readFileSync(path.join(dir, '.state.sha256'), 'utf8').trim();
+      const bytes = readRegularFile(path.join(dir, 'state.json'), STATE_READ_CAP);
+      const sidecar = readText(path.join(dir, '.state.sha256'), REGISTRY_READ_CAP).trim();
       if (sidecar !== sha256Bytes(bytes)) throw new Error('digest');
       const st = JSON.parse(bytes.toString('utf8'));
       if (validateSchema(loadSchemaFile('do-it-state.1.schema.json'), st).length) throw new Error('schema');
@@ -3699,7 +3727,7 @@ function takeOvers(state) {
 // Raw read for callers that only need to know whether a run is in flight.
 function peekRunStatus(ctx, runId) {
   try {
-    return JSON.parse(fs.readFileSync(path.join(runDir(ctx, runId), 'state.json'), 'utf8')).status;
+    return JSON.parse(readText(path.join(runDir(ctx, runId), 'state.json'))).status;
   } catch {
     return 'UNREADABLE';
   }

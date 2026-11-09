@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fail } from './errors.mjs';
 import { appendEvent, eventsPath } from './events.mjs';
-import { atomicWriteJson, readJsonIfExists } from './fs-atomic.mjs';
+import { BULK_READ_CAP, atomicWriteJson, readJsonIfExists, readText } from './fs-atomic.mjs';
 import { canonicalJson, sha256Bytes } from './hash.mjs';
 import { listRunIds, loadState } from './state.mjs';
 
@@ -64,7 +64,7 @@ export function stopGateMarks(ctx, runId) {
   const numbers = new Set();
   const openLists = new Set();
   let lines = [];
-  try { lines = fs.readFileSync(eventsPath(ctx, runId), 'utf8').split('\n'); } catch { /* no events */ }
+  try { lines = readText(eventsPath(ctx, runId), BULK_READ_CAP).split('\n'); } catch { /* no events */ }
   for (const line of lines) {
     if (!line.includes('"stop_parked"')) continue;
     let ev;

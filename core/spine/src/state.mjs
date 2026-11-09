@@ -4,7 +4,7 @@ import path from 'node:path';
 import { realpathSafe } from './ctx.mjs';
 import { fail } from './errors.mjs';
 import { appendEvent } from './events.mjs';
-import { REGISTRY_READ_CAP, STATE_READ_CAP, atomicWrite, jsonBytes, readRegularFile } from './fs-atomic.mjs';
+import { REGISTRY_READ_CAP, STATE_READ_CAP, atomicWrite, jsonBytes, readRegularFile, readText } from './fs-atomic.mjs';
 import { sha256Bytes } from './hash.mjs';
 import { loadSchemaFile, validateSchema } from './schema.mjs';
 
@@ -104,7 +104,7 @@ export function selectRunId(ctx, flags) {
   let best = null;
   for (const id of ids) {
     let created = '';
-    try { created = JSON.parse(fs.readFileSync(path.join(runDir(ctx, id), 'state.json'), 'utf8')).created_at || ''; } catch { /* tampered: still selectable */ }
+    try { created = JSON.parse(readText(path.join(runDir(ctx, id), 'state.json'))).created_at || ''; } catch { /* tampered: still selectable */ }
     if (!best || created > best.created || (created === best.created && id > best.id)) best = { id, created };
   }
   return best.id;
@@ -154,8 +154,8 @@ export function unreadableRuns(ctx) {
   for (const id of listRunIds(ctx)) {
     const dir = runDir(ctx, id);
     try {
-      const bytes = fs.readFileSync(path.join(dir, 'state.json'));
-      const sidecar = fs.readFileSync(path.join(dir, '.state.sha256'), 'utf8').trim();
+      const bytes = readRegularFile(path.join(dir, 'state.json'), STATE_READ_CAP);
+      const sidecar = readText(path.join(dir, '.state.sha256'), REGISTRY_READ_CAP).trim();
       if (sidecar !== sha256Bytes(bytes)) throw new Error('digest');
       const st = JSON.parse(bytes.toString('utf8'));
       if (validateSchema(loadSchemaFile('do-it-state.1.schema.json'), st).length) throw new Error('schema');
@@ -183,7 +183,7 @@ export function takeOvers(state) {
 // Raw read for callers that only need to know whether a run is in flight.
 export function peekRunStatus(ctx, runId) {
   try {
-    return JSON.parse(fs.readFileSync(path.join(runDir(ctx, runId), 'state.json'), 'utf8')).status;
+    return JSON.parse(readText(path.join(runDir(ctx, runId), 'state.json'))).status;
   } catch {
     return 'UNREADABLE';
   }

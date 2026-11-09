@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fail } from './errors.mjs';
-import { atomicWrite } from './fs-atomic.mjs';
+import { atomicWrite, readText } from './fs-atomic.mjs';
 import { loadSchemaFile, validateSchema } from './schema.mjs';
 import { SETTINGS_DEFAULTS, isPlainObject, settingsClone, settingsScanSecrets } from './settings.mjs';
 
@@ -16,7 +16,7 @@ export const GITIGNORE_LINES = ['.do-it/runs/', '.secrets/'];
 
 export function writeIfDifferent(file, text) {
   let current = null;
-  try { current = fs.readFileSync(file, 'utf8'); } catch { /* absent */ }
+  try { current = readText(file); } catch { /* absent */ }
   if (current === text) return false;
   atomicWrite(file, text);
   return true;
@@ -32,7 +32,7 @@ export function cmdInit(ctx, args) {
   let settings;
   let existed = fs.existsSync(settingsFile);
   if (existed) {
-    try { settings = JSON.parse(fs.readFileSync(settingsFile, 'utf8')); } catch (e) {
+    try { settings = JSON.parse(readText(settingsFile)); } catch (e) {
       throw fail('SETTINGS_INVALID', 1, { errors: [{ file: settingsFile, pointer: '', message: 'JSON parse error: ' + e.message }] });
     }
   } else {
@@ -55,7 +55,7 @@ export function cmdInit(ctx, args) {
 
   const ignoreFile = path.join(ctx.repo, '.gitignore');
   let ignoreText = '';
-  try { ignoreText = fs.readFileSync(ignoreFile, 'utf8'); } catch { /* absent */ }
+  try { ignoreText = readText(ignoreFile); } catch { /* absent */ }
   const present = new Set(ignoreText.split(/\r?\n/).map((l) => l.trim()));
   const missing = GITIGNORE_LINES.filter((l) => !present.has(l));
   if (missing.length) {

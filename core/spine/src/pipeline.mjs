@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { fail } from './errors.mjs';
+import { readText } from './fs-atomic.mjs';
 import { parseYamlLite } from './yaml-lite.mjs';
 
 export function pipelineDirs(ctx) {
@@ -28,7 +29,7 @@ export function loadPipeline(ctx, preset) {
   if (!preset) return null;
   const file = pipelineFile(ctx, preset);
   if (!file) return null;
-  const doc = parseYamlLite(fs.readFileSync(file, 'utf8'));
+  const doc = parseYamlLite(readText(file));
   const raw = doc && Array.isArray(doc.steps) ? doc.steps : null;
   if (!raw) throw fail('PIPELINE_INVALID', 1, { file, message: 'a preset needs a steps list' });
   const ids = new Set();

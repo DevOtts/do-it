@@ -38,14 +38,33 @@ export function atomicWriteJson(file, value, opts) {
   atomicWrite(file, jsonBytes(value), opts);
 }
 
-export function appendLine(file, line) {
+// CP-03 R6-S1-M13: every append goes through appendRegular. Opening a FIFO for writing blocks until a reader
+// appears, which no timer inside the spine can break; O_NONBLOCK makes a reader-less FIFO fail with ENXIO at
+// once, and anything that is not a regular file (FIFO, device, socket, directory, symlink) is refused.
+export function appendRegular(file, text) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.appendFileSync(file, redactText(line) + '\n');
+  let st = null;
+  try { st = fs.lstatSync(file); } catch (e) { if (e.code !== 'ENOENT') throw e; }
+  if (st && !st.isFile()) throw codedError('ENOTREG', 'not a regular file (' + fileKind(st) + '): ' + file);
+  const c = fs.constants;
+  const flags = c.O_WRONLY | c.O_APPEND | c.O_CREAT | (c.O_NONBLOCK || 0) | (c.O_NOFOLLOW || 0);
+  const fd = fs.openSync(file, flags, 0o666);
+  try {
+    if (!fs.fstatSync(fd).isFile()) throw codedError('ENOTREG', 'not a regular file: ' + file);
+    const buf = Buffer.from(text, 'utf8');
+    let off = 0;
+    while (off < buf.length) off += fs.writeSync(fd, buf, off, buf.length - off);
+  } finally {
+    fs.closeSync(fd);
+  }
+}
+
+export function appendLine(file, line) {
+  appendRegular(file, redactText(line) + '\n');
 }
 
 export function appendJsonLine(file, value) {
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.appendFileSync(file, JSON.stringify(redactJsonValues(value)) + '\n');
+  appendRegular(file, JSON.stringify(redactJsonValues(value)) + '\n');
 }
 
 // CP-03 R5-S1-M10: a FIFO, a device or an endless file must never hang the spine. readRegularFile reads only a
@@ -54,6 +73,8 @@ export function appendJsonLine(file, value) {
 // Errors carry a code (ENOENT, ENOTREG, EFBIG, ...) and never quote the file's content.
 export const REGISTRY_READ_CAP = 64 * 1024;
 export const STATE_READ_CAP = 16 * 1024 * 1024;
+// files the spine hashes or copies whole (results, evidence, migrated files) and append-only logs
+export const BULK_READ_CAP = 256 * 1024 * 1024;
 
 function fileKind(st) {
   if (st.isSymbolicLink()) return 'symlink';
@@ -103,10 +124,16 @@ export function readJsonRegular(file, cap, opts) {
   try { return JSON.parse(bytes.toString('utf8')); } catch { throw codedError('EJSON', 'not valid JSON: ' + file); }
 }
 
+// CP-03 R6-S1-M13: the spine reads no file but through readRegularFile (a source lint holds this).
+export function readText(file, cap) {
+  return readRegularFile(file, cap || STATE_READ_CAP).toString('utf8');
+}
+
+// null when absent; a parse error is a SyntaxError as before; a FIFO or a device is ENOTREG, never a hang.
 export function readJsonIfExists(file) {
   let text;
   try {
-    text = fs.readFileSync(file, 'utf8');
+    text = readText(file, STATE_READ_CAP);
   } catch (e) {
     if (e.code === 'ENOENT') return null;
     throw e;

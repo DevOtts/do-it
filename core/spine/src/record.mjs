@@ -5,7 +5,7 @@ import { fail } from './errors.mjs';
 import { appendEvent } from './events.mjs';
 import { resolveEvidence } from './evidence.mjs';
 import { adoptsUnattributed, autoClosePackages, finishLineUpsert, readFinishLine, writeFinishLine } from './finish-line.mjs';
-import { atomicWrite, atomicWriteJson, readJsonIfExists } from './fs-atomic.mjs';
+import { BULK_READ_CAP, atomicWrite, atomicWriteJson, readJsonIfExists, readRegularFile, readText } from './fs-atomic.mjs';
 import { sha256Bytes } from './hash.mjs';
 import { escalationQuestion, ladderEscalated } from './ladder.mjs';
 import { ledgerUpsert, readLedger, writeLedger } from './ledger.mjs';
@@ -50,7 +50,7 @@ export function cmdRecord(ctx, args) {
 
   const resultFile = path.resolve(ctx.cwd, f.result);
   let bytes;
-  try { bytes = fs.readFileSync(resultFile); } catch (e) {
+  try { bytes = readRegularFile(resultFile, BULK_READ_CAP); } catch (e) {
     throw fail('RESULT_UNREADABLE', 1, { file: f.result, message: e.message });
   }
   const resultSha = sha256Bytes(bytes);
@@ -141,7 +141,7 @@ export function checkpointVerdictProblem(ctx, state, row, r) {
     if (!want.includes(r.abs)) return 'evidence must be the checkpoint verdict file ' + cp.evidence + ', got ' + r.path;
   }
   let text;
-  try { text = fs.readFileSync(r.abs, 'utf8'); } catch (e) { return 'cannot read ' + r.path + ': ' + (e.code || e.message); }
+  try { text = readText(r.abs, BULK_READ_CAP); } catch (e) { return 'cannot read ' + r.path + ': ' + (e.code || e.message); }
   const v = parseVerdict(text, id);
   return v.state === 'pass' ? null : v.state + ': ' + v.reason;
 }
@@ -411,7 +411,7 @@ export function planSliceOutcome(plan, next, result, slice, reason) {
 
 export function readQuestionsFile(ctx, file) {
   try {
-    const j = JSON.parse(fs.readFileSync(path.resolve(ctx.repo, file), 'utf8'));
+    const j = JSON.parse(readText(path.resolve(ctx.repo, file)));
     const list = Array.isArray(j) ? j : (j && Array.isArray(j.questions) ? j.questions : []);
     return list;
   } catch {

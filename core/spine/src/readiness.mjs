@@ -1,7 +1,7 @@
-import fs from 'node:fs';
 import path from 'node:path';
 import { fail } from './errors.mjs';
 import { appendEvent } from './events.mjs';
+import { STATE_READ_CAP, readRegularFile } from './fs-atomic.mjs';
 import { adoptsUnattributed, findRow, finishLineUpsert, hasRow, readFinishLine, writeFinishLine } from './finish-line.mjs';
 import { sha256Bytes } from './hash.mjs';
 import { loadSchemaFile, validateSchema } from './schema.mjs';
@@ -32,8 +32,10 @@ export function decisionList(decisions) {
 export function checkReadiness(ctx) {
   const file = readinessPath(ctx);
   let bytes;
-  try { bytes = fs.readFileSync(file); } catch (e) {
+  try { bytes = readRegularFile(file, STATE_READ_CAP); } catch (e) {
     if (e.code === 'ENOENT') return { ok: false, outcome: 'READINESS_MISSING', extra: { file } };
+    // CP-03 R6-S1-M13: a FIFO, a device or an oversized file is an invalid verdict, never a hang
+    if (e.code === 'ENOTREG' || e.code === 'EFBIG') return { ok: false, outcome: 'READINESS_INVALID', extra: { file, errors: [{ pointer: '', message: e.message }] } };
     throw e;
   }
   let data;

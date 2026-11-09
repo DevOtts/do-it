@@ -4,7 +4,7 @@ import path from 'node:path';
 import { fail } from './errors.mjs';
 import { appendEvent, eventsPath } from './events.mjs';
 import { adoptsUnattributed, readFinishLine, renderBoard, rowsForRun } from './finish-line.mjs';
-import { atomicWrite } from './fs-atomic.mjs';
+import { BULK_READ_CAP, atomicWrite, readText } from './fs-atomic.mjs';
 import { packAppend } from './pack.mjs';
 import { loadSettings } from './settings.mjs';
 import { loadState, runDir, selectRunId, writeState } from './state.mjs';
@@ -46,7 +46,7 @@ export function resumeCommand(runId) {
 
 function lastEvents(ctx, runId, n) {
   let lines = [];
-  try { lines = fs.readFileSync(eventsPath(ctx, runId), 'utf8').split('\n').filter(Boolean); } catch { /* none yet */ }
+  try { lines = readText(eventsPath(ctx, runId), BULK_READ_CAP).split('\n').filter(Boolean); } catch { /* none yet */ }
   return lines.slice(-n).map((l) => (l.length > HANDOFF_EVENT_CLIP ? l.slice(0, HANDOFF_EVENT_CLIP) : l));
 }
 
