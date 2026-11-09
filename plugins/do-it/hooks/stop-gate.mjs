@@ -25,6 +25,12 @@ if (!sessionId && !cwd) process.exit(0);
 
 const { json, overflow } = callSpine(['gate', 'stop', ...(sessionId ? ['--session', sessionId] : []), ...(cwd ? ['--cwd', cwd] : []), '--json'], PLUGIN_ROOT);
 const outcome = json && json.outcome;
+// CP-03 R9-L-b: a runs folder that exists but cannot be listed is reported; only the runs the session
+// registry names there were gated
+const unlistable = json && Array.isArray(json.runs_unlistable) ? json.runs_unlistable : [];
+if (unlistable.length) {
+  process.stderr.write('do-it stop gate: runs_unlistable: ' + unlistable.map((u) => String(u.home || 'the runs folder') + ' (' + String(u.error) + '; gated from the registry: ' + ((u.registry_runs || []).join(', ') || 'none') + ')').join('; ') + '\n');
+}
 
 if (outcome === 'STOP_REFUSED') {
   const count = Number.isFinite(Number(json.stop_refusals)) ? Number(json.stop_refusals) : null;

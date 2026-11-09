@@ -96,10 +96,17 @@ export function loadState(ctx, runId) {
 }
 
 export function listRunIds(ctx) {
+  return listRunIdsChecked(ctx).ids;
+}
+
+// { ids, error }: error is set when the runs folder exists but cannot be listed (EACCES on a 0311 folder, ...).
+export function listRunIdsChecked(ctx) {
   const base = path.join(ctx.home, 'runs');
   let names = [];
-  try { names = fs.readdirSync(base); } catch { return []; }
-  return names.filter((n) => fs.existsSync(path.join(base, n, 'state.json'))).sort();
+  try { names = fs.readdirSync(base); } catch (e) {
+    return { ids: [], error: e && e.code === 'ENOENT' ? null : String(e && e.code ? e.code : (e && e.message) || e) };
+  }
+  return { ids: names.filter((n) => fs.existsSync(path.join(base, n, 'state.json'))).sort(), error: null };
 }
 
 // Newest run by created_at (ties by id); --run picks one explicitly.
@@ -135,11 +142,18 @@ function cwdInside(ownerCwd, cwd) {
 // Returns { run, owned, status, legacy, unreadable, ranked }: the newest owned run that still gates (else the
 // newest owned run), the count of legacy runs, the ids whose state.json cannot be parsed, and every owned
 // run ranked the same way ({ id, created, status }).
+// CP-03 R9-L-b: when the runs folder exists but cannot be listed, the run ids the session registry names for
+// this home (scope.knownIds) are looked up by path instead, and `unlistable` carries the error.
 export function selectScopedRunId(ctx, scope) {
   const owned = [];
   const unreadable = [];
   let legacy = 0;
-  for (const id of listRunIds(ctx)) {
+  const listing = listRunIdsChecked(ctx);
+  let ids = listing.ids;
+  if (listing.error && Array.isArray(scope.knownIds)) {
+    ids = scope.knownIds.filter((id) => /^[A-Za-z0-9._-]{1,128}$/.test(id) && !/^\.+$/.test(id) && fs.existsSync(path.join(runDir(ctx, id), 'state.json'))).sort();
+  }
+  for (const id of ids) {
     let st;
     try { st = JSON.parse(readRegularFile(path.join(runDir(ctx, id), 'state.json'), STATE_READ_CAP).toString('utf8')); } catch { unreadable.push(id); continue; }
     const o = st && st.owner;
@@ -154,7 +168,7 @@ export function selectScopedRunId(ctx, scope) {
   // ranked: every owned run, the gating ones first, each group newest first
   const ranked = [...gating, ...owned.filter((r) => NON_GATING_STATUSES.includes(r.status))];
   const pick = ranked[0] || null;
-  return { run: pick ? pick.id : null, owned: !!pick, status: pick ? pick.status : null, legacy, unreadable, ranked };
+  return { run: pick ? pick.id : null, owned: !!pick, status: pick ? pick.status : null, legacy, unreadable, ranked, unlistable: listing.error };
 }
 
 // Runs whose state.json fails the same checks loadState makes, reported without side effects.

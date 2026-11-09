@@ -3388,13 +3388,16 @@ function sessionHomes(ctx, sessionId) {
   const skip = new Set(stale.filter((e) => e.legacy).map((e) => e.run_id + '\0' + e.home));
   if (all.some((e) => e.legacy === 'file')) { try { migrateLegacy(ctx, sessionId, skip); } catch { /* still read next time */ } }
   if (all.some((e) => e.legacy === 'dir')) { try { migrateOldDir(ctx, sessionId, skip); } catch { /* still read next time */ } }
-  const seen = new Set();
+  // each home also names the session's run ids in it (CP-03 R9-L-b: the gate's fallback when the home's runs
+  // folder exists but cannot be listed)
+  const byHome = new Map();
   const homes = [];
   for (const e of keep) {
     const home = realpathSafe(e.home);
-    if (seen.has(home)) continue;
-    seen.add(home);
-    homes.push({ home, root: typeof e.root === 'string' ? e.root : path.dirname(home) });
+    if (byHome.has(home)) { if (!byHome.get(home).runs.includes(e.run_id)) byHome.get(home).runs.push(e.run_id); continue; }
+    const h = { home, root: typeof e.root === 'string' ? e.root : path.dirname(home), runs: [e.run_id] };
+    byHome.set(home, h);
+    homes.push(h);
   }
   return { homes, errors };
 }
@@ -3709,10 +3712,17 @@ function loadState(ctx, runId) {
 }
 
 function listRunIds(ctx) {
+  return listRunIdsChecked(ctx).ids;
+}
+
+// { ids, error }: error is set when the runs folder exists but cannot be listed (EACCES on a 0311 folder, ...).
+function listRunIdsChecked(ctx) {
   const base = path.join(ctx.home, 'runs');
   let names = [];
-  try { names = fs.readdirSync(base); } catch { return []; }
-  return names.filter((n) => fs.existsSync(path.join(base, n, 'state.json'))).sort();
+  try { names = fs.readdirSync(base); } catch (e) {
+    return { ids: [], error: e && e.code === 'ENOENT' ? null : String(e && e.code ? e.code : (e && e.message) || e) };
+  }
+  return { ids: names.filter((n) => fs.existsSync(path.join(base, n, 'state.json'))).sort(), error: null };
 }
 
 // Newest run by created_at (ties by id); --run picks one explicitly.
@@ -3748,11 +3758,18 @@ function cwdInside(ownerCwd, cwd) {
 // Returns { run, owned, status, legacy, unreadable, ranked }: the newest owned run that still gates (else the
 // newest owned run), the count of legacy runs, the ids whose state.json cannot be parsed, and every owned
 // run ranked the same way ({ id, created, status }).
+// CP-03 R9-L-b: when the runs folder exists but cannot be listed, the run ids the session registry names for
+// this home (scope.knownIds) are looked up by path instead, and `unlistable` carries the error.
 function selectScopedRunId(ctx, scope) {
   const owned = [];
   const unreadable = [];
   let legacy = 0;
-  for (const id of listRunIds(ctx)) {
+  const listing = listRunIdsChecked(ctx);
+  let ids = listing.ids;
+  if (listing.error && Array.isArray(scope.knownIds)) {
+    ids = scope.knownIds.filter((id) => /^[A-Za-z0-9._-]{1,128}$/.test(id) && !/^\.+$/.test(id) && fs.existsSync(path.join(runDir(ctx, id), 'state.json'))).sort();
+  }
+  for (const id of ids) {
     let st;
     try { st = JSON.parse(readRegularFile(path.join(runDir(ctx, id), 'state.json'), STATE_READ_CAP).toString('utf8')); } catch { unreadable.push(id); continue; }
     const o = st && st.owner;
@@ -3767,7 +3784,7 @@ function selectScopedRunId(ctx, scope) {
   // ranked: every owned run, the gating ones first, each group newest first
   const ranked = [...gating, ...owned.filter((r) => NON_GATING_STATUSES.includes(r.status))];
   const pick = ranked[0] || null;
-  return { run: pick ? pick.id : null, owned: !!pick, status: pick ? pick.status : null, legacy, unreadable, ranked };
+  return { run: pick ? pick.id : null, owned: !!pick, status: pick ? pick.status : null, legacy, unreadable, ranked, unlistable: listing.error };
 }
 
 // Runs whose state.json fails the same checks loadState makes, reported without side effects.
@@ -4074,17 +4091,18 @@ function gateStop(ctx, args) {
   const here = realpathSafe(ctx.home);
   const reg = sessionHomes(ctx, scope.session);
   const notes = reg.errors.length ? { registry_unreadable: reg.errors } : {};
-  const homes = [{ ctx, home: here, own: true }];
+  const known = (home) => { const h = reg.homes.find((x) => x.home === home); return h && Array.isArray(h.runs) ? h.runs : []; };
+  const homes = [{ ctx, home: here, own: true, scope: { ...scope, knownIds: known(here) } }];
   for (const h of reg.homes) {
-    if (h.home !== here) homes.push({ ctx: { ...ctx, home: h.home, root: h.root }, home: h.home, own: false });
+    if (h.home !== here) homes.push({ ctx: { ...ctx, home: h.home, root: h.root }, home: h.home, own: false, scope: { ...scope, knownIds: known(h.home) } });
   }
-  if (homes.length === 1) return withNotes(() => hookStopIn(ctx, scope), notes);
+  if (homes.length === 1) return withNotes(() => hookStopIn(ctx, homes[0].scope), notes);
   const answers = [];
   const unreadableHomes = [];
   let firstError = null;
   for (const h of homes) {
     try {
-      answers.push({ home: h.home, out: hookStopIn(h.ctx, scope) });
+      answers.push({ home: h.home, out: hookStopIn(h.ctx, h.scope) });
     } catch (e) {
       if (e instanceof CliError && e.outcome === 'STOP_REFUSED') { answers.push({ home: h.home, refused: e }); continue; }
       // CP-03 R5-S1-M9: the cwd's home is reported like any other; it never hides the other homes' answers
@@ -4098,6 +4116,8 @@ function gateStop(ctx, args) {
   const unwritable = answers.flatMap((a) => ((a.out || (a.refused && a.refused.extra) || {}).unwritable || []).map((u) => ({ ...u, home: a.home })));
   if (unwritable.length) notes.unwritable = unwritable;
   if (unwritable.some((u) => u.refusal_uncounted)) notes.refusal_uncounted = true;
+  const unlistable = answers.flatMap((a) => ((a.out || (a.refused && a.refused.extra) || {}).runs_unlistable || []).map((u) => ({ ...u, home: a.home })));
+  if (unlistable.length) notes.runs_unlistable = unlistable;
   const searched = homes.map((h) => h.home);
   const refused = answers.filter((a) => a.refused);
   if (refused.length) {
@@ -4120,9 +4140,16 @@ function withNotes(fn, notes) {
   try { return { ...fn(), ...notes }; } catch (e) { throw addNotes(e, notes); }
 }
 
-// The hook-path rule inside one home (CONTRACT 3.1).
+// The hook-path rule inside one home (CONTRACT 3.1). CP-03 R9-L-b: a runs folder that exists but cannot be
+// listed is reported (runs_unlistable) on every answer; the registry's runs for this home are still gated.
 function hookStopIn(ctx, scope) {
   const scoped = selectScopedRunId(ctx, scope);
+  if (!scoped.unlistable) return hookStopScoped(ctx, scope, scoped);
+  const note = { runs_unlistable: [{ home: ctx.home, error: scoped.unlistable, registry_runs: scope.knownIds || [] }] };
+  return withNotes(() => hookStopScoped(ctx, scope, scoped), note);
+}
+
+function hookStopScoped(ctx, scope, scoped) {
   if (!scoped.run) {
     if (scoped.unreadable.length) {
       for (const id of scoped.unreadable) logUnreadableOnce(ctx, id, { fail_open: true });

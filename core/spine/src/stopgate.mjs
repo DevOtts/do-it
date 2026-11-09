@@ -180,17 +180,18 @@ export function gateStop(ctx, args) {
   const here = realpathSafe(ctx.home);
   const reg = sessionHomes(ctx, scope.session);
   const notes = reg.errors.length ? { registry_unreadable: reg.errors } : {};
-  const homes = [{ ctx, home: here, own: true }];
+  const known = (home) => { const h = reg.homes.find((x) => x.home === home); return h && Array.isArray(h.runs) ? h.runs : []; };
+  const homes = [{ ctx, home: here, own: true, scope: { ...scope, knownIds: known(here) } }];
   for (const h of reg.homes) {
-    if (h.home !== here) homes.push({ ctx: { ...ctx, home: h.home, root: h.root }, home: h.home, own: false });
+    if (h.home !== here) homes.push({ ctx: { ...ctx, home: h.home, root: h.root }, home: h.home, own: false, scope: { ...scope, knownIds: known(h.home) } });
   }
-  if (homes.length === 1) return withNotes(() => hookStopIn(ctx, scope), notes);
+  if (homes.length === 1) return withNotes(() => hookStopIn(ctx, homes[0].scope), notes);
   const answers = [];
   const unreadableHomes = [];
   let firstError = null;
   for (const h of homes) {
     try {
-      answers.push({ home: h.home, out: hookStopIn(h.ctx, scope) });
+      answers.push({ home: h.home, out: hookStopIn(h.ctx, h.scope) });
     } catch (e) {
       if (e instanceof CliError && e.outcome === 'STOP_REFUSED') { answers.push({ home: h.home, refused: e }); continue; }
       // CP-03 R5-S1-M9: the cwd's home is reported like any other; it never hides the other homes' answers
@@ -204,6 +205,8 @@ export function gateStop(ctx, args) {
   const unwritable = answers.flatMap((a) => ((a.out || (a.refused && a.refused.extra) || {}).unwritable || []).map((u) => ({ ...u, home: a.home })));
   if (unwritable.length) notes.unwritable = unwritable;
   if (unwritable.some((u) => u.refusal_uncounted)) notes.refusal_uncounted = true;
+  const unlistable = answers.flatMap((a) => ((a.out || (a.refused && a.refused.extra) || {}).runs_unlistable || []).map((u) => ({ ...u, home: a.home })));
+  if (unlistable.length) notes.runs_unlistable = unlistable;
   const searched = homes.map((h) => h.home);
   const refused = answers.filter((a) => a.refused);
   if (refused.length) {
@@ -226,9 +229,16 @@ function withNotes(fn, notes) {
   try { return { ...fn(), ...notes }; } catch (e) { throw addNotes(e, notes); }
 }
 
-// The hook-path rule inside one home (CONTRACT 3.1).
+// The hook-path rule inside one home (CONTRACT 3.1). CP-03 R9-L-b: a runs folder that exists but cannot be
+// listed is reported (runs_unlistable) on every answer; the registry's runs for this home are still gated.
 function hookStopIn(ctx, scope) {
   const scoped = selectScopedRunId(ctx, scope);
+  if (!scoped.unlistable) return hookStopScoped(ctx, scope, scoped);
+  const note = { runs_unlistable: [{ home: ctx.home, error: scoped.unlistable, registry_runs: scope.knownIds || [] }] };
+  return withNotes(() => hookStopScoped(ctx, scope, scoped), note);
+}
+
+function hookStopScoped(ctx, scope, scoped) {
   if (!scoped.run) {
     if (scoped.unreadable.length) {
       for (const id of scoped.unreadable) logUnreadableOnce(ctx, id, { fail_open: true });

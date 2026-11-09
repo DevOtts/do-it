@@ -192,13 +192,16 @@ export function sessionHomes(ctx, sessionId) {
   const skip = new Set(stale.filter((e) => e.legacy).map((e) => e.run_id + '\0' + e.home));
   if (all.some((e) => e.legacy === 'file')) { try { migrateLegacy(ctx, sessionId, skip); } catch { /* still read next time */ } }
   if (all.some((e) => e.legacy === 'dir')) { try { migrateOldDir(ctx, sessionId, skip); } catch { /* still read next time */ } }
-  const seen = new Set();
+  // each home also names the session's run ids in it (CP-03 R9-L-b: the gate's fallback when the home's runs
+  // folder exists but cannot be listed)
+  const byHome = new Map();
   const homes = [];
   for (const e of keep) {
     const home = realpathSafe(e.home);
-    if (seen.has(home)) continue;
-    seen.add(home);
-    homes.push({ home, root: typeof e.root === 'string' ? e.root : path.dirname(home) });
+    if (byHome.has(home)) { if (!byHome.get(home).runs.includes(e.run_id)) byHome.get(home).runs.push(e.run_id); continue; }
+    const h = { home, root: typeof e.root === 'string' ? e.root : path.dirname(home), runs: [e.run_id] };
+    byHome.set(home, h);
+    homes.push(h);
   }
   return { homes, errors };
 }

@@ -129,3 +129,31 @@ test('CP03 R9-S1-M16 packAppend dedupes on the redacted text and skips while the
     assert.equal(pack.packAppend(ctx, runId, [other], { stopGate: true }).length, 1);
   } finally { red.redactReset(); }
 });
+
+// L-b: a runs folder that can be traversed but not listed (0311). The registry names the session's run, so it
+// is looked up by path and still gates; the answer and the hook's stderr say runs_unlistable.
+test('CP03 R9-L-b a runs folder that cannot be listed: the registry run still gates and runs_unlistable is reported', { skip: AS_ROOT, timeout: 120000 }, () => {
+  const w = world();
+  const X = repo(w, 'X');
+  const id = startRun(w, X, 'lb');
+  const runs = path.join(X, '.do-it', 'runs');
+  fs.chmodSync(runs, 0o311);
+  try {
+    for (const H of HOOKS) {
+      const h = hook(w, H, 'lb', X);
+      assert.equal(h.code, 2, `${path.relative(ROOT, H)}: ${h.stderr}`);
+      assert.match(h.stderr, /runs_unlistable/);
+      assert.match(h.stderr, new RegExp(id));
+    }
+    const s = sp(w, X, ['gate', 'stop', '--session', 'lb', '--cwd', X]);
+    assert.equal(s.out && s.out.outcome, 'STOP_REFUSED', s.stdout);
+    assert.ok(Array.isArray(s.out.runs_unlistable) && s.out.runs_unlistable[0].registry_runs.includes(id), s.stdout);
+    // a session the registry does not know: nothing to gate here, but the allow says why it could not look
+    const o = sp(w, X, ['gate', 'stop', '--session', 'other', '--cwd', X]);
+    assert.equal(o.out && o.out.outcome, 'STOP_ALLOWED', o.stdout);
+    assert.ok(Array.isArray(o.out.runs_unlistable), o.stdout);
+    const h = hook(w, HOOKS[0], 'other', X);
+    assert.equal(h.code, 0);
+    assert.match(h.stderr, /runs_unlistable/);
+  } finally { fs.chmodSync(runs, 0o755); }
+});
