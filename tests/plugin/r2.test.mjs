@@ -51,7 +51,7 @@ test('T-R2-03 marketplace entry shape', () => {
   const own = m.plugins.filter((p) => p.name === 'do-it');
   assert.equal(own.length, 1);
   assert.equal(own[0].source, './plugins/do-it');
-  assert.equal(own[0].version, '1.0.5');
+  assert.equal(own[0].version, '1.1.0');
   for (const p of m.plugins.filter((x) => x.name !== 'do-it')) {
     assert.equal(p.source.source, 'github', p.name);
     assert.match(p.source.repo, /^DevOtts\/[a-z-]+$/, p.name);
@@ -73,7 +73,8 @@ test('T-R2-05 pins are exact', () => {
   const companions = json('core/companions.json').companions;
   for (const c of companions) assert.match(c.version, /^[0-9]+\.[0-9]+\.[0-9]+$/, c.name);
   const released = companions.filter((c) => ['deploy-it', 'reconcile-it'].includes(c.name));
-  assert.ok(released.length === 2 && released.every((c) => c.status === 'published' && c.version === '1.0.0'));
+  assert.ok(released.length === 2 && released.every((c) => c.status === 'published'));
+  assert.deepEqual(Object.fromEntries(released.map((c) => [c.name, c.version])), { 'deploy-it': '1.0.0', 'reconcile-it': '1.0.1' });
   for (const bad of ['^0.3.0', 'latest']) {
     const d = scratchRoot();
     const c = json('core/companions.json');

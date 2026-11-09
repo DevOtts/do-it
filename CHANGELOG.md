@@ -1,7 +1,19 @@
 # Changelog
 
-## Unreleased (1.1.0)
-Host integrations stay isolated under `hosts/` (epic E1, ruling R3, decision D2). The coordinator sets the version.
+## 1.1.0 — 2026-11-09
+Trust and fixes release (D7; resumable test gates ship separately as 1.2.0). Summary by epic first, then the detail.
+
+Summary
+- S1 stop-gate ownership: the stop gate gates only the session that owns a run. D9 keeps the cwd fallback only for runs that also have no session id. D10 adds `do-it pack withdraw --by stop-gate` (marks unanswered stop-gate questions `withdrawn`, kept, never deleted; answered ones untouched). The session id comes from the host (`DO_IT_SESSION_ENV`), not from a hand-exported variable. `resume --run <id> --take-over` is required to re-bind a run owned by another non-null session (X25, owner-approved X27). A per-session registry at `~/.do-it/sessions` lets the hook find a session's runs. CP-03 hardening rounds R4 to R10 (details below).
+- E1 host isolation: R3, D2. Integration code lives under `hosts/<name>/`, core names no host (G-12). Engine is labelled "Experimental: server side declined (PR #727, 2026-10-29)" in the README, hero alt text, `SKILL.md` and `hosts/engine/README.md`; G-9 keeps the table honest.
+- H1 `check-pins --tags`: G-3, D3 (prompt-it v1.0.0 tag), D4 (marketplace entries pin each sibling with `ref: "v<version>"`). `check-pins --marketplace` also compares the version labels with `companions.json`.
+- B1 board truth: `status-write view --json` reports `stale`, and the fixture test `tests/status/b1-stale.test.mjs` proves a board that no longer matches its plan is shown as stale (X16).
+- K2 optional companions: init-it (D1, public, 0.1.0) and doc-it (D11, public, 0.1.0) are listed in `companions.json` and the marketplace as `required: false`. D14: when doc-it is missing, consumers print `[skip] doc-it not installed: <check>`, never report that check as PASS and never fail (X10 says how doc-it is found).
+- Pre-tag hardening: N1 dormant host settings (the 1.0.5 shape, `state.backend` local plus a dormant `state.<host>` block, stays valid in repo and installed layouts); drift guards for the bundle, the mirror and the version files.
+- Sibling pins: prompt-it 1.0.0, plan-it 5.3.0, build-it 4.2.0, review-it 2.2.0, conclude-it 2.2.0, parallel-lifecycle 1.0.0, deploy-it 1.0.0, reconcile-it 1.0.1, init-it 0.1.0, doc-it 0.1.0. Marketplace refs `v<version>` for every sibling it lists.
+- Proposed CONTRACT amendments A3 to A16 (proposed, owner-approved A9 to A12, X27): T-S1-05b legacy-only, the spine parks and the hook does not, `gate escalate --reason`, the per-session registry. A3 to A5 cover `resume --take-over`. The rest are proposals awaiting the owner.
+
+Detail: host integrations stay isolated under `hosts/` (epic E1, ruling R3, decision D2).
 - The Engine state store moved out of core: `core/state-stores/engine.mjs`, `engine-drivers/*` and their tests now live in `hosts/engine/state-store/`, with their CLI commands (`driver`, `config`) and the conformance target. `core/state-stores/index.mjs` keeps `local-fs` and `git-branch` and loads any other backend from the `state_store` entry of `hosts/<name>/adapter.manifest.json`; a backend whose host folder is missing fails with `DRIVER_UNKNOWN` naming the host.
 - Settings: `state.backend` stays; `state.<backend>` is one object keyed by the backend name, validated by the host's own schema (`hosts/engine/state-store/settings.schema.json`). The `engine` default is gone from core; existing `state.engine.blobs` files stay valid. No new top-level settings key (G-8). `--set state.<backend>.<key>=value` reaches the host schema.
 - The G-12 scan gains the word `engine` and covers `core/` and `scripts/` (T-E1-01); deleting `hosts/engine/` leaves every core suite green (tests/hosts/isolation.test.mjs).
