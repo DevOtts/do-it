@@ -6,6 +6,7 @@ import { openPackQuestions, packAppend } from './pack.mjs';
 import { cleanSessionId } from './session.mjs';
 import { sessionHomes } from './sessions.mjs';
 import { realpathSafe } from './ctx.mjs';
+import { STATE_READ_CAP, readRegularFile } from './fs-atomic.mjs';
 import { loadSettings } from './settings.mjs';
 import { NON_GATING_STATUSES, loadState, selectRunId, selectScopedRunId, writeState } from './state.mjs';
 
@@ -21,7 +22,7 @@ function logQuiet(ctx, runId, row) {
 // already this one (a run we do not own must not grow an events file just because we looked at it).
 function lastEventIs(ctx, runId, name) {
   try {
-    const lines = fs.readFileSync(eventsPath(ctx, runId), 'utf8').split('\n').filter(Boolean);
+    const lines = readRegularFile(eventsPath(ctx, runId), STATE_READ_CAP).toString('utf8').split('\n').filter(Boolean);
     return JSON.parse(lines[lines.length - 1]).event === name;
   } catch { return false; }
 }

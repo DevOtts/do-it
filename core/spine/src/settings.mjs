@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { fail } from './errors.mjs';
+import { REGISTRY_READ_CAP, readRegularFile } from './fs-atomic.mjs';
 import { loadSchemaFile, schemaEscape, validateSchema } from './schema.mjs';
 
 export const SETTINGS_DEFAULTS = {
@@ -174,7 +175,7 @@ export function loadSettings(ctx, setFlags) {
     if (!exists) continue;
     let parsed;
     try {
-      parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
+      parsed = JSON.parse(readRegularFile(file, REGISTRY_READ_CAP).toString('utf8'));
     } catch (e) {
       parseErrors.push({ file, pointer: '', message: 'JSON parse error: ' + e.message });
       continue;

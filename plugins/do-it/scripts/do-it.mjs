@@ -708,7 +708,7 @@ function finishLinePath(ctx) {
 }
 
 function readFinishLine(ctx) {
-  const fl = readJsonIfExists(finishLinePath(ctx));
+  const fl = readJsonRegular(finishLinePath(ctx), STATE_READ_CAP);
   if (!fl || !Array.isArray(fl.rows)) return { rows: [] };
   return fl;
 }
@@ -889,6 +889,61 @@ function atomicWriteJson(file, value, opts) {
 function appendLine(file, line) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.appendFileSync(file, redactText(line) + '\n');
+}
+
+// CP-03 R5-S1-M10: a FIFO, a device or an endless file must never hang the spine. readRegularFile reads only a
+// regular file, at most `cap` bytes. opts.noFollow refuses a symlink outright (lstat; the session registry
+// never follows one); otherwise a symlink is followed but must still end at a regular file.
+// Errors carry a code (ENOENT, ENOTREG, EFBIG, ...) and never quote the file's content.
+const REGISTRY_READ_CAP = 64 * 1024;
+const STATE_READ_CAP = 16 * 1024 * 1024;
+
+function fileKind(st) {
+  if (st.isSymbolicLink()) return 'symlink';
+  if (st.isFIFO()) return 'fifo';
+  if (st.isDirectory()) return 'directory';
+  if (st.isSocket()) return 'socket';
+  if (st.isCharacterDevice() || st.isBlockDevice()) return 'device';
+  return 'other';
+}
+
+function codedError(code, message) {
+  const e = new Error(message);
+  e.code = code;
+  return e;
+}
+
+function readRegularFile(file, cap, opts) {
+  const st = opts && opts.noFollow ? fs.lstatSync(file) : fs.statSync(file);
+  if (!st.isFile()) throw codedError('ENOTREG', 'not a regular file (' + fileKind(st) + '): ' + file);
+  if (st.size > cap) throw codedError('EFBIG', 'larger than ' + cap + ' bytes: ' + file);
+  const flags = fs.constants.O_RDONLY | (fs.constants.O_NONBLOCK || 0) | (opts && opts.noFollow ? (fs.constants.O_NOFOLLOW || 0) : 0);
+  const fd = fs.openSync(file, flags);
+  try {
+    if (!fs.fstatSync(fd).isFile()) throw codedError('ENOTREG', 'not a regular file: ' + file);
+    const buf = Buffer.alloc(Math.min(cap, Math.max(st.size, 0)) + 1);
+    let n = 0;
+    for (;;) {
+      const got = fs.readSync(fd, buf, n, buf.length - n, null);
+      if (!got) break;
+      n += got;
+      if (n > cap) throw codedError('EFBIG', 'larger than ' + cap + ' bytes: ' + file);
+      if (n === buf.length) break;
+    }
+    return buf.subarray(0, n);
+  } finally {
+    fs.closeSync(fd);
+  }
+}
+
+// JSON from a regular file; a parse error is reported without the file's content.
+function readJsonRegular(file, cap, opts) {
+  let bytes;
+  try { bytes = readRegularFile(file, cap, opts); } catch (e) {
+    if (e.code === 'ENOENT') return null;
+    throw e;
+  }
+  try { return JSON.parse(bytes.toString('utf8')); } catch { throw codedError('EJSON', 'not valid JSON: ' + file); }
 }
 
 function readJsonIfExists(file) {
@@ -3043,8 +3098,12 @@ function runFile(ctx, sessionId, runId) {
 
 const isEntry = (e) => e && typeof e.run_id === 'string' && typeof e.home === 'string';
 
+// CP-03 R5-S1-M10: registry files are read with lstat first: only a regular file (never a symlink, FIFO or
+// device), at most 64 KiB. Anything else is reported, never followed or read.
+const readRegistryJson = (file) => readJsonRegular(file, REGISTRY_READ_CAP, { noFollow: true });
+
 function readLegacy(file) {
-  const doc = readJsonIfExists(file);
+  const doc = readRegistryJson(file);
   return doc && Array.isArray(doc.runs) ? doc.runs.filter(isEntry) : [];
 }
 
@@ -3067,17 +3126,22 @@ function migrateLegacy(ctx, sessionId, skip) {
 function readEntries(ctx, sessionId) {
   const out = [];
   const errors = [];
+  // the error names the file and the cause, never the file's content (R5-L5)
   const note = (file, e) => errors.push({ file, error: String(e && e.code ? e.code + ': ' + e.message : (e && e.message) || e) });
   const legacy = legacySessionFile(ctx, sessionId);
   try { for (const e of readLegacy(legacy)) out.push({ ...e, file: null }); } catch (e) { note(legacy, e); }
   const dir = sessionDir(ctx, sessionId);
   let names = [];
-  try { names = fs.readdirSync(dir); } catch (e) { if (e.code !== 'ENOENT') note(dir, e); }
+  try {
+    const st = fs.lstatSync(dir);
+    if (!st.isDirectory()) note(dir, Object.assign(new Error('not a directory' + (st.isSymbolicLink() ? ' (symlink, not followed)' : '')), { code: 'ENOTDIR' }));
+    else names = fs.readdirSync(dir);
+  } catch (e) { if (e.code !== 'ENOENT') note(dir, e); }
   for (const n of names.sort()) {
     if (n.startsWith('.') || !n.endsWith('.json')) continue; // temp files of a write in flight
     const file = path.join(dir, n);
     try {
-      const doc = readJsonIfExists(file);
+      const doc = readRegistryJson(file);
       if (isEntry(doc)) out.push({ run_id: doc.run_id, home: doc.home, root: doc.root, file });
       else if (doc !== null) note(file, new Error('not a registry entry'));
     } catch (e) { note(file, e); }
@@ -3099,14 +3163,19 @@ function registerSessionRun(ctx, sessionId, runId) {
 }
 
 function liveEntry(e, sessionId) {
+  // a forged run id never walks out of the home's runs folder
+  if (!/^[A-Za-z0-9._-]{1,128}$/.test(e.run_id) || /^\.+$/.test(e.run_id)) return false;
+  const file = path.join(e.home, 'runs', e.run_id, 'state.json');
   try {
-    const st = JSON.parse(fs.readFileSync(path.join(e.home, 'runs', e.run_id, 'state.json'), 'utf8'));
+    const st = readJsonRegular(file, STATE_READ_CAP);
     if (!st || OVER.includes(st.status)) return false;
     const o = st.owner;
     return !!(o && typeof o === 'object' && o.session_id === sessionId);
   } catch (err) {
+    // a FIFO, device or oversized file is no run state (R5-S1-M10): never read it, drop the entry
+    if (err && (err.code === 'ENOTREG' || err.code === 'EFBIG')) return false;
     // a run that is there but unreadable stays listed: the gate reports it, it does not forget it
-    return fs.existsSync(path.join(e.home, 'runs', e.run_id, 'state.json'));
+    return fs.existsSync(file);
   }
 }
 
@@ -3313,7 +3382,7 @@ function loadSettings(ctx, setFlags) {
     if (!exists) continue;
     let parsed;
     try {
-      parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
+      parsed = JSON.parse(readRegularFile(file, REGISTRY_READ_CAP).toString('utf8'));
     } catch (e) {
       parseErrors.push({ file, pointer: '', message: 'JSON parse error: ' + e.message });
       continue;
@@ -3424,13 +3493,13 @@ function loadState(ctx, runId) {
   const dir = runDir(ctx, runId);
   let bytes;
   try {
-    bytes = fs.readFileSync(path.join(dir, 'state.json'));
+    bytes = readRegularFile(path.join(dir, 'state.json'), STATE_READ_CAP);
   } catch (e) {
     if (e.code === 'ENOENT') throw fail('RUN_NOT_FOUND', 1, { run_id: runId });
     throw e;
   }
   let sidecar = null;
-  try { sidecar = fs.readFileSync(path.join(dir, '.state.sha256'), 'utf8').trim(); } catch { /* missing */ }
+  try { sidecar = readRegularFile(path.join(dir, '.state.sha256'), REGISTRY_READ_CAP).toString('utf8').trim(); } catch { /* missing, or not a regular file */ }
   if (sidecar === null) throw tamperFail(ctx, runId, 'sidecar_missing');
   if (sidecar !== sha256Bytes(bytes)) throw tamperFail(ctx, runId, 'digest_mismatch');
   let state;
@@ -3488,7 +3557,7 @@ function selectScopedRunId(ctx, scope) {
   let legacy = 0;
   for (const id of listRunIds(ctx)) {
     let st;
-    try { st = JSON.parse(fs.readFileSync(path.join(runDir(ctx, id), 'state.json'), 'utf8')); } catch { unreadable.push(id); continue; }
+    try { st = JSON.parse(readRegularFile(path.join(runDir(ctx, id), 'state.json'), STATE_READ_CAP).toString('utf8')); } catch { unreadable.push(id); continue; }
     const o = st && st.owner;
     if (!o || typeof o !== 'object') { legacy += 1; continue; }
     let mine = false;
@@ -3645,7 +3714,7 @@ function logQuiet(ctx, runId, row) {
 // already this one (a run we do not own must not grow an events file just because we looked at it).
 function lastEventIs(ctx, runId, name) {
   try {
-    const lines = fs.readFileSync(eventsPath(ctx, runId), 'utf8').split('\n').filter(Boolean);
+    const lines = readRegularFile(eventsPath(ctx, runId), STATE_READ_CAP).toString('utf8').split('\n').filter(Boolean);
     return JSON.parse(lines[lines.length - 1]).event === name;
   } catch { return false; }
 }

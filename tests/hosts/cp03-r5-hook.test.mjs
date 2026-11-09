@@ -116,4 +116,20 @@ for (const H of HOOKS) {
       assert.equal(hook(w, H, 'sh-s', z).code, 2, 'the older run of the same home still refuses');
     } finally { fs.chmodSync(r2, 0o755); }
   });
+
+  test(`CP03 R5-S1-M10 a FIFO in the session registry never hangs the hook into an allow (${which})`, () => {
+    const w = world();
+    w.env.DO_IT_USER_HOME = path.join(w.home, 'uh');
+    const x = repo(w, 'X');
+    patient(x);
+    startRun(w, x, 'ff-1');
+    assert.equal(hook(w, H, 'ff-1', x).code, 2);
+    const sessions = path.join(w.env.DO_IT_USER_HOME, 'sessions');
+    const dir = fs.readdirSync(sessions).map((n) => path.join(sessions, n)).find((p) => fs.statSync(p).isDirectory());
+    cp.execFileSync('mkfifo', [path.join(dir, 'zz-evil.json')]);
+    fs.symlinkSync('/dev/zero', path.join(dir, 'zz-zero.json'));
+    const t0 = Date.now();
+    assert.equal(hook(w, H, 'ff-1', x).code, 2);
+    assert.ok(Date.now() - t0 < 10000, 'no 20 s timeout');
+  });
 }

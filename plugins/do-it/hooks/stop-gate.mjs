@@ -27,4 +27,6 @@ if (outcome === 'STOP_REFUSED') {
   process.stderr.write(`${json.reason || 'Finish-line rows are still open.'}\n${json.board ? json.board + '\n' : ''}Keep working; stop is refused${tally}.\n`);
   process.exit(2);
 }
+// CP-03 R5-S1-M10: a spine that gave no answer (timeout, crash) still fails open, but says so
+if (!outcome) process.stderr.write('do-it stop gate: the spine gave no answer, so this stop is allowed unchecked.\n');
 process.exit(0);

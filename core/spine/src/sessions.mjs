@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { realpathSafe } from './ctx.mjs';
-import { atomicWriteJson, readJsonIfExists } from './fs-atomic.mjs';
+import { REGISTRY_READ_CAP, STATE_READ_CAP, atomicWriteJson, readJsonRegular } from './fs-atomic.mjs';
 import { sha256Bytes } from './hash.mjs';
 
 // Session registry (CP-03 R3-S1-H7). A session can start a run in one repo and stop while its cwd is in
@@ -43,8 +43,12 @@ function runFile(ctx, sessionId, runId) {
 
 const isEntry = (e) => e && typeof e.run_id === 'string' && typeof e.home === 'string';
 
+// CP-03 R5-S1-M10: registry files are read with lstat first: only a regular file (never a symlink, FIFO or
+// device), at most 64 KiB. Anything else is reported, never followed or read.
+const readRegistryJson = (file) => readJsonRegular(file, REGISTRY_READ_CAP, { noFollow: true });
+
 function readLegacy(file) {
-  const doc = readJsonIfExists(file);
+  const doc = readRegistryJson(file);
   return doc && Array.isArray(doc.runs) ? doc.runs.filter(isEntry) : [];
 }
 
@@ -67,17 +71,22 @@ function migrateLegacy(ctx, sessionId, skip) {
 function readEntries(ctx, sessionId) {
   const out = [];
   const errors = [];
+  // the error names the file and the cause, never the file's content (R5-L5)
   const note = (file, e) => errors.push({ file, error: String(e && e.code ? e.code + ': ' + e.message : (e && e.message) || e) });
   const legacy = legacySessionFile(ctx, sessionId);
   try { for (const e of readLegacy(legacy)) out.push({ ...e, file: null }); } catch (e) { note(legacy, e); }
   const dir = sessionDir(ctx, sessionId);
   let names = [];
-  try { names = fs.readdirSync(dir); } catch (e) { if (e.code !== 'ENOENT') note(dir, e); }
+  try {
+    const st = fs.lstatSync(dir);
+    if (!st.isDirectory()) note(dir, Object.assign(new Error('not a directory' + (st.isSymbolicLink() ? ' (symlink, not followed)' : '')), { code: 'ENOTDIR' }));
+    else names = fs.readdirSync(dir);
+  } catch (e) { if (e.code !== 'ENOENT') note(dir, e); }
   for (const n of names.sort()) {
     if (n.startsWith('.') || !n.endsWith('.json')) continue; // temp files of a write in flight
     const file = path.join(dir, n);
     try {
-      const doc = readJsonIfExists(file);
+      const doc = readRegistryJson(file);
       if (isEntry(doc)) out.push({ run_id: doc.run_id, home: doc.home, root: doc.root, file });
       else if (doc !== null) note(file, new Error('not a registry entry'));
     } catch (e) { note(file, e); }
@@ -99,14 +108,19 @@ export function registerSessionRun(ctx, sessionId, runId) {
 }
 
 function liveEntry(e, sessionId) {
+  // a forged run id never walks out of the home's runs folder
+  if (!/^[A-Za-z0-9._-]{1,128}$/.test(e.run_id) || /^\.+$/.test(e.run_id)) return false;
+  const file = path.join(e.home, 'runs', e.run_id, 'state.json');
   try {
-    const st = JSON.parse(fs.readFileSync(path.join(e.home, 'runs', e.run_id, 'state.json'), 'utf8'));
+    const st = readJsonRegular(file, STATE_READ_CAP);
     if (!st || OVER.includes(st.status)) return false;
     const o = st.owner;
     return !!(o && typeof o === 'object' && o.session_id === sessionId);
   } catch (err) {
+    // a FIFO, device or oversized file is no run state (R5-S1-M10): never read it, drop the entry
+    if (err && (err.code === 'ENOTREG' || err.code === 'EFBIG')) return false;
     // a run that is there but unreadable stays listed: the gate reports it, it does not forget it
-    return fs.existsSync(path.join(e.home, 'runs', e.run_id, 'state.json'));
+    return fs.existsSync(file);
   }
 }
 

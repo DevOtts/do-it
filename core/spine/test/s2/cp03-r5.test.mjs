@@ -5,7 +5,7 @@ import cp from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { after, test } from 'node:test';
-import { mkRepo, real, readJson, runDirOf, writeJson } from '../helpers.mjs';
+import { BIN, mkRepo, real, readJson, runDirOf, writeJson } from '../helpers.mjs';
 
 const made = [];
 const mk = (o) => { const r = mkRepo(o); made.push(r.dir, r.home); return r; };
@@ -198,3 +198,40 @@ test('CP03 R5-S1-M9 a run whose refusal cannot be written never opens the stop f
     assert.deepEqual(g.out.unwritable.map((u) => u.run_id), [a2]);
   } finally { fs.chmodSync(r2, 0o755); }
 });
+
+test('CP03 R5-S1-M10 a FIFO, a symlink to an endless file or an oversized file in the registry never hangs the gate; it is reported', () => {
+  const repo = mk();
+  patient(repo);
+  const env = { DO_IT_USER_HOME: path.join(repo.home, 'uh') };
+  start(repo, 'ff-1', repo.dir, env);
+  const before = hookStop(repo, 'ff-1', repo.dir, env);
+  assert.equal(before.out.outcome, 'STOP_REFUSED', before.stdout);
+  const dir = fs.readdirSync(path.join(env.DO_IT_USER_HOME, 'sessions')).map((n) => path.join(env.DO_IT_USER_HOME, 'sessions', n)).find((p) => fs.statSync(p).isDirectory());
+  cp.execFileSync('mkfifo', [path.join(dir, 'zz-evil.json')]);
+  fs.symlinkSync('/dev/zero', path.join(dir, 'zz-zero.json'));
+  fs.symlinkSync('/etc/passwd', path.join(dir, 'zz-passwd.json'));
+  fs.writeFileSync(path.join(dir, 'zz-big.json'), '{"x":"' + 'a'.repeat(70 * 1024) + '"}');
+  const t0 = Date.now();
+  const g = cp.spawnSync(process.execPath, [BIN, 'gate', 'stop', '--session', 'ff-1', '--cwd', repo.dir, '--json'], { cwd: repo.dir, env: { ...repo.env, ...env }, encoding: 'utf8', timeout: 15000 });
+  assert.ok(Date.now() - t0 < 10000, 'answered without hanging');
+  const out = JSON.parse(g.stdout.trim().split('\n').pop());
+  assert.equal(out.outcome, 'STOP_REFUSED', g.stdout);
+  const bad = out.registry_unreadable.map((x) => path.basename(x.file)).sort();
+  assert.deepEqual(bad, ['zz-big.json', 'zz-evil.json', 'zz-passwd.json', 'zz-zero.json']);
+  for (const x of out.registry_unreadable) assert.match(x.error, /^(ENOTREG|EFBIG): /, x.error);
+  assert.doesNotMatch(g.stdout, /User Database|root:/, 'R5-L5: no file content is quoted');
+  // a forged entry whose home holds a FIFO state.json is dropped, not read
+  const forged = tmpHome(repo);
+  fs.mkdirSync(path.join(forged, 'runs', 'r-x'), { recursive: true });
+  cp.execFileSync('mkfifo', [path.join(forged, 'runs', 'r-x', 'state.json')]);
+  writeJson(path.join(dir, 'zz-forged.json'), { session_id: 'ff-1', run_id: 'r-x', home: forged, root: path.dirname(forged) });
+  const g2 = cp.spawnSync(process.execPath, [BIN, 'gate', 'stop', '--session', 'ff-1', '--cwd', repo.dir, '--json'], { cwd: repo.dir, env: { ...repo.env, ...env }, encoding: 'utf8', timeout: 15000 });
+  assert.equal(g2.status, 1, 'answered: ' + g2.stdout + g2.stderr);
+  assert.equal(JSON.parse(g2.stdout.trim().split('\n').pop()).outcome, 'STOP_REFUSED');
+});
+
+function tmpHome(repo) {
+  const d = path.join(repo.home, 'forged-' + Date.now(), '.do-it');
+  fs.mkdirSync(d, { recursive: true });
+  return d;
+}

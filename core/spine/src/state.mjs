@@ -4,7 +4,7 @@ import path from 'node:path';
 import { realpathSafe } from './ctx.mjs';
 import { fail } from './errors.mjs';
 import { appendEvent } from './events.mjs';
-import { atomicWrite } from './fs-atomic.mjs';
+import { REGISTRY_READ_CAP, STATE_READ_CAP, atomicWrite, readRegularFile } from './fs-atomic.mjs';
 import { sha256Bytes } from './hash.mjs';
 import { redactText } from './redact.mjs';
 import { loadSchemaFile, validateSchema } from './schema.mjs';
@@ -69,13 +69,13 @@ export function loadState(ctx, runId) {
   const dir = runDir(ctx, runId);
   let bytes;
   try {
-    bytes = fs.readFileSync(path.join(dir, 'state.json'));
+    bytes = readRegularFile(path.join(dir, 'state.json'), STATE_READ_CAP);
   } catch (e) {
     if (e.code === 'ENOENT') throw fail('RUN_NOT_FOUND', 1, { run_id: runId });
     throw e;
   }
   let sidecar = null;
-  try { sidecar = fs.readFileSync(path.join(dir, '.state.sha256'), 'utf8').trim(); } catch { /* missing */ }
+  try { sidecar = readRegularFile(path.join(dir, '.state.sha256'), REGISTRY_READ_CAP).toString('utf8').trim(); } catch { /* missing, or not a regular file */ }
   if (sidecar === null) throw tamperFail(ctx, runId, 'sidecar_missing');
   if (sidecar !== sha256Bytes(bytes)) throw tamperFail(ctx, runId, 'digest_mismatch');
   let state;
@@ -133,7 +133,7 @@ export function selectScopedRunId(ctx, scope) {
   let legacy = 0;
   for (const id of listRunIds(ctx)) {
     let st;
-    try { st = JSON.parse(fs.readFileSync(path.join(runDir(ctx, id), 'state.json'), 'utf8')); } catch { unreadable.push(id); continue; }
+    try { st = JSON.parse(readRegularFile(path.join(runDir(ctx, id), 'state.json'), STATE_READ_CAP).toString('utf8')); } catch { unreadable.push(id); continue; }
     const o = st && st.owner;
     if (!o || typeof o !== 'object') { legacy += 1; continue; }
     let mine = false;

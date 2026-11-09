@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { loadSchemaFile, validateSchema } from './schema.mjs';
 import { fail } from './errors.mjs';
-import { atomicWriteJson, readJsonIfExists } from './fs-atomic.mjs';
+import { STATE_READ_CAP, atomicWriteJson, readJsonRegular } from './fs-atomic.mjs';
 
 // finish-line.json: the board of rows that must all become terminal (CONTRACT section 2).
 // States: OPEN, DONE (the closed state, needs evidence), PARKED (needs owner_question),
@@ -13,7 +13,7 @@ export function finishLinePath(ctx) {
 }
 
 export function readFinishLine(ctx) {
-  const fl = readJsonIfExists(finishLinePath(ctx));
+  const fl = readJsonRegular(finishLinePath(ctx), STATE_READ_CAP);
   if (!fl || !Array.isArray(fl.rows)) return { rows: [] };
   return fl;
 }
