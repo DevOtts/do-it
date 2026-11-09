@@ -109,7 +109,12 @@ export function cliMain(argv, opts) {
     if (!args.positionals.length || args.flags.help) {
       result = { outcome: 'USAGE', exit: args.flags.help ? 0 : 1, commands: COMMANDS };
     } else {
-      ctx = makeCtx({ cwd: opts && opts.cwd, env: opts && opts.env });
+      // CP-03 R5-S1-M11: a hook stop names the host's cwd with --cwd and may run the spine from anywhere (the
+      // hook spawns it from the plugin root, which always exists). The cwd's home is found from --cwd; when
+      // that folder is gone or cannot be entered there is no cwd home, and the registry homes still gate.
+      const stopCwd = args.positionals[0] === 'gate' && args.positionals[1] === 'stop' && typeof args.flags.cwd === 'string' && args.flags.cwd
+        ? path.resolve((opts && opts.cwd) || '.', args.flags.cwd) : null;
+      ctx = makeCtx({ cwd: stopCwd || (opts && opts.cwd), env: opts && opts.env });
       redactInit(ctx);
       result = dispatch(ctx, args);
     }

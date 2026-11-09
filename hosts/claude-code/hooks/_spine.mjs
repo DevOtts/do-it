@@ -7,6 +7,8 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
+// The plugin root: a folder that exists as long as the hook does (CP-03 R5-S1-M11 spawns the spine from it).
+export const PLUGIN_ROOT = join(HERE, '..');
 
 export function spineScript() {
   if (process.env.DO_IT_SPINE) return process.env.DO_IT_SPINE;

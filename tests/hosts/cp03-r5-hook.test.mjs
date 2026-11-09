@@ -132,4 +132,25 @@ for (const H of HOOKS) {
     assert.equal(hook(w, H, 'ff-1', x).code, 2);
     assert.ok(Date.now() - t0 < 10000, 'no 20 s timeout');
   });
+
+  test(`CP03 R5-S1-M11 a stop whose cwd was removed or cannot be entered is still refused (${which})`, () => {
+    const w = world();
+    w.env.DO_IT_USER_HOME = path.join(w.home, 'uh');
+    const x = repo(w, 'X');
+    patient(x);
+    startRun(w, x, 'ce-1');
+    const gone = path.join(w.parent, 'gone');
+    assert.equal(hookIn(w, H, 'ce-1', gone, w.home).code, 2, 'cwd deleted');
+    const locked = path.join(w.parent, 'locked');
+    fs.mkdirSync(locked);
+    fs.chmodSync(locked, 0o000);
+    try {
+      assert.equal(hookIn(w, H, 'ce-1', locked, w.home).code, 2, 'cwd at chmod 000');
+    } finally { fs.chmodSync(locked, 0o755); }
+  });
+}
+// the hook process itself runs from `from`; the host's (possibly missing) cwd is only in the payload
+function hookIn(w, hookFile, session, cwd, from) {
+  const r = cp.spawnSync(process.execPath, [hookFile], { input: JSON.stringify({ session_id: session, cwd, hook_event_name: 'Stop' }), cwd: from, env: w.env, encoding: 'utf8' });
+  return { code: r.status, stderr: r.stderr };
 }

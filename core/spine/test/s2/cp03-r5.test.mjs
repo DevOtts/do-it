@@ -235,3 +235,26 @@ function tmpHome(repo) {
   fs.mkdirSync(d, { recursive: true });
   return d;
 }
+
+test('CP03 R5-S1-M11 gate stop with a cwd that is gone or cannot be entered, run from another folder, still gates the session', () => {
+  const repo = mk();
+  patient(repo);
+  const env = { DO_IT_USER_HOME: path.join(repo.home, 'uh') };
+  start(repo, 'ce-1', repo.dir, env);
+  const elsewhere = repo.home;
+  const gone = path.join(repo.dir, '..', path.basename(repo.dir) + '-gone');
+  let g = real(repo, ['gate', 'stop', '--session', 'ce-1', '--cwd', gone], env, elsewhere);
+  assert.equal(g.out.outcome, 'STOP_REFUSED', g.stdout);
+  const locked = path.join(repo.home, 'locked');
+  fs.mkdirSync(locked);
+  fs.chmodSync(locked, 0o000);
+  try {
+    g = real(repo, ['gate', 'stop', '--session', 'ce-1', '--cwd', locked], env, elsewhere);
+    assert.equal(g.out.outcome, 'STOP_REFUSED', g.stdout);
+  } finally { fs.chmodSync(locked, 0o755); }
+  // run from another repo's folder, the --cwd names the home (not the spine's own working folder)
+  const other = mk();
+  g = real(repo, ['gate', 'stop', '--session', 'ce-1', '--cwd', repo.dir], env, other.dir);
+  assert.equal(g.out.outcome, 'STOP_REFUSED', g.stdout);
+  assert.equal(fs.existsSync(other.doIt), false, 'nothing is written in the folder the spine was run from');
+});

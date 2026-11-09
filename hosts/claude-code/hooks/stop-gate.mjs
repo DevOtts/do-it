@@ -10,14 +10,20 @@
 // The gate is scoped to this session: the hook passes its session id and cwd, and the spine looks in every
 // home the session's runs were started in, not only the cwd's (R3-S1-H7).
 // An unreachable or unintelligible spine fails open: a broken gate must not trap the session.
-import { callSpine, readStdinJson } from './_spine.mjs';
+// The spine is spawned from the plugin root, never from the host's cwd: that folder may be gone (a removed
+// worktree) or not enterable, and the spine must still gate the session's runs through its registry
+// (CP-03 R5-S1-M11). The host's cwd reaches the spine only as --cwd.
+import { PLUGIN_ROOT, callSpine, readStdinJson } from './_spine.mjs';
 
 const input = readStdinJson();
 // a blank or whitespace session id is no session (CP-03 S1-L2)
 const sessionId = typeof input.session_id === 'string' && input.session_id.trim() ? input.session_id.trim() : null;
-const cwd = input.cwd || process.cwd();
+let cwd = typeof input.cwd === 'string' && input.cwd ? input.cwd : null;
+if (!cwd) { try { cwd = process.cwd(); } catch { cwd = null; } }
+// with neither a session nor a cwd there is nothing to scope the gate to (the spine would read the plugin's own folder)
+if (!sessionId && !cwd) process.exit(0);
 
-const { json } = callSpine(['gate', 'stop', ...(sessionId ? ['--session', sessionId] : []), '--cwd', cwd, '--json'], cwd);
+const { json } = callSpine(['gate', 'stop', ...(sessionId ? ['--session', sessionId] : []), ...(cwd ? ['--cwd', cwd] : []), '--json'], PLUGIN_ROOT);
 const outcome = json && json.outcome;
 
 if (outcome === 'STOP_REFUSED') {
