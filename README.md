@@ -102,7 +102,7 @@ Hosts without native subagents run the same pipeline, sequentially, as separate 
 The four behaviors that make it hold overnight:
 
 - **Plan once, ask once.** One owner pack, answered with a reply like `1 yes 2 no 3: B`.
-- **Run to the finish line.** A stop-gate refuses to end the turn while rows are open and nothing blocks them.
+- **Run to the finish line.** A stop-gate refuses to end the turn while rows are open and nothing blocks them. If the gate cannot write its own count (disk full, read-only folder, state at the size cap), it keeps refusing and never parks the run until that write error is fixed; each refusal names the error.
 - **Review loops that converge.** The exit is a rule, not a mood: converged, converged with minors, stalled, or over budget.
 - **One home, `.do-it/`.** Same layout standalone or under do-it.
 

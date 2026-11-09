@@ -10,6 +10,7 @@ do-it is the conductor above the *-it family. The spine (`do-it` CLI) is the onl
 4. Human questions go into the single owner pack; never ask mid-run. Answer with `do-it answer`.
 5. At the context ceiling, write a handoff (`do-it handoff`) before the next step.
 6. Close only when every finish-line row is terminal (`do-it status --json`).
+7. The stop gate refuses a stop while your run has open rows, and parks the run after `stop_gate.patience` refusals without progress. A refusal marked `refusal_uncounted` could not be written (disk full, read-only folder, `STATE_TOO_LARGE`): it is not counted, so the run never parks and every stop is refused until the write error it names is fixed. Fix that error; do not wait for a park.
 
 ## Rules
 
