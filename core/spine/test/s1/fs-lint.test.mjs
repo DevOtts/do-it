@@ -27,6 +27,24 @@ test('CP03 R6-S1-M13 lint: no raw file open, read or append in core/spine/src ou
   assert.deepEqual(hits, [], 'route these through fs-atomic.mjs:\n' + hits.join('\n'));
 });
 
+// CP-03 R7-S1-L6: build.mjs bundles core/renderers and core/drivers/secrets into the spine as well, so the
+// same rule holds there.
+test('CP03 R7-S1-L6 lint: no raw file open, read or append in any other bundled source (renderers, secrets drivers)', () => {
+  const core = path.resolve(SRC, '..', '..');
+  const hits = [];
+  for (const sub of ['renderers', path.join('drivers', 'secrets')]) {
+    const dir = path.join(core, sub);
+    if (!fs.existsSync(dir)) continue;
+    for (const name of fs.readdirSync(dir).filter((n) => n.endsWith('.mjs')).sort()) {
+      fs.readFileSync(path.join(dir, name), 'utf8').split('\n').forEach((line, i) => {
+        const m = RAW.exec(line);
+        if (m) hits.push(sub + '/' + name + ':' + (i + 1) + ' ' + m[1] + '  ' + line.trim());
+      });
+    }
+  }
+  assert.deepEqual(hits, [], 'route these through core/spine/src/fs-atomic.mjs:\n' + hits.join('\n'));
+});
+
 test('CP03 R6-S1-M13 lint: fs-atomic.mjs opens for append only through appendRegular', () => {
   const text = fs.readFileSync(path.join(SRC, 'fs-atomic.mjs'), 'utf8');
   assert.doesNotMatch(text, /\bappendFileSync\b|\bcreateReadStream\b|\bcreateWriteStream\b|\breadFileSync\b/);

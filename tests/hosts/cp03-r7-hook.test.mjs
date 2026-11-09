@@ -174,3 +174,24 @@ test('CP03 R7-S1-L5 a run whose events log or owner pack cannot be written still
   assert.ok([0, 2].includes(p.code));
   assert.equal(status(), 'PARKED');
 });
+
+// R7-S1-L6: the bundled `file` secrets driver read .secrets/<name> with a raw read, so a FIFO there hung gate build.
+test('CP03 R7-S1-L6 gate build with a FIFO credential file answers at once: the credential is missing, the run BLOCKED with that reason', { skip: NO_FIFO, timeout: 120000 }, () => {
+  const w = world();
+  const X = repo(w, 'X');
+  const id = startRun(w, X, 'sec');
+  writeJson(path.join(X, '.do-it', 'plan', 'READINESS.json'), { ...readiness([{ id: 's0' }]), credentials: ['API_KEY'] });
+  fs.mkdirSync(path.join(X, '.secrets'));
+  cp.execFileSync('mkfifo', [path.join(X, '.secrets', 'API_KEY')]);
+  const t0 = Date.now();
+  const r = cp.spawnSync(process.execPath, [BIN, 'gate', 'build', '--run', id, '--json'], { cwd: X, env: w.env, encoding: 'utf8', timeout: 15000 });
+  assert.ok(!r.error, 'gate build must not hang: ' + (r.error && r.error.code));
+  assert.ok(Date.now() - t0 < 10000);
+  const out = JSON.parse(r.stdout.trim().split('\n').pop());
+  assert.equal(out.outcome, 'BLOCKED', r.stdout);
+  assert.deepEqual(out.missing, ['API_KEY']);
+  // the same answer as a missing credential file (CONTRACT: BLOCKED carries its reason, and does not gate)
+  const st = JSON.parse(fs.readFileSync(path.join(X, '.do-it', 'runs', id, 'state.json'), 'utf8'));
+  assert.equal(st.status, 'BLOCKED');
+  assert.match(st.status_reason.reason, /API_KEY/);
+});

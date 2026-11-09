@@ -4576,7 +4576,10 @@ function secretsFileResolve(name, ref, ctx) {
   const rel = path.relative(dir, file);
   if (!rel || rel.startsWith('..') || path.isAbsolute(rel)) return { ok: false, detail: 'name_outside_ref' };
   let text;
-  try { text = fs.readFileSync(file, 'utf8'); } catch { return { ok: false, detail: 'file_missing' }; }
+  // CP-03 R7-S1-L6: a FIFO or a device at .secrets/<name> is refused at once, never read (a raw read hung)
+  try { text = readRegularFile(file, REGISTRY_READ_CAP).toString('utf8'); } catch (e) {
+    return { ok: false, detail: e && e.code && e.code !== 'ENOENT' ? 'file_unreadable' : 'file_missing' };
+  }
   const value = text.replace(/\r?\n$/, '');
   if (!value) return { ok: false, detail: 'file_empty' };
   return { ok: true, value, length: value.length };
