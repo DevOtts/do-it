@@ -148,7 +148,29 @@ for (const H of HOOKS) {
       assert.equal(hookIn(w, H, 'ce-1', locked, w.home).code, 2, 'cwd at chmod 000');
     } finally { fs.chmodSync(locked, 0o755); }
   });
+
+  test(`CP03 R5-S1-M12 a case twin's stop never deletes the owner's registry entry (${which})`, () => {
+    const w = world();
+    w.env.DO_IT_USER_HOME = path.join(w.home, 'uh');
+    const x = repo(w, 'X');
+    patient(x);
+    const a = startRun(w, x, 'case-sess');
+    // progress before each stop, so patience never parks the run
+    const fl = path.join(x, '.do-it', 'finish-line.json');
+    fs.writeFileSync(path.join(x, 'ev.txt'), 'x\n');
+    const progress = () => {
+      const b = JSON.parse(fs.readFileSync(fl, 'utf8'));
+      const r = b.rows.find((row) => row.run_id === a && row.state === 'OPEN');
+      r.state = 'DONE'; r.evidence = 'ev.txt';
+      fs.writeFileSync(fl, JSON.stringify(b, null, 2) + '\n');
+    };
+    assert.equal(hook(w, H, 'case-sess', w.parent).code, 2);
+    assert.equal(hook(w, H, 'CASE-SESS', w.parent).code, 0, 'the twin owns nothing');
+    progress();
+    assert.equal(hook(w, H, 'case-sess', w.parent).code, 2, 'the owner is still gated from the parent');
+  });
 }
+
 // the hook process itself runs from `from`; the host's (possibly missing) cwd is only in the payload
 function hookIn(w, hookFile, session, cwd, from) {
   const r = cp.spawnSync(process.execPath, [hookFile], { input: JSON.stringify({ session_id: session, cwd, hook_event_name: 'Stop' }), cwd: from, env: w.env, encoding: 'utf8' });

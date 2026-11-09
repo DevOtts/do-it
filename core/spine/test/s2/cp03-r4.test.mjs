@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { after, test } from 'node:test';
 import { BIN, mkRepo, real, readJson, runDirOf, writeJson } from '../helpers.mjs';
+import { sessionFolderName } from '../../src/sessions.mjs';
 
 const made = [];
 const mk = (o) => { const r = mkRepo(o); made.push(r.dir, r.home); return r; };
@@ -109,7 +110,9 @@ test('CP03 R4-S1-H8 legitimate callers keep working: needs_human with a question
 });
 
 // R4-S1-M8: the session registry is one file per run, so parallel starts never lose each other.
-const regDir = (repo, s, root) => path.join(root || path.join(repo.home, '.do-it'), 'sessions', s);
+// R5-S1-M12: the folder is named by the digest of the exact session id; the pre-release single file kept the plain id
+const regDir = (repo, s, root) => path.join(root || path.join(repo.home, '.do-it'), 'sessions', sessionFolderName(s));
+const legacyFile = (repo, s, root) => path.join(root || path.join(repo.home, '.do-it'), 'sessions', s) + '.json';
 const entries = (repo, s, root) => { try { return fs.readdirSync(regDir(repo, s, root)).filter((n) => n.endsWith('.json') && !n.startsWith('.')).map((n) => readJson(path.join(regDir(repo, s, root), n))); } catch { return []; } };
 
 function spawnAsync(argv, opts) {
@@ -171,12 +174,12 @@ test('CP03 R4-S1-M8 the pre-release single-file registry is still read and migra
   const doIt = fs.realpathSync(repo.doIt);
   // rewrite the registry in the old layout: sessions/mig.json with runs: [...], plus a dead entry
   fs.rmSync(regDir(repo, 'mig'), { recursive: true });
-  writeJson(regDir(repo, 'mig') + '.json', { session_id: 'mig', runs: [{ run_id: a, home: doIt, root: fs.realpathSync(repo.dir) }, { run_id: 'r-gone', home: path.join(repo.home, 'nowhere', '.do-it') }] });
+  writeJson(legacyFile(repo, 'mig'), { session_id: 'mig', runs: [{ run_id: a, home: doIt, root: fs.realpathSync(repo.dir) }, { run_id: 'r-gone', home: path.join(repo.home, 'nowhere', '.do-it') }] });
   const y = path.join(repo.home, 'Y');
   fs.mkdirSync(y);
   const stop = hookStop(repo, 'mig', y);
   assert.equal(stop.out.outcome, 'STOP_REFUSED', 'a legacy entry still gates: ' + stop.stdout);
-  assert.ok(!fs.existsSync(regDir(repo, 'mig') + '.json'), 'the old file is migrated away');
+  assert.ok(!fs.existsSync(legacyFile(repo, 'mig')), 'the old file is migrated away');
   assert.deepEqual(entries(repo, 'mig').map((e) => e.run_id), [a], 'the live entry is carried over, the dead one is not');
   // a second run of the session; when the first is concluded-away, only its own file goes
   const b = start(repo, 'mig');
@@ -196,7 +199,7 @@ test('CP03 R4-S1-M7 a garbled, directory or unreadable registry is reported; the
   writeJson(path.join(repo.doIt, 'settings.json'), { stop_gate: { patience: 50 } });
   assert.equal(hookStop(repo, 'reg-1', null, env).out.outcome, 'STOP_REFUSED');
   const legacy = path.join(userHome, 'sessions', 'reg-1.json');
-  const dir = path.join(userHome, 'sessions', 'reg-1');
+  const dir = path.join(userHome, 'sessions', sessionFolderName('reg-1'));
   const check = (label) => {
     const r = hookStop(repo, 'reg-1', null, env);
     assert.equal(r.code, 1, label + ': ' + r.stdout);

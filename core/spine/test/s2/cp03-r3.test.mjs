@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { after, test } from 'node:test';
 import { mkRepo, real, readJson, runDirOf, sha256Bytes, writeJson } from '../helpers.mjs';
+import { sessionFolderName } from '../../src/sessions.mjs';
 
 // temp repos, their user homes and sibling folders are removed when the file is done
 const made = [];
@@ -123,7 +124,8 @@ test('CP03 R3-S1-H7 a stop from a sibling repo or a non-git folder still finds t
 test('CP03 R3-S1-H7 the registry records start, resume and take-over; stale entries are pruned', () => {
   const repo = mk({ commit: true });
   // one file per run (R4-S1-M8): sessions/<session>/<run>.json
-  const regDir = (s, root) => path.join(root || path.join(repo.home, '.do-it'), 'sessions', s);
+  // R5-S1-M12: the folder is named by the digest of the exact session id
+  const regDir = (s, root) => path.join(root || path.join(repo.home, '.do-it'), 'sessions', sessionFolderName(s));
   const entries = (s, root) => { try { return fs.readdirSync(regDir(s, root)).filter((n) => n.endsWith('.json')).map((n) => readJson(path.join(regDir(s, root), n))); } catch { return []; } };
   const a = start(repo, 'sess-A');
   real(repo, ['next', '--run', a]);

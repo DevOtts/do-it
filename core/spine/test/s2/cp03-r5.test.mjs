@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { after, test } from 'node:test';
 import { BIN, mkRepo, real, readJson, runDirOf, writeJson } from '../helpers.mjs';
+import { sessionFolderName } from '../../src/sessions.mjs';
 
 const made = [];
 const mk = (o) => { const r = mkRepo(o); made.push(r.dir, r.home); return r; };
@@ -257,4 +258,44 @@ test('CP03 R5-S1-M11 gate stop with a cwd that is gone or cannot be entered, run
   g = real(repo, ['gate', 'stop', '--session', 'ce-1', '--cwd', repo.dir], env, other.dir);
   assert.equal(g.out.outcome, 'STOP_REFUSED', g.stdout);
   assert.equal(fs.existsSync(other.doIt), false, 'nothing is written in the folder the spine was run from');
+});
+
+test('CP03 R5-S1-M12 session ids that differ only in case never share or prune each other\'s registry entries; the round-4 layout migrates', () => {
+  const parent = mk();
+  const env = { DO_IT_USER_HOME: path.join(parent.home, 'uh') };
+  const x = subRepo(parent, 'X');
+  const y = subRepo(parent, 'Y');
+  for (const r of [x, y]) patient(r);
+  const a = start(x, 'case-sess', x.dir, env);
+  let g = hookStop(x, 'case-sess', parent.dir, env);
+  assert.equal(g.out.outcome, 'STOP_REFUSED', g.stdout);
+  // the reviewer's twin: its stop from the parent finds nothing of its own and deletes nothing
+  g = hookStop(x, 'CASE-SESS', parent.dir, env);
+  assert.equal(g.out.outcome, 'STOP_ALLOWED', g.stdout);
+  const sessions = path.join(env.DO_IT_USER_HOME, 'sessions');
+  const folder = path.join(sessions, sessionFolderName('case-sess'));
+  assert.equal(fs.readdirSync(folder).filter((n) => n.endsWith('.json')).length, 1, 'the owner\'s entry is still there');
+  g = hookStop(x, 'case-sess', parent.dir, env);
+  assert.equal(g.out.outcome, 'STOP_REFUSED', 'the owner is still gated from the parent: ' + g.stdout);
+  assert.notEqual(sessionFolderName('case-sess'), sessionFolderName('CASE-SESS'));
+
+  // round-4 layout: each session's entry under its plain id (one folder on a case-insensitive disk)
+  const b = start(y, 'CASE-SESS', y.dir, env);
+  const moveToOld = (sid, runId) => {
+    const from = path.join(sessions, sessionFolderName(sid), runId + '.json');
+    const doc = readJson(from);
+    fs.rmSync(path.join(sessions, sessionFolderName(sid)), { recursive: true });
+    writeJson(path.join(sessions, sid, runId + '.json'), doc);
+  };
+  moveToOld('case-sess', a);
+  moveToOld('CASE-SESS', b);
+  g = hookStop(x, 'case-sess', parent.dir, env);
+  assert.equal(g.out.outcome, 'STOP_REFUSED', g.stdout);
+  assert.equal(g.out.run_id, a, 'only its own run');
+  assert.ok(fs.existsSync(path.join(sessions, sessionFolderName('case-sess'), a + '.json')), 'migrated to the digest folder');
+  assert.ok(fs.existsSync(path.join(sessions, 'CASE-SESS', b + '.json')), 'the twin\'s entry is left where it was');
+  g = hookStop(y, 'CASE-SESS', parent.dir, env);
+  assert.equal(g.out.outcome, 'STOP_REFUSED', g.stdout);
+  assert.equal(g.out.run_id, b);
+  assert.ok(fs.existsSync(path.join(sessions, sessionFolderName('CASE-SESS'), b + '.json')));
 });
