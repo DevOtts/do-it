@@ -445,8 +445,9 @@ function gateAdvance(ctx, args) {
 const ESCALATE_FROM = ['NEEDS_HUMAN', 'FAILED'];
 function gateEscalate(ctx, args) {
   const f = args.flags;
-  const reason = typeof f.reason === 'string' ? f.reason.trim() : '';
-  if (!reason) throw fail('USAGE', 1, { message: 'gate escalate requires --reason "<why the owner must take the run>"' });
+  // CP-03 R6-S1-L4: the same reason rule as every status that ends the gate (no placeholder, no invisible text)
+  const reason = cleanReason(f.reason);
+  if (!reason) throw fail('USAGE', 1, { message: 'gate escalate requires --reason "<why the owner must take the run>" (a placeholder or invisible text is no reason)' });
   const runId = selectRunId(ctx, f);
   const state = loadState(ctx, runId);
   if (!ESCALATE_FROM.includes(state.status)) {

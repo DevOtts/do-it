@@ -25,7 +25,7 @@ import { resolveSession } from './session.mjs';
 import { registerSessionRun } from './sessions.mjs';
 import { loadSettings } from './settings.mjs';
 import { gateStop } from './stopgate.mjs';
-import { advanceRunStatus, loadState, newRunId, newState, runDir, selectRunId, takeOvers, unreadableRuns, writeState } from './state.mjs';
+import { advanceRunStatus, cleanReason, loadState, newRunId, newState, runDir, selectRunId, takeOvers, unreadableRuns, writeState } from './state.mjs';
 import { gateVerify } from './verify.mjs';
 import { DO_IT_VERSION } from './version.mjs';
 
@@ -230,8 +230,9 @@ export function gateAdvance(ctx, args) {
 export const ESCALATE_FROM = ['NEEDS_HUMAN', 'FAILED'];
 export function gateEscalate(ctx, args) {
   const f = args.flags;
-  const reason = typeof f.reason === 'string' ? f.reason.trim() : '';
-  if (!reason) throw fail('USAGE', 1, { message: 'gate escalate requires --reason "<why the owner must take the run>"' });
+  // CP-03 R6-S1-L4: the same reason rule as every status that ends the gate (no placeholder, no invisible text)
+  const reason = cleanReason(f.reason);
+  if (!reason) throw fail('USAGE', 1, { message: 'gate escalate requires --reason "<why the owner must take the run>" (a placeholder or invisible text is no reason)' });
   const runId = selectRunId(ctx, f);
   const state = loadState(ctx, runId);
   if (!ESCALATE_FROM.includes(state.status)) {

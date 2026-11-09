@@ -43,6 +43,7 @@ test('CP03 R6-S1-L1 a placeholder or invisible slice reason is no reason: the sl
   const st = stateOf(repo, a);
   if (st.status === 'BLOCKED') assert.match(st.status_reason.reason, /\(STALE_HEAD\)$/);
 });
+
 test('CP03 R6-S1-L3 a board whose rows are not rows refuses the stop as unreadable, never INTERNAL_ERROR or allowed', () => {
   const repo = mk();
   patient(repo);
@@ -56,3 +57,20 @@ test('CP03 R6-S1-L3 a board whose rows are not rows refuses the stop as unreadab
   }
 });
 
+test('CP03 R6-S1-L4 gate escalate refuses a placeholder or invisible reason', () => {
+  const repo = mk();
+  patient(repo);
+  const a = start(repo, 'r6l4-s');
+  assert.equal(real(repo, ['gate', 'advance', '--run', a, '--to', 'BUILDING']).out.outcome, 'ADVANCED');
+  writeJson(path.join(repo.dir, 'results', 'r.json'), res(a, { status: 'failed', exit_code: 1, reason: 'the build broke on main' }));
+  const f = real(repo, ['record', '--run', a, '--result', 'results/r.json']);
+  assert.equal(stateOf(repo, a).status, 'FAILED', f.stdout);
+  for (const reason of ['.', '​', 'n/a', '  ']) {
+    const e = real(repo, ['gate', 'escalate', '--run', a, '--reason', reason]);
+    assert.equal(e.out.outcome, 'USAGE', JSON.stringify(reason) + ' ' + e.stdout);
+    assert.equal(stateOf(repo, a).status, 'FAILED');
+  }
+  const e = real(repo, ['gate', 'escalate', '--run', a, '--reason', 'owner must pick the fix']);
+  assert.equal(e.out.outcome, 'ESCALATED', e.stdout);
+  assert.equal(stateOf(repo, a).status_reason.reason, 'owner must pick the fix');
+});
