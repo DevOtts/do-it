@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { fail } from './errors.mjs';
-import { atomicWrite, atomicWriteJson } from './fs-atomic.mjs';
+import { BULK_READ_CAP, atomicWrite, atomicWriteJson, readRegularFile, readText } from './fs-atomic.mjs';
 import { sha256File } from './hash.mjs';
 import { DO_IT_VERSION } from './version.mjs';
 
@@ -19,7 +19,7 @@ export function cmdInstall(ctx) {
   const binDir = ctx.env.DO_IT_BIN_DIR ? path.resolve(ctx.cwd, ctx.env.DO_IT_BIN_DIR) : path.join(ctx.userHome, '.do-it', 'bin');
   const dest = path.join(binDir, 'do-it');
   fs.mkdirSync(binDir, { recursive: true });
-  atomicWrite(dest, fs.readFileSync(source));
+  atomicWrite(dest, readRegularFile(source, BULK_READ_CAP));
   fs.chmodSync(dest, 0o755);
   let printed = '';
   try {
@@ -37,7 +37,7 @@ function loadCompanions(ctx) {
     path.join(ctx.root, 'core', 'companions.json'),
   ];
   for (const file of candidates) {
-    if (fs.existsSync(file)) return JSON.parse(fs.readFileSync(file, 'utf8'));
+    if (fs.existsSync(file)) return JSON.parse(readText(file));
   }
   throw fail('INSTALL_NO_COMPANIONS', 1, { message: 'core/companions.json not found', tried: candidates });
 }
@@ -51,7 +51,7 @@ export function cmdInstallCompanions(ctx, args) {
   const required = loadCompanions(ctx).companions.filter((c) => c.required);
   const stateFile = path.join(ctx.home, 'companions-installed.json');
   let done = {};
-  try { done = JSON.parse(fs.readFileSync(stateFile, 'utf8')); } catch { done = {}; }
+  try { done = JSON.parse(readText(stateFile)); } catch { done = {}; }
   const have = new Set(done[host] || []);
   const cmdOf = (c) => ['skills', 'add', c.repo, '-a', host];
   const todo = required.filter((c) => !have.has(c.name));

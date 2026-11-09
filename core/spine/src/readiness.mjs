@@ -1,13 +1,13 @@
-import fs from 'node:fs';
 import path from 'node:path';
 import { fail } from './errors.mjs';
 import { appendEvent } from './events.mjs';
-import { finishLineUpsert, readFinishLine, writeFinishLine } from './finish-line.mjs';
+import { STATE_ACCEPT_CAP, STATE_HEADROOM, STATE_READ_CAP, jsonBytes, readRegularFile } from './fs-atomic.mjs';
+import { adoptsUnattributed, findRow, finishLineUpsert, hasRow, readFinishLine, writeFinishLine } from './finish-line.mjs';
 import { sha256Bytes } from './hash.mjs';
 import { loadSchemaFile, validateSchema } from './schema.mjs';
 import { resolveCredentials } from './secrets.mjs';
 import { loadSettings } from './settings.mjs';
-import { loadState, selectRunId, writeState } from './state.mjs';
+import { guardStatusEntry, loadState, selectRunId, writeState } from './state.mjs';
 
 export const CLASS_TIER = { deterministic: 'T3', gather: 'T3', implementation: 'T2', hard: 'T1' };
 export const GATE_BUILD_FROM = ['INTAKE', 'PLANNING', 'AWAIT_RATIFY', 'BLOCKED', 'NEEDS_HUMAN'];
@@ -32,8 +32,10 @@ export function decisionList(decisions) {
 export function checkReadiness(ctx) {
   const file = readinessPath(ctx);
   let bytes;
-  try { bytes = fs.readFileSync(file); } catch (e) {
+  try { bytes = readRegularFile(file, STATE_READ_CAP); } catch (e) {
     if (e.code === 'ENOENT') return { ok: false, outcome: 'READINESS_MISSING', extra: { file } };
+    // CP-03 R6-S1-M13: a FIFO, a device or an oversized file is an invalid verdict, never a hang
+    if (e.code === 'ENOTREG' || e.code === 'EFBIG') return { ok: false, outcome: 'READINESS_INVALID', extra: { file, errors: [{ pointer: '', message: e.message }] } };
     throw e;
   }
   let data;
@@ -141,9 +143,20 @@ export function seedCheckpoints(state, fl, data) {
   };
   for (const c of block.checkpoints) {
     const id = CHECKPOINT_ROW_PREFIX + c.id;
-    if (!fl.rows.some((r) => r.id === id)) finishLineUpsert(fl, id, { kind: 'package' }, state.run_id);
+    if (!hasRow(fl, id, state.run_id, adoptsUnattributed(state))) finishLineUpsert(fl, id, { kind: 'package' }, state.run_id, adoptsUnattributed(state));
   }
   return block.count;
+}
+
+// CP-03 R8-S1-M15: measured exactly as atomicWrite will write it (jsonBytes = after redaction), and accepted
+// only up to the read cap minus the headroom the run's own bookkeeping needs.
+export function planTooLarge(state, fl) {
+  const limit = 'the ' + STATE_ACCEPT_CAP + '-byte limit (the ' + STATE_READ_CAP + '-byte state cap less ' + STATE_HEADROOM + ' bytes of headroom)';
+  const stateBytes = jsonBytes(state).length;
+  if (stateBytes > STATE_ACCEPT_CAP) return { pointer: '/slices', message: 'the plan seeds a state of ' + stateBytes + ' bytes, above ' + limit + ' (' + state.slices.length + ' slices); split the plan' };
+  const flBytes = jsonBytes(fl).length;
+  if (flBytes > STATE_ACCEPT_CAP) return { pointer: '/slices', message: 'the plan seeds a finish line of ' + flBytes + ' bytes, above ' + limit + '; split the plan' };
+  return null;
 }
 
 export function seedSlices(state, data) {
@@ -184,26 +197,37 @@ export function gateBuild(ctx, args) {
     const provider = settings.values.secrets.provider;
     const reason = 'missing credential ' + missing.map((m) => m.name).join(', ') + ' via provider ' + provider;
     const from = state.status;
+    // CP-03 R5-S1-H9: BLOCKED goes through the one status-entry guard, and the reason is kept in state
+    const stored = guardStatusEntry(from, 'BLOCKED', { reason });
     state.status = 'BLOCKED';
+    if (stored) state.status_reason = { status: 'BLOCKED', reason: stored, stage: state.stage, at: now };
     writeState(ctx, state);
-    finishLineUpsert(fl, CRED_ROW_ID, { kind: 'package', state: 'BLOCKED', reason, evidence: null }, runId);
+    finishLineUpsert(fl, CRED_ROW_ID, { kind: 'package', state: 'BLOCKED', reason, evidence: null }, runId, adoptsUnattributed(state));
     writeFinishLine(ctx, fl);
     appendEvent(ctx, runId, { event: 'build_blocked', stage: state.stage, host: state.host, verdict: 'CREDENTIAL_MISSING', detail: { from, credentials: missing.map((m) => m.name), provider } });
     return { outcome: 'BLOCKED', exit: 3, run_id: runId, status: 'BLOCKED', reason, missing: missing.map((m) => m.name), provider };
   }
   const from = state.status;
+  const adopt = adoptsUnattributed(state);
   seedSlices(state, v.data);
   const checkpoints = seedCheckpoints(state, fl, v.data);
   state.gates.build = { approved: true, owner: 'readiness', date: now, readiness_sha256: v.sha256 };
   state.status = 'BUILDING';
-  writeState(ctx, state);
   for (const s of state.slices) {
-    if (!fl.rows.some((r) => r.id === s.id)) finishLineUpsert(fl, s.id, { kind: 'package' }, runId);
+    if (!hasRow(fl, s.id, runId, adopt)) finishLineUpsert(fl, s.id, { kind: 'package' }, runId, adopt);
   }
-  const credRow = fl.rows.find((r) => r.id === CRED_ROW_ID);
+  const credRow = findRow(fl, CRED_ROW_ID, runId, adopt);
   if (credRow && credRow.state === 'BLOCKED') {
-    finishLineUpsert(fl, CRED_ROW_ID, { state: 'DONE', reason: null, evidence: path.relative(ctx.repo, readinessPath(ctx)) }, runId);
+    finishLineUpsert(fl, CRED_ROW_ID, { state: 'DONE', reason: null, evidence: path.relative(ctx.repo, readinessPath(ctx)) }, runId, adopt);
   }
+  // CP-03 R7-S1-M14: a plan whose seeded state or board would pass the spine's own read cap is refused
+  // before anything is written, so the run stays where it was (gated) and the error names the plan.
+  const tooBig = planTooLarge(state, fl);
+  if (tooBig) {
+    appendEvent(ctx, runId, { event: 'build_refused', stage: state.stage, host: state.host, verdict: 'READINESS_INVALID', detail: { errors: [tooBig] } });
+    throw fail('READINESS_INVALID', 1, { run_id: runId, status: from, file: readinessPath(ctx), errors: [tooBig] });
+  }
+  writeState(ctx, state);
   writeFinishLine(ctx, fl);
   appendEvent(ctx, runId, { event: 'build_approved', stage: state.stage, host: state.host, verdict: 'READINESS_OK', detail: { from, readiness_sha256: v.sha256, slices: state.slices.length, review_checkpoints: checkpoints } });
   return { outcome: 'READINESS_OK', exit: 0, run_id: runId, status: 'BUILDING', slices: state.slices.map((s) => s.id), review_checkpoints: checkpoints };

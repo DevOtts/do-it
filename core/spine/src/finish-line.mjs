@@ -1,7 +1,8 @@
+import fs from 'node:fs';
 import path from 'node:path';
 import { loadSchemaFile, validateSchema } from './schema.mjs';
 import { fail } from './errors.mjs';
-import { atomicWriteJson, readJsonIfExists } from './fs-atomic.mjs';
+import { STATE_READ_CAP, atomicWriteJson, readJsonRegular } from './fs-atomic.mjs';
 
 // finish-line.json: the board of rows that must all become terminal (CONTRACT section 2).
 // States: OPEN, DONE (the closed state, needs evidence), PARKED (needs owner_question),
@@ -12,9 +13,33 @@ export function finishLinePath(ctx) {
   return path.join(ctx.home, 'finish-line.json');
 }
 
-export function readFinishLine(ctx) {
-  const fl = readJsonIfExists(finishLinePath(ctx));
-  if (!fl || !Array.isArray(fl.rows)) return { rows: [] };
+// CP-03 R5-S1-L4: a board that cannot be read is a named refusal (FINISH_LINE_UNREADABLE, with the file and
+// the cause, never its content), not an INTERNAL_ERROR, so `next` after a park tells the agent what to fix.
+export function readFinishLine(ctx, opts) {
+  const file = finishLinePath(ctx);
+  let fl;
+  try { fl = readJsonRegular(file, STATE_READ_CAP); } catch (e) {
+    const error = String(e && e.code ? e.code + ': ' + e.message : (e && e.message) || e);
+    throw fail('FINISH_LINE_UNREADABLE', 1, { file, error, message: 'finish-line.json cannot be read (' + error + '); restore it from git or fix it by hand, then run the command again' });
+  }
+  if (!fl || !Array.isArray(fl.rows)) {
+    // CP-03 R5-S1-L2: on the stop path a board that parses but is not { rows: [...] } is as unknown as one
+    // that does not parse (A16 fails closed); a missing board is still an empty one
+    if (opts && opts.strict && fs.existsSync(file)) {
+      const error = 'EBOARD: rows is not a list in ' + file;
+      throw fail('FINISH_LINE_UNREADABLE', 1, { file, error, message: 'finish-line.json cannot be read (' + error + '); restore it from git or fix it by hand, then run the command again' });
+    }
+    return { rows: [] };
+  }
+  // CP-03 R6-S1-L3: on the stop path every row must be a row (an object with a string id and state); a null or
+  // a number in rows is as unknown as a garbled board, never an INTERNAL_ERROR or an empty board
+  if (opts && opts.strict) {
+    const bad = fl.rows.findIndex((r) => !r || typeof r !== 'object' || Array.isArray(r) || typeof r.id !== 'string' || typeof r.state !== 'string');
+    if (bad !== -1) {
+      const error = 'EBOARD: row ' + bad + ' is not an object with a string id and state in ' + file;
+      throw fail('FINISH_LINE_UNREADABLE', 1, { file, error, message: 'finish-line.json cannot be read (' + error + '); restore it from git or fix it by hand, then run the command again' });
+    }
+  }
   return fl;
 }
 
@@ -24,9 +49,34 @@ export function writeFinishLine(ctx, fl) {
   atomicWriteJson(finishLinePath(ctx), fl);
 }
 
-// A row carries the run that wrote it (`run_id`); a row written before that existed has none.
-export function finishLineUpsert(fl, id, patch, runId) {
-  let row = fl.rows.find((r) => r.id === id);
+// A row's identity is (run_id, id): row ids are namespaced per run, so two runs of one preset (or two
+// plans with the same slice ids) each get their own rows (CP-03 S1-H1). A row written before run_id
+// existed has none. Only a legacy run (state with no owner object, written by 1.0.x) may adopt such a
+// row; a 1.1 run never does, or a 1.0.x board's rows would stand in for the run's own and it would
+// seed nothing (CP-03 R2-S1-H3). `adopt` is false unless the caller passes adoptsUnattributed(state).
+// A legacy run that `resume` later bound to a session keeps adopting (owner.adopted_legacy, CP-03 R3-L7).
+export function adoptsUnattributed(state) {
+  if (!state) return false;
+  const o = state.owner;
+  return !(o && typeof o === 'object') || o.adopted_legacy === true;
+}
+
+export function findRow(fl, id, runId, adopt) {
+  const rid = runId || null;
+  if (rid) {
+    const own = fl.rows.find((r) => r.id === id && r.run_id === rid);
+    if (own) return own;
+    if (!adopt) return null;
+  }
+  return fl.rows.find((r) => r.id === id && !r.run_id) || null;
+}
+
+export function hasRow(fl, id, runId, adopt) {
+  return !!findRow(fl, id, runId, adopt);
+}
+
+export function finishLineUpsert(fl, id, patch, runId, adopt) {
+  let row = findRow(fl, id, runId, adopt);
   if (!row) {
     row = { id, kind: 'dod', state: 'OPEN', evidence: null, owner_question: null, reason: null, archived_to: null };
     if (runId) row.run_id = runId;
@@ -38,8 +88,10 @@ export function finishLineUpsert(fl, id, patch, runId) {
   return row;
 }
 
-// The rows one run answers for. A hook stop is strict: rows without a run_id (older boards, other
-// runs) never gate it. An explicit `gate stop` also counts unattributed rows, as 1.0.x did.
+// The rows one run answers for: its own, plus unattributed rows of an older board only when the run may
+// adopt them. Every caller passes adoptsUnattributed(state), the same rule seeding uses: next, status,
+// handoff, conclude and both stop paths (CP-03 R3-S1-M6). A 1.1 run therefore never answers for, and is
+// never held by, a 1.0.x row that `record` would refuse to let it close; a legacy run still counts them.
 export function rowsForRun(fl, runId, includeUnattributed) {
   return { rows: fl.rows.filter((r) => r.run_id === runId || (includeUnattributed && !r.run_id)) };
 }
@@ -63,12 +115,21 @@ export function rowClosed(row) {
 // A package row (a slice) closes by itself once every one of its case rows
 // (`T-<slice>-<n>`) is terminal: DONE when all are DONE, else BLOCKED naming the
 // ones that are not. A package with no case rows, or with one still open, is left alone.
-export function autoClosePackages(fl) {
+// Case rows count only for the package of the same run (rows are namespaced per run). An unattributed
+// row (an older board) pairs only with an unattributed package, or with the legacy run named by
+// `legacyRunId` (the one run allowed to adopt it): a 1.1 package never closes on a 1.0.x case row.
+function sameRun(pkg, c, legacyRunId) {
+  if ((pkg.run_id || null) === (c.run_id || null)) return true;
+  if (!legacyRunId) return false;
+  return (!c.run_id && pkg.run_id === legacyRunId) || (!pkg.run_id && c.run_id === legacyRunId);
+}
+
+export function autoClosePackages(fl, legacyRunId) {
   const closed = [];
   for (const pkg of fl.rows) {
     if (pkg.kind !== 'package' || pkg.state !== 'OPEN' || pkg.id.includes(':')) continue;
     const re = new RegExp('^T-' + pkg.id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '-\\d');
-    const cases = fl.rows.filter((r) => r.kind === 'dod' && re.test(r.id));
+    const cases = fl.rows.filter((r) => r.kind === 'dod' && sameRun(pkg, r, legacyRunId) && re.test(r.id));
     if (!cases.length || !cases.every(rowTerminal)) continue;
     const notDone = cases.filter((r) => r.state !== 'DONE');
     if (notDone.length) {

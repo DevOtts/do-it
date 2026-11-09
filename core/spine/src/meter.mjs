@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { fail } from './errors.mjs';
 import { buildEventRow } from './events.mjs';
-import { appendLine } from './fs-atomic.mjs';
+import { appendJsonLine } from './fs-atomic.mjs';
 import { loadSchemaFile, validateSchema } from './schema.mjs';
 import { loadState, selectRunId } from './state.mjs';
 
@@ -39,6 +39,6 @@ export function cmdMeter(ctx, args) {
   if (input.extra !== undefined) row.extra = input.extra;
   const errors = validateSchema(loadSchemaFile('token-meter.schema.json'), row);
   if (errors.length) throw fail('METER_ROW_INVALID', 1, { errors });
-  appendLine(meterPath(ctx, runId), JSON.stringify(row));
+  appendJsonLine(meterPath(ctx, runId), row);
   return { outcome: 'METER_APPENDED', exit: 0, run_id: runId, row };
 }

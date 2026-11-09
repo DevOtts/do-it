@@ -1,6 +1,6 @@
 import path from 'node:path';
 import { fail } from './errors.mjs';
-import { appendLine } from './fs-atomic.mjs';
+import { appendJsonLine } from './fs-atomic.mjs';
 import { loadSchemaFile, validateSchema } from './schema.mjs';
 
 export const EVENT_FIELDS = ['ts', 'run_id', 'slice_id', 'stage', 'persona', 'tier', 'model', 'host', 'event', 'parent_id', 'verdict'];
@@ -23,6 +23,6 @@ export function appendEvent(ctx, runId, fields) {
   const row = buildEventRow(ctx, runId, fields);
   const errors = validateSchema(loadSchemaFile('events.schema.json'), row);
   if (errors.length) throw fail('EVENT_INVALID', 1, { errors });
-  appendLine(eventsPath(ctx, runId), JSON.stringify(row));
+  appendJsonLine(eventsPath(ctx, runId), row);
   return row;
 }

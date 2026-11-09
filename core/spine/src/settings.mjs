@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { fail } from './errors.mjs';
+import { REGISTRY_READ_CAP, readRegularFile, readText } from './fs-atomic.mjs';
 import { loadSchemaFile, schemaEscape, validateSchema } from './schema.mjs';
 
 export const SETTINGS_DEFAULTS = {
@@ -39,14 +40,14 @@ export function settingsHostSchema(ctx, name) {
   if (!dir) return { error: 'no host "' + name + '" is installed to validate state.' + name };
   let entry;
   try {
-    entry = JSON.parse(fs.readFileSync(path.join(dir, name, 'adapter.manifest.json'), 'utf8')).state_store;
+    entry = JSON.parse(readText(path.join(dir, name, 'adapter.manifest.json'))).state_store;
   } catch (e) {
     return { error: 'host "' + name + '" manifest is unreadable: ' + e.message };
   }
   if (!entry || !entry.settings_schema) return { error: 'host "' + name + '" declares no state_store.settings_schema for state.' + name };
   const file = path.join(dir, name, entry.settings_schema);
   try {
-    return { schema: JSON.parse(fs.readFileSync(file, 'utf8')) };
+    return { schema: JSON.parse(readText(file)) };
   } catch (e) {
     return { error: 'host "' + name + '" settings schema is unreadable: ' + e.message };
   }
@@ -174,7 +175,7 @@ export function loadSettings(ctx, setFlags) {
     if (!exists) continue;
     let parsed;
     try {
-      parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
+      parsed = JSON.parse(readRegularFile(file, REGISTRY_READ_CAP).toString('utf8'));
     } catch (e) {
       parseErrors.push({ file, pointer: '', message: 'JSON parse error: ' + e.message });
       continue;

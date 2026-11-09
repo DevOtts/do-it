@@ -41,6 +41,8 @@ const flFile = (repo) => path.join(repo.doIt, 'finish-line.json');
 const eventsOf = (repo, id) => readJsonl(path.join(runDirOf(repo, id), 'events.jsonl'));
 const packOf = (repo, id) => readJson(path.join(runDirOf(repo, id), 'owner-pack.json'));
 
+// A 1.1 run answers only for rows tagged with its id (CP-03 R2-S1-H3, R3-S1-M6): fixtures tag theirs.
+const own = (runId, rows) => rows.map((r) => ({ ...r, run_id: runId }));
 function flRow(id, state, o) {
   return { id, kind: 'package', state: state || 'OPEN', evidence: null, owner_question: null, reason: null, archived_to: null, ...(o || {}) };
 }
@@ -187,7 +189,7 @@ test('T-S2-09 next returns waves in dependency order', () => {
   const repo = mkRepo();
   const id = startRun(repo, unit, ['--preset', 'waves']);
   const env = { DO_IT_PIPELINES: PIPES };
-  writeJson(flFile(repo), { rows: [flRow('w1', 'OPEN', { kind: 'wave' }), flRow('w2', 'OPEN', { kind: 'wave' }), flRow('w3', 'OPEN', { kind: 'wave' })] });
+  writeJson(flFile(repo), { rows: [flRow('w1', 'OPEN', { kind: 'wave', run_id: id }), flRow('w2', 'OPEN', { kind: 'wave', run_id: id }), flRow('w3', 'OPEN', { kind: 'wave', run_id: id })] });
   let n = unit(repo, ['next'], env);
   assert.equal(n.out.wave, 'w1');
   assert.equal(n.out.tier, 'T2');
@@ -215,13 +217,13 @@ test('T-S2-09 next returns waves in dependency order', () => {
 
 test('T-S2-10 board stays small and deterministic', () => {
   const repo = mkRepo();
-  startRun(repo, unit);
+  const id = startRun(repo, unit);
   const rows = [];
   for (let i = 0; i < 50; i++) rows.push(flRow('closed-' + i, 'DONE', { evidence: 'proof/' + i + '.txt' }));
   for (let i = 0; i < 6; i++) rows.push(flRow('open-' + i));
   for (let i = 0; i < 2; i++) rows.push(flRow('parked-' + i, 'PARKED', { owner_question: 'Question number ' + i + ' that is rather long and wordy, to push the size up a lot more' }));
   for (let i = 0; i < 2; i++) rows.push(flRow('blocked-' + i, 'BLOCKED', { reason: 'owner gate: prod flag number ' + i + ' needs the owner to decide something long' }));
-  writeJson(flFile(repo), { rows });
+  writeJson(flFile(repo), { rows: own(id, rows) });
   const a = unit(repo, ['status']);
   const b = unit(repo, ['status']);
   assert.ok(a.out.board.length <= 1200);
@@ -236,7 +238,7 @@ test('T-S2-10 board stays small and deterministic', () => {
 test('T-S2-11 G-9 stop-gate refuses with the board, three times', () => {
   const repo = mkRepo();
   const id = startRun(repo, unit);
-  writeJson(flFile(repo), { rows: [flRow('r1')] });
+  writeJson(flFile(repo), { rows: own(id, [flRow('r1')]) });
   for (const n of [1, 2, 3]) {
     const r = unit(repo, ['gate', 'stop']);
     assert.equal(r.code, 1);
@@ -249,7 +251,7 @@ test('T-S2-11 G-9 stop-gate refuses with the board, three times', () => {
 test('T-S2-12 G-9 fourth refusal parks and asks [REAL]', () => {
   const repo = mkRepo();
   const id = startRun(repo, real);
-  writeJson(flFile(repo), { rows: [flRow('r1')] });
+  writeJson(flFile(repo), { rows: own(id, [flRow('r1')]) });
   for (let i = 0; i < 3; i++) {
     const r = real(repo, ['gate', 'stop']);
     assert.equal(r.code, 1);
@@ -270,12 +272,12 @@ test('T-S2-12 G-9 fourth refusal parks and asks [REAL]', () => {
 test('T-S2-13 progress resets the stop-gate counter', () => {
   const repo = mkRepo();
   const id = startRun(repo, unit);
-  writeJson(flFile(repo), { rows: [flRow('r1'), flRow('r2')] });
+  writeJson(flFile(repo), { rows: own(id, [flRow('r1'), flRow('r2')]) });
   unit(repo, ['gate', 'stop']);
   unit(repo, ['gate', 'stop']);
   assert.equal(stateOf(repo, id).stop_refusals, 2);
   put(repo, 'proof/r1.txt', 'ok');
-  writeJson(flFile(repo), { rows: [flRow('r1', 'DONE', { evidence: 'proof/r1.txt' }), flRow('r2')] });
+  writeJson(flFile(repo), { rows: own(id, [flRow('r1', 'DONE', { evidence: 'proof/r1.txt' }), flRow('r2')]) });
   const r = unit(repo, ['gate', 'stop']);
   assert.equal(r.out.outcome, 'STOP_REFUSED');
   assert.equal(r.out.stop_refusals, 1);
@@ -285,18 +287,18 @@ test('T-S2-13 progress resets the stop-gate counter', () => {
 test('T-S2-14 stop is allowed when every row is terminal', () => {
   const repo = mkRepo();
   const id = startRun(repo, unit);
-  writeJson(flFile(repo), { rows: [
+  writeJson(flFile(repo), { rows: own(id, [
     flRow('r1', 'DONE', { evidence: 'proof/r1.txt' }),
     flRow('r2', 'PARKED', { owner_question: 'Which tenant?' }),
     flRow('r3', 'BLOCKED', { reason: 'owner gate' }),
-  ] });
+  ]) });
   setState(repo, id, (st) => { st.stop_refusals = 2; });
   const r = unit(repo, ['gate', 'stop']);
   assert.equal(r.code, 0);
   assert.equal(r.out.outcome, 'STOP_ALLOWED');
   assert.equal(stateOf(repo, id).stop_refusals, 2);
   // a DONE row without evidence is not closed
-  writeJson(flFile(repo), { rows: [flRow('r1', 'DONE')] });
+  writeJson(flFile(repo), { rows: own(id, [flRow('r1', 'DONE')]) });
   assert.equal(unit(repo, ['gate', 'stop']).out.outcome, 'STOP_REFUSED');
 });
 
@@ -304,7 +306,7 @@ test('T-S2-15 BLOCKED outcome parks only its own slice', () => {
   const repo = mkRepo();
   const id = startRun(repo, unit);
   setState(repo, id, (st) => { st.status = 'BUILDING'; st.slices.push(slice('a'), slice('b')); });
-  writeJson(flFile(repo), { rows: [flRow('a'), flRow('b')] });
+  writeJson(flFile(repo), { rows: [flRow('a', 'OPEN', { run_id: id }), flRow('b', 'OPEN', { run_id: id })] });
   const empty = record(unit, repo, result(id, { status: 'blocked', slice_id: 'a', reason: '  ' }), 'e');
   assert.equal(empty.code, 1);
   assert.equal(empty.out.outcome, 'BLOCK_REASON_REQUIRED');

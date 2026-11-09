@@ -1,5 +1,5 @@
 // T-S1-09 [REAL]: `do-it start --request "x"` from a Claude Code Bash with the plugin, no flags and no
-// exports, records the session's own id; after /clear, `resume` re-binds the run to the new id.
+// exports, records the session's own id; after /clear, `resume --run <id> --take-over` re-binds the run to the new id.
 // The host half is the plugin's SessionStart hook; this test runs it for real, sources the env file it
 // writes (what Claude Code does for every Bash call), and spawns the plugin's copy of the CLI.
 import assert from 'node:assert/strict';
@@ -48,7 +48,15 @@ test('T-S1-09 [REAL] start records CLAUDE_CODE_SESSION_ID with no flag or export
   // /clear: a new session id in the same Bash environment, SessionStart runs again
   const NEW = SESSION + '-after-clear';
   assert.equal(startHook(NEW).status, 0);
-  const resumed = bash(repo, envFile, { CLAUDE_CODE_SESSION_ID: NEW }, 'node "$CLI" resume --json');
+  // plain resume cannot tell a cleared session from a live one, so it refuses and names the run (CP-03 S1-H2)
+  const plain = bash(repo, envFile, { CLAUDE_CODE_SESSION_ID: NEW }, 'node "$CLI" resume --json');
+  assert.equal(plain.code, 1, plain.stdout + plain.stderr);
+  const refused = JSON.parse(plain.stdout.trim().split('\n').pop());
+  assert.equal(refused.outcome, 'OWNED_BY_OTHER_SESSION');
+  assert.equal(refused.run_id, runId);
+  assert.equal(readJson(stateFile).owner.session_id, SESSION, 'nothing changes without --take-over');
+  // the SKILL's /clear line: resume --run <id> --take-over
+  const resumed = bash(repo, envFile, { CLAUDE_CODE_SESSION_ID: NEW }, 'node "$CLI" resume --run ' + runId + ' --take-over --json');
   assert.equal(resumed.code, 0, resumed.stdout + resumed.stderr);
   const after = readJson(stateFile).owner;
   assert.equal(after.session_id, NEW);

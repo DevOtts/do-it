@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { fail } from './errors.mjs';
+import { readText } from './fs-atomic.mjs';
 import { canonicalJson } from './hash.mjs';
 
 // JSON Schema subset: type, enum, const, required, properties, items,
@@ -102,5 +103,5 @@ export function loadSchemaFile(name) {
   const here = path.dirname(fileURLToPath(import.meta.url));
   const file = path.join(here, '..', '..', 'schemas', name);
   if (!fs.existsSync(file)) throw fail('SCHEMA_NOT_FOUND', 1, { schema: name });
-  return JSON.parse(fs.readFileSync(file, 'utf8'));
+  return JSON.parse(readText(file));
 }

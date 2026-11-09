@@ -3,8 +3,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fail } from './errors.mjs';
 import { appendEvent, eventsPath } from './events.mjs';
-import { readFinishLine, renderBoard } from './finish-line.mjs';
-import { atomicWrite } from './fs-atomic.mjs';
+import { adoptsUnattributed, readFinishLine, renderBoard, rowsForRun } from './finish-line.mjs';
+import { BULK_READ_CAP, atomicWrite, readText } from './fs-atomic.mjs';
 import { packAppend } from './pack.mjs';
 import { loadSettings } from './settings.mjs';
 import { loadState, runDir, selectRunId, writeState } from './state.mjs';
@@ -46,7 +46,7 @@ export function resumeCommand(runId) {
 
 function lastEvents(ctx, runId, n) {
   let lines = [];
-  try { lines = fs.readFileSync(eventsPath(ctx, runId), 'utf8').split('\n').filter(Boolean); } catch { /* none yet */ }
+  try { lines = readText(eventsPath(ctx, runId), BULK_READ_CAP).split('\n').filter(Boolean); } catch { /* none yet */ }
   return lines.slice(-n).map((l) => (l.length > HANDOFF_EVENT_CLIP ? l.slice(0, HANDOFF_EVENT_CLIP) : l));
 }
 
@@ -105,7 +105,7 @@ export function cmdHandoff(ctx, args) {
 
   const { files, missing } = collectStateFiles(ctx, runId, state);
   if (missing.length) throw fail('HANDOFF_PATH_INVALID', 1, { run_id: runId, missing });
-  const board = renderBoard(readFinishLine(ctx));
+  const board = renderBoard(rowsForRun(readFinishLine(ctx), runId, adoptsUnattributed(state)));
   const events = lastEvents(ctx, runId, HANDOFF_EVENTS);
   let text = renderHandoff(ctx, state, files, board, events);
   if (text.length > HANDOFF_MAX_CHARS) text = renderHandoff(ctx, state, files, board.slice(0, 1200), events.map((e) => e.slice(0, 200))).slice(0, HANDOFF_MAX_CHARS);

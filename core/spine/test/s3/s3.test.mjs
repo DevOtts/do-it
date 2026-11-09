@@ -175,10 +175,17 @@ test('T-S3-07 exit_code must mirror status', () => {
 
 test('T-S3-08 all six statuses record with the mirrored code', () => {
   const expectRun = { ok: 'INTAKE', failed: 'FAILED', needs_human: 'NEEDS_HUMAN', blocked: 'BLOCKED', usage_limit: 'PARKED', context_reset: 'INTAKE' };
+  // CP-03 R4-S1-H8: the three statuses that end the stop gate carry what they claim (a reason, a question)
+  const extra = {
+    failed: { reason: 'the build step exited non-zero on every retry' },
+    blocked: { reason: 'owner gate: the production flag is not set' },
+    needs_human: { pending_human: { questions_path: 'results/q.json' } },
+  };
   for (const status of Object.keys(EXIT)) {
     const repo = mkRepo();
     const runId = startRun(repo, unit);
-    const r = record(unit, repo, 'results/r.json', result(runId, { status }));
+    writeJson(path.join(repo.dir, 'results', 'q.json'), { questions: [{ kind: 'ratify', text: 'Ship the plan?', options: ['yes', 'no'], recommendation: 'yes', default: 'yes', reversible: true }] });
+    const r = record(unit, repo, 'results/r.json', result(runId, { status, ...(extra[status] || {}) }));
     assert.equal(r.out.outcome, 'RECORDED', status);
     assert.equal(r.code, EXIT[status], status);
     assert.equal(stateOf(repo, runId).status, expectRun[status], status);
@@ -229,7 +236,8 @@ test('T-S3-11 G-13 conclude refuses an unaccounted row [REAL]', () => {
   const repo = mkRepo();
   const runId = startRun(repo, real);
   put(repo, 'proof/out.txt', 'ok');
-  const open = (id) => ({ id, kind: 'dod', state: 'OPEN', evidence: null, owner_question: null, reason: null, archived_to: null });
+  // the run's own rows carry its id: a 1.1 run never answers for an unattributed row (CP-03 R3-S1-M6)
+  const open = (id) => ({ id, kind: 'dod', state: 'OPEN', evidence: null, owner_question: null, reason: null, archived_to: null, run_id: runId });
   writeJson(path.join(repo.doIt, 'finish-line.json'), { rows: [open('DOD-1'), open('DOD-2')] });
   assert.equal(record(real, repo, 'results/r1.json', result(runId, { verdicts: [verdictRow('DOD-1')] })).code, 0);
   const c = real(repo, ['gate', 'conclude']);
@@ -290,6 +298,8 @@ test('T-S3-14 conclude closes when everything is accounted [REAL]', () => {
 });
 
 function deployFixture(repo, runId, runner) {
+  // CP-03 R5-S1-H9: deploy legs are recorded only while the run is deploying
+  for (const to of ['BUILDING', 'VERIFYING', 'DEPLOYING']) assert.equal(runner(repo, ['gate', 'advance', '--run', runId, '--to', to]).out.outcome, 'ADVANCED', to);
   put(repo, 'proof/api.txt', 'api deployed');
   put(repo, 'proof/worker.txt', 'worker deployed');
   put(repo, 'proof/web.txt', 'web failed');

@@ -10,25 +10,26 @@ import { appendEvent } from './events.mjs';
 import { cleanStaleTmp } from './fs-atomic.mjs';
 import { cmdHandoff } from './handoff.mjs';
 import { cmdInit } from './init.mjs';
-import { renderBoard, readFinishLine } from './finish-line.mjs';
+import { adoptsUnattributed, renderBoard, readFinishLine, rowsForRun } from './finish-line.mjs';
 import { cmdMeter } from './meter.mjs';
 import { cmdNext, gateRoute } from './next.mjs';
 import { gateBuild } from './readiness.mjs';
-import { cmdPack } from './pack.mjs';
+import { cmdPack, openPackQuestions, packAppend } from './pack.mjs';
 import { cmdPark } from './park.mjs';
 import { cmdRecord } from './record.mjs';
-import { redactInit, redactText } from './redact.mjs';
+import { redactInit, redactValue } from './redact.mjs';
 import { cmdResume } from './resume.mjs';
 import { redactFlushEvents } from './secrets.mjs';
 import { route } from './router.mjs';
-import { resolveSessionId } from './session.mjs';
+import { resolveSession } from './session.mjs';
+import { registerSessionRun } from './sessions.mjs';
 import { loadSettings } from './settings.mjs';
 import { gateStop } from './stopgate.mjs';
-import { advanceRunStatus, loadState, newRunId, newState, runDir, selectRunId, unreadableRuns, writeState } from './state.mjs';
+import { advanceRunStatus, cleanReason, loadState, newRunId, newState, runDir, selectRunId, takeOvers, unreadableRuns, writeState } from './state.mjs';
 import { gateVerify } from './verify.mjs';
 import { DO_IT_VERSION } from './version.mjs';
 
-export const BOOL_FLAGS = new Set(['json', 'migrate', 'install', 'secrets', 'append', 'force', 'finalize', 'help', 'version', 'verbose', 'dry-run']);
+export const BOOL_FLAGS = new Set(['json', 'migrate', 'install', 'secrets', 'append', 'force', 'finalize', 'help', 'version', 'verbose', 'dry-run', 'take-over']);
 export const COMMANDS = ['init', 'start', 'next', 'record', 'gate', 'answer', 'handoff', 'resume', 'park', 'pack', 'status', 'meter', 'doctor'];
 
 export function parseArgs(argv) {
@@ -108,7 +109,12 @@ export function cliMain(argv, opts) {
     if (!args.positionals.length || args.flags.help) {
       result = { outcome: 'USAGE', exit: args.flags.help ? 0 : 1, commands: COMMANDS };
     } else {
-      ctx = makeCtx({ cwd: opts && opts.cwd, env: opts && opts.env });
+      // CP-03 R5-S1-M11: a hook stop names the host's cwd with --cwd and may run the spine from anywhere (the
+      // hook spawns it from the plugin root, which always exists). The cwd's home is found from --cwd; when
+      // that folder is gone or cannot be entered there is no cwd home, and the registry homes still gate.
+      const stopCwd = args.positionals[0] === 'gate' && args.positionals[1] === 'stop' && typeof args.flags.cwd === 'string' && args.flags.cwd
+        ? path.resolve((opts && opts.cwd) || '.', args.flags.cwd) : null;
+      ctx = makeCtx({ cwd: stopCwd || (opts && opts.cwd), env: opts && opts.env });
       redactInit(ctx);
       result = dispatch(ctx, args);
     }
@@ -125,7 +131,11 @@ export function cliMain(argv, opts) {
     if (result.root === undefined) result.root = ctx.root;
     if (result.home === undefined) result.home = ctx.home;
   }
-  const stdout = redactText(json ? JSON.stringify(result) + '\n' : renderHuman(result));
+  // CP-03 R4-L4: redact after the outcome is decided. Every free-text field is redacted; the protocol
+  // fields (outcome, exit) are the spine's own words and are never rewritten, so no secret value can turn
+  // a STOP_REFUSED into something a host reads as "allowed".
+  const shown = { ...redactValue(result), outcome: result.outcome, exit };
+  const stdout = json ? JSON.stringify(shown) + '\n' : renderHuman(shown);
   if (ctx) redactFlushEvents(ctx, result);
   return { exit, stdout };
 }
@@ -135,13 +145,14 @@ export function cmdStart(ctx, args) {
   if (typeof f.request !== 'string' || !f.request.trim()) throw fail('USAGE', 1, { message: 'start requires --request "<text>"' });
   const settings = loadSettings(ctx, args.sets);
   const runId = newRunId(ctx);
+  const session = resolveSession(ctx, f);
   const size = f.size === undefined ? null : (/^\d+$/.test(String(f.size)) ? Number(f.size) : String(f.size));
   const state = newState(ctx, runId, {
     preset: typeof f.preset === 'string' ? f.preset : null,
     request: f.request,
     size,
     host: typeof f.host === 'string' ? f.host : settings.values.host.driver,
-    owner: { session_id: resolveSessionId(ctx, f), cwd: ctx.cwd },
+    owner: { session_id: session.id, cwd: ctx.cwd },
   });
   const routed = state.preset ? null : route(f.request);
   if (routed && routed.preset) {
@@ -154,7 +165,13 @@ export function cmdStart(ctx, args) {
   if (routed && routed.preset) {
     appendEvent(ctx, runId, { event: 'route', stage: state.stage, host: state.host, verdict: routed.preset, detail: { rule: routed.rule, model_call: false } });
   }
-  return { outcome: 'STARTED', exit: 0, run_id: runId, status: state.status, preset: state.preset, root: ctx.root, home: ctx.home };
+  const out = { outcome: 'STARTED', exit: 0, run_id: runId, status: state.status, preset: state.preset, root: ctx.root, home: ctx.home };
+  // the stop gate finds this run from any cwd the session stops in (CP-03 R3-S1-H7)
+  const regErr = registerSessionRun(ctx, session.id, runId);
+  if (regErr) out.session_registry_error = regErr;
+  // an explicit id outranks the host's live one (2.1); say so, since only the recorded id is gated
+  if (session.conflict) out.session_conflict = session.conflict;
+  return out;
 }
 
 export function cmdStatus(ctx, args) {
@@ -175,7 +192,8 @@ export function cmdStatus(ctx, args) {
     handoffs: state.handoffs,
     stop_refusals: state.stop_refusals,
     run_verdict: state.run_verdict === undefined ? null : state.run_verdict,
-    board: renderBoard(readFinishLine(ctx)),
+    last_take_over: takeOvers(state).pop() || null,
+    board: renderBoard(rowsForRun(readFinishLine(ctx), runId, adoptsUnattributed(state))),
     stale_tmp_removed: removed,
     unreadable_runs: unreadableRuns(ctx),
   };
@@ -191,8 +209,9 @@ export function cmdGate(ctx, args) {
     case 'stop': return gateStop(ctx, args);
     case 'route': return gateRoute(ctx, args);
     case 'ceiling': return gateCeiling(ctx, args);
+    case 'escalate': return gateEscalate(ctx, args);
     default:
-      throw fail('USAGE', 1, { message: 'gate needs a subcommand', subcommands: ['verify', 'conclude', 'advance', 'build', 'stop', 'route', 'ceiling'] });
+      throw fail('USAGE', 1, { message: 'gate needs a subcommand', subcommands: ['verify', 'conclude', 'advance', 'build', 'stop', 'route', 'ceiling', 'escalate'] });
   }
 }
 
@@ -203,4 +222,49 @@ export function gateAdvance(ctx, args) {
   const state = loadState(ctx, runId);
   const moved = advanceRunStatus(ctx, state, to);
   return { outcome: 'ADVANCED', exit: 0, run_id: runId, from: moved.from, status: moved.to };
+}
+
+// gate escalate --reason "<text>": hand a run that already waits on the owner (NEEDS_HUMAN, with an open
+// owner-pack question) or has FAILED over to the owner for good. It starts only from a status that already
+// does not gate a stop, so it never switches a gate off (CP-03 R3-S1-H6); the reason is kept in the event.
+export const ESCALATE_FROM = ['NEEDS_HUMAN', 'FAILED'];
+export function gateEscalate(ctx, args) {
+  const f = args.flags;
+  // CP-03 R6-S1-L4: the same reason rule as every status that ends the gate (no placeholder, no invisible text)
+  const reason = cleanReason(f.reason);
+  if (!reason) throw fail('USAGE', 1, { message: 'gate escalate requires --reason "<why the owner must take the run>" (a placeholder or invisible text is no reason)' });
+  const runId = selectRunId(ctx, f);
+  const state = loadState(ctx, runId);
+  if (!ESCALATE_FROM.includes(state.status)) {
+    throw fail('TRANSITION_REFUSED', 1, { from: state.status, to: 'ESCALATED', allowed_from: ESCALATE_FROM, message: 'gate escalate starts only from a run that already waits on the owner or has failed' });
+  }
+  const open = openPackQuestions(ctx, runId);
+  if (state.status === 'NEEDS_HUMAN' && !open.length) {
+    throw fail('TRANSITION_REFUSED', 1, { from: state.status, to: 'ESCALATED', message: 'no open owner-pack question: nothing hands the run to the owner' });
+  }
+  // CP-03 R4-S1-H8: ESCALATED is terminal, so the owner must find it waiting in the pack. From FAILED with no
+  // open question, the reason itself becomes one (and the failure's recorded cause goes with it).
+  let question = null;
+  if (state.status === 'FAILED' && !open.length) {
+    const cause = state.status_reason && state.status_reason.status === 'FAILED' ? state.status_reason.reason : null;
+    const added = packAppend(ctx, runId, [{
+      kind: 'escalation',
+      source: 'gate-escalate',
+      text: 'The run failed and was escalated to you: ' + reason + (cause ? ' (recorded cause: ' + cause + ')' : '') + '. Restart it, or close it with its open rows as residuals?',
+      options: ['restart run', 'close with residuals'],
+      recommendation: 'restart run',
+      default: null,
+      reversible: true,
+    }]);
+    if (!added.length && !openPackQuestions(ctx, runId).length) {
+      throw fail('TRANSITION_REFUSED', 1, { from: state.status, to: 'ESCALATED', message: 'the escalation question could not be written to the owner pack' });
+    }
+    question = added.length ? added[0].n : null;
+  }
+  const from = state.status;
+  state.status = 'ESCALATED';
+  state.status_reason = { status: 'ESCALATED', reason, stage: state.stage, at: ctx.now() };
+  writeState(ctx, state);
+  appendEvent(ctx, runId, { event: 'escalated', stage: state.stage, host: state.host, verdict: 'ESCALATED', detail: { from, reason, ...(question ? { question } : {}) } });
+  return { outcome: 'ESCALATED', exit: 0, run_id: runId, from, status: 'ESCALATED', reason, ...(question ? { pack_question: question } : {}) };
 }

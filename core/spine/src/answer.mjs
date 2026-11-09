@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { appendEvent } from './events.mjs';
 import { fail } from './errors.mjs';
-import { atomicWrite, atomicWriteJson, readJsonIfExists } from './fs-atomic.mjs';
+import { STATE_READ_CAP, atomicWrite, atomicWriteJson, readJsonIfExists, readText } from './fs-atomic.mjs';
 import { packPath, packIdOf } from './pack.mjs';
 import { parseReply } from './reply.mjs';
 import { loadSchemaFile, validateSchema } from './schema.mjs';
@@ -29,7 +29,7 @@ export function packGuard(ctx, runId, pack) {
   const rec = readJsonIfExists(renderRecordPath(ctx, runId));
   let shown = rec ? rec.pack_id : null;
   if (rec && rec.file && fs.existsSync(rec.file) && fs.statSync(rec.file).isFile()) {
-    const text = fs.readFileSync(rec.file, 'utf8');
+    const text = readText(rec.file);
     const m = /name="pack-id" content="([0-9a-f]+)"/.exec(text) || /<!-- pack-id: ([0-9a-f]+) -->/.exec(text);
     if (m) shown = m[1];
   }
@@ -130,8 +130,8 @@ function answerApply(ctx, runId, state, fullPack, f, hasReply) {
   if (errors.length) throw fail('ANSWER_INVALID', 1, { errors });
   const text = JSON.stringify(doc, null, 2) + '\n';
   const file = answersPath(ctx, runId);
-  const before = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null;
-  if (before !== text) atomicWrite(file, text);
+  const before = fs.existsSync(file) ? readText(file) : null;
+  if (before !== text) atomicWrite(file, text, { cap: STATE_READ_CAP });
   for (const n of added) {
     const a = have.get(n);
     emit(ctx, runId, state, a.source === 'default' ? 'default_applied' : 'answer_recorded', a.source, { n, answer: a.answer, source: a.source });

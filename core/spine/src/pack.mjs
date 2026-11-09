@@ -1,9 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fail } from './errors.mjs';
-import { appendEvent } from './events.mjs';
-import { atomicWriteJson, readJsonIfExists } from './fs-atomic.mjs';
+import { appendEvent, eventsPath } from './events.mjs';
+import { BULK_READ_CAP, atomicWriteJson, readJsonIfExists, readText } from './fs-atomic.mjs';
 import { canonicalJson, sha256Bytes } from './hash.mjs';
+import { redactJsonValues } from './redact.mjs';
 import { listRunIds, loadState } from './state.mjs';
 
 export function packPath(ctx, runId) {
@@ -15,13 +16,35 @@ export function packIdOf(questions) {
 }
 
 // Stages only append questions; numbering is stable and duplicates by text are ignored (ruling D7).
-export function packAppend(ctx, runId, questions) {
+// CP-03 R9-S1-M16: the pack is stored redacted, so a text is compared both as given and as it is stored.
+// opts.stopGate (the gate's own park question only): nothing is added while the run already has an open
+// question the gate wrote (stopGateMarks), so a park that is retried never asks the owner twice.
+export function packAppend(ctx, runId, questions, opts) {
   const file = packPath(ctx, runId);
   const pack = readJsonIfExists(file) || { pack_id: null, run_id: runId, questions: [], created_at: ctx.now() };
   const added = [];
+  // CP-03 R10-S1-M17: the gate's own question is deduped only against OPEN questions (not withdrawn, not
+  // answered): once the owner answered a park, the next park with the same rows asks again.
+  const stop = !!(opts && opts.stopGate);
+  const open = stop ? openOf(ctx, runId, pack, opts.onAnswersError) : null;
+  const held = stop ? openStopGateQuestion(ctx, runId, pack, open) : null;
+  if (held) {
+    // CP-03 R10 L-d: the park reuses the gate's open question; its text is brought up to the current rows.
+    // Only a row that is still the gate's own sentence is rewritten (an event can be forged, a text cannot).
+    const q = questions[0];
+    const row = pack.questions.find((x) => x.n === held.n);
+    if (row && q && typeof q.text === 'string' && STOP_GATE_TEXT.test(q.text) && STOP_GATE_TEXT.test(row.text) && row.text !== q.text && row.text !== redactJsonValues(q.text)) {
+      row.text = q.text;
+      pack.pack_id = packIdOf(pack.questions);
+      atomicWriteJson(file, pack);
+    }
+    return added;
+  }
   for (const q of questions) {
     if (!q || typeof q.text !== 'string' || !q.text.trim()) continue;
-    if (pack.questions.some((x) => x.text === q.text && x.status !== 'withdrawn')) continue;
+    const stored = redactJsonValues(q.text);
+    const same = (x) => x.text === q.text || x.text === stored;
+    if (stop ? open.some(same) : pack.questions.some((x) => same(x) && x.status !== 'withdrawn')) continue;
     const n = pack.questions.reduce((m, x) => Math.max(m, x.n), 0) + 1;
     const row = {
       n,
@@ -43,10 +66,63 @@ export function packAppend(ctx, runId, questions) {
   return added;
 }
 
-// The stop gate wrote its questions with source 'stop-gate'. Before that field existed it wrote this
-// exact sentence; the text is its own template, so it identifies the origin.
-export function isStopGateQuestion(q) {
-  return q.source === 'stop-gate' || (q.source === undefined && q.kind === 'default' && /^The run stopped with \d+ open row\(s\) after \d+ refusals: /.test(q.text));
+// Questions still waiting on the owner: not withdrawn and not answered in answers.json.
+// onAnswersError (the stop gate only, CP-03 R10 L-g): an answers.json that cannot be read counts as no
+// answers and the error is handed to it, so a garbled file never blocks a park. Without it the read throws.
+export function openPackQuestions(ctx, runId, onAnswersError) {
+  return openOf(ctx, runId, readJsonIfExists(packPath(ctx, runId)), onAnswersError);
+}
+
+function openOf(ctx, runId, pack, onAnswersError) {
+  if (!pack || !Array.isArray(pack.questions)) return [];
+  let doc = null;
+  try { doc = readJsonIfExists(path.join(ctx.home, 'runs', runId, 'answers.json')); } catch (e) {
+    if (typeof onAnswersError !== 'function') throw e;
+    onAnswersError(e);
+  }
+  const answered = new Set((doc && Array.isArray(doc.answers) ? doc.answers : []).map((a) => a.n));
+  return pack.questions.filter((q) => q.status !== 'withdrawn' && !answered.has(q.n));
+}
+
+// The sentence the stop gate writes when it parks a run at patience. `record` refuses a result question that
+// starts with it (STOP_GATE_TEXT_RESERVED), so only the gate writes it.
+export const STOP_GATE_TEXT = /^The run stopped with \d+ open row\(s\) after \d+ refusals: /;
+const STOP_GATE_IDS = /^The run stopped with \d+ open row\(s\) after \d+ refusals: (.*)\. Resume the run or close it with the open rows as residuals\?$/;
+
+// CP-03 R5-S1-H10: which questions did the stop gate itself write? Only the gate writes `stop_parked` events:
+// since 1.1 the event names the question's number; a 1.0.x (or pre-release 1.1) event names the open rows,
+// which the question's text repeats. A `source` field proves nothing: a result file could set one.
+export function stopGateMarks(ctx, runId) {
+  const numbers = new Set();
+  const openLists = new Set();
+  let lines = [];
+  try { lines = readText(eventsPath(ctx, runId), BULK_READ_CAP).split('\n'); } catch { /* no events */ }
+  for (const line of lines) {
+    if (!line.includes('"stop_parked"')) continue;
+    let ev;
+    try { ev = JSON.parse(line); } catch { continue; }
+    if (!ev || ev.event !== 'stop_parked' || !ev.detail || typeof ev.detail !== 'object') continue;
+    if (Number.isInteger(ev.detail.question)) numbers.add(ev.detail.question);
+    else if (Array.isArray(ev.detail.open)) openLists.add(ev.detail.open.join(', '));
+  }
+  return { numbers, openLists };
+}
+
+// The run's open (not withdrawn, not answered) question that the stop gate itself wrote, or null.
+// `open` (optional): the run's open questions, already read; `onAnswersError` as in openPackQuestions.
+export function openStopGateQuestion(ctx, runId, pack, open, onAnswersError) {
+  const marks = stopGateMarks(ctx, runId);
+  if (!marks.numbers.size && !marks.openLists.size) return null;
+  if (!open) open = pack ? openOf(ctx, runId, pack, onAnswersError) : openPackQuestions(ctx, runId, onAnswersError);
+  return open.find((q) => isStopGateQuestion(q, marks)) || null;
+}
+
+export function isStopGateQuestion(q, marks) {
+  if (!q || !marks) return false;
+  if (marks.numbers.has(q.n)) return true;
+  if (q.kind !== 'default' || typeof q.text !== 'string') return false;
+  const m = STOP_GATE_IDS.exec(q.text);
+  return !!m && marks.openLists.has(m[1]);
 }
 
 export const WITHDRAW_REASON = 'withdrawn: the stop gate raised this for a run it should not have gated';
@@ -68,29 +144,43 @@ export function cmdPack(ctx, args) {
   const reason = typeof f.reason === 'string' && f.reason ? f.reason : WITHDRAW_REASON;
   const withdrawn = [];
   const kept = [];
+  const refused = [];
   for (const id of ids) {
     const file = packPath(ctx, id);
     const pack = readJsonIfExists(file);
     if (!pack || !Array.isArray(pack.questions)) continue;
     const answersDoc = readJsonIfExists(path.join(ctx.home, 'runs', id, 'answers.json'));
     const answered = new Set((answersDoc && Array.isArray(answersDoc.answers) ? answersDoc.answers : []).map((a) => a.n));
+    const marks = stopGateMarks(ctx, id);
     const now = ctx.now();
-    let changed = 0;
+    const picks = [];
     for (const q of pack.questions) {
-      if (!isStopGateQuestion(q) || q.status === 'withdrawn') continue;
+      if (q.status === 'withdrawn' || !isStopGateQuestion(q, marks)) continue;
       if (answered.has(q.n)) { kept.push({ run_id: id, n: q.n }); continue; }
+      picks.push(q);
+    }
+    if (!picks.length) continue;
+    let st = null;
+    try { st = loadState(ctx, id); } catch { /* the event still records the withdrawal */ }
+    // CP-03 R5-S1-H10: a NEEDS_HUMAN run waits on its open questions. Withdrawing the last one would leave it
+    // waiting on nobody, outside the stop gate for good, so the withdrawal is refused for that run.
+    const left = pack.questions.filter((q) => q.status !== 'withdrawn' && !answered.has(q.n) && !picks.includes(q));
+    if (st && st.status === 'NEEDS_HUMAN' && !left.length) {
+      refused.push({ run_id: id, questions: picks.map((q) => q.n), reason: 'run ' + id + ' is NEEDS_HUMAN and these are its last open owner-pack questions; answer them (do-it answer) instead' });
+      continue;
+    }
+    for (const q of picks) {
       q.status = 'withdrawn';
       q.withdrawn_at = now;
       q.withdrawn_reason = reason;
       withdrawn.push({ run_id: id, n: q.n });
-      changed += 1;
     }
-    if (!changed) continue;
     pack.pack_id = packIdOf(pack.questions);
     atomicWriteJson(file, pack);
-    let st = {};
-    try { st = loadState(ctx, id); } catch { /* the event still records the withdrawal */ }
-    appendEvent(ctx, id, { event: 'pack_withdrawn', stage: st.stage || null, host: st.host || null, verdict: 'WITHDRAWN', detail: { by: 'stop-gate', count: changed } });
+    appendEvent(ctx, id, { event: 'pack_withdrawn', stage: (st && st.stage) || null, host: (st && st.host) || null, verdict: 'WITHDRAWN', detail: { by: 'stop-gate', count: picks.length } });
   }
-  return { outcome: withdrawn.length ? 'PACK_WITHDRAWN' : 'PACK_NOOP', exit: 0, by: 'stop-gate', withdrawn, kept_answered: kept };
+  if (refused.length && (f.run || !withdrawn.length)) {
+    throw fail('PACK_WITHDRAW_REFUSED', 1, { by: 'stop-gate', refused, withdrawn, message: refused.map((r) => r.reason).join('; ') });
+  }
+  return { outcome: withdrawn.length ? 'PACK_WITHDRAWN' : 'PACK_NOOP', exit: 0, by: 'stop-gate', withdrawn, kept_answered: kept, ...(refused.length ? { refused } : {}) };
 }
