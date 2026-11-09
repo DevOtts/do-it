@@ -298,6 +298,8 @@ test('T-S3-14 conclude closes when everything is accounted [REAL]', () => {
 });
 
 function deployFixture(repo, runId, runner) {
+  // CP-03 R5-S1-H9: deploy legs are recorded only while the run is deploying
+  for (const to of ['BUILDING', 'VERIFYING', 'DEPLOYING']) assert.equal(runner(repo, ['gate', 'advance', '--run', runId, '--to', to]).out.outcome, 'ADVANCED', to);
   put(repo, 'proof/api.txt', 'api deployed');
   put(repo, 'proof/worker.txt', 'worker deployed');
   put(repo, 'proof/web.txt', 'web failed');

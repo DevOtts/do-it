@@ -7,7 +7,7 @@ import { sha256Bytes } from './hash.mjs';
 import { loadSchemaFile, validateSchema } from './schema.mjs';
 import { resolveCredentials } from './secrets.mjs';
 import { loadSettings } from './settings.mjs';
-import { loadState, selectRunId, writeState } from './state.mjs';
+import { guardStatusEntry, loadState, selectRunId, writeState } from './state.mjs';
 
 export const CLASS_TIER = { deterministic: 'T3', gather: 'T3', implementation: 'T2', hard: 'T1' };
 export const GATE_BUILD_FROM = ['INTAKE', 'PLANNING', 'AWAIT_RATIFY', 'BLOCKED', 'NEEDS_HUMAN'];
@@ -184,7 +184,10 @@ export function gateBuild(ctx, args) {
     const provider = settings.values.secrets.provider;
     const reason = 'missing credential ' + missing.map((m) => m.name).join(', ') + ' via provider ' + provider;
     const from = state.status;
+    // CP-03 R5-S1-H9: BLOCKED goes through the one status-entry guard, and the reason is kept in state
+    const stored = guardStatusEntry(from, 'BLOCKED', { reason });
     state.status = 'BLOCKED';
+    if (stored) state.status_reason = { status: 'BLOCKED', reason: stored, stage: state.stage, at: now };
     writeState(ctx, state);
     finishLineUpsert(fl, CRED_ROW_ID, { kind: 'package', state: 'BLOCKED', reason, evidence: null }, runId, adoptsUnattributed(state));
     writeFinishLine(ctx, fl);

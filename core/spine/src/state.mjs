@@ -223,9 +223,42 @@ export const NON_GATING_OWNERS = {
   NEEDS_HUMAN: 'record (a needs_human result with at least one owner-pack question)',
   AWAIT_RATIFY: 'the owner pack / readiness (gate build)',
   BLOCKED: 'record (a blocked result with a reason) or gate build on a blocked readiness',
-  FAILED: 'record (a failed result with a reason)',
+  FAILED: 'record (a failed result with a reason, or a deploy-legs result while deploying whose failed legs carry evidence)',
   ESCALATED: 'record (ladder or rollback), handoff at its cap, or gate escalate --reason from NEEDS_HUMAN or FAILED',
 };
+
+// CP-03 R5-S1-H9: the one guard on every path into FAILED, BLOCKED or NEEDS_HUMAN. All three switch the stop
+// gate off (CONTRACT 3.1), so the run must say why: FAILED and BLOCKED need a reason (kept as
+// state.status_reason), NEEDS_HUMAN needs a question that lands open in the owner pack. `record` (run-level,
+// slice settle and deploy legs alike) and `gate build` (missing credential) call it before they write.
+export const CAUSE_REQUIRED = { FAILED: 'FAIL_REASON_REQUIRED', BLOCKED: 'BLOCK_REASON_REQUIRED', NEEDS_HUMAN: 'NEEDS_HUMAN_WITHOUT_QUESTION' };
+
+// A reason is text with something in it: invisible and space characters are stripped first.
+export function cleanReason(text) {
+  if (typeof text !== 'string') return null;
+  const t = text.replace(/[\p{White_Space}​-‍⁠﻿]+/gu, ' ').trim();
+  return t || null;
+}
+
+// Returns the reason to store (FAILED, BLOCKED) or null; throws the status's refusal code when the cause is missing.
+// cause: { reason?: string, openQuestion?: boolean }; extra goes into the refusal.
+export function guardStatusEntry(from, to, cause, extra) {
+  if (!Object.prototype.hasOwnProperty.call(CAUSE_REQUIRED, to) || from === to) return null;
+  const c = cause || {};
+  if (to === 'NEEDS_HUMAN') {
+    if (c.openQuestion) return null;
+    throw fail(CAUSE_REQUIRED.NEEDS_HUMAN, 1, {
+      from, to, ...(extra || {}),
+      message: 'a needs_human result must bring at least one owner-pack question (pending_human.questions_path); with none, nothing waits on the owner and the run would leave the stop gate',
+    });
+  }
+  const reason = cleanReason(c.reason);
+  if (reason) return reason;
+  throw fail(CAUSE_REQUIRED[to], 1, {
+    from, to, ...(extra || {}),
+    message: 'entering ' + to + ' needs a non-empty reason: it ends the stop gate for this run',
+  });
+}
 
 // gate advance --to STATUS: a move along the M1 lifecycle between statuses that gate, nothing else.
 export function advanceRunStatus(ctx, state, to) {

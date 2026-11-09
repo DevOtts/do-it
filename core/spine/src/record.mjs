@@ -9,10 +9,10 @@ import { atomicWrite, atomicWriteJson, readJsonIfExists } from './fs-atomic.mjs'
 import { sha256Bytes } from './hash.mjs';
 import { escalationQuestion, ladderEscalated } from './ladder.mjs';
 import { ledgerUpsert, readLedger, writeLedger } from './ledger.mjs';
-import { legsLookRolledBack, planDeploy, staleLegsAfterRollback } from './legs.mjs';
+import { LEG_PASSED, legsLookRolledBack, planDeploy, staleLegsAfterRollback } from './legs.mjs';
 import { openPackQuestions, packAppend, packPath } from './pack.mjs';
 import { loadSchemaFile, validateSchema } from './schema.mjs';
-import { loadState, selectRunId, writeState } from './state.mjs';
+import { cleanReason, guardStatusEntry, loadState, selectRunId, writeState } from './state.mjs';
 import { CHECKPOINT_ROW_PREFIX } from './readiness.mjs';
 import { parseVerdict } from './verdict-file.mjs';
 
@@ -256,7 +256,20 @@ export function planRecord(ctx, runId, state, result) {
     };
   }
 
+  // CP-03 R5-S1-H9: the cause a status entry needs (guardStatusEntry, below) is collected on every path.
+  let causeReason = null;
   if (isDeploy) {
+    // deploy legs belong to a run that is deploying: from any other status a leg result could take the run
+    // straight to FAILED (non-gating) without ever passing through DEPLOYING
+    if (!DEPLOY_STATUSES.includes(state.status)) {
+      throw fail('DEPLOY_OUT_OF_ORDER', 1, { status: state.status, allowed_from: DEPLOY_STATUSES, message: 'a deploy-legs result is recorded only while the run is ' + DEPLOY_STATUSES.join(', ') + ' (gate advance --to DEPLOYING first)' });
+    }
+    // a leg that did not make it says why: its evidence, or the result's reason
+    const silent = result.legs.filter((l) => (l.state === 'FAILED' || l.state === 'NEEDS_HUMAN' || l.state === 'ROLLBACK_FAILED') && !cleanReason(l.evidence) && !cleanReason(result.reason));
+    if (silent.length) {
+      throw fail('FAIL_REASON_REQUIRED', 1, { legs: silent.map((l) => l.leg), message: 'a FAILED or NEEDS_HUMAN leg needs evidence or the result needs a reason' });
+    }
+    causeReason = cleanReason(result.reason) || result.legs.filter((l) => l.state !== LEG_PASSED && cleanReason(l.evidence)).map((l) => 'leg ' + l.leg + ' ' + l.state + ': ' + cleanReason(l.evidence)).join('; ') || null;
     const resolveLeg = (leg) => legResolved.get(leg.leg) || null;
     if (state.status === 'ROLLED_BACK' && !legsLookRolledBack(state, result) && result.legs.every((l) => l.state === 'DEPLOYED_VERIFIED')) {
       const stale = staleLegsAfterRollback(state, result.legs, resolveLeg);
@@ -279,25 +292,17 @@ export function planRecord(ctx, runId, state, result) {
       if (!reason) throw fail('BLOCK_REASON_REQUIRED', 1, { slice_id: slice.id, message: 'a BLOCKED slice needs a reason' });
     }
     // CP-03 R4-S1-H8: a run-level result that takes the run to BLOCKED or FAILED switches the stop gate off
-    // (both are non-gating, CONTRACT 3.1), so it must say why. The reason is kept in state and in the event.
-    let runReason = null;
+    // (both are non-gating, CONTRACT 3.1), so it must say why (checked by guardStatusEntry below).
     if (!slice && (result.status === 'blocked' || result.status === 'failed')) {
-      runReason = result.status === 'blocked' ? blockReason(result) : failReason(result);
-      if (!runReason) {
-        const code = result.status === 'blocked' ? 'BLOCK_REASON_REQUIRED' : 'FAIL_REASON_REQUIRED';
-        throw fail(code, 1, { slice_id: null, status: result.status, message: 'a run-level ' + result.status + ' result needs a non-empty reason: it ends the stop gate for this run' });
-      }
+      causeReason = result.status === 'blocked' ? blockReason(result) : failReason(result);
     }
     applyStatusToState(next, result);
     next.stage = result.stage;
-    if (runReason) {
-      next.status_reason = { status: next.status, reason: runReason, stage: result.stage, at: now };
-      plan.events.push({ event: result.status === 'blocked' ? 'run_blocked' : 'run_failed', stage: result.stage, verdict: next.status, detail: { reason: runReason } });
-      plan.extra.reason = runReason;
-    }
     if (slice && outcome === 'RECORDED') {
       const sl = planSliceOutcome(plan, next, result, slice, reason);
       if (sl) { outcome = sl.outcome; exit = sl.exit; }
+      // the run settled to BLOCKED because only blocked slices are left: their own reasons are the cause
+      if (next.status === 'BLOCKED') causeReason = 'every remaining slice is blocked: ' + next.slices.filter((x) => x.status === 'BLOCKED').map((x) => x.id).join(', ') + (reason ? ' (' + reason + ')' : '');
     }
   }
 
@@ -322,14 +327,18 @@ export function planRecord(ctx, runId, state, result) {
       plan.questions.push(...qs);
     }
   }
-  // CP-03 R4-S1-H8: NEEDS_HUMAN does not gate a stop, so a result enters it only when it hands the owner
-  // something to answer: at least one question of this call is (or already is) open in the owner pack.
-  // G-8 keeps autonomy: from BUILDING a mid-run question becomes a default and the run never gets here.
-  if (next.status === 'NEEDS_HUMAN' && state.status !== 'NEEDS_HUMAN' && !questionsLandOpen(ctx, runId, plan.questions)) {
-    throw fail('NEEDS_HUMAN_WITHOUT_QUESTION', 1, {
-      slice_id: result.slice_id || null,
-      message: 'a needs_human result must bring at least one owner-pack question (pending_human.questions_path); with none, nothing waits on the owner and the run would leave the stop gate',
-    });
+  // CP-03 R4-S1-H8 / R5-S1-H9: one guard for every way this result moves the run into FAILED, BLOCKED or
+  // NEEDS_HUMAN (run-level, slice settle, deploy legs). NEEDS_HUMAN needs a question that lands open in the
+  // owner pack; FAILED and BLOCKED need a reason, kept as status_reason. G-8 keeps autonomy: from BUILDING a
+  // mid-run question becomes a default and the status does not change, so the guard is not reached.
+  const stored = guardStatusEntry(state.status, next.status, {
+    reason: causeReason,
+    openQuestion: next.status === 'NEEDS_HUMAN' ? questionsLandOpen(ctx, runId, plan.questions) : false,
+  }, { slice_id: result.slice_id || null, status: result.status });
+  if (stored) {
+    next.status_reason = { status: next.status, reason: stored, stage: result.stage, at: now };
+    if (!isDeploy && !result.slice_id) plan.events.push({ event: result.status === 'blocked' ? 'run_blocked' : 'run_failed', stage: result.stage, verdict: next.status, detail: { reason: stored } });
+    plan.extra.reason = stored;
   }
   if (result.run_verdict !== undefined && result.run_verdict !== null) plan.extra.reported_run_verdict = result.run_verdict;
   plan.outcome = outcome;
@@ -337,6 +346,9 @@ export function planRecord(ctx, runId, state, result) {
   plan.nextState = next;
   return plan;
 }
+
+// The statuses that have deploy legs (D17): only then may a result carry them.
+export const DEPLOY_STATUSES = ['DEPLOYING', 'PROVING', 'PARTIAL_FAILURE', 'ROLLED_BACK'];
 
 export function blockReason(result) {
   if (typeof result.reason === 'string' && result.reason.trim()) return result.reason.trim();
