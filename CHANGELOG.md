@@ -8,6 +8,8 @@ Host integrations stay isolated under `hosts/` (epic E1, ruling R3, decision D2)
 - The host tables in the README and the generated `SKILL.md` are built from `hosts/*/adapter.manifest.json` (`level`, `server_side`, `status_label`) by `scripts/hosts-table.mjs`; `check-readme.mjs --hosts` fails when a host folder has no row or a host whose server side is declined is listed as Supported (G-4).
 - D2: Engine shows as "Experimental: server side declined (PR #727, 2026-10-29)" in the README table, the hero alt text, `SKILL.md` and `hosts/engine/README.md`. The adapter is kept; no redesign.
 - The Engine live case T-R4-05 moved from `tests/e2e/r4.test.mjs` to `hosts/engine/tests/`.
+- Stop gate (CP-03 R8-S1-M15): the gate fails open only when a run's `state.json` cannot be read. When the state was read and the run has open rows, a refusal whose own bookkeeping cannot be written (`STATE_TOO_LARGE`, a read-only run folder, any write error) is still `STOP_REFUSED` (hook exit 2). The answer lists the error in `unwritable` and carries `refusal_uncounted: true` and `uncounted_runs`. Patience cannot advance without a write, so such a run is refused on every stop and never parked by the gate until the write error is fixed or its rows close.
+- Headroom: `gate build` accepts a plan only when the state and the finish line it seeds are at most the state cap less 1 MiB (`STATE_ACCEPT_CAP`), measured as written (after redaction). `record` accepts a result file up to the same limit.
 
 ## 1.0.5
 Four frictions from the BCL r11 run (backlog note do-it-plugin-friction-from-bcl-r11).

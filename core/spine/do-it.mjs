@@ -3895,34 +3895,49 @@ function logUnreadableOnce(ctx, runId, detail) {
 
 const DEFAULT_PATIENCE = 3;
 
-const errText = (e) => String(e && e.code ? e.code + ': ' + e.message : (e && e.message) || e);
+// a Node error's message already starts with its code ("EACCES: permission denied, ..."): do not repeat it
+const errText = (e) => String(e && e.code && !String(e.message || '').startsWith(e.code) ? e.code + ': ' + e.message : (e && e.message) || e);
 
-// CP-03 R5-S1-M9: one run whose refusal cannot be written (or whose state cannot be read for a reason other
-// than tampering) is reported and fails open for itself alone; every other run is still gated.
+// CP-03 R8-S1-M15 (supersedes the R5-S1-M9 fail-open): CONTRACT 3.1 fails open ONLY when state.json cannot
+// be read. Once a run's state was read and it gates with open rows, a refusal whose bookkeeping (count,
+// signature, park, events) cannot be written is STILL a refusal: it is reported in `unwritable` and marked
+// `refusal_uncounted`. Patience cannot advance without a write, so such a run is never parked by the gate;
+// it is refused on every stop until the write error is fixed or its rows close.
 function eachRefusal(ctx, runs, fn, unwritable) {
   const refused = [];
   const parked = [];
   for (const w of runs) {
     let r;
     try { r = fn(w); } catch (e) {
-      unwritable.push({ run_id: w.id, error: errText(e) });
-      continue;
+      // anything refuseOrPark did not catch itself: still a refusal, uncounted
+      r = { parked: false, ids: (w.open || [{ id: 'finish-line.json unreadable' }]).map((x) => x.id), refusals: w.state.stop_refusals, uncounted: errText(e) };
     }
+    if (r.uncounted) unwritable.push({ run_id: w.id, error: r.uncounted, refused: true, refusal_uncounted: true });
     if (r.logError) unwritable.push({ run_id: w.id, error: r.logError, refused: true });
-    (r.parked ? parked : refused).push({ id: w.id, refusals: r.refusals, ids: r.ids });
+    (r.parked ? parked : refused).push({ id: w.id, refusals: r.refusals, ids: r.ids, uncounted: r.uncounted || null });
   }
+  // a counted refusal is the one shown first; an uncounted one never hides it
+  refused.sort((a, b) => (a.uncounted ? 1 : 0) - (b.uncounted ? 1 : 0));
   return { refused, parked };
+}
+
+// The fields every STOP_REFUSED answer carries when a refusal could not be counted.
+function uncountedNote(refused) {
+  const lost = refused.filter((r) => r.uncounted);
+  if (!lost.length) return { note: '', extra: {} };
+  const note = '; the refusal of ' + lost.map((r) => r.id + ' (' + r.uncounted + ')').join(', ') + ' could not be written, so it is not counted: patience cannot advance and the run will not park on its own until the write error is fixed';
+  return { note, extra: { refusal_uncounted: true, uncounted_runs: lost.map((r) => r.id) } };
 }
 
 function refuseUnreadableBoard(ctx, gating, patience, error, extra, unwritable) {
   const id = 'finish-line.json unreadable';
   const { refused, parked } = eachRefusal(ctx, gating, (g) => refuseOrPark(ctx, g.id, g.state, { rows: [] }, [{ id }], patience), unwritable);
   const more = unwritable.length ? { unwritable } : {};
-  if (!refused.length && !parked.length) return allowed({ owned: true, run_id: gating[0].id, reason: 'the refusal could not be written for any gating run', ...extra, ...more });
-  extra = { ...extra, ...more };
+  const lost = uncountedNote(refused);
+  extra = { ...extra, ...more, ...lost.extra };
   const board = 'FINISH LINE: unreadable (' + error + ')';
   if (!refused.length) return { outcome: 'PARKED', exit: 2, owned: true, run_id: parked[0].id, status: 'PARKED', open: [id], board, board_error: error, ...extra };
-  throw fail('STOP_REFUSED', 1, { owned: true, run_id: refused[0].id, reason: 'finish-line.json cannot be read, so the open rows are unknown: ' + error, stop_refusals: refused[0].refusals, patience, open: [id], board, board_error: error, ...(gating.length > 1 ? { runs: gating.map((g) => g.id) } : {}), ...extra });
+  throw fail('STOP_REFUSED', 1, { owned: true, run_id: refused[0].id, reason: 'finish-line.json cannot be read, so the open rows are unknown: ' + error + lost.note, stop_refusals: refused[0].refusals, patience, open: [id], board, board_error: error, ...(gating.length > 1 ? { runs: gating.map((g) => g.id) } : {}), ...extra });
 }
 
 // One run's refusal bookkeeping: the patience counter resets when its rows changed since the last stop;
@@ -3930,6 +3945,7 @@ function refuseUnreadableBoard(ctx, gating, patience, error, extra, unwritable) 
 function refuseOrPark(ctx, runId, state, fl, open, patience) {
   const ids = open.map((r) => r.id);
   const sig = rowsSignature(fl);
+  const stored = state.stop_refusals;
   const prev = state.gates.stop_gate;
   if (prev && prev.sig !== sig) state.stop_refusals = 0;
   // CP-03 R7-S1-L5: once the state write holds the refusal, a log line or a park that cannot be written
@@ -3937,6 +3953,12 @@ function refuseOrPark(ctx, runId, state, fl, open, patience) {
   let logError = null;
   const logEvent = (row) => { try { appendEvent(ctx, runId, row); } catch (e) { logError = errText(e); } };
   let parkError = null;
+  // CP-03 R8-S1-M15: the state write itself failed (STATE_TOO_LARGE, EACCES, ...): refuse anyway, uncounted
+  const uncounted = (e) => {
+    const err = errText(e);
+    logEvent({ event: 'stop_refused', stage: state.stage, host: state.host, verdict: 'STOP_REFUSED', detail: { refusals: stored, open: ids, refusal_uncounted: true, write_error: err, ...(parkError ? { park_error: parkError } : {}) } });
+    return { parked: false, ids, refusals: stored, uncounted: err, logError: logError || parkError };
+  };
   const text = 'The run stopped with ' + ids.length + ' open row(s) after ' + patience + ' refusals: ' + ids.join(', ') + '. Resume the run or close it with the open rows as residuals?';
   if (state.stop_refusals >= patience) {
     try {
@@ -3956,7 +3978,7 @@ function refuseOrPark(ctx, runId, state, fl, open, patience) {
     state.gates.stop_gate = { sig };
     const from = state.status;
     state.status = 'PARKED';
-    writeState(ctx, state);
+    try { writeState(ctx, state); } catch (e) { return uncounted(e); }
     // CP-03 R5-S1-H10: the event is the gate's own mark on the question (pack withdraw trusts nothing else)
     let q = null;
     try { q = openPackQuestions(ctx, runId).find((x) => x.text === text); } catch { /* the park stands */ }
@@ -3965,7 +3987,7 @@ function refuseOrPark(ctx, runId, state, fl, open, patience) {
   }
   state.stop_refusals += 1;
   state.gates.stop_gate = { sig };
-  writeState(ctx, state);
+  try { writeState(ctx, state); } catch (e) { return uncounted(e); }
   logEvent({ event: 'stop_refused', stage: state.stage, host: state.host, verdict: 'STOP_REFUSED', detail: { refusals: state.stop_refusals, open: ids, ...(parkError ? { park_error: parkError } : {}) } });
   return { parked: false, ids, refusals: state.stop_refusals, logError: logError || parkError };
 }
@@ -3984,7 +4006,12 @@ function explicitStop(ctx, f) {
   const patience = loadSettings(ctx, []).values.stop_gate.patience;
   const r = refuseOrPark(ctx, runId, state, fl, open, patience);
   if (r.parked) return { outcome: 'PARKED', exit: 2, owned: true, run_id: runId, status: 'PARKED', open: r.ids, board };
-  throw fail('STOP_REFUSED', 1, { owned: true, run_id: runId, reason: 'finish-line rows are still open', stop_refusals: r.refusals, patience, open: r.ids, board });
+  const lost = uncountedNote([{ id: runId, uncounted: r.uncounted }]);
+  const unwritable = [
+    ...(r.uncounted ? [{ run_id: runId, error: r.uncounted, refused: true, refusal_uncounted: true }] : []),
+    ...(r.logError ? [{ run_id: runId, error: r.logError, refused: true }] : []),
+  ];
+  throw fail('STOP_REFUSED', 1, { owned: true, run_id: runId, reason: 'finish-line rows are still open' + lost.note, stop_refusals: r.refusals, patience, open: r.ids, board, ...(unwritable.length ? { unwritable } : {}), ...lost.extra });
 }
 
 // G-1 (1.1): a hook stop is gated by EVERY active run owned by the hook's session (CONTRACT 3.1 row 1
@@ -4029,6 +4056,7 @@ function gateStop(ctx, args) {
   // every home's write errors are reported, whichever home's answer is shown
   const unwritable = answers.flatMap((a) => ((a.out || (a.refused && a.refused.extra) || {}).unwritable || []).map((u) => ({ ...u, home: a.home })));
   if (unwritable.length) notes.unwritable = unwritable;
+  if (unwritable.some((u) => u.refusal_uncounted)) notes.refusal_uncounted = true;
   const searched = homes.map((h) => h.home);
   const refused = answers.filter((a) => a.refused);
   if (refused.length) {
@@ -4114,9 +4142,6 @@ function hookStopIn(ctx, scope) {
     boards.push((withOpen.length > 1 ? 'run ' + w.id + '\n' : '') + renderBoard(w.fl));
   }
   if (unwritable.length) extra.unwritable = unwritable;
-  if (!refused.length && !parked.length) {
-    return allowed({ owned: true, run_id: withOpen[0].id, reason: 'the refusal could not be written for any run with open rows', ...extra });
-  }
   const many = withOpen.length > 1 ? { runs: withOpen.map((w) => w.id), open_by_run: openByRun } : {};
   const text = boards.join('\n\n');
   if (!refused.length) {
@@ -4124,8 +4149,10 @@ function hookStopIn(ctx, scope) {
     return { outcome: 'PARKED', exit: 2, owned: true, run_id: first, status: 'PARKED', open: openByRun[first], board: text, ...many, ...(withOpen.length > 1 ? { parked: parked.map((p) => p.id) } : {}), ...extra };
   }
   const first = refused[0];
+  const lost = uncountedNote(refused);
   throw fail('STOP_REFUSED', 1, {
-    owned: true, run_id: first.id, reason: 'finish-line rows are still open', stop_refusals: first.refusals, patience,
+    ...lost.extra,
+    owned: true, run_id: first.id, reason: 'finish-line rows are still open' + lost.note, stop_refusals: first.refusals, patience,
     open: openByRun[first.id], board: text, ...many, ...(parked.length ? { parked: parked.map((p) => p.id) } : {}), ...extra,
   });
 }

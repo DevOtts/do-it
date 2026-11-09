@@ -166,7 +166,7 @@ test('CP03 R5-S1-H10 pack withdraw never removes the last open question of a NEE
   assert.equal(real(repo, ['pack', 'withdraw', '--by', 'stop-gate']).out.outcome, 'PACK_WITHDRAW_REFUSED');
 });
 
-test('CP03 R5-S1-M9 a run whose refusal cannot be written never opens the stop for the other runs of its home or for other homes', () => {
+test('CP03 R5-S1-M9 a run whose refusal cannot be written never opens the stop for the other runs of its home or for other homes (R8-S1-M15: nor for itself)', () => {
   // two homes, one session: A open in X, B open in Y; X's run folder read-only
   const parent = mk();
   const env = { DO_IT_USER_HOME: path.join(parent.home, 'uh') };
@@ -180,9 +180,12 @@ test('CP03 R5-S1-M9 a run whose refusal cannot be written never opens the stop f
   try {
     const g = hookStop(x, 'xo-s', x.dir, env);
     assert.equal(g.out.outcome, 'STOP_REFUSED', g.stdout);
-    assert.deepEqual(g.out.refused_homes, [fs.realpathSync(y.doIt)], g.stdout);
+    // since R8-S1-M15 the unwritable run is refused too (uncounted), never failed open: both homes refuse
+    assert.deepEqual(g.out.refused_homes, [fs.realpathSync(x.doIt), fs.realpathSync(y.doIt)], g.stdout);
     assert.equal(g.out.unwritable[0].run_id, a, 'the write error is reported');
     assert.match(g.out.unwritable[0].error, /EACCES/);
+    assert.equal(g.out.unwritable[0].refusal_uncounted, true);
+    assert.equal(g.out.refusal_uncounted, true);
   } finally { fs.chmodSync(ra, 0o755); }
 
   // same home: A1 older and open, A2 newer and open, A2 read-only
