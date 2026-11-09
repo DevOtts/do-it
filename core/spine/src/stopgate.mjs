@@ -93,6 +93,9 @@ function refuseOrPark(ctx, runId, state, fl, open, patience) {
   let logError = null;
   const logEvent = (row) => { try { appendEvent(ctx, runId, row); } catch (e) { logError = errText(e); } };
   let parkError = null;
+  // CP-03 R10 L-g: an unreadable answers.json counts as no answers for the park and is reported on its event
+  let answersError = null;
+  const onAnswersError = (e) => { answersError = errText(e); };
   // CP-03 R8-S1-M15: the state write itself failed (STATE_TOO_LARGE, EACCES, ...): refuse anyway, uncounted
   const uncounted = (e) => {
     const err = errText(e);
@@ -114,7 +117,7 @@ function refuseOrPark(ctx, runId, state, fl, open, patience) {
         recommendation: 'resume run',
         default: 'resume run',
         reversible: true,
-      }], { stopGate: true });
+      }], { stopGate: true, onAnswersError });
     } catch (e) { parkError = errText(e); }
   }
   if (state.stop_refusals >= patience && !parkError) {
@@ -127,9 +130,9 @@ function refuseOrPark(ctx, runId, state, fl, open, patience) {
     let q = null;
     try {
       const stored = redactJsonValues(text);
-      q = openPackQuestions(ctx, runId).find((x) => x.text === text || x.text === stored) || openStopGateQuestion(ctx, runId);
+      q = openPackQuestions(ctx, runId, onAnswersError).find((x) => x.text === text || x.text === stored) || openStopGateQuestion(ctx, runId, null, null, onAnswersError);
     } catch { /* the park stands */ }
-    logEvent({ event: 'stop_parked', stage: state.stage, host: state.host, verdict: 'PARKED', detail: { from, open: ids, ...(q ? { question: q.n } : {}) } });
+    logEvent({ event: 'stop_parked', stage: state.stage, host: state.host, verdict: 'PARKED', detail: { from, open: ids, ...(q ? { question: q.n } : {}), ...(answersError ? { answers_error: answersError } : {}) } });
     return { parked: true, ids, refusals: 0, logError };
   }
   state.stop_refusals += 1;

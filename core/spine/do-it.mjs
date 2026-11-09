@@ -1802,7 +1802,7 @@ function packAppend(ctx, runId, questions, opts) {
   // CP-03 R10-S1-M17: the gate's own question is deduped only against OPEN questions (not withdrawn, not
   // answered): once the owner answered a park, the next park with the same rows asks again.
   const stop = !!(opts && opts.stopGate);
-  const open = stop ? openOf(ctx, runId, pack) : null;
+  const open = stop ? openOf(ctx, runId, pack, opts.onAnswersError) : null;
   const held = stop ? openStopGateQuestion(ctx, runId, pack, open) : null;
   if (held) {
     // CP-03 R10 L-d: the park reuses the gate's open question; its text is brought up to the current rows.
@@ -1843,13 +1843,19 @@ function packAppend(ctx, runId, questions, opts) {
 }
 
 // Questions still waiting on the owner: not withdrawn and not answered in answers.json.
-function openPackQuestions(ctx, runId) {
-  return openOf(ctx, runId, readJsonIfExists(packPath(ctx, runId)));
+// onAnswersError (the stop gate only, CP-03 R10 L-g): an answers.json that cannot be read counts as no
+// answers and the error is handed to it, so a garbled file never blocks a park. Without it the read throws.
+function openPackQuestions(ctx, runId, onAnswersError) {
+  return openOf(ctx, runId, readJsonIfExists(packPath(ctx, runId)), onAnswersError);
 }
 
-function openOf(ctx, runId, pack) {
+function openOf(ctx, runId, pack, onAnswersError) {
   if (!pack || !Array.isArray(pack.questions)) return [];
-  const doc = readJsonIfExists(path.join(ctx.home, 'runs', runId, 'answers.json'));
+  let doc = null;
+  try { doc = readJsonIfExists(path.join(ctx.home, 'runs', runId, 'answers.json')); } catch (e) {
+    if (typeof onAnswersError !== 'function') throw e;
+    onAnswersError(e);
+  }
   const answered = new Set((doc && Array.isArray(doc.answers) ? doc.answers : []).map((a) => a.n));
   return pack.questions.filter((q) => q.status !== 'withdrawn' && !answered.has(q.n));
 }
@@ -1879,11 +1885,11 @@ function stopGateMarks(ctx, runId) {
 }
 
 // The run's open (not withdrawn, not answered) question that the stop gate itself wrote, or null.
-// `open` (optional): the run's open questions, already read.
-function openStopGateQuestion(ctx, runId, pack, open) {
+// `open` (optional): the run's open questions, already read; `onAnswersError` as in openPackQuestions.
+function openStopGateQuestion(ctx, runId, pack, open, onAnswersError) {
   const marks = stopGateMarks(ctx, runId);
   if (!marks.numbers.size && !marks.openLists.size) return null;
-  if (!open) open = pack ? openOf(ctx, runId, pack) : openPackQuestions(ctx, runId);
+  if (!open) open = pack ? openOf(ctx, runId, pack, onAnswersError) : openPackQuestions(ctx, runId, onAnswersError);
   return open.find((q) => isStopGateQuestion(q, marks)) || null;
 }
 
@@ -4022,6 +4028,9 @@ function refuseOrPark(ctx, runId, state, fl, open, patience) {
   let logError = null;
   const logEvent = (row) => { try { appendEvent(ctx, runId, row); } catch (e) { logError = errText(e); } };
   let parkError = null;
+  // CP-03 R10 L-g: an unreadable answers.json counts as no answers for the park and is reported on its event
+  let answersError = null;
+  const onAnswersError = (e) => { answersError = errText(e); };
   // CP-03 R8-S1-M15: the state write itself failed (STATE_TOO_LARGE, EACCES, ...): refuse anyway, uncounted
   const uncounted = (e) => {
     const err = errText(e);
@@ -4043,7 +4052,7 @@ function refuseOrPark(ctx, runId, state, fl, open, patience) {
         recommendation: 'resume run',
         default: 'resume run',
         reversible: true,
-      }], { stopGate: true });
+      }], { stopGate: true, onAnswersError });
     } catch (e) { parkError = errText(e); }
   }
   if (state.stop_refusals >= patience && !parkError) {
@@ -4056,9 +4065,9 @@ function refuseOrPark(ctx, runId, state, fl, open, patience) {
     let q = null;
     try {
       const stored = redactJsonValues(text);
-      q = openPackQuestions(ctx, runId).find((x) => x.text === text || x.text === stored) || openStopGateQuestion(ctx, runId);
+      q = openPackQuestions(ctx, runId, onAnswersError).find((x) => x.text === text || x.text === stored) || openStopGateQuestion(ctx, runId, null, null, onAnswersError);
     } catch { /* the park stands */ }
-    logEvent({ event: 'stop_parked', stage: state.stage, host: state.host, verdict: 'PARKED', detail: { from, open: ids, ...(q ? { question: q.n } : {}) } });
+    logEvent({ event: 'stop_parked', stage: state.stage, host: state.host, verdict: 'PARKED', detail: { from, open: ids, ...(q ? { question: q.n } : {}), ...(answersError ? { answers_error: answersError } : {}) } });
     return { parked: true, ids, refusals: 0, logError };
   }
   state.stop_refusals += 1;

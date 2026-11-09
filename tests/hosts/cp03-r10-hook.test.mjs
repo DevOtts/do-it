@@ -153,3 +153,19 @@ test('CP03 R10 L-d a park that reuses the open gate question brings its text up 
   assert.equal(pack.packAppend(ctx, runId, [gateQ(['cccccc'])], { stopGate: true }).length, 0);
   assert.equal(pack.openPackQuestions(ctx, runId).find((x) => x.n === stage.n).text, 'Which region?');
 });
+
+test('CP03 R10 L-g a garbled answers.json never blocks a park: it counts as no answers and the park event reports it', { timeout: 300000 }, () => {
+  const w = world();
+  const { X, id } = building(w, 'lg', [{ id: 'aaaaaa' }]);
+  park(w, X, id, 'lg');
+  const [q1] = openGateQs(X, id);
+  assert.equal(sp(w, X, ['answer', '--run', id, '--reply', q1.n + ': resume run']).code, 0);
+  resume(w, X, id, 'lg');
+  fs.writeFileSync(path.join(X, '.do-it', 'runs', id, 'answers.json'), '{ garbled');
+  park(w, X, id, 'lg');
+  const evs = parkedEvents(X, id);
+  assert.equal(evs.length, 2);
+  assert.match(evs[1].detail.answers_error || '', /JSON|Unexpected|Expected/, JSON.stringify(evs[1]));
+  assert.equal(evs[1].detail.question, q1.n, 'unreadable answers: the gate question counts as open and is reused');
+  assert.equal(stopGateQs(X, id).length, 1, 'no second question while the answers cannot be read');
+});
