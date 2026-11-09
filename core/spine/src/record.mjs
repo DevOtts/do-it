@@ -356,17 +356,21 @@ export function planRecord(ctx, runId, state, result) {
 // The statuses that have deploy legs (D17): only then may a result carry them.
 export const DEPLOY_STATUSES = ['DEPLOYING', 'PROVING', 'PARTIAL_FAILURE', 'ROLLED_BACK'];
 
+// CP-03 R6-S1-L1: a slice reason obeys the same rule as a run reason (cleanReason: no placeholder, no
+// invisible-only text); the sentence the spine builds around it would otherwise always pass the guard.
 export function blockReason(result) {
-  if (typeof result.reason === 'string' && result.reason.trim()) return result.reason.trim();
-  const v = (result.verdicts || []).find((x) => x.verdict === 'BLOCKED' && typeof x.evidence === 'string' && x.evidence.trim());
-  return v ? v.evidence.trim() : null;
+  const r = cleanReason(result.reason);
+  if (r) return r;
+  const v = (result.verdicts || []).find((x) => x.verdict === 'BLOCKED' && cleanReason(x.evidence));
+  return v ? cleanReason(v.evidence) : null;
 }
 
 // A run-level failure names its cause: the result's reason, else the evidence of a verdict that did not verify.
 export function failReason(result) {
-  if (typeof result.reason === 'string' && result.reason.trim()) return result.reason.trim();
-  const v = (result.verdicts || []).find((x) => x.verdict !== 'VERIFIED' && typeof x.evidence === 'string' && x.evidence.trim());
-  return v ? v.evidence.trim() : null;
+  const r = cleanReason(result.reason);
+  if (r) return r;
+  const v = (result.verdicts || []).find((x) => x.verdict !== 'VERIFIED' && cleanReason(x.evidence));
+  return v ? cleanReason(v.evidence) : null;
 }
 
 // True when at least one of `questions` will be open in the run's owner pack once appended: a new text
