@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { fail } from './errors.mjs';
 import { appendEvent } from './events.mjs';
-import { STATE_READ_CAP, jsonBytes, readRegularFile } from './fs-atomic.mjs';
+import { STATE_ACCEPT_CAP, STATE_HEADROOM, STATE_READ_CAP, jsonBytes, readRegularFile } from './fs-atomic.mjs';
 import { adoptsUnattributed, findRow, finishLineUpsert, hasRow, readFinishLine, writeFinishLine } from './finish-line.mjs';
 import { sha256Bytes } from './hash.mjs';
 import { loadSchemaFile, validateSchema } from './schema.mjs';
@@ -148,11 +148,14 @@ export function seedCheckpoints(state, fl, data) {
   return block.count;
 }
 
+// CP-03 R8-S1-M15: measured exactly as atomicWrite will write it (jsonBytes = after redaction), and accepted
+// only up to the read cap minus the headroom the run's own bookkeeping needs.
 export function planTooLarge(state, fl) {
+  const limit = 'the ' + STATE_ACCEPT_CAP + '-byte limit (the ' + STATE_READ_CAP + '-byte state cap less ' + STATE_HEADROOM + ' bytes of headroom)';
   const stateBytes = jsonBytes(state).length;
-  if (stateBytes > STATE_READ_CAP) return { pointer: '/slices', message: 'the plan seeds a state of ' + stateBytes + ' bytes, above the ' + STATE_READ_CAP + '-byte state cap (' + state.slices.length + ' slices); split the plan' };
+  if (stateBytes > STATE_ACCEPT_CAP) return { pointer: '/slices', message: 'the plan seeds a state of ' + stateBytes + ' bytes, above ' + limit + ' (' + state.slices.length + ' slices); split the plan' };
   const flBytes = jsonBytes(fl).length;
-  if (flBytes > STATE_READ_CAP) return { pointer: '/slices', message: 'the plan seeds a finish line of ' + flBytes + ' bytes, above the ' + STATE_READ_CAP + '-byte cap; split the plan' };
+  if (flBytes > STATE_ACCEPT_CAP) return { pointer: '/slices', message: 'the plan seeds a finish line of ' + flBytes + ' bytes, above ' + limit + '; split the plan' };
   return null;
 }
 

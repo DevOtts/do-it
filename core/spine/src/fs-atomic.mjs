@@ -86,6 +86,11 @@ export function appendJsonLine(file, value) {
 // Errors carry a code (ENOENT, ENOTREG, EFBIG, ...) and never quote the file's content.
 export const REGISTRY_READ_CAP = 64 * 1024;
 export const STATE_READ_CAP = 16 * 1024 * 1024;
+// CP-03 R8-S1-M15: what the spine ACCEPTS into a state (or board) it seeds leaves 1 MiB of headroom under the
+// read cap, so the run's own later bookkeeping (stop refusals, signatures, statuses) never meets the cap.
+// Sizes are measured as written: jsonBytes, after redaction.
+export const STATE_HEADROOM = 1024 * 1024;
+export const STATE_ACCEPT_CAP = STATE_READ_CAP - STATE_HEADROOM;
 // files the spine hashes or copies whole (results, evidence, migrated files) and append-only logs
 export const BULK_READ_CAP = 256 * 1024 * 1024;
 

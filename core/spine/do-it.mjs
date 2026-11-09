@@ -969,6 +969,11 @@ function appendJsonLine(file, value) {
 // Errors carry a code (ENOENT, ENOTREG, EFBIG, ...) and never quote the file's content.
 const REGISTRY_READ_CAP = 64 * 1024;
 const STATE_READ_CAP = 16 * 1024 * 1024;
+// CP-03 R8-S1-M15: what the spine ACCEPTS into a state (or board) it seeds leaves 1 MiB of headroom under the
+// read cap, so the run's own later bookkeeping (stop refusals, signatures, statuses) never meets the cap.
+// Sizes are measured as written: jsonBytes, after redaction.
+const STATE_HEADROOM = 1024 * 1024;
+const STATE_ACCEPT_CAP = STATE_READ_CAP - STATE_HEADROOM;
 // files the spine hashes or copies whole (results, evidence, migrated files) and append-only logs
 const BULK_READ_CAP = 256 * 1024 * 1024;
 
@@ -2139,11 +2144,14 @@ function seedCheckpoints(state, fl, data) {
   return block.count;
 }
 
+// CP-03 R8-S1-M15: measured exactly as atomicWrite will write it (jsonBytes = after redaction), and accepted
+// only up to the read cap minus the headroom the run's own bookkeeping needs.
 function planTooLarge(state, fl) {
+  const limit = 'the ' + STATE_ACCEPT_CAP + '-byte limit (the ' + STATE_READ_CAP + '-byte state cap less ' + STATE_HEADROOM + ' bytes of headroom)';
   const stateBytes = jsonBytes(state).length;
-  if (stateBytes > STATE_READ_CAP) return { pointer: '/slices', message: 'the plan seeds a state of ' + stateBytes + ' bytes, above the ' + STATE_READ_CAP + '-byte state cap (' + state.slices.length + ' slices); split the plan' };
+  if (stateBytes > STATE_ACCEPT_CAP) return { pointer: '/slices', message: 'the plan seeds a state of ' + stateBytes + ' bytes, above ' + limit + ' (' + state.slices.length + ' slices); split the plan' };
   const flBytes = jsonBytes(fl).length;
-  if (flBytes > STATE_READ_CAP) return { pointer: '/slices', message: 'the plan seeds a finish line of ' + flBytes + ' bytes, above the ' + STATE_READ_CAP + '-byte cap; split the plan' };
+  if (flBytes > STATE_ACCEPT_CAP) return { pointer: '/slices', message: 'the plan seeds a finish line of ' + flBytes + ' bytes, above ' + limit + '; split the plan' };
   return null;
 }
 
@@ -2257,8 +2265,9 @@ function cmdRecord(ctx, args) {
   const resultFile = path.resolve(ctx.cwd, f.result);
   let bytes;
   // CP-03 R7-S1-M14: a result is copied into the journal and the state, which are read back capped at
-  // STATE_READ_CAP, so a larger result is refused before anything is written.
-  try { bytes = readRegularFile(resultFile, STATE_READ_CAP); } catch (e) {
+  // STATE_READ_CAP, so a larger result is refused before anything is written (R8-S1-M15: accepted only up to
+  // STATE_ACCEPT_CAP, the cap less the run's bookkeeping headroom).
+  try { bytes = readRegularFile(resultFile, STATE_ACCEPT_CAP); } catch (e) {
     throw fail('RESULT_UNREADABLE', 1, { file: f.result, message: e.message });
   }
   const resultSha = sha256Bytes(bytes);
