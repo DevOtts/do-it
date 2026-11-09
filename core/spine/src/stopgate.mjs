@@ -105,7 +105,7 @@ function explicitStop(ctx, f) {
   if (NON_GATING_STATUSES.includes(state.status)) {
     return allowed({ owned: true, run_id: runId, status: state.status, reason: 'run is ' + state.status + ', it does not gate', stop_refusals: state.stop_refusals });
   }
-  const fl = rowsForRun(readFinishLine(ctx), runId, adoptsUnattributed(state));
+  const fl = rowsForRun(readFinishLine(ctx, { strict: true }), runId, adoptsUnattributed(state));
   const open = openRows(fl);
   const board = renderBoard(fl);
   if (!open.length) return allowed({ owned: true, run_id: runId, reason: 'no open rows for this run', stop_refusals: state.stop_refusals, board });
@@ -216,7 +216,7 @@ function hookStopIn(ctx, scope) {
   let patience;
   try { patience = loadSettings(ctx, []).values.stop_gate.patience; } catch { patience = DEFAULT_PATIENCE; }
   let board;
-  try { board = readFinishLine(ctx); } catch (e) {
+  try { board = readFinishLine(ctx, { strict: true }); } catch (e) {
     const why = e instanceof CliError && e.extra && e.extra.error ? e.extra.error : String(e && e.message ? e.message : e);
     return refuseUnreadableBoard(ctx, gating, patience, why, extra, unwritable);
   }

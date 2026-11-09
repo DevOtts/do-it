@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import path from 'node:path';
 import { loadSchemaFile, validateSchema } from './schema.mjs';
 import { fail } from './errors.mjs';
@@ -14,14 +15,22 @@ export function finishLinePath(ctx) {
 
 // CP-03 R5-S1-L4: a board that cannot be read is a named refusal (FINISH_LINE_UNREADABLE, with the file and
 // the cause, never its content), not an INTERNAL_ERROR, so `next` after a park tells the agent what to fix.
-export function readFinishLine(ctx) {
+export function readFinishLine(ctx, opts) {
   const file = finishLinePath(ctx);
   let fl;
   try { fl = readJsonRegular(file, STATE_READ_CAP); } catch (e) {
     const error = String(e && e.code ? e.code + ': ' + e.message : (e && e.message) || e);
     throw fail('FINISH_LINE_UNREADABLE', 1, { file, error, message: 'finish-line.json cannot be read (' + error + '); restore it from git or fix it by hand, then run the command again' });
   }
-  if (!fl || !Array.isArray(fl.rows)) return { rows: [] };
+  if (!fl || !Array.isArray(fl.rows)) {
+    // CP-03 R5-S1-L2: on the stop path a board that parses but is not { rows: [...] } is as unknown as one
+    // that does not parse (A16 fails closed); a missing board is still an empty one
+    if (opts && opts.strict && fs.existsSync(file)) {
+      const error = 'EBOARD: rows is not a list in ' + file;
+      throw fail('FINISH_LINE_UNREADABLE', 1, { file, error, message: 'finish-line.json cannot be read (' + error + '); restore it from git or fix it by hand, then run the command again' });
+    }
+    return { rows: [] };
+  }
   return fl;
 }
 

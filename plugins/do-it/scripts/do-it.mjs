@@ -714,14 +714,22 @@ function finishLinePath(ctx) {
 
 // CP-03 R5-S1-L4: a board that cannot be read is a named refusal (FINISH_LINE_UNREADABLE, with the file and
 // the cause, never its content), not an INTERNAL_ERROR, so `next` after a park tells the agent what to fix.
-function readFinishLine(ctx) {
+function readFinishLine(ctx, opts) {
   const file = finishLinePath(ctx);
   let fl;
   try { fl = readJsonRegular(file, STATE_READ_CAP); } catch (e) {
     const error = String(e && e.code ? e.code + ': ' + e.message : (e && e.message) || e);
     throw fail('FINISH_LINE_UNREADABLE', 1, { file, error, message: 'finish-line.json cannot be read (' + error + '); restore it from git or fix it by hand, then run the command again' });
   }
-  if (!fl || !Array.isArray(fl.rows)) return { rows: [] };
+  if (!fl || !Array.isArray(fl.rows)) {
+    // CP-03 R5-S1-L2: on the stop path a board that parses but is not { rows: [...] } is as unknown as one
+    // that does not parse (A16 fails closed); a missing board is still an empty one
+    if (opts && opts.strict && fs.existsSync(file)) {
+      const error = 'EBOARD: rows is not a list in ' + file;
+      throw fail('FINISH_LINE_UNREADABLE', 1, { file, error, message: 'finish-line.json cannot be read (' + error + '); restore it from git or fix it by hand, then run the command again' });
+    }
+    return { rows: [] };
+  }
   return fl;
 }
 
@@ -3862,7 +3870,7 @@ function explicitStop(ctx, f) {
   if (NON_GATING_STATUSES.includes(state.status)) {
     return allowed({ owned: true, run_id: runId, status: state.status, reason: 'run is ' + state.status + ', it does not gate', stop_refusals: state.stop_refusals });
   }
-  const fl = rowsForRun(readFinishLine(ctx), runId, adoptsUnattributed(state));
+  const fl = rowsForRun(readFinishLine(ctx, { strict: true }), runId, adoptsUnattributed(state));
   const open = openRows(fl);
   const board = renderBoard(fl);
   if (!open.length) return allowed({ owned: true, run_id: runId, reason: 'no open rows for this run', stop_refusals: state.stop_refusals, board });
@@ -3973,7 +3981,7 @@ function hookStopIn(ctx, scope) {
   let patience;
   try { patience = loadSettings(ctx, []).values.stop_gate.patience; } catch { patience = DEFAULT_PATIENCE; }
   let board;
-  try { board = readFinishLine(ctx); } catch (e) {
+  try { board = readFinishLine(ctx, { strict: true }); } catch (e) {
     const why = e instanceof CliError && e.extra && e.extra.error ? e.extra.error : String(e && e.message ? e.message : e);
     return refuseUnreadableBoard(ctx, gating, patience, why, extra, unwritable);
   }

@@ -336,3 +336,21 @@ test('CP03 R5-S1-L4 after a garbled board parks the run, resume and next name th
   assert.match(n.out.message, /restore it from git/);
   assert.doesNotMatch(n.stdout, /<<<<<<</, 'the board\'s content is not quoted');
 });
+
+test('CP03 R5-S1-L2 a board that parses but has the wrong shape refuses the stop like a garbled one', () => {
+  const repo = mk();
+  patient(repo);
+  const a = start(repo, 'l2-s');
+  const fl = path.join(repo.doIt, 'finish-line.json');
+  for (const text of ['{}', '{"rows":null}', '{"rows":{}}', 'null', '[]']) {
+    fs.writeFileSync(fl, text);
+    const g = hookStop(repo, 'l2-s');
+    assert.equal(g.out.outcome, 'STOP_REFUSED', text + ': ' + g.stdout);
+    assert.match(g.out.reason, /finish-line\.json cannot be read/);
+    const e = real(repo, ['gate', 'stop', '--run', a]);
+    assert.equal(e.out.outcome, 'FINISH_LINE_UNREADABLE', text + ': ' + e.stdout);
+  }
+  // a missing board is still an empty one
+  fs.rmSync(fl);
+  assert.equal(hookStop(repo, 'l2-s').out.outcome, 'STOP_ALLOWED');
+});
