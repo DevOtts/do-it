@@ -1681,8 +1681,6 @@ function packAppend(ctx, runId, questions) {
   return added;
 }
 
-// The stop gate wrote its questions with source 'stop-gate'. Before that field existed it wrote this
-// exact sentence; the text is its own template, so it identifies the origin.
 // Questions still waiting on the owner: not withdrawn and not answered in answers.json.
 function openPackQuestions(ctx, runId) {
   const pack = readJsonIfExists(packPath(ctx, runId));
@@ -1692,8 +1690,36 @@ function openPackQuestions(ctx, runId) {
   return pack.questions.filter((q) => q.status !== 'withdrawn' && !answered.has(q.n));
 }
 
-function isStopGateQuestion(q) {
-  return q.source === 'stop-gate' || (q.source === undefined && q.kind === 'default' && /^The run stopped with \d+ open row\(s\) after \d+ refusals: /.test(q.text));
+// The sentence the stop gate writes when it parks a run at patience. `record` refuses a result question that
+// starts with it (STOP_GATE_TEXT_RESERVED), so only the gate writes it.
+const STOP_GATE_TEXT = /^The run stopped with \d+ open row\(s\) after \d+ refusals: /;
+const STOP_GATE_IDS = /^The run stopped with \d+ open row\(s\) after \d+ refusals: (.*)\. Resume the run or close it with the open rows as residuals\?$/;
+
+// CP-03 R5-S1-H10: which questions did the stop gate itself write? Only the gate writes `stop_parked` events:
+// since 1.1 the event names the question's number; a 1.0.x (or pre-release 1.1) event names the open rows,
+// which the question's text repeats. A `source` field proves nothing: a result file could set one.
+function stopGateMarks(ctx, runId) {
+  const numbers = new Set();
+  const openLists = new Set();
+  let lines = [];
+  try { lines = fs.readFileSync(eventsPath(ctx, runId), 'utf8').split('\n'); } catch { /* no events */ }
+  for (const line of lines) {
+    if (!line.includes('"stop_parked"')) continue;
+    let ev;
+    try { ev = JSON.parse(line); } catch { continue; }
+    if (!ev || ev.event !== 'stop_parked' || !ev.detail || typeof ev.detail !== 'object') continue;
+    if (Number.isInteger(ev.detail.question)) numbers.add(ev.detail.question);
+    else if (Array.isArray(ev.detail.open)) openLists.add(ev.detail.open.join(', '));
+  }
+  return { numbers, openLists };
+}
+
+function isStopGateQuestion(q, marks) {
+  if (!q || !marks) return false;
+  if (marks.numbers.has(q.n)) return true;
+  if (q.kind !== 'default' || typeof q.text !== 'string') return false;
+  const m = STOP_GATE_IDS.exec(q.text);
+  return !!m && marks.openLists.has(m[1]);
 }
 
 const WITHDRAW_REASON = 'withdrawn: the stop gate raised this for a run it should not have gated';
@@ -1715,31 +1741,45 @@ function cmdPack(ctx, args) {
   const reason = typeof f.reason === 'string' && f.reason ? f.reason : WITHDRAW_REASON;
   const withdrawn = [];
   const kept = [];
+  const refused = [];
   for (const id of ids) {
     const file = packPath(ctx, id);
     const pack = readJsonIfExists(file);
     if (!pack || !Array.isArray(pack.questions)) continue;
     const answersDoc = readJsonIfExists(path.join(ctx.home, 'runs', id, 'answers.json'));
     const answered = new Set((answersDoc && Array.isArray(answersDoc.answers) ? answersDoc.answers : []).map((a) => a.n));
+    const marks = stopGateMarks(ctx, id);
     const now = ctx.now();
-    let changed = 0;
+    const picks = [];
     for (const q of pack.questions) {
-      if (!isStopGateQuestion(q) || q.status === 'withdrawn') continue;
+      if (q.status === 'withdrawn' || !isStopGateQuestion(q, marks)) continue;
       if (answered.has(q.n)) { kept.push({ run_id: id, n: q.n }); continue; }
+      picks.push(q);
+    }
+    if (!picks.length) continue;
+    let st = null;
+    try { st = loadState(ctx, id); } catch { /* the event still records the withdrawal */ }
+    // CP-03 R5-S1-H10: a NEEDS_HUMAN run waits on its open questions. Withdrawing the last one would leave it
+    // waiting on nobody, outside the stop gate for good, so the withdrawal is refused for that run.
+    const left = pack.questions.filter((q) => q.status !== 'withdrawn' && !answered.has(q.n) && !picks.includes(q));
+    if (st && st.status === 'NEEDS_HUMAN' && !left.length) {
+      refused.push({ run_id: id, questions: picks.map((q) => q.n), reason: 'run ' + id + ' is NEEDS_HUMAN and these are its last open owner-pack questions; answer them (do-it answer) instead' });
+      continue;
+    }
+    for (const q of picks) {
       q.status = 'withdrawn';
       q.withdrawn_at = now;
       q.withdrawn_reason = reason;
       withdrawn.push({ run_id: id, n: q.n });
-      changed += 1;
     }
-    if (!changed) continue;
     pack.pack_id = packIdOf(pack.questions);
     atomicWriteJson(file, pack);
-    let st = {};
-    try { st = loadState(ctx, id); } catch { /* the event still records the withdrawal */ }
-    appendEvent(ctx, id, { event: 'pack_withdrawn', stage: st.stage || null, host: st.host || null, verdict: 'WITHDRAWN', detail: { by: 'stop-gate', count: changed } });
+    appendEvent(ctx, id, { event: 'pack_withdrawn', stage: (st && st.stage) || null, host: (st && st.host) || null, verdict: 'WITHDRAWN', detail: { by: 'stop-gate', count: picks.length } });
   }
-  return { outcome: withdrawn.length ? 'PACK_WITHDRAWN' : 'PACK_NOOP', exit: 0, by: 'stop-gate', withdrawn, kept_answered: kept };
+  if (refused.length && (f.run || !withdrawn.length)) {
+    throw fail('PACK_WITHDRAW_REFUSED', 1, { by: 'stop-gate', refused, withdrawn, message: refused.map((r) => r.reason).join('; ') });
+  }
+  return { outcome: withdrawn.length ? 'PACK_WITHDRAWN' : 'PACK_NOOP', exit: 0, by: 'stop-gate', withdrawn, kept_answered: kept, ...(refused.length ? { refused } : {}) };
 }
 
 // ---- park.mjs ----
@@ -2324,7 +2364,13 @@ function planRecord(ctx, runId, state, result) {
   // A BLOCKED slice (owner-gate) also routes its question into the owner pack (R4 T-R4-19, B10).
   if ((result.status === 'needs_human' || result.status === 'blocked') && result.pending_human && result.pending_human.questions_path) {
     // a question with no text is no question: the pack would drop it (packAppend), so it decides nothing
-    const qs = readQuestionsFile(ctx, result.pending_human.questions_path).filter((q) => q && typeof q.text === 'string' && q.text.trim());
+    // CP-03 R5-S1-H10: only the spine says where a question came from, so a result's own `source` is dropped,
+    // and the stop gate's sentence is reserved (pack withdraw must never mistake a result question for it)
+    const qs = readQuestionsFile(ctx, result.pending_human.questions_path)
+      .filter((q) => q && typeof q.text === 'string' && q.text.trim())
+      .map((q) => { const { source, ...rest } = q; return rest; });
+    const reserved = qs.filter((q) => STOP_GATE_TEXT.test(q.text.trim()));
+    if (reserved.length) throw fail('STOP_GATE_TEXT_RESERVED', 1, { texts: reserved.map((q) => q.text.slice(0, 120)), message: 'a result question may not use the stop gate\'s own sentence; word the question in your own terms' });
     const midrun = result.status === 'needs_human' && !isDeploy && state.status === 'BUILDING' ? qs.filter((q) => q && q.kind !== 'owner-gate') : [];
     if (midrun.length) {
       // G-8: no question to the owner mid-run; the recommendation decides and the end report shows it.
@@ -3632,10 +3678,11 @@ function refuseOrPark(ctx, runId, state, fl, open, patience) {
   const prev = state.gates.stop_gate;
   if (prev && prev.sig !== sig) state.stop_refusals = 0;
   if (state.stop_refusals >= patience) {
+    const text = 'The run stopped with ' + ids.length + ' open row(s) after ' + patience + ' refusals: ' + ids.join(', ') + '. Resume the run or close it with the open rows as residuals?';
     packAppend(ctx, runId, [{
       kind: 'default',
       source: 'stop-gate',
-      text: 'The run stopped with ' + ids.length + ' open row(s) after ' + patience + ' refusals: ' + ids.join(', ') + '. Resume the run or close it with the open rows as residuals?',
+      text,
       options: ['resume run', 'close with residuals'],
       recommendation: 'resume run',
       default: 'resume run',
@@ -3646,7 +3693,9 @@ function refuseOrPark(ctx, runId, state, fl, open, patience) {
     const from = state.status;
     state.status = 'PARKED';
     writeState(ctx, state);
-    appendEvent(ctx, runId, { event: 'stop_parked', stage: state.stage, host: state.host, verdict: 'PARKED', detail: { from, open: ids } });
+    // CP-03 R5-S1-H10: the event is the gate's own mark on the question (pack withdraw trusts nothing else)
+    const q = openPackQuestions(ctx, runId).find((x) => x.text === text);
+    appendEvent(ctx, runId, { event: 'stop_parked', stage: state.stage, host: state.host, verdict: 'PARKED', detail: { from, open: ids, ...(q ? { question: q.n } : {}) } });
     return { parked: true, ids, refusals: 0 };
   }
   state.stop_refusals += 1;

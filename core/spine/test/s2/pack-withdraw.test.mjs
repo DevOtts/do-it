@@ -8,7 +8,7 @@ import { packIdOf } from '../../src/pack.mjs';
 
 const q = (n, text, extra) => ({ n, kind: 'default', text, options: ['resume run', 'close with residuals'], recommendation: 'resume run', default: 'resume run', reversible: true, ...(extra || {}) });
 
-function setup() {
+function setup(o) {
   const repo = mkRepo();
   const id = startRun(repo, real);
   const questions = [
@@ -20,7 +20,15 @@ function setup() {
   const dir = runDirOf(repo, id);
   writeJson(path.join(dir, 'owner-pack.json'), { pack_id: packIdOf(questions), run_id: id, questions, created_at: '2026-11-06T00:00:00.000Z' });
   writeJson(path.join(dir, 'answers.json'), { pack_id: packIdOf(questions), answers: [{ n: 2, answer: 'resume run', source: 'reply', free_text: false }], pending: [1, 3, 4], complete: false });
+  // CP-03 R5-S1-H10: a stop-gate question is one the gate wrote, and the gate marks it with its own
+  // `stop_parked` event (1.1 names the question number; 1.0.x named the open rows)
+  gateParked(dir, id, [[1, ['A', 'B']], [2, ['C']], [3, ['D', 'E', 'F', 'G']]], o && o.legacy);
   return { repo, id, dir };
+}
+
+function gateParked(dir, id, parks, legacy) {
+  const lines = parks.map(([n, open]) => JSON.stringify({ ts: '2026-11-06T00:00:0' + n + '.000Z', run_id: id, slice_id: null, stage: null, persona: null, tier: null, model: null, host: null, event: 'stop_parked', parent_id: null, verdict: 'PARKED', detail: legacy ? { from: 'BUILDING', open } : { from: 'BUILDING', open, question: n } }));
+  fs.appendFileSync(path.join(dir, 'events.jsonl'), lines.join('\n') + '\n');
 }
 
 test('T-S1-11 withdraw marks unanswered stop-gate questions, keeps answered and stage ones, and is idempotent', () => {
@@ -54,7 +62,7 @@ test('T-S1-11 withdraw marks unanswered stop-gate questions, keeps answered and 
 });
 
 test('T-S1-11b without --run every pack is considered; a pack written before `source` existed is matched by the gate\'s own sentence', () => {
-  const { repo, id, dir } = setup();
+  const { repo, id, dir } = setup({ legacy: true });
   const file = path.join(dir, 'owner-pack.json');
   const pack = readJson(file);
   for (const x of pack.questions) delete x.source;

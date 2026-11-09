@@ -10,7 +10,7 @@ import { sha256Bytes } from './hash.mjs';
 import { escalationQuestion, ladderEscalated } from './ladder.mjs';
 import { ledgerUpsert, readLedger, writeLedger } from './ledger.mjs';
 import { LEG_PASSED, legsLookRolledBack, planDeploy, staleLegsAfterRollback } from './legs.mjs';
-import { openPackQuestions, packAppend, packPath } from './pack.mjs';
+import { STOP_GATE_TEXT, openPackQuestions, packAppend, packPath } from './pack.mjs';
 import { loadSchemaFile, validateSchema } from './schema.mjs';
 import { cleanReason, guardStatusEntry, loadState, selectRunId, writeState } from './state.mjs';
 import { CHECKPOINT_ROW_PREFIX } from './readiness.mjs';
@@ -309,7 +309,13 @@ export function planRecord(ctx, runId, state, result) {
   // A BLOCKED slice (owner-gate) also routes its question into the owner pack (R4 T-R4-19, B10).
   if ((result.status === 'needs_human' || result.status === 'blocked') && result.pending_human && result.pending_human.questions_path) {
     // a question with no text is no question: the pack would drop it (packAppend), so it decides nothing
-    const qs = readQuestionsFile(ctx, result.pending_human.questions_path).filter((q) => q && typeof q.text === 'string' && q.text.trim());
+    // CP-03 R5-S1-H10: only the spine says where a question came from, so a result's own `source` is dropped,
+    // and the stop gate's sentence is reserved (pack withdraw must never mistake a result question for it)
+    const qs = readQuestionsFile(ctx, result.pending_human.questions_path)
+      .filter((q) => q && typeof q.text === 'string' && q.text.trim())
+      .map((q) => { const { source, ...rest } = q; return rest; });
+    const reserved = qs.filter((q) => STOP_GATE_TEXT.test(q.text.trim()));
+    if (reserved.length) throw fail('STOP_GATE_TEXT_RESERVED', 1, { texts: reserved.map((q) => q.text.slice(0, 120)), message: 'a result question may not use the stop gate\'s own sentence; word the question in your own terms' });
     const midrun = result.status === 'needs_human' && !isDeploy && state.status === 'BUILDING' ? qs.filter((q) => q && q.kind !== 'owner-gate') : [];
     if (midrun.length) {
       // G-8: no question to the owner mid-run; the recommendation decides and the end report shows it.

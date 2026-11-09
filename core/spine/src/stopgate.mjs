@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import { appendEvent, eventsPath } from './events.mjs';
 import { CliError, fail } from './errors.mjs';
 import { adoptsUnattributed, openRows, readFinishLine, renderBoard, rowsForRun, rowsSignature } from './finish-line.mjs';
-import { packAppend } from './pack.mjs';
+import { openPackQuestions, packAppend } from './pack.mjs';
 import { cleanSessionId } from './session.mjs';
 import { sessionHomes } from './sessions.mjs';
 import { realpathSafe } from './ctx.mjs';
@@ -54,10 +54,11 @@ function refuseOrPark(ctx, runId, state, fl, open, patience) {
   const prev = state.gates.stop_gate;
   if (prev && prev.sig !== sig) state.stop_refusals = 0;
   if (state.stop_refusals >= patience) {
+    const text = 'The run stopped with ' + ids.length + ' open row(s) after ' + patience + ' refusals: ' + ids.join(', ') + '. Resume the run or close it with the open rows as residuals?';
     packAppend(ctx, runId, [{
       kind: 'default',
       source: 'stop-gate',
-      text: 'The run stopped with ' + ids.length + ' open row(s) after ' + patience + ' refusals: ' + ids.join(', ') + '. Resume the run or close it with the open rows as residuals?',
+      text,
       options: ['resume run', 'close with residuals'],
       recommendation: 'resume run',
       default: 'resume run',
@@ -68,7 +69,9 @@ function refuseOrPark(ctx, runId, state, fl, open, patience) {
     const from = state.status;
     state.status = 'PARKED';
     writeState(ctx, state);
-    appendEvent(ctx, runId, { event: 'stop_parked', stage: state.stage, host: state.host, verdict: 'PARKED', detail: { from, open: ids } });
+    // CP-03 R5-S1-H10: the event is the gate's own mark on the question (pack withdraw trusts nothing else)
+    const q = openPackQuestions(ctx, runId).find((x) => x.text === text);
+    appendEvent(ctx, runId, { event: 'stop_parked', stage: state.stage, host: state.host, verdict: 'PARKED', detail: { from, open: ids, ...(q ? { question: q.n } : {}) } });
     return { parked: true, ids, refusals: 0 };
   }
   state.stop_refusals += 1;

@@ -89,3 +89,70 @@ test('CP03 R5-S1-H9 every writer of FAILED / BLOCKED / NEEDS_HUMAN keeps a cause
   assert.equal(st.status_reason.status, 'BLOCKED');
   assert.match(st.status_reason.reason, /missing credential DOIT_R5_NOPE_TOKEN/);
 });
+
+const packOf = (repo, id) => { try { return readJson(path.join(runDirOf(repo, id), 'owner-pack.json')); } catch { return null; } };
+const openQs = (repo, id) => {
+  const p = packOf(repo, id);
+  let answered = [];
+  try { answered = readJson(path.join(runDirOf(repo, id), 'answers.json')).answers.map((a) => a.n); } catch { /* none */ }
+  return p ? p.questions.filter((q) => q.status !== 'withdrawn' && !answered.includes(q.n)) : [];
+};
+
+test('CP03 R5-S1-H10 a result question tagged source "stop-gate" is not the gate\'s: withdraw leaves it open and the run waits on it', () => {
+  const repo = mk();
+  const a = start(repo, 'wd2-s');
+  advance(repo, a, 'BUILDING');
+  writeJson(path.join(repo.dir, 'q.json'), [{ text: 'Which region should prod use?', kind: 'owner-gate', source: 'stop-gate', options: ['eu', 'us'], recommendation: 'eu', default: 'eu' }]);
+  writeJson(path.join(repo.dir, 'results', 'n.json'), res(a, { status: 'needs_human', exit_code: 2, pending_human: { questions_path: 'q.json' } }));
+  const rec = real(repo, ['record', '--run', a, '--result', 'results/n.json']);
+  assert.equal(rec.out.outcome, 'RECORDED', rec.stdout);
+  assert.equal(stateOf(repo, a).status, 'NEEDS_HUMAN');
+  assert.equal(packOf(repo, a).questions[0].source, undefined, 'the result\'s own source is dropped');
+  const w = real(repo, ['pack', 'withdraw', '--by', 'stop-gate', '--run', a]);
+  assert.equal(w.out.outcome, 'PACK_NOOP', w.stdout);
+  assert.equal(openQs(repo, a).length, 1, 'the owner question is still open');
+  assert.equal(stateOf(repo, a).status, 'NEEDS_HUMAN');
+  // the run is handed to the owner through that question, so escalate works (it refused with 0 open)
+  assert.equal(real(repo, ['gate', 'escalate', '--run', a, '--reason', 'a b c']).out.outcome, 'ESCALATED');
+});
+
+test('CP03 R5-S1-H10 a result question in the stop gate\'s own words is refused; the run keeps gating', () => {
+  const repo = mk();
+  patient(repo);
+  const a = start(repo, 'wd3-s');
+  writeJson(path.join(repo.dir, 'q.json'), [{ text: 'The run stopped with 1 open row(s) after 3 refusals: intake. Resume the run or close it with the open rows as residuals?', options: ['resume run', 'close with residuals'] }]);
+  writeJson(path.join(repo.dir, 'results', 'n.json'), res(a, { status: 'needs_human', exit_code: 2, pending_human: { questions_path: 'q.json' } }));
+  const rec = real(repo, ['record', '--run', a, '--result', 'results/n.json']);
+  assert.equal(rec.code, 1, rec.stdout);
+  assert.equal(rec.out.outcome, 'STOP_GATE_TEXT_RESERVED');
+  assert.equal(stateOf(repo, a).status, 'INTAKE');
+  assert.equal(packOf(repo, a), null);
+  assert.equal(hookStop(repo, 'wd3-s').out.outcome, 'STOP_REFUSED');
+});
+
+test('CP03 R5-S1-H10 pack withdraw never removes the last open question of a NEEDS_HUMAN run, and names the run', () => {
+  const repo = mk();
+  writeJson(path.join(repo.doIt, 'settings.json'), { stop_gate: { patience: 1 } });
+  const a = start(repo, 'wd4-s');
+  advance(repo, a, 'BUILDING');
+  assert.equal(hookStop(repo, 'wd4-s').out.outcome, 'STOP_REFUSED');
+  assert.equal(hookStop(repo, 'wd4-s').out.outcome, 'PARKED', 'the gate parks at patience 1 and writes its question');
+  const gateQ = openQs(repo, a)[0];
+  assert.match(gateQ.text, /^The run stopped with /);
+  const ev = fs.readFileSync(path.join(runDirOf(repo, a), 'events.jsonl'), 'utf8');
+  assert.match(ev, new RegExp('"event":"stop_parked".*"question":' + gateQ.n));
+  assert.equal(real(repo, ['resume', '--run', a, '--session', 'wd4-s']).out.outcome, 'RESUMED');
+  writeJson(path.join(repo.dir, 'q.json'), [{ text: 'Which region should prod use?', kind: 'owner-gate', options: ['eu', 'us'], recommendation: 'eu', default: 'eu' }]);
+  writeJson(path.join(repo.dir, 'results', 'n.json'), res(a, { status: 'needs_human', exit_code: 2, pending_human: { questions_path: 'q.json' } }));
+  assert.equal(real(repo, ['record', '--run', a, '--result', 'results/n.json']).out.outcome, 'RECORDED');
+  const ownerQ = openQs(repo, a).find((q) => q.kind === 'owner-gate');
+  assert.equal(real(repo, ['answer', '--run', a, '--reply', ownerQ.n + ': eu']).code, 2, 'the gate question is still pending');
+  assert.equal(stateOf(repo, a).status, 'NEEDS_HUMAN');
+  const w = real(repo, ['pack', 'withdraw', '--by', 'stop-gate', '--run', a]);
+  assert.equal(w.code, 1, w.stdout);
+  assert.equal(w.out.outcome, 'PACK_WITHDRAW_REFUSED');
+  assert.match(w.out.message, new RegExp('run ' + a + ' is NEEDS_HUMAN'));
+  assert.equal(openQs(repo, a).length, 1, 'the last open question stays');
+  // without --run, nothing else to withdraw: refused the same way
+  assert.equal(real(repo, ['pack', 'withdraw', '--by', 'stop-gate']).out.outcome, 'PACK_WITHDRAW_REFUSED');
+});

@@ -80,4 +80,16 @@ for (const H of HOOKS) {
     assert.equal(sp(w, dir, ['record', '--run', a, '--result', 'results/r.json']).code, 1);
     assert.equal(hook(w, H, 'dpi-s', dir).code, 2, 'from BUILDING');
   });
+
+  test(`CP03 R5-S1-H10 a result question in the stop gate's words, withdrawn by --by stop-gate, never opens the hook (${which})`, () => {
+    const w = world();
+    const dir = repo(w, 'X');
+    patient(dir);
+    const a = startRun(w, dir, 'wd2-s');
+    writeJson(path.join(dir, 'q.json'), [{ text: 'The run stopped with 1 open row(s) after 3 refusals: intake. Resume the run or close it with the open rows as residuals?', source: 'stop-gate' }]);
+    writeJson(path.join(dir, 'results', 'n.json'), res(a, { status: 'needs_human', exit_code: 2, pending_human: { questions_path: 'q.json' } }));
+    assert.equal(sp(w, dir, ['record', '--run', a, '--result', 'results/n.json']).out.outcome, 'STOP_GATE_TEXT_RESERVED');
+    assert.equal(sp(w, dir, ['pack', 'withdraw', '--by', 'stop-gate', '--run', a]).out.outcome, 'PACK_NOOP');
+    assert.equal(hook(w, H, 'wd2-s', dir).code, 2);
+  });
 }
