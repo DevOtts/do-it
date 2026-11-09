@@ -156,3 +156,26 @@ test('CP03 R6-S1-M13 the spine readers and appender refuse a FIFO at once instea
   assert.equal(fs.readFileSync(path.join(dir, 'ok.jsonl'), 'utf8'), '{"a":1}\n{"a":2}\n');
   assert.equal(fsa.readJsonIfExists(path.join(dir, 'missing.json')), null);
 });
+
+// R6-S1-L2: spawnSync's default 1 MiB buffer cut off a large refusal (ENOBUFS) and the hook allowed the stop.
+for (const H of HOOKS) {
+  const which = path.relative(ROOT, H);
+  test(`CP03 R6-S1-L2 a refusal larger than 1 MiB is still a refusal, and an answer past the buffer is refused, not allowed (${which})`, () => {
+    const dir = tmp('dit-r6-big-');
+    const env = { ...process.env };
+    delete env.NODE_TEST_CONTEXT;
+    // a 2 MiB STOP_REFUSED answer (25,000 open ids is about 1.25 MB)
+    const big = path.join(dir, 'big-spine.mjs');
+    fs.writeFileSync(big, "const open = Array.from({ length: 120000 }, (_, i) => 'T-' + i);\nprocess.stdout.write(JSON.stringify({ outcome: 'STOP_REFUSED', exit: 1, reason: 'finish-line rows are still open', open, board: 'FINISH LINE: 0 of 120000 closed' }) + '\\n');\n");
+    let r = cp.spawnSync(process.execPath, [H], { input: JSON.stringify({ session_id: 'big-s', cwd: dir, hook_event_name: 'Stop' }), cwd: dir, env: { ...env, DO_IT_SPINE: big }, encoding: 'utf8', timeout: 60000 });
+    assert.equal(r.status, 2, r.stderr);
+    assert.match(r.stderr, /stop is refused/);
+    // an answer longer than the 64 MiB buffer
+    const huge = path.join(dir, 'huge-spine.mjs');
+    fs.writeFileSync(huge, "const chunk = 'x'.repeat(1024 * 1024);\nfor (let i = 0; i < 65; i++) process.stdout.write(chunk);\n");
+    r = cp.spawnSync(process.execPath, [H], { input: JSON.stringify({ session_id: 'big-s', cwd: dir, hook_event_name: 'Stop' }), cwd: dir, env: { ...env, DO_IT_SPINE: huge }, encoding: 'utf8', timeout: 60000 });
+    assert.equal(r.status, 2, r.stderr);
+    assert.match(r.stderr, /too large to read/);
+    assert.doesNotMatch(r.stderr, /gave no answer/);
+  });
+}

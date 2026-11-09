@@ -16,11 +16,15 @@ export function spineScript() {
   return candidates.find((p) => existsSync(p));
 }
 
-// Returns { exit, json } ; json is null when stdout is not JSON or the spine is unreachable.
+// Returns { exit, json, overflow } ; json is null when stdout is not JSON or the spine is unreachable.
+// CP-03 R6-S1-L2: the spine's answer may be large (a board of thousands of rows), so the buffer is 64 MiB,
+// not spawnSync's 1 MiB; an answer longer still is reported as `overflow` rather than as no answer.
+export const SPINE_MAX_BUFFER = 64 * 1024 * 1024;
 export function callSpine(args, cwd) {
   const script = spineScript();
   if (!script) return { exit: null, json: null };
-  const r = spawnSync(process.execPath, [script, ...args], { cwd: cwd || process.cwd(), encoding: 'utf8', timeout: 20000 });
+  const r = spawnSync(process.execPath, [script, ...args], { cwd: cwd || process.cwd(), encoding: 'utf8', timeout: 20000, maxBuffer: SPINE_MAX_BUFFER });
+  if (r.error && r.error.code === 'ENOBUFS') return { exit: r.status, json: null, overflow: true };
   let json = null;
   try { json = JSON.parse(r.stdout); } catch { /* not JSON */ }
   return { exit: r.status, json };

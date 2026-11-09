@@ -23,7 +23,7 @@ if (!cwd) { try { cwd = process.cwd(); } catch { cwd = null; } }
 // with neither a session nor a cwd there is nothing to scope the gate to (the spine would read the plugin's own folder)
 if (!sessionId && !cwd) process.exit(0);
 
-const { json } = callSpine(['gate', 'stop', ...(sessionId ? ['--session', sessionId] : []), ...(cwd ? ['--cwd', cwd] : []), '--json'], PLUGIN_ROOT);
+const { json, overflow } = callSpine(['gate', 'stop', ...(sessionId ? ['--session', sessionId] : []), ...(cwd ? ['--cwd', cwd] : []), '--json'], PLUGIN_ROOT);
 const outcome = json && json.outcome;
 
 if (outcome === 'STOP_REFUSED') {
@@ -31,6 +31,12 @@ if (outcome === 'STOP_REFUSED') {
   const patience = Number.isFinite(Number(json.patience)) ? Number(json.patience) : null;
   const tally = count !== null && patience !== null ? ` (${count} of ${patience} without progress)` : '';
   process.stderr.write(`${json.reason || 'Finish-line rows are still open.'}\n${json.board ? json.board + '\n' : ''}Keep working; stop is refused${tally}.\n`);
+  process.exit(2);
+}
+// CP-03 R6-S1-L2: only an answer that lists open rows is longer than the spine's 64 MiB buffer: a refusal, or a
+// park (the next stop then finds the run PARKED, which does not gate)
+if (overflow) {
+  process.stderr.write('do-it stop gate: the spine\'s answer was too large to read, which only a refusal with a very large board can be. Keep working; stop is refused.\n');
   process.exit(2);
 }
 // CP-03 R5-S1-M10: a spine that gave no answer (timeout, crash) still fails open, but says so
