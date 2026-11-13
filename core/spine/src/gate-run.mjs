@@ -182,6 +182,40 @@ function gateRunReadKeys(runDir) {
   return v;
 }
 
+// == sweep of run directories left by a killed gate run (SIGKILL leaves no chance to remove them) ==
+// Removes {tmpdir}/do-it-gate-{run_id}/ only when spine.json names an owner that is provably gone: the pid answers
+// ESRCH, or it answers but its start time differs from the recorded one. Unsure (no owner, unreadable, EPERM, no
+// start time to compare) keeps the directory.
+export function gateRunSweep(ownRunId) {
+  const root = path.dirname(gateFpRunDir('g-00000000T000000Z-0000'));
+  let names = [];
+  try { names = fs.readdirSync(root); } catch { return 0; }
+  let removed = 0;
+  for (const n of names) {
+    const m = /^do-it-gate-(g-[0-9]{8}T[0-9]{6}Z-[0-9a-f]{4})$/.exec(n);
+    if (!m || m[1] === ownRunId) continue;
+    const dir = path.join(root, n);
+    const sp = gateVerdictReadJson(path.join(dir, 'spine.json'), BULK_READ_CAP).value;
+    const owner = sp && sp.owner;
+    if (!owner || !Number.isInteger(owner.pid) || owner.pid <= 0) continue;
+    let dead = false;
+    try {
+      process.kill(owner.pid, 0);
+    } catch (e) {
+      dead = !!e && e.code === 'ESRCH';
+    }
+    if (!dead && typeof owner.pid_start === 'string' && owner.pid_start) {
+      let now = null;
+      try { now = gateProcStart(owner.pid); } catch { now = null; }
+      if (typeof now === 'string' && now && now !== owner.pid_start) dead = true;
+    }
+    if (!dead) continue;
+    gateVerdictRemoveDir(dir);
+    removed++;
+  }
+  return removed;
+}
+
 // == validation of the command line (D1, A7, A9) ==
 export function gateRunArgs(ctx, args) {
   const f = args.flags;
@@ -288,9 +322,14 @@ async function gateRunAdmitted(ctx, a, gates, found, admission) {
   const porcelain0 = gateRunPorcelain(repo, ctx.env);
   const head = gateRunHead(repo, ctx.env);
   const dirty0 = gateRunRelevant(porcelain0, null);
+  let swept = 0;
+  if (!ctx.env.DO_IT_GATE_KEEP_RUN_DIR) { try { swept = gateRunSweep(runId); } catch { swept = 0; } }
+  let pidStart = null;
+  try { pidStart = gateProcStart(process.pid); } catch { pidStart = null; }
   const runDir = gateFpRunDir(runId);
   fs.mkdirSync(runDir, { recursive: true });
   const run = {
+    owner: { pid: process.pid, pid_start: typeof pidStart === 'string' ? pidStart : null },
     schema: 'do-it-gate-spine-run/1', run_id: runId, phase: 'main', scope: a.scope, leg: a.leg, clean: a.clean, resume: a.resume,
     runner: a.runner, runner_version: typeof found.desc.version === 'string' ? found.desc.version : null, argv: a.passthrough,
     store_dir: store.dir, repo, solo: [], spine: spine.table ? gateVerdictSpineDump(spine) : { reason: spine.reason || 'fingerprint-error', never: [] },
@@ -306,8 +345,6 @@ async function gateRunAdmitted(ctx, a, gates, found, admission) {
     warnings.push('reuse unavailable: manifest ' + ((e && (e.outcome || e.code)) || 'error'));
   }
   atomicWriteJson(path.join(runDir, 'spine.json'), run, { cap: BULK_READ_CAP });
-  let pidStart = null;
-  try { pidStart = gateProcStart(process.pid); } catch { pidStart = null; }
   try {
     gateStoreAppend(store, {
       type: 'run_start', run_id: runId, at: new Date().toISOString(), leg: a.leg, scope: a.scope, clean: a.clean, tree_dirty: dirty0,
@@ -432,6 +469,6 @@ async function gateRunAdmitted(ctx, a, gates, found, admission) {
     flaky_excluded: flakyExcluded, source_runs: v.source_runs, oldest_reused_at: v.oldest_reused_at, resumed_from: v.resumed_from,
     failed_files: failedFiles, unstable: a.clean ? after.unstable : [], tainted: v.tainted, taint_reason: v.taint_reason,
     tree: { dirty, commit: dirty ? null : head }, admission, clean: a.clean, resume: a.resume, store: store.dir,
-    runner_exit: main.exit, runner_signal: main.signal, adapter: a.runner, run_dir: ctx.env.DO_IT_GATE_KEEP_RUN_DIR ? runDir : null, warnings,
+    runner_exit: main.exit, runner_signal: main.signal, adapter: a.runner, run_dir: ctx.env.DO_IT_GATE_KEEP_RUN_DIR ? runDir : null, swept_run_dirs: swept, warnings,
   };
 }

@@ -218,22 +218,29 @@ test('T-V2-10 FLAKY is file-sticky across a key change for 7 days (AM-7)', (t) =
     writeBeh(repo, fileName(7), { result: 'pass', edited: true });
     const lists = [];
     const folds = [];
+    let afterEdit = null;
     for (let i = 0; i < 3; i++) {
       run(repo, []);
+      if (i === 0) afterEdit = decisionOf(repo, fileName(7));
       lists.push(lastStart(repo).run_list.includes(fileName(7)));
       const f = foldOf(repo, fileName(7));
       folds.push(f.state + '/' + f.flaky_passes);
     }
     if (age === 1) {
-      // the carried flag starts the new key at streak 0: one pass leaves FLAKY 1, the second clears it
+      // the carried flag starts the new key at streak 0 (fold right after the edit, before any row on the new key);
+      // one pass leaves FLAKY 1, the second clears it
+      assert.equal(afterEdit.fold, 'FLAKY');
+      assert.equal(afterEdit.streak, 0);
+      assert.equal(afterEdit.decision, 'run');
       assert.deepEqual(lists, [true, true, false]);
       assert.deepEqual(folds.slice(0, 2), ['FLAKY/1', 'PASS/0']);
     } else {
-      // an 8-day-old flag does not carry: one pass on the new key is PASS and it is reused on the second run
+      // an 8-day-old flag does not carry: the new key folds NEVER_RUN, one pass is PASS, reused on the second run
+      assert.equal(afterEdit.fold, 'NEVER_RUN');
       assert.deepEqual(lists, [true, false, false], JSON.stringify(starts(repo).slice(-3).map((s) => (s.decision_files || []).find((d) => d.file === fileName(7)))) + ' ' + folds.join(' '));
       assert.equal(folds[0], 'PASS/0');
     }
-    t.diagnostic('T-V2-10 flag ' + age + ' d: in run lists ' + JSON.stringify(lists) + ' folds ' + folds.join(' '));
+    t.diagnostic('T-V2-10 flag ' + age + ' d: after edit ' + afterEdit.fold + '/' + afterEdit.streak + ' · in run lists ' + JSON.stringify(lists) + ' · folds ' + folds.join(' '));
   }
 });
 

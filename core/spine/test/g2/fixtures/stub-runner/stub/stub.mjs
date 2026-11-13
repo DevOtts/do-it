@@ -99,7 +99,7 @@ if (env.GATE_FIXTURE_TAMPER_RUNLIST && decided) {
   list = list.filter((f) => f !== env.GATE_FIXTURE_TAMPER_RUNLIST);
   fs.writeFileSync(path.join(runDir, 'run-list.json'), JSON.stringify({ files: list }));
 }
-log({ event: 'start', argv, manifest: true, decided, decide_status: d.status, run_list: list, scope: manifest.scope, clean: manifest.clean, leg: manifest.leg, run_id: manifest.run_id, solo: argv.includes('--solo'), holder: env.DO_IT_GATE_HOLDER || null, holders: count(holdersDir), tickets: count(ticketsDir), decision_files: decision ? decision.files.map((x) => ({ file: x.file, decision: x.decision, why: x.why, key: x.key_now })) : null });
+log({ event: 'start', argv, manifest: true, decided, decide_status: d.status, run_list: list, scope: manifest.scope, clean: manifest.clean, leg: manifest.leg, run_id: manifest.run_id, solo: argv.includes('--solo'), holder: env.DO_IT_GATE_HOLDER || null, holders: count(holdersDir), tickets: count(ticketsDir), decision_files: decision ? decision.files.map((x) => ({ file: x.file, decision: x.decision, why: x.why, key: x.key_now, fold: x.fold || null, streak: x.streak === undefined ? null : x.streak })) : null });
 
 function row(r) {
   const line = gateRowLine(r) + '\n';

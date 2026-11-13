@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import cp from 'node:child_process';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
 import { BIN, SPINE_DIR } from '../helpers.mjs';
@@ -393,4 +394,31 @@ test('T-V1-15 failed recovery escalates: a SUSPECT_KILLER runs solo; killed agai
     }
     t.diagnostic('T-V1-15 ' + variant + ': ' + r3.out.line);
   }
+});
+
+test('V1-sweep a SIGKILLed gate run leaves no run dir behind: dead owners swept, live or unknown owners kept', (t) => {
+  const repo = stubRepo(t);
+  const root = os.tmpdir();
+  const dead = cp.spawnSync(process.execPath, ['-e', 'process.stdout.write(String(process.pid))'], { encoding: 'utf8' });
+  const deadPid = Number(dead.stdout);
+  const mk = (suffix, owner) => {
+    const d = path.join(root, 'do-it-gate-g-20200101T000000Z-' + suffix);
+    fs.mkdirSync(d, { recursive: true });
+    fs.writeFileSync(path.join(d, 'spine.json'), JSON.stringify(owner === undefined ? { run_id: 'x' } : { run_id: 'x', owner }));
+    return d;
+  };
+  const gone = mk('dea1', { pid: deadPid, pid_start: 'darwin:Thu Jan  1 00:00:00 1970' });
+  const reused = mk('dea2', { pid: process.pid, pid_start: 'darwin:not-this-process' });
+  const live = mk('a1ve', { pid: process.pid, pid_start: gateProcStart(process.pid) });
+  const unknown = mk('a2ve');
+  t.after(() => { for (const d of [gone, reused, live, unknown]) fs.rmSync(d, { recursive: true, force: true }); });
+  const r = run(repo, []);
+  assert.equal(r.code, 0, r.stdout);
+  assert.equal(fs.existsSync(gone), false);
+  assert.equal(fs.existsSync(reused), false);
+  assert.equal(fs.existsSync(live), true);
+  assert.equal(fs.existsSync(unknown), true);
+  // the count is not asserted: concurrent gate runs in other test files sweep the same tmpdir
+  assert.equal(typeof r.out.swept_run_dirs, 'number');
+  t.diagnostic('V1-sweep swept ' + r.out.swept_run_dirs + ' (dead pid ' + deadPid + ', reused start); live and owner-less kept');
 });

@@ -63,7 +63,7 @@ test('T-L1-04 G-1: no store, unparseable line, CRC-bad copy and unattributable g
 
 test('T-L1-05 every M1 edge (18) plus 6 docs/03 rows fold to the listed state, reuse and flakyPasses', () => {
   const fx = JSON.parse(fs.readFileSync(path.join(FIX, 'm1-transitions.json'), 'utf8'));
-  assert.equal(fx.entries.length, 24);
+  assert.equal(fx.entries.length, 25);
   let ok = 0;
   for (const e of fx.entries) {
     const o = e.opts || {};
@@ -86,7 +86,7 @@ test('T-L1-05 every M1 edge (18) plus 6 docs/03 rows fold to the listed state, r
   const region = src.slice(src.indexOf('// == fold: pure'), src.indexOf('// == end fold: pure =='));
   assert.ok(region.length > 2000);
   assert.doesNotMatch(region, /\bfs\.|\bcp\.|\bprocess\.|Date\.now|new Date\(\)/);
-  console.log('T-L1-05 ' + ok + ' of 24 entries match; fold section has 0 fs/child_process/clock calls');
+  console.log('T-L1-05 ' + ok + ' of 25 entries match; fold section has 0 fs/child_process/clock calls');
 });
 
 test('T-L1-06 killed runs: finished work survives the kill under --resume, a live run is never reused, two kills => SUSPECT_KILLER', () => {
@@ -155,6 +155,11 @@ test('T-L1-07 R9 age: 24 h TTL, the last clean run as horizon, and a future time
   assert.equal(c.reuse, null);
   const d = gateFold(rowsToItems(rows), key(), NOW, { file: 'g.spec.ts' });
   assert.equal(d.reuse, 'PASS');
+  // the horizon is per leg: the same clean run marked for leg real-mongo never expires leg unit
+  const otherLeg = rows.map((r) => (r.row.type === 'clean' ? { row: { ...r.row, leg: 'real-mongo' } } : r));
+  const g = gateFold(rowsToItems(otherLeg), key(), NOW, { file: 'f.spec.ts' });
+  assert.equal(g.state, 'PASS');
+  assert.equal(g.reuse, 'PASS');
   const e = one(-5 / 60);
   assert.equal(e.reuse, null);
   assert.equal(e.reason, 'future-timestamp');

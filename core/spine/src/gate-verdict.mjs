@@ -225,6 +225,7 @@ export function gateSelect(run, keys, scan, opts) {
     const fi = gateVerdictItemsFor(bucket, f.file, leg);
     const fold = gateFold(fi, { key: d.key_now, components: d.components }, now, { file: f.file, leg, resume: !!run.resume, liveRuns: live, source: scan.source });
     d.fold = fold.state;
+    d.streak = fold.flakyPasses;
     if (fold.state === 'SUSPECT_KILLER') { d.decision = 'solo'; d.why = 'suspect-killer'; continue; }
     if (fold.reuse !== 'PASS') { d.why = fold.state === 'NEVER_RUN' ? fold.reason : fold.state.toLowerCase() + (fold.reason && fold.reason !== fold.state.toLowerCase() ? ': ' + fold.reason : ''); continue; }
     const row = gateVerdictPassRow(fi, fold, f.file, leg, d.key_now);

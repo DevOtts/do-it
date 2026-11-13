@@ -1,5 +1,5 @@
 {
-  "note": "One entry per CONTRACT §8 M1 edge (18) plus 6 docs/03 §6 rows. Event DSL: t f=finish s=start x=corrupt line; run = run number; key = key label; res = result; ago = hours before now (default spaced 0.1 h). opts.open = runs without run_end; opts.live = runs whose owner is alive; opts.tainted = runs whose run_end is tainted.",
+  "note": "One entry per CONTRACT §8 M1 edge (18) plus 6 docs/03 §6 rows, plus M1-25 (A5 carry before any row on the new key). Event DSL: t f=finish s=start x=corrupt line; run = run number; key = key label; res = result; ago = hours before now (default spaced 0.1 h). opts.open = runs without run_end; opts.live = runs whose owner is alive; opts.tainted = runs whose run_end is tainted.",
   "entries": [
     { "id": "M1-01", "edge": "NEVER_RUN --> RUNNING", "events": [{ "t": "s", "run": 1 }], "opts": { "open": [1], "live": [1] }, "expect": { "state": "RUNNING", "reuse": null, "flakyPasses": 0 } },
     { "id": "M1-02", "edge": "RUNNING --> PASS", "events": [{ "t": "s", "run": 1 }, { "t": "f", "run": 1, "res": "PASS" }], "expect": { "state": "PASS", "reuse": "PASS", "flakyPasses": 0 } },
@@ -24,6 +24,7 @@
     { "id": "D3-03", "edge": "docs/03: PASS from a tainted run is ignored", "events": [{ "t": "f", "run": 1, "res": "PASS" }], "opts": { "tainted": [1] }, "expect": { "state": "NEVER_RUN", "reuse": null, "flakyPasses": 0, "reason": "tainted-run" } },
     { "id": "D3-04", "edge": "docs/03: clean PASS resets age", "events": [{ "t": "f", "run": 1, "res": "PASS", "ago": 30 }, { "t": "f", "run": 2, "res": "PASS", "clean": true, "ago": 1 }], "expect": { "state": "PASS", "reuse": "PASS", "flakyPasses": 0 } },
     { "id": "D3-05", "edge": "docs/03: PASS-invariant violation by a non-spine writer => FAIL (H1 failed>0, H5 passed 0)", "events": [{ "t": "f", "run": 1, "res": "PASS", "inv": "h5" }], "expect": { "state": "FAIL", "reuse": null, "flakyPasses": 0, "reason": "pass-invariant" } },
-    { "id": "D3-06", "edge": "docs/03 (A5): FAIL then clean PASS => FLAKY n 1", "events": [{ "t": "f", "run": 1, "res": "FAIL" }, { "t": "f", "run": 2, "res": "PASS", "clean": true }], "expect": { "state": "FLAKY", "reuse": null, "flakyPasses": 1 } }
+    { "id": "D3-06", "edge": "docs/03 (A5): FAIL then clean PASS => FLAKY n 1", "events": [{ "t": "f", "run": 1, "res": "FAIL" }, { "t": "f", "run": 2, "res": "PASS", "clean": true }], "expect": { "state": "FLAKY", "reuse": null, "flakyPasses": 1 } },
+    { "id": "M1-25", "edge": "FLAKY carry across a key change before the new key has a row (A5)", "events": [{ "t": "f", "run": 1, "res": "PASS", "key": "k1" }, { "t": "f", "run": 2, "res": "FAIL", "key": "k1" }], "keyNow": "k2", "expect": { "state": "FLAKY", "reuse": null, "flakyPasses": 0, "reason": "flaky-carry" } }
   ]
 }
