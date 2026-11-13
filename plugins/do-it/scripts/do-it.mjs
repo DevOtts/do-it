@@ -1281,7 +1281,20 @@ function gateQueueDiskMaxSeq(root) {
   return max;
 }
 
+// Lock scratch dirs left by a process killed mid-acquire or mid-release (.lock.tmp-, .lock.stale-, .lock.rel-
+// with a dead pid). Runs under the lock; a live pid's dir is in use and kept.
+function gateQueueSweepLockScratch(root) {
+  let names = [];
+  try { names = fs.readdirSync(root); } catch { return; }
+  for (const n of names) {
+    const m = /^\.lock\.(?:tmp|stale|rel)-(\d+)-/.exec(n);
+    if (!m) continue;
+    if (gateProcState(Number(m[1]), null) === 'dead') fs.rmSync(path.join(root, n), { recursive: true, force: true });
+  }
+}
+
 function gateQueueNextSeq(root) {
+  gateQueueSweepLockScratch(root);
   const file = path.join(root, 'seq');
   let cur = null;
   try { cur = readJsonRegular(file, 4096); } catch { cur = null; }

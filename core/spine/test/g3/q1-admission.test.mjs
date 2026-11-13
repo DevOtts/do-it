@@ -237,6 +237,8 @@ test('T-Q1-13 stale lock reclaimed once; 20 concurrent gates get distinct seqs 1
   const dead = Number(cp.spawnSync(process.execPath, ['-e', 'process.stdout.write(String(process.pid))'], { encoding: 'utf8' }).stdout);
   fs.mkdirSync(path.join(sb.q, '.lock'), { recursive: true });
   fs.writeFileSync(path.join(sb.q, '.lock', 'owner.json'), JSON.stringify({ pid: dead, pid_start: null, at: new Date().toISOString() }));
+  // scratch left by a locker killed mid-acquire: swept once its pid is dead
+  fs.mkdirSync(path.join(sb.q, '.lock.tmp-' + dead + '-deadbeef'), { recursive: true });
   const gates = [];
   for (let i = 0; i < 20; i++) gates.push(sb.gate(['--peak-mb', '1', '--label', 'n' + i], null, { argv: [process.execPath, '-e', '0'] }));
   await Promise.all(gates.map((g) => g.done));
