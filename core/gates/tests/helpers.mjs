@@ -20,6 +20,7 @@ export const FILTER = path.join(JEST_ADAPTER, 'filter.cjs');
 export const CLOSURE = path.join(JEST_ADAPTER, 'closure.cjs');
 export const COMMON = path.join(JEST_ADAPTER, 'common.cjs');
 export const FIXTURE = path.join(HERE, 'fixtures', 'jest-30');
+export const CLOSURE_DRIVER = path.join(HERE, 'jest', 'closure-driver.cjs');
 export const FAKE_DECIDE = path.join(HERE, 'fake-decide.mjs');
 export const SPINE_SRC = path.join(REPO_ROOT, 'core', 'spine', 'src');
 export const GOLDEN_ROW = path.join(REPO_ROOT, 'core', 'spine', 'test', 'g1', 'fixtures');

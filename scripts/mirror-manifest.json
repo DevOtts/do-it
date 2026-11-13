@@ -6,6 +6,7 @@
     { "src": "core/spine/do-it.mjs", "dst": "plugins/do-it/scripts/do-it.mjs", "kind": "file" },
     { "src": "core/personas", "dst": "plugins/do-it/personas", "kind": "dir" },
     { "src": "core/pipelines", "dst": "plugins/do-it/pipelines", "kind": "dir" },
+    { "src": "core/gates/adapters", "dst": "plugins/do-it/gates/adapters", "kind": "dir" },
     { "src": "hosts/claude-code/hooks", "dst": "plugins/do-it/hooks", "kind": "dir" },
     { "src": "hosts/*/adapter.manifest.json", "dst": "plugins/do-it/hosts/*/adapter.manifest.json", "kind": "file" },
     { "src": "hosts/*/state-store", "dst": "plugins/do-it/hosts/*/state-store", "kind": "dir", "exclude": ["tests"] },

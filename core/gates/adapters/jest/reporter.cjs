@@ -232,9 +232,13 @@ class DoItGateReporter {
         this._lastError = new Error('COUNT_MISMATCH sent ' + sent + ' received ' + received);
         process.stderr.write('COUNT_MISMATCH sent ' + sent + ' received ' + received + '\n');
       }
-      const interrupted = res.wasInterrupted === true;
+      // Outside watch mode jest bails by calling onRunComplete and exiting without setting wasInterrupted, so a bail is
+      // recognised by its own arithmetic: bail set, enough failed tests, and fewer results seen than suites scheduled.
+      const bail = Number(this._globalConfig.bail) || 0;
+      const bailed = bail > 0 && res.numFailedTests >= bail && received !== null && this._filesSeen < received;
+      const interrupted = res.wasInterrupted === true || bailed;
       let interruptReason = null;
-      if (interrupted) interruptReason = Number(this._globalConfig.bail) > 0 && res.numFailedTests > 0 ? 'BAIL' : 'INTERRUPTED';
+      if (interrupted) interruptReason = bailed || (bail > 0 && res.numFailedTests > 0) ? 'BAIL' : 'INTERRUPTED';
       const handles = Array.isArray(res.openHandles) ? res.openHandles.length : 0;
       if (res.runExecError || this._unhandled > 0) this._reasons.add('UNHANDLED_ERRORS');
       if (handles > 0) this._reasons.add('OPEN_HANDLES');
