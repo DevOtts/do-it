@@ -2,7 +2,7 @@
   "schema": 1,
   "implementation": "resumable-test-gates",
   "title": "resumable-test-gates",
-  "updated_at": "2026-11-13T20:10:28Z",
+  "updated_at": "2026-11-13T20:11:39Z",
   "approximate": false,
   "closed": false,
   "waves": [
@@ -564,11 +564,11 @@
         {
           "id": "V1-01",
           "title": "Add the eight-entry test-gate subcommand table to `cmdGate` (`core/spine/src/cli.mjs:180-193`), the `--` separator to `parseArgs` (`cli.mjs:32-55`, tokens after it go verbatim to `args.passthrough`) and `resume`, `clean`, `status` to `BOOL_FLAGS` (`cli.mjs:29`); `run`/`results`/`decide` dispatch to `gateRunCmd`/`gateResultsCmd`/`gateDecideCmd`, `queue`/`push`/`train`/`nightly`/`schedule` return `notImplemented` (`cli.mjs:57`) until their lanes ship; `--resume` with `--clean` is `USAGE`. Acceptance: T-V1-10 passes and existing `core/spine/test/s1` to `s5` still pass.",
-          "status": "not-started",
+          "status": "in-progress",
           "blocked_on": null,
           "evidence": null,
-          "owner": null,
-          "updated_at": "2026-11-06T15:23:46Z",
+          "owner": "build-it:opus",
+          "updated_at": "2026-11-13T20:11:37Z",
           "note": null,
           "check": {
             "kind": "command",
@@ -581,11 +581,11 @@
         {
           "id": "V1-02",
           "title": "Create `core/spine/src/gate-run.mjs` with argument validation, settings read (`gates.reuse.*`, `gates.peak_mb`, `gates.queue.timeout_s`), run id generation with collision redraw, `run_start`/`run_end` rows through L1's append, the admission call (inherited through `DO_IT_GATE_HOLDER` or self through `gateQueueAdmit`, D3; `GATE_WAIT_TIMEOUT` and `GATE_QUEUE_REJECTED` surfaced) and the adapter descriptor lookup with the CONTRACT §6 fallback (new file). Acceptance: T-V1-02, T-V1-09 and T-V1-14 pass.",
-          "status": "not-started",
+          "status": "in-progress",
           "blocked_on": null,
           "evidence": null,
-          "owner": null,
-          "updated_at": "2026-11-06T15:23:46Z",
+          "owner": "build-it:opus",
+          "updated_at": "2026-11-13T20:11:37Z",
           "note": null,
           "check": {
             "kind": "command",
@@ -599,11 +599,11 @@
         {
           "id": "V1-03",
           "title": "Implement the one-invocation run protocol in `core/spine/src/gate-run.mjs` (§11 A1): per-run temp directory, `manifest.json` through F1's builder, one runner spawn with the descriptor's inject argv and `DO_IT_GATE_MANIFEST` on its env, `decision.json` and `runner-report.json` read after exit, INTERRUPTED detection (runner killed by a signal, or a dead-owner `run_start` with no `run_end`) and the suspect-killer solo pass (new file). Acceptance: T-V1-01, T-V1-06 and T-V1-15 pass.",
-          "status": "not-started",
+          "status": "in-progress",
           "blocked_on": null,
           "evidence": null,
-          "owner": null,
-          "updated_at": "2026-11-06T15:23:46Z",
+          "owner": "build-it:opus",
+          "updated_at": "2026-11-13T20:11:37Z",
           "note": null,
           "check": {
             "kind": "command",
@@ -618,11 +618,11 @@
         {
           "id": "V1-04",
           "title": "Create `core/spine/src/gate-verdict.mjs` with `gateSelect` (imports L1's `gateFold`, §11 A3; NEVER set, `keys.json` errors, leg filter, source-run eligibility with and without `--resume`, the spine-side re-check of `gate`, `core`, `installed`, `env`, `platform` and WIDE `tree`) and `gateDecideCmd` (reads manifest and `keys.json`, builds `key_now`, writes `run-list.json` and `decision.json` via `atomicWrite` `core/spine/src/fs-atomic.mjs:11`, refuses a run directory without a `run_start` row) (new file). Acceptance: T-V1-02, T-V1-03, T-V1-11 and T-V1-12 pass.",
-          "status": "not-started",
+          "status": "in-progress",
           "blocked_on": null,
           "evidence": null,
-          "owner": null,
-          "updated_at": "2026-11-06T15:23:46Z",
+          "owner": "build-it:opus",
+          "updated_at": "2026-11-13T20:11:37Z",
           "note": null,
           "check": {
             "kind": "command",
@@ -638,11 +638,11 @@
         {
           "id": "V1-05",
           "title": "Add composition, the verdict line grammar, the `--json` object, exit codes and dirty-tree labelling to `core/spine/src/gate-verdict.mjs` (compose re-reads the store; unsatisfied files fail; zero-pass and zero-file legs fail; runner exit is part of the predicate) (new file). Acceptance: T-V1-04, T-V1-05, T-V1-07, T-V1-08 and T-V1-13 pass.",
-          "status": "not-started",
+          "status": "in-progress",
           "blocked_on": null,
           "evidence": null,
-          "owner": null,
-          "updated_at": "2026-11-06T15:23:46Z",
+          "owner": "build-it:opus",
+          "updated_at": "2026-11-13T20:11:37Z",
           "note": null,
           "check": {
             "kind": "command",
@@ -659,11 +659,11 @@
         {
           "id": "V1-06",
           "title": "Add `gateResultsCmd` to `core/spine/src/gate-verdict.mjs`: per-file folds, corrupt-row header, last clean per leg, `--why FILE` component diff, `--json`, exit 0, digests only (new file). Acceptance: the `gate results` assertions in T-V1-10, T-V1-11 and T-V1-12 pass.",
-          "status": "not-started",
+          "status": "in-progress",
           "blocked_on": null,
           "evidence": null,
-          "owner": null,
-          "updated_at": "2026-11-06T15:23:46Z",
+          "owner": "build-it:opus",
+          "updated_at": "2026-11-13T20:11:37Z",
           "note": null,
           "check": {
             "kind": "none",
@@ -747,11 +747,11 @@
         {
           "id": "V1-07",
           "title": "Build the stub runner fixture and the two live-target tests in `core/spine/test/g2/fixtures/stub-runner/`, `core/spine/test/g2/gate-run.test.mjs` and `core/spine/test/g2/gate-real.test.mjs`, test names carrying the case ids (convention `research/01-do-it-repo.md:85`). Acceptance: every V1 case runs by name; T-V1-16, T-V1-17 and T-V1-18 pass on their live targets (an absent runner reports IMPLEMENTED-NOT-VERIFIED, §11 A11).",
-          "status": "not-started",
+          "status": "in-progress",
           "blocked_on": null,
           "evidence": null,
-          "owner": null,
-          "updated_at": "2026-11-06T15:23:46Z",
+          "owner": "build-it:opus",
+          "updated_at": "2026-11-13T20:11:37Z",
           "note": null,
           "check": {
             "kind": "command",
@@ -766,11 +766,11 @@
         {
           "id": "V2-01",
           "title": "Add clean mode to `core/spine/src/gate-run.mjs`: skip every store read before COMPOSING, set `clean:true` in the manifest, append the `clean` boundary row only on an untainted completed run, make `--scope nightly` and an inherited `DO_IT_GATE_SCOPE=nightly` imply clean (warning when the command lacks `--clean`), reject a typed `--scope nightly --resume`, and make `gate decide` list every file without opening the store in clean mode (V1's `gateRunCmd`, `gateDecideCmd`). Acceptance: T-V2-03, T-V2-04, T-V2-15 and T-V2-17 pass.",
-          "status": "not-started",
+          "status": "in-progress",
           "blocked_on": null,
           "evidence": null,
-          "owner": null,
-          "updated_at": "2026-11-06T15:23:46Z",
+          "owner": "build-it:opus",
+          "updated_at": "2026-11-13T20:11:37Z",
           "note": null,
           "check": {
             "kind": "command",
@@ -786,11 +786,11 @@
         {
           "id": "V2-02",
           "title": "Wire UNSTABLE_UNDER_REUSE in `core/spine/src/gate-verdict.mjs`: after a clean run, re-fold the clean run's files with L1's `gateFold` and list those now UNSTABLE_UNDER_REUSE in `unstable[]`; `gateSelect` refuses reuse while the fold says UNSTABLE (7 days and two consecutive clean passes; a clean FAIL on a different key is a plain FAIL). Acceptance: T-V2-01, T-V2-11 and T-V2-14 pass.",
-          "status": "not-started",
+          "status": "in-progress",
           "blocked_on": null,
           "evidence": null,
-          "owner": null,
-          "updated_at": "2026-11-06T15:23:46Z",
+          "owner": "build-it:opus",
+          "updated_at": "2026-11-13T20:11:37Z",
           "note": null,
           "check": {
             "kind": "command",
@@ -804,11 +804,11 @@
         {
           "id": "V2-03",
           "title": "Wire FLAKY in `core/spine/src/gate-verdict.mjs`: `gateSelect` refuses reuse while L1's `gateFold` says FLAKY (flips on one key, retried PASS, two consecutive passes, file-sticky across a key change for 7 days, §11 A5) and the composer counts FLAKY and UNSTABLE files in `flaky-excluded`. Acceptance: T-V2-02, T-V2-09 and T-V2-10 pass.",
-          "status": "not-started",
+          "status": "in-progress",
           "blocked_on": null,
           "evidence": null,
-          "owner": null,
-          "updated_at": "2026-11-06T15:23:46Z",
+          "owner": "build-it:opus",
+          "updated_at": "2026-11-13T20:11:37Z",
           "note": null,
           "check": {
             "kind": "command",
@@ -823,11 +823,11 @@
         {
           "id": "V2-04",
           "title": "Pass the TTL inputs to `gateFold` from `core/spine/src/gate-verdict.mjs`: `now` and, per leg, the horizon = `run_start` `at` of the run named by the newest `clean` row (R9, CONTRACT §4.5, §11 A4); show EXPIRED in `gate results --why`. Acceptance: T-V2-05 and T-V2-06 pass.",
-          "status": "not-started",
+          "status": "in-progress",
           "blocked_on": null,
           "evidence": null,
-          "owner": null,
-          "updated_at": "2026-11-06T15:23:46Z",
+          "owner": "build-it:opus",
+          "updated_at": "2026-11-13T20:11:38Z",
           "note": null,
           "check": {
             "kind": "command",
@@ -841,11 +841,11 @@
         {
           "id": "V2-05",
           "title": "Add taint to `core/spine/src/gate-run.mjs` and `gate-verdict.mjs`: `run_end.tainted` and `reason` from `runner-report.json`, runner exit with no failing file, or a missing report; tainted runs' PASS rows never reused, even under `--resume`; interruption is not taint (AM-3). Acceptance: T-V2-07 and T-V2-08 pass.",
-          "status": "not-started",
+          "status": "in-progress",
           "blocked_on": null,
           "evidence": null,
-          "owner": null,
-          "updated_at": "2026-11-06T15:23:46Z",
+          "owner": "build-it:opus",
+          "updated_at": "2026-11-13T20:11:38Z",
           "note": null,
           "check": {
             "kind": "command",
@@ -859,11 +859,11 @@
         {
           "id": "V2-06",
           "title": "Add the quarantine view builder to `core/spine/src/gate-verdict.mjs` and write `views/flaky.json` with `atomicWrite` (`core/spine/src/fs-atomic.mjs:11`) at the end of every run; never read it for a decision. Acceptance: T-V2-12 passes.",
-          "status": "not-started",
+          "status": "in-progress",
           "blocked_on": null,
           "evidence": null,
-          "owner": null,
-          "updated_at": "2026-11-06T15:23:46Z",
+          "owner": "build-it:opus",
+          "updated_at": "2026-11-13T20:11:38Z",
           "note": null,
           "check": {
             "kind": "command",
@@ -876,11 +876,11 @@
         {
           "id": "V2-07",
           "title": "Add the red-baseline failure-set baseline to `core/spine/src/gate-verdict.mjs`: `fail_set[]` in `gate results --json` and `prior_fail_on_same_key` on each failed file of a `gate run` FAIL, verdict unchanged. Acceptance: T-V2-13 passes.",
-          "status": "not-started",
+          "status": "in-progress",
           "blocked_on": null,
           "evidence": null,
-          "owner": null,
-          "updated_at": "2026-11-06T15:23:46Z",
+          "owner": "build-it:opus",
+          "updated_at": "2026-11-13T20:11:38Z",
           "note": null,
           "check": {
             "kind": "command",
@@ -893,11 +893,11 @@
         {
           "id": "V2-08",
           "title": "Build the order-dependent fixtures (stub and jest) and their tests in `core/spine/test/g2/fixtures/` and `core/spine/test/g2/gate-clean-flaky.test.mjs`, `core/spine/test/g2/gate-real.test.mjs`. Acceptance: T-V2-01 and T-V2-16 pass, each run by its case id.",
-          "status": "not-started",
+          "status": "in-progress",
           "blocked_on": null,
           "evidence": null,
-          "owner": null,
-          "updated_at": "2026-11-06T15:23:46Z",
+          "owner": "build-it:opus",
+          "updated_at": "2026-11-13T20:11:38Z",
           "note": null,
           "check": {
             "kind": "command",
@@ -911,11 +911,11 @@
         {
           "id": "A1-01",
           "title": "Build the jest fixture repo and test harness (`core/gates/tests/fixtures/jest-30/**` including `jest.config.js`, `sequencer.cjs`, `expected-closures.json`, `planted/**`, and `core/gates/tests/helpers.mjs` with the manifest writer and the `DO_IT_REAL_JEST` locator; shapes from research/03 F12 and docs/06 §1 \"first vertical slice\"). Acceptance: `DO_IT_REAL_JEST=… jest --listTests` in the fixture lists exactly 30 spec files, and `expected-closures.json` has an entry for every spec.",
-          "status": "not-started",
+          "status": "in-progress",
           "blocked_on": null,
           "evidence": null,
-          "owner": null,
-          "updated_at": "2026-11-06T15:23:46Z",
+          "owner": "build-it:sonnet",
+          "updated_at": "2026-11-13T20:11:38Z",
           "note": null,
           "check": {
             "kind": "none",
@@ -995,11 +995,11 @@
         {
           "id": "A1-02",
           "title": "Package the adapter as standalone CommonJS and add the mirror row (`core/gates/adapters/jest/{reporter,filter,closure}.cjs` skeletons and `adapter.json` importing only `node:` modules and lazily the project's jest packages; `scripts/mirror-manifest.json` pair `core/gates/adapters` to `plugins/do-it/gates/adapters`, `scripts/sync-mirror.mjs:31` copies dirs recursively; bundler rules `build.mjs:40-47`). Acceptance: `node scripts/sync-mirror.mjs --check` exits 0 after `--write`, and the bundle bytes of `core/spine/do-it.mjs` are unchanged.",
-          "status": "not-started",
+          "status": "in-progress",
           "blocked_on": null,
           "evidence": null,
-          "owner": null,
-          "updated_at": "2026-11-06T15:23:46Z",
+          "owner": "build-it:sonnet",
+          "updated_at": "2026-11-13T20:11:38Z",
           "note": null,
           "check": {
             "kind": "command",
@@ -1012,11 +1012,11 @@
         {
           "id": "A1-03",
           "title": "Implement `reporter.cjs` rows (`onRunStart`, `onTestFileStart` for start rows, `onTestFileResult` for finish rows, `onRunComplete` for `runner-report.json`; PASS predicate per `@jest/test-result/build/helpers.js:54-86`, `ReporterDispatcher.js:27-33`; one `O_APPEND` write per row, CRC, failure side file with env redaction, key cross-checked against the run-list key and dep hashes re-checked at finish). Acceptance: the predicate matrix yields exactly 2 PASS in 32 shapes and no row exceeds 4096 bytes.",
-          "status": "not-started",
+          "status": "in-progress",
           "blocked_on": null,
           "evidence": null,
-          "owner": null,
-          "updated_at": "2026-11-06T15:23:46Z",
+          "owner": "build-it:sonnet",
+          "updated_at": "2026-11-13T20:11:38Z",
           "note": null,
           "check": {
             "kind": "command",
@@ -1032,11 +1032,11 @@
         {
           "id": "A1-04",
           "title": "Implement `closure.cjs` (BFS over `DependencyResolver.resolve` per `jest-resolve-dependencies/build/index.js:81-134`; own extractor keeping `import type` and adding `jest.mock|doMock|unmock|requireActual` literals and the snapshot path; NARROW or WIDE per CONTRACT §4.6; unresolved repo-local specifier means WIDE; any throw means `unknown`; `keys.json` writer; sidecar writer D10). Acceptance: closure-derived dependents equal `--findRelatedTests` for the 6 chosen modules.",
-          "status": "not-started",
+          "status": "in-progress",
           "blocked_on": null,
           "evidence": null,
-          "owner": null,
-          "updated_at": "2026-11-06T15:23:46Z",
+          "owner": "build-it:sonnet",
+          "updated_at": "2026-11-13T20:11:38Z",
           "note": null,
           "check": {
             "kind": "command",
@@ -1051,11 +1051,11 @@
         {
           "id": "A1-05",
           "title": "Implement `filter.cjs` (builds context with `readConfigs` (`jest-config/build/index.js:38`) and `Runtime.createContext`, writes `keys.json`, calls `do-it gate decide --run-dir D` exactly once with a timeout, returns exactly the `run-list.json` files plus any `unknown` file; any decide failure returns every path; `SearchSource.js:369-388`). Acceptance: after an all-PASS run a second run executes exactly the 2 NEVER files and decide was called once.",
-          "status": "not-started",
+          "status": "in-progress",
           "blocked_on": null,
           "evidence": null,
-          "owner": null,
-          "updated_at": "2026-11-06T15:23:46Z",
+          "owner": "build-it:sonnet",
+          "updated_at": "2026-11-13T20:11:38Z",
           "note": null,
           "check": {
             "kind": "command",
@@ -1071,11 +1071,11 @@
         {
           "id": "A1-06",
           "title": "Handle interrupt, bail, worker crash, retry and exact-set count (`TestScheduler.js:125-127, 397-406`; `jest-runner/build/index.js:136`; `SearchSource.js:283-291`; `ReporterDispatcher.js:79-83`; `invocations` at `@jest/test-result/build/index.d.ts:121`). Acceptance: a run-list of 5 paths of which 1 is not a test file ends in `COUNT_MISMATCH` with a non-zero jest exit.",
-          "status": "not-started",
+          "status": "in-progress",
           "blocked_on": null,
           "evidence": null,
-          "owner": null,
-          "updated_at": "2026-11-06T15:23:46Z",
+          "owner": "build-it:sonnet",
+          "updated_at": "2026-11-13T20:11:38Z",
           "note": null,
           "check": {
             "kind": "command",
@@ -1090,11 +1090,11 @@
         {
           "id": "A1-07",
           "title": "Add `memoryHint(config, manifest)` exported from `reporter.cjs` (`jest-config/build/normalize.js:969-973`, `testSchedulerHelper.js:47-55`; repo config wins). Acceptance: returns no flag when the repo config sets the limit.",
-          "status": "not-started",
+          "status": "in-progress",
           "blocked_on": null,
           "evidence": null,
-          "owner": null,
-          "updated_at": "2026-11-06T15:23:46Z",
+          "owner": "build-it:sonnet",
+          "updated_at": "2026-11-13T20:11:38Z",
           "note": null,
           "check": {
             "kind": "command",
@@ -1107,11 +1107,11 @@
         {
           "id": "A1-08",
           "title": "Add golden-vector and mutant tests (`core/gates/tests/jest/{parity,mutant}.test.mjs`: adapter row bytes and `crc` equal the spine `canonicalJson` over a golden corpus, composed `rtg-key/1` equals F1's golden manifest, an adapter row is accepted by the L1 scan). Acceptance: the mutant that drops the predicate fails with `PREDICATE_VIOLATION`.",
-          "status": "not-started",
+          "status": "in-progress",
           "blocked_on": null,
           "evidence": null,
-          "owner": null,
-          "updated_at": "2026-11-06T15:23:46Z",
+          "owner": "build-it:sonnet",
+          "updated_at": "2026-11-13T20:11:38Z",
           "note": null,
           "check": {
             "kind": "command",
@@ -1124,11 +1124,11 @@
         {
           "id": "Q2-01",
           "title": "Replace Q1's basic run in `core/spine/src/gate-queue.mjs` with `spawn(argv[0], argv.slice(1), {detached: true, stdio: 'inherit'})` (research/01 §4 #8, `research/01-do-it-repo.md:123`), pass `DO_IT_GATE_HOLDER={seq}-{pid}` to the child, rewrite the holder file with `pgid = child.pid`, and turn a spawn error into release plus exit 127 with `[gate-queue] command failed to start: {code}`. Acceptance: T-Q2-05 and T-Q2-08 pass.",
-          "status": "not-started",
+          "status": "in-progress",
           "blocked_on": null,
           "evidence": null,
-          "owner": null,
-          "updated_at": "2026-11-06T15:23:46Z",
+          "owner": "build-it:opus",
+          "updated_at": "2026-11-13T20:11:38Z",
           "note": null,
           "check": {
             "kind": "command",
@@ -1141,11 +1141,11 @@
         {
           "id": "Q2-02",
           "title": "Add the descendant tracker `gateQueueTrack` in `core/spine/src/gate-queue.mjs`: every 2 s poll one `/bin/ps -axo pid=,ppid=,pgid=,lstart=` snapshot, accumulate (pid, start) of everything reachable from the root PID by ppid plus every member of its pgid; no name or argv matching anywhere (G-11). Acceptance: T-Q2-01 and T-Q2-15 pass.",
-          "status": "not-started",
+          "status": "in-progress",
           "blocked_on": null,
           "evidence": null,
-          "owner": null,
-          "updated_at": "2026-11-06T15:23:46Z",
+          "owner": "build-it:opus",
+          "updated_at": "2026-11-13T20:11:38Z",
           "note": null,
           "check": {
             "kind": "command",
@@ -1158,11 +1158,11 @@
         {
           "id": "Q2-03",
           "title": "Forward SIGINT, SIGTERM and SIGHUP to `-pgid` in `core/spine/src/gate-queue.mjs` and map exits: command code passthrough, 128 + N for a command killed by signal N, 130/143 for an interrupted queue with outcome `GATE_INTERRUPTED` (CONTRACT §4.4). Acceptance: T-Q2-05 and T-Q2-06 pass.",
-          "status": "not-started",
+          "status": "in-progress",
           "blocked_on": null,
           "evidence": null,
-          "owner": null,
-          "updated_at": "2026-11-06T15:23:46Z",
+          "owner": "build-it:opus",
+          "updated_at": "2026-11-13T20:11:39Z",
           "note": null,
           "check": {
             "kind": "command",
@@ -1176,11 +1176,11 @@
         {
           "id": "Q2-04",
           "title": "Implement cleanup then release in `core/spine/src/gate-queue.mjs` (PRD D17): SIGTERM to the group and every tracked live (pid, start), 10 s grace, SIGKILL survivors, re-snapshot, `cleanup incomplete` line for an unkillable survivor, then remove the holder file under the lock (`holder file missing at release` if gone), then print `[gate-queue] released seq={s} exit={c} cleaned={k}`; a `DO_IT_FAULT=queue_skip_cleanup` hook (pattern of `core/spine/src/record.mjs:39`) skips only the kill step for the can-fail proof. Acceptance: T-Q2-01, T-Q2-02, T-Q2-03, T-Q2-04, T-Q2-07 and T-Q2-14 pass.",
-          "status": "not-started",
+          "status": "in-progress",
           "blocked_on": null,
           "evidence": null,
-          "owner": null,
-          "updated_at": "2026-11-06T15:23:46Z",
+          "owner": "build-it:opus",
+          "updated_at": "2026-11-13T20:11:39Z",
           "note": null,
           "check": {
             "kind": "command",
@@ -1198,11 +1198,11 @@
         {
           "id": "Q2-05",
           "title": "Add nested admission and orphan reporting in `core/spine/src/gate-queue.mjs`: a live ancestor holder named by `DO_IT_GATE_HOLDER` (checked with `gateProcAlive` and a ppid walk) runs the command with no second ticket and prints `admission: inherited` (CONTRACT §11 A8); export `gateQueueHeldBySelf(ctx)` returning that holder or null; a reclaimer that finds live members of a dead holder's pgid prints `[gate-queue] orphan process group {pgid} still has {n} processes (not killed: not ours)`. Acceptance: T-Q2-09 and T-Q2-13 pass.",
-          "status": "not-started",
+          "status": "in-progress",
           "blocked_on": null,
           "evidence": null,
-          "owner": null,
-          "updated_at": "2026-11-06T15:23:46Z",
+          "owner": "build-it:opus",
+          "updated_at": "2026-11-13T20:11:39Z",
           "note": null,
           "check": {
             "kind": "command",
@@ -1216,11 +1216,11 @@
         {
           "id": "Q2-06",
           "title": "Add `--status [--json]` to `gateQueueCmd` in `core/spine/src/gate-queue.mjs`: budget, single-read signals, holders, FIFO with stored reasons, dead entries marked `dead (reclaim pending)`, no file written, renamed or removed; exit 0. Acceptance: T-Q2-12 passes.",
-          "status": "not-started",
+          "status": "in-progress",
           "blocked_on": null,
           "evidence": null,
-          "owner": null,
-          "updated_at": "2026-11-06T15:23:46Z",
+          "owner": "build-it:opus",
+          "updated_at": "2026-11-13T20:11:39Z",
           "note": null,
           "check": {
             "kind": "command",
@@ -1233,11 +1233,11 @@
         {
           "id": "Q2-07",
           "title": "Export `gateQueueRun(ctx, {argv, peakMb, label, timeoutS})` and `gateQueueAdmit(ctx, {peakMb, label, timeoutS})` (in-process admission for `gate run`, returns `{seq, release()}`, CONTRACT §11 A8) from `core/spine/src/gate-queue.mjs`, read `gates.peak_mb` from the workspace settings file when `--peak-mb` is absent, and add the entry-point lint `core/spine/test/g3/q2-entry.test.mjs` that fails when any `core/spine/src` module other than `gate-queue.mjs` spawns a detached child or a `/bin/sh -c` gate command. Acceptance: T-Q2-10 and T-Q2-11 pass; `node core/spine/build.mjs` exits 0 and `node scripts/sync-mirror.mjs --check` exits 0.",
-          "status": "not-started",
+          "status": "in-progress",
           "blocked_on": null,
           "evidence": null,
-          "owner": null,
-          "updated_at": "2026-11-06T15:23:46Z",
+          "owner": "build-it:opus",
+          "updated_at": "2026-11-13T20:11:39Z",
           "note": null,
           "check": {
             "kind": "command",
@@ -3148,6 +3148,246 @@
       "task": "S1-08",
       "from": "in-progress",
       "to": "done",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-11-13T20:11:37Z",
+      "task": "V1-01",
+      "from": "not-started",
+      "to": "in-progress",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-11-13T20:11:37Z",
+      "task": "V1-02",
+      "from": "not-started",
+      "to": "in-progress",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-11-13T20:11:37Z",
+      "task": "V1-03",
+      "from": "not-started",
+      "to": "in-progress",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-11-13T20:11:37Z",
+      "task": "V1-04",
+      "from": "not-started",
+      "to": "in-progress",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-11-13T20:11:37Z",
+      "task": "V1-05",
+      "from": "not-started",
+      "to": "in-progress",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-11-13T20:11:37Z",
+      "task": "V1-06",
+      "from": "not-started",
+      "to": "in-progress",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-11-13T20:11:37Z",
+      "task": "V1-07",
+      "from": "not-started",
+      "to": "in-progress",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-11-13T20:11:37Z",
+      "task": "V2-01",
+      "from": "not-started",
+      "to": "in-progress",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-11-13T20:11:37Z",
+      "task": "V2-02",
+      "from": "not-started",
+      "to": "in-progress",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-11-13T20:11:37Z",
+      "task": "V2-03",
+      "from": "not-started",
+      "to": "in-progress",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-11-13T20:11:38Z",
+      "task": "V2-04",
+      "from": "not-started",
+      "to": "in-progress",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-11-13T20:11:38Z",
+      "task": "V2-05",
+      "from": "not-started",
+      "to": "in-progress",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-11-13T20:11:38Z",
+      "task": "V2-06",
+      "from": "not-started",
+      "to": "in-progress",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-11-13T20:11:38Z",
+      "task": "V2-07",
+      "from": "not-started",
+      "to": "in-progress",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-11-13T20:11:38Z",
+      "task": "V2-08",
+      "from": "not-started",
+      "to": "in-progress",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-11-13T20:11:38Z",
+      "task": "A1-01",
+      "from": "not-started",
+      "to": "in-progress",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-11-13T20:11:38Z",
+      "task": "A1-02",
+      "from": "not-started",
+      "to": "in-progress",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-11-13T20:11:38Z",
+      "task": "A1-03",
+      "from": "not-started",
+      "to": "in-progress",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-11-13T20:11:38Z",
+      "task": "A1-04",
+      "from": "not-started",
+      "to": "in-progress",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-11-13T20:11:38Z",
+      "task": "A1-05",
+      "from": "not-started",
+      "to": "in-progress",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-11-13T20:11:38Z",
+      "task": "A1-06",
+      "from": "not-started",
+      "to": "in-progress",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-11-13T20:11:38Z",
+      "task": "A1-07",
+      "from": "not-started",
+      "to": "in-progress",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-11-13T20:11:38Z",
+      "task": "A1-08",
+      "from": "not-started",
+      "to": "in-progress",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-11-13T20:11:38Z",
+      "task": "Q2-01",
+      "from": "not-started",
+      "to": "in-progress",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-11-13T20:11:38Z",
+      "task": "Q2-02",
+      "from": "not-started",
+      "to": "in-progress",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-11-13T20:11:39Z",
+      "task": "Q2-03",
+      "from": "not-started",
+      "to": "in-progress",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-11-13T20:11:39Z",
+      "task": "Q2-04",
+      "from": "not-started",
+      "to": "in-progress",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-11-13T20:11:39Z",
+      "task": "Q2-05",
+      "from": "not-started",
+      "to": "in-progress",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-11-13T20:11:39Z",
+      "task": "Q2-06",
+      "from": "not-started",
+      "to": "in-progress",
+      "by": "build-it",
+      "note": null
+    },
+    {
+      "at": "2026-11-13T20:11:39Z",
+      "task": "Q2-07",
+      "from": "not-started",
+      "to": "in-progress",
       "by": "build-it",
       "note": null
     }
