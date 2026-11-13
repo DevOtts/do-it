@@ -48,8 +48,13 @@ Rules: `exit_code` mirrors `status` (ok 0, failed 1, needs_human 2, blocked/usag
   "tiers": { "T1": "", "T2": "", "T3": "" },
   "ceilings": { "warn_tokens": 150000, "warn_pct": 40, "block_tokens": 250000, "block_pct": 60 },
   "stop_gate": { "patience": 3 },
-  "observability": { "provider": "none" } }
+  "observability": { "provider": "none" },
+  "gates": { "on_push": null, "on_train_complete": null, "nightly": null, "peak_mb": null,
+             "reuse": { "core": [], "always_run": [], "never_reuse": [], "env": [], "env_files": [] },
+             "queue": { "budget_pct": null, "timeout_s": null, "swap_used_max_mb": null } } }
 ```
+`gates` (resumable test gates) has twelve leaves, all defaulting to `null` or `[]`; a stage left `null` runs as a visible `[skip] <stage>: no gate declared`, never a silent pass. `gates.queue.*` is honoured from the global file only (`~/.do-it/settings.json`); a workspace or run-flag value is ignored and listed. The effective values (budget 60 percent, timeout 14400 s) come from one helper, `gatesQueueSettings`. A gate command that is one long unbroken token with no spaces trips the secret scan (`SETTINGS_SECRET_VALUE`); a normal command line with spaces does not.
+
 Precedence: run flag, workspace, global, defaults. Secrets hold references only. Ceilings: whichever of absolute or window-percent fires first.
 
 ## 7. `.do-it/` layout

@@ -1,7 +1,7 @@
 import { cmdInstall, cmdInstallCompanions } from './install.mjs';
 import { cmdMigrate } from './migrate.mjs';
 import { doctorSecrets } from './secrets.mjs';
-import { loadSettings } from './settings.mjs';
+import { GATES_STAGES, gatesStage, loadSettings } from './settings.mjs';
 import { DO_IT_VERSION } from './version.mjs';
 export function cmdDoctor(ctx, args) {
   const f = args.flags;
@@ -21,6 +21,7 @@ export function cmdDoctor(ctx, args) {
     repo: ctx.repo,
     files: loaded.files,
     entries: loaded.entries,
+    gate_stages: GATES_STAGES.map((st) => gatesStage(loaded.values, st)),
     settings,
   };
 }

@@ -18,7 +18,26 @@ export const SETTINGS_DEFAULTS = {
   ceilings: { warn_tokens: 150000, warn_pct: 40, block_tokens: 250000, block_pct: 60 },
   stop_gate: { patience: 3 },
   observability: { provider: 'none' },
+  gates: {
+    on_push: null,
+    on_train_complete: null,
+    nightly: null,
+    peak_mb: null,
+    reuse: { core: [], always_run: [], never_reuse: [], env: [], env_files: [] },
+    queue: { budget_pct: null, timeout_s: null, swap_used_max_mb: null },
+  },
 };
+
+export const GATES_STAGES = ['on_push', 'on_train_complete', 'nightly'];
+export const GATES_QUEUE_DEFAULTS = { budget_pct: 60, timeout_s: 14400 };
+
+// One stage of the gates block: { stage, declared, command, line }. A null leaf is never a silent pass:
+// `line` is the visible skip line (G-13). A declared stage has line null.
+export function gatesStage(values, stage) {
+  const g = values && values.gates;
+  const cmd = g && typeof g[stage] === 'string' && g[stage].length ? g[stage] : null;
+  return { stage, declared: cmd !== null, command: cmd, line: cmd === null ? '[skip] ' + stage + ': no gate declared' : null };
+}
 
 // Host-owned settings: `state.<backend>` is one object keyed by the backend name. Core does not know its
 // shape; the host that provides the backend declares it in the `state_store.settings_schema` entry of
@@ -223,4 +242,30 @@ export function loadSettings(ctx, setFlags) {
   const leaves = flattenSettings(merged, '', {});
   const entries = Object.keys(leaves).sort().map((key) => ({ key, value: leaves[key], source: sources[key] || 'default' }));
   return { values: merged, entries, files };
+}
+
+// The one place the effective gate-queue values are computed (A8). `queue.*` is honoured from the global
+// settings file only; a leaf whose merged source is the workspace or a run flag is listed in `ignored[]`.
+export function gatesQueueSettings(ctx, loaded) {
+  let fromGlobal = {};
+  try {
+    const file = settingsPaths(ctx).global;
+    if (fs.existsSync(file)) {
+      const data = JSON.parse(readRegularFile(file, REGISTRY_READ_CAP).toString('utf8'));
+      if (isPlainObject(data) && isPlainObject(data.gates) && isPlainObject(data.gates.queue)) fromGlobal = data.gates.queue;
+    }
+  } catch { /* an unreadable global file is reported by loadSettings; here it means defaults */ }
+  const ignored = [];
+  for (const e of (loaded && loaded.entries) || []) {
+    if (e.key.startsWith('gates.queue.') && (e.source === 'workspace' || e.source === 'run-flag')) {
+      ignored.push({ key: e.key.slice('gates.'.length), source: e.source });
+    }
+  }
+  const pick = (k) => (Number.isInteger(fromGlobal[k]) ? fromGlobal[k] : null);
+  return {
+    budget_pct: pick('budget_pct') === null ? GATES_QUEUE_DEFAULTS.budget_pct : pick('budget_pct'),
+    timeout_s: pick('timeout_s') === null ? GATES_QUEUE_DEFAULTS.timeout_s : pick('timeout_s'),
+    swap_used_max_mb: pick('swap_used_max_mb'),
+    ignored,
+  };
 }
