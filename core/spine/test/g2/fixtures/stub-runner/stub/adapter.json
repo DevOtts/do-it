@@ -1,0 +1,9 @@
+{
+  "schema": "do-it-gate-adapter/1",
+  "runner": "stub",
+  "files": ["stub.mjs"],
+  "command": ["{node}", "{adapter}/stub.mjs"],
+  "inject": [],
+  "solo": ["--solo"],
+  "version": "1.0.0"
+}
