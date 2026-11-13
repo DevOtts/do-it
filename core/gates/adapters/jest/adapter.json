@@ -1,0 +1,14 @@
+{
+  "schema": "do-it-gate-adapter/1",
+  "runner": "jest",
+  "version": 1,
+  "files": { "reporter": "reporter.cjs", "filter": "filter.cjs", "closure": "closure.cjs", "common": "common.cjs" },
+  "manifest": { "env": "DO_IT_GATE_MANIFEST" },
+  "inject": {
+    "argv": ["--filter={adapter_dir}/filter.cjs", "--reporters={adapter_dir}/reporter.cjs"],
+    "note": "--reporters replaces the project's reporters: a project that keeps its own list adds reporter.cjs to its reporters array instead"
+  },
+  "selection": { "hook": "jest --filter", "decide": "do-it gate decide --run-dir {run_dir}", "decide_override_env": "DO_IT_GATE_DECIDE", "no_tests_flag": "--passWithNoTests" },
+  "files_exchanged": ["manifest.json", "keys.json", "run-list.json", "selected.json", "runner-report.json"],
+  "memory_hint": { "export": "reporter.cjs#memoryHint", "flag": "--workerIdleMemoryLimit" }
+}
