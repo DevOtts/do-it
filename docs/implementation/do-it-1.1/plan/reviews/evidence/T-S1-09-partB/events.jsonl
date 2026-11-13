@@ -1,0 +1,2 @@
+{"ts":"2026-11-13T18:21:28.905Z","run_id":"r-20261113-182128-2084","slice_id":null,"stage":"intake","persona":null,"tier":null,"model":null,"host":"auto","event":"run_started","parent_id":null,"verdict":null}
+{"ts":"2026-11-13T18:24:19.772Z","run_id":"r-20261113-182128-2084","slice_id":null,"stage":"intake","persona":null,"tier":null,"model":null,"host":"auto","event":"owner_taken_over","parent_id":null,"verdict":"TAKEN_OVER","detail":{"from":"dca344df-641b-4ad7-84f9-1d01c24859ea","to":"135bc59d-4f05-4fe9-b14c-5989fd7872c5","taken_over":true}}

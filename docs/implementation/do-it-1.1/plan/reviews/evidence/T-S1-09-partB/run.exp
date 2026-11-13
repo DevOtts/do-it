@@ -1,0 +1,33 @@
+set stty_init "rows 50 cols 200"
+set SP [lindex $argv 0]
+set PL "$SP/plugin"
+set R "$SP/repo"
+set timeout 30
+log_file -noappend "$SP/tui.log"
+cd $R
+spawn claude --plugin-dir $PL --model haiku --dangerously-skip-permissions
+sleep 25
+send -- "Use the Bash tool to run exactly this one command and nothing else: node $PL/scripts/do-it.mjs start --request x --json > $R/start.out 2>&1; echo \$CLAUDE_CODE_SESSION_ID > $R/sid1.txt; echo ENV=\$DO_IT_SESSION_ENV > $R/diag1.txt"
+sleep 2
+send "\r"
+sleep 75
+send -- "/clear"
+sleep 2
+send "\r"
+sleep 12
+send -- "Use the Bash tool to run exactly this one command and nothing else: echo \$CLAUDE_CODE_SESSION_ID > $R/sid2.txt; node $PL/scripts/do-it.mjs resume --json > $R/resume1.out 2>&1"
+sleep 2
+send "\r"
+sleep 75
+send -- "Resume the do-it run in this repo with the do-it CLI at $PL/scripts/do-it.mjs (use --json). Follow any instruction the tool output gives you."
+sleep 2
+send "\r"
+sleep 150
+send -- "Use the Bash tool to run exactly this one command and nothing else: echo \$CLAUDE_CODE_SESSION_ID > $R/sid3.txt; node $PL/scripts/do-it.mjs status --json > $R/status.out 2>&1"
+sleep 2
+send "\r"
+sleep 60
+send -- "/exit"
+sleep 2
+send "\r"
+sleep 5
