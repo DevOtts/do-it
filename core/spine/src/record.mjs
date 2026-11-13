@@ -4,15 +4,15 @@ import path from 'node:path';
 import { fail } from './errors.mjs';
 import { appendEvent } from './events.mjs';
 import { resolveEvidence } from './evidence.mjs';
-import { autoClosePackages, finishLineUpsert, readFinishLine, writeFinishLine } from './finish-line.mjs';
-import { atomicWrite, atomicWriteJson, readJsonIfExists } from './fs-atomic.mjs';
+import { adoptsUnattributed, autoClosePackages, finishLineUpsert, readFinishLine, writeFinishLine } from './finish-line.mjs';
+import { BULK_READ_CAP, STATE_ACCEPT_CAP, atomicWrite, atomicWriteJson, readJsonIfExists, readRegularFile, readText } from './fs-atomic.mjs';
 import { sha256Bytes } from './hash.mjs';
 import { escalationQuestion, ladderEscalated } from './ladder.mjs';
 import { ledgerUpsert, readLedger, writeLedger } from './ledger.mjs';
-import { legsLookRolledBack, planDeploy, staleLegsAfterRollback } from './legs.mjs';
-import { packAppend } from './pack.mjs';
+import { LEG_PASSED, legsLookRolledBack, planDeploy, staleLegsAfterRollback } from './legs.mjs';
+import { STOP_GATE_TEXT, openPackQuestions, packAppend, packPath } from './pack.mjs';
 import { loadSchemaFile, validateSchema } from './schema.mjs';
-import { loadState, selectRunId, writeState } from './state.mjs';
+import { cleanReason, guardStatusEntry, loadState, selectRunId, writeState } from './state.mjs';
 import { CHECKPOINT_ROW_PREFIX } from './readiness.mjs';
 import { parseVerdict } from './verdict-file.mjs';
 
@@ -50,7 +50,10 @@ export function cmdRecord(ctx, args) {
 
   const resultFile = path.resolve(ctx.cwd, f.result);
   let bytes;
-  try { bytes = fs.readFileSync(resultFile); } catch (e) {
+  // CP-03 R7-S1-M14: a result is copied into the journal and the state, which are read back capped at
+  // STATE_READ_CAP, so a larger result is refused before anything is written (R8-S1-M15: accepted only up to
+  // STATE_ACCEPT_CAP, the cap less the run's bookkeeping headroom).
+  try { bytes = readRegularFile(resultFile, STATE_ACCEPT_CAP); } catch (e) {
     throw fail('RESULT_UNREADABLE', 1, { file: f.result, message: e.message });
   }
   const resultSha = sha256Bytes(bytes);
@@ -108,8 +111,9 @@ export function applyJournal(ctx, j, allowFault) {
   if (!fs.existsSync(copy)) atomicWrite(copy, j.result_text);
   if (j.fl_ops.length) {
     const fl = readFinishLine(ctx);
-    for (const op of j.fl_ops) finishLineUpsert(fl, op.id, op.patch);
-    autoClosePackages(fl);
+    const adopt = adoptsUnattributed(j.next_state);
+    for (const op of j.fl_ops) finishLineUpsert(fl, op.id, op.patch, runId, adopt);
+    autoClosePackages(fl, adopt ? runId : null);
     writeFinishLine(ctx, fl);
   }
   if (j.questions.length) packAppend(ctx, runId, j.questions);
@@ -140,7 +144,7 @@ export function checkpointVerdictProblem(ctx, state, row, r) {
     if (!want.includes(r.abs)) return 'evidence must be the checkpoint verdict file ' + cp.evidence + ', got ' + r.path;
   }
   let text;
-  try { text = fs.readFileSync(r.abs, 'utf8'); } catch (e) { return 'cannot read ' + r.path + ': ' + (e.code || e.message); }
+  try { text = readText(r.abs, BULK_READ_CAP); } catch (e) { return 'cannot read ' + r.path + ': ' + (e.code || e.message); }
   const v = parseVerdict(text, id);
   return v.state === 'pass' ? null : v.state + ': ' + v.reason;
 }
@@ -255,7 +259,20 @@ export function planRecord(ctx, runId, state, result) {
     };
   }
 
+  // CP-03 R5-S1-H9: the cause a status entry needs (guardStatusEntry, below) is collected on every path.
+  let causeReason = null;
   if (isDeploy) {
+    // deploy legs belong to a run that is deploying: from any other status a leg result could take the run
+    // straight to FAILED (non-gating) without ever passing through DEPLOYING
+    if (!DEPLOY_STATUSES.includes(state.status)) {
+      throw fail('DEPLOY_OUT_OF_ORDER', 1, { status: state.status, allowed_from: DEPLOY_STATUSES, message: 'a deploy-legs result is recorded only while the run is ' + DEPLOY_STATUSES.join(', ') + ' (gate advance --to DEPLOYING first)' });
+    }
+    // a leg that did not make it says why: its evidence, or the result's reason
+    const silent = result.legs.filter((l) => (l.state === 'FAILED' || l.state === 'NEEDS_HUMAN' || l.state === 'ROLLBACK_FAILED') && !cleanReason(l.evidence) && !cleanReason(result.reason));
+    if (silent.length) {
+      throw fail('FAIL_REASON_REQUIRED', 1, { legs: silent.map((l) => l.leg), message: 'a FAILED or NEEDS_HUMAN leg needs evidence or the result needs a reason' });
+    }
+    causeReason = cleanReason(result.reason) || result.legs.filter((l) => l.state !== LEG_PASSED && cleanReason(l.evidence)).map((l) => 'leg ' + l.leg + ' ' + l.state + ': ' + cleanReason(l.evidence)).join('; ') || null;
     const resolveLeg = (leg) => legResolved.get(leg.leg) || null;
     if (state.status === 'ROLLED_BACK' && !legsLookRolledBack(state, result) && result.legs.every((l) => l.state === 'DEPLOYED_VERIFIED')) {
       const stale = staleLegsAfterRollback(state, result.legs, resolveLeg);
@@ -277,17 +294,31 @@ export function planRecord(ctx, runId, state, result) {
       reason = blockReason(result);
       if (!reason) throw fail('BLOCK_REASON_REQUIRED', 1, { slice_id: slice.id, message: 'a BLOCKED slice needs a reason' });
     }
+    // CP-03 R4-S1-H8: a run-level result that takes the run to BLOCKED or FAILED switches the stop gate off
+    // (both are non-gating, CONTRACT 3.1), so it must say why (checked by guardStatusEntry below).
+    if (!slice && (result.status === 'blocked' || result.status === 'failed')) {
+      causeReason = result.status === 'blocked' ? blockReason(result) : failReason(result);
+    }
     applyStatusToState(next, result);
     next.stage = result.stage;
     if (slice && outcome === 'RECORDED') {
       const sl = planSliceOutcome(plan, next, result, slice, reason);
       if (sl) { outcome = sl.outcome; exit = sl.exit; }
+      // the run settled to BLOCKED because only blocked slices are left: their own reasons are the cause
+      if (next.status === 'BLOCKED') causeReason = 'every remaining slice is blocked: ' + next.slices.filter((x) => x.status === 'BLOCKED').map((x) => x.id).join(', ') + (reason ? ' (' + reason + ')' : '');
     }
   }
 
   // A BLOCKED slice (owner-gate) also routes its question into the owner pack (R4 T-R4-19, B10).
   if ((result.status === 'needs_human' || result.status === 'blocked') && result.pending_human && result.pending_human.questions_path) {
-    const qs = readQuestionsFile(ctx, result.pending_human.questions_path);
+    // a question with no text is no question: the pack would drop it (packAppend), so it decides nothing
+    // CP-03 R5-S1-H10: only the spine says where a question came from, so a result's own `source` is dropped,
+    // and the stop gate's sentence is reserved (pack withdraw must never mistake a result question for it)
+    const qs = readQuestionsFile(ctx, result.pending_human.questions_path)
+      .filter((q) => q && typeof q.text === 'string' && q.text.trim())
+      .map((q) => { const { source, ...rest } = q; return rest; });
+    const reserved = qs.filter((q) => STOP_GATE_TEXT.test(q.text.trim()));
+    if (reserved.length) throw fail('STOP_GATE_TEXT_RESERVED', 1, { texts: reserved.map((q) => q.text.slice(0, 120)), message: 'a result question may not use the stop gate\'s own sentence; word the question in your own terms' });
     const midrun = result.status === 'needs_human' && !isDeploy && state.status === 'BUILDING' ? qs.filter((q) => q && q.kind !== 'owner-gate') : [];
     if (midrun.length) {
       // G-8: no question to the owner mid-run; the recommendation decides and the end report shows it.
@@ -305,6 +336,19 @@ export function planRecord(ctx, runId, state, result) {
       plan.questions.push(...qs);
     }
   }
+  // CP-03 R4-S1-H8 / R5-S1-H9: one guard for every way this result moves the run into FAILED, BLOCKED or
+  // NEEDS_HUMAN (run-level, slice settle, deploy legs). NEEDS_HUMAN needs a question that lands open in the
+  // owner pack; FAILED and BLOCKED need a reason, kept as status_reason. G-8 keeps autonomy: from BUILDING a
+  // mid-run question becomes a default and the status does not change, so the guard is not reached.
+  const stored = guardStatusEntry(state.status, next.status, {
+    reason: causeReason,
+    openQuestion: next.status === 'NEEDS_HUMAN' ? questionsLandOpen(ctx, runId, plan.questions) : false,
+  }, { slice_id: result.slice_id || null, status: result.status });
+  if (stored) {
+    next.status_reason = { status: next.status, reason: stored, stage: result.stage, at: now };
+    if (!isDeploy && !result.slice_id) plan.events.push({ event: result.status === 'blocked' ? 'run_blocked' : 'run_failed', stage: result.stage, verdict: next.status, detail: { reason: stored } });
+    plan.extra.reason = stored;
+  }
   if (result.run_verdict !== undefined && result.run_verdict !== null) plan.extra.reported_run_verdict = result.run_verdict;
   plan.outcome = outcome;
   plan.exit = exit;
@@ -312,10 +356,35 @@ export function planRecord(ctx, runId, state, result) {
   return plan;
 }
 
+// The statuses that have deploy legs (D17): only then may a result carry them.
+export const DEPLOY_STATUSES = ['DEPLOYING', 'PROVING', 'PARTIAL_FAILURE', 'ROLLED_BACK'];
+
+// CP-03 R6-S1-L1: a slice reason obeys the same rule as a run reason (cleanReason: no placeholder, no
+// invisible-only text); the sentence the spine builds around it would otherwise always pass the guard.
 export function blockReason(result) {
-  if (typeof result.reason === 'string' && result.reason.trim()) return result.reason.trim();
-  const v = (result.verdicts || []).find((x) => x.verdict === 'BLOCKED' && typeof x.evidence === 'string' && x.evidence.trim());
-  return v ? v.evidence.trim() : null;
+  const r = cleanReason(result.reason);
+  if (r) return r;
+  const v = (result.verdicts || []).find((x) => x.verdict === 'BLOCKED' && cleanReason(x.evidence));
+  return v ? cleanReason(v.evidence) : null;
+}
+
+// A run-level failure names its cause: the result's reason, else the evidence of a verdict that did not verify.
+export function failReason(result) {
+  const r = cleanReason(result.reason);
+  if (r) return r;
+  const v = (result.verdicts || []).find((x) => x.verdict !== 'VERIFIED' && cleanReason(x.evidence));
+  return v ? cleanReason(v.evidence) : null;
+}
+
+// True when at least one of `questions` will be open in the run's owner pack once appended: a new text
+// (packAppend adds it), or a text already there that is neither withdrawn nor answered.
+export function questionsLandOpen(ctx, runId, questions) {
+  const valid = (questions || []).filter((q) => q && typeof q.text === 'string' && q.text.trim());
+  if (!valid.length) return false;
+  const pack = readJsonIfExists(packPath(ctx, runId));
+  const have = pack && Array.isArray(pack.questions) ? pack.questions.filter((x) => x.status !== 'withdrawn') : [];
+  const open = new Set(openPackQuestions(ctx, runId).map((x) => x.text));
+  return valid.some((q) => !have.some((x) => x.text === q.text) || open.has(q.text));
 }
 
 // Slice-attached results (D14, CONTRACT M1): FAILED, ESCALATED, BLOCKED and the
@@ -349,7 +418,7 @@ export function planSliceOutcome(plan, next, result, slice, reason) {
 
 export function readQuestionsFile(ctx, file) {
   try {
-    const j = JSON.parse(fs.readFileSync(path.resolve(ctx.repo, file), 'utf8'));
+    const j = JSON.parse(readText(path.resolve(ctx.repo, file)));
     const list = Array.isArray(j) ? j : (j && Array.isArray(j.questions) ? j.questions : []);
     return list;
   } catch {

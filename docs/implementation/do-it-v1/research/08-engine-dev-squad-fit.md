@@ -1,6 +1,6 @@
 # 08 - Engine dev squad: fit with the do-it design, and what to adjust now
 
-Read: ES = /Users/macbook/Workspace/Engine/Engine-Core/docs/implementation/engine-dev-squad/ (SCOPE-BRIEF, SYNTHESIS, DECISIONS, STATUS, WAVES.html, delivery/STATUS.md, delivery/00-program-plan.md, docs/02 and 04, delivery/KICKOFF-W3.md, SQUAD-BRIEF, CONTRACT headings).
+Read: ES = <pilot-repo>/docs/implementation/engine-dev-squad/ (SCOPE-BRIEF, SYNTHESIS, DECISIONS, STATUS, WAVES.html, delivery/STATUS.md, delivery/00-program-plan.md, docs/02 and 04, delivery/KICKOFF-W3.md, SQUAD-BRIEF, CONTRACT headings).
 do-it = /Users/macbook/Workspace/Devotts/do-it/docs/implementation/do-it-v1/ (research/02-RESEARCH-AND-DESIGN.html, research/06-engine-squads.md).
 Not read in depth: R1-R7 research bodies, CONTRACT.md body (146 KB), epics/PRDs, AMENDMENT-LOG. Claims about them are from STATUS/synthesis only.
 
@@ -13,7 +13,7 @@ Not read in depth: R1-R7 research bodies, CONTRACT.md body (146 KB), epics/PRDs,
 - Rulings: GitHub App (Q1), ClickUp as intake (Q2), repo is doc truth (Q3), Job+gVisor runner (Q-A1), credentials via the backbone with per-step preference + fallback (O-2), PM may merge only low-risk work (Q-A3), fast track for unconnected providers (Q-B2), pilot her0-landing-page (Q-B3.1), one repo per card (OR-9), prompt-injection boundary (OR-8), previews free, prod deploys are approved Plans (O-1).
 - Waves (re-waved G4-W): W1 integrations (GitHub App, gateway, repos<->orgs, PR events, ClickUp fail-closed, Cloudflare read) ; W2 runtime foundations (gVisor probe, settings, PR on card) ; W3 squad pipeline DS8-DS13 ; W4 merge+deploy+docs round ; W5 repo docs -> bible ; W6 ClickUp mirror ; W7 pilot ; v1.5 outside-change rail etc.
 - Status: delivery/STATUS.md says W2 CLOSED 2026-10-10 (49/56 VERIFIED, gVisor PASS), W3 next, 0 shipped to her0/praxya (HELD). KICKOFF-W3.md exists. Top-level ES/STATUS.md is STALE (still says W-B "TBD" and W-P at G4).
-- Open: G4 owner questions O-3/4/5/11/12/13; cross-program asks A-10..A-15 to the CT/p2p orchestrator; KT24 delegation and CT dispatch are code-guarded off until brain-agent honours cancel (critical path).
+- Open: G4 owner questions O-3/4/5/11/12/13; cross-program asks A-10..A-15 to the CT/p2p orchestrator; KT24 delegation and CT dispatch are code-guarded off until a consumer service honours cancel (critical path).
 
 ## 2. Overlaps and conflicts with the do-it design
 

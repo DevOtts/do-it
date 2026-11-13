@@ -7,7 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const EMBEDDED_SCHEMAS = {"answers.schema.json":{"$id":"do-it-answers/1","title":"answers.json: the parsed owner reply, deterministic (no timestamps)","type":"object","required":["pack_id","answers","pending","complete"],"properties":{"pack_id":{"type":"string","minLength":1},"complete":{"type":"boolean"},"pending":{"type":"array","items":{"type":"integer","minimum":1}},"answers":{"type":"array","items":{"type":"object","required":["n","answer","source","free_text"],"properties":{"n":{"type":"integer","minimum":1},"answer":{"type":"string"},"source":{"enum":["reply","recommendation","default"]},"free_text":{"type":"boolean"}},"additionalProperties":false}}},"additionalProperties":false},"do-it-state.1.schema.json":{"$id":"do-it-state/1","title":"do-it run state (written only by the spine)","type":"object","required":["schema","run_id","preset","request","status","size","host","stage","slices","gates","handoffs","stop_refusals","review","created_at","updated_at"],"properties":{"schema":{"const":"do-it-state/1"},"run_id":{"type":"string","minLength":1},"preset":{"type":["string","null"]},"request":{"type":"string"},"status":{"enum":["INTAKE","PLANNING","AWAIT_RATIFY","BUILDING","VERIFYING","REVIEWING","FIXING","DEPLOYING","PROVING","CONCLUDING","DONE","NEEDS_HUMAN","PARKED","BLOCKED","FAILED","PARTIAL_FAILURE","ROLLED_BACK","ESCALATED"]},"size":{"type":["integer","string","null"]},"host":{"type":["string","null"]},"stage":{"type":["string","null"]},"slices":{"type":"array","items":{"type":"object","required":["id","status"],"properties":{"id":{"type":"string","minLength":1},"lane":{"type":["string","null"]},"tier":{"type":["string","null"]},"wave":{"type":["string","null"]},"status":{"type":"string"},"attempts":{"type":"integer","minimum":0},"escalations":{"type":"integer","minimum":0}}}},"gates":{"type":"object"},"handoffs":{"type":"integer","minimum":0},"stop_refusals":{"type":"integer","minimum":0},"review":{"type":"object","required":["round","exit"],"properties":{"round":{"type":"integer","minimum":0},"exit":{"type":["string","null"]}}},"created_at":{"type":"string","minLength":1},"updated_at":{"type":"string","minLength":1},"ceiling":{"type":["string","object","null"]},"park":{"type":["object","null"]},"handoff_state":{"type":["string","object","null"]},"run_verdict":{"enum":["DONE_ALL_VERIFIED","DONE_WITH_RESIDUALS","BLOCKED","NEEDS_RESET","USAGE_LIMIT",null]},"deploy":{"type":["object","null"]},"last_journal":{"type":["string","null"]}}},"events.schema.json":{"$id":"do-it-event/1","title":"events.jsonl row (trace fields frozen for v2 exporters)","type":"object","required":["ts","run_id","slice_id","stage","persona","tier","model","host","event","parent_id","verdict"],"properties":{"ts":{"type":"string","minLength":1},"run_id":{"type":"string","minLength":1},"slice_id":{"type":["string","null"]},"stage":{"type":["string","null"]},"persona":{"type":["string","null"]},"tier":{"type":["string","null"]},"model":{"type":["string","null"]},"host":{"type":["string","null"]},"event":{"type":"string","minLength":1},"parent_id":{"type":["string","null"]},"verdict":{"type":["string","null"]},"detail":{"type":["object","string","null"]}},"additionalProperties":false},"finish-line.schema.json":{"$id":"do-it-finish-line/1","title":"finish-line.json: rows that must all become terminal","type":"object","required":["rows"],"properties":{"rows":{"type":"array","items":{"type":"object","required":["id","kind","state"],"properties":{"id":{"type":"string","minLength":1},"kind":{"enum":["wave","package","dod"]},"state":{"enum":["OPEN","DONE","PARKED","BLOCKED"]},"evidence":{"type":["string","null"]},"owner_question":{"type":["string","null"]},"reason":{"type":["string","null"]},"archived_to":{"type":["string","null"]}}}}}},"it-result.1.schema.json":{"$id":"it-result/1","title":"Result file every stage writes as its last act","type":"object","required":["schema","stage","run_id","status","exit_code"],"properties":{"schema":{"const":"it-result/1"},"stage":{"enum":["prompt-it","plan-it","build-it","review-it","deploy-it","conclude-it","reconcile-it"]},"run_id":{"type":"string","minLength":1},"slice_id":{"type":["string","null"]},"version":{"type":["string","null"]},"head_sha":{"type":["string","null"]},"status":{"enum":["ok","needs_human","blocked","failed","context_reset","usage_limit"]},"exit_code":{"type":"integer","minimum":0,"maximum":3},"verdicts":{"type":"array","items":{"type":"object","required":["row","verdict"],"properties":{"row":{"type":"string","minLength":1},"verdict":{"enum":["VERIFIED","IMPLEMENTED-NOT-VERIFIED","BLOCKED"]},"evidence":{"type":["string","null"]},"real":{"type":"boolean"}}}},"reason":{"type":["string","null"]},"run_verdict":{"enum":["DONE_ALL_VERIFIED","DONE_WITH_RESIDUALS","BLOCKED","NEEDS_RESET","USAGE_LIMIT",null]},"next":{"type":["object","null"]},"pending_human":{"type":["object","null"]},"artifacts":{"type":"array","items":{"type":"object","required":["path"],"properties":{"path":{"type":"string"},"kind":{"type":["string","null"]},"sha256":{"type":["string","null"]}}}},"resume":{"type":["object","null"]},"tokens":{"type":["object","null"]},"rollback":{"type":"boolean"},"legs":{"type":"array","items":{"type":"object","required":["leg","state"],"properties":{"leg":{"type":"string","minLength":1},"state":{"enum":["DEPLOYED_VERIFIED","DEPLOYED_UNVERIFIED","HELD","FAILED","NEEDS_HUMAN","ROLLED_BACK","ROLLBACK_FAILED"]},"evidence":{"type":["string","null"]},"compensate":{"type":["string","object","array","null"]}}}}}},"ledger.schema.json":{"$id":"do-it-ledger/1","title":"ledger.json: latest verdict and evidence per DoD row","type":"object","required":["schema","run_id","rows"],"properties":{"schema":{"const":"do-it-ledger/1"},"run_id":{"type":"string","minLength":1},"rows":{"type":"array","items":{"type":"object","required":["row","verdict","evidence","evidence_sha256","real","recorded_at","updated_at"],"properties":{"row":{"type":"string","minLength":1},"verdict":{"enum":["VERIFIED","IMPLEMENTED-NOT-VERIFIED","BLOCKED"]},"evidence":{"type":["string","null"]},"evidence_path":{"type":["string","null"]},"evidence_sha256":{"type":["string","null"]},"real":{"type":"boolean"},"reason":{"type":["string","null"]},"recorded_at":{"type":"string","minLength":1},"updated_at":{"type":"string","minLength":1}}}}}},"owner-pack.schema.json":{"$id":"do-it-owner-pack/1","title":"owner-pack.json: the single set of questions for the human","type":"object","required":["pack_id","run_id","questions","created_at"],"properties":{"pack_id":{"type":["string","null"]},"run_id":{"type":"string","minLength":1},"created_at":{"type":"string","minLength":1},"questions":{"type":"array","items":{"type":"object","required":["n","kind","text","options","recommendation","default","reversible"],"properties":{"n":{"type":"integer","minimum":1},"kind":{"type":"string","minLength":1},"text":{"type":"string","minLength":1},"options":{"type":"array","items":{"type":"string"}},"recommendation":{"type":["string","null"]},"default":{"type":["string","null"]},"reversible":{"type":"boolean"}},"additionalProperties":false}}},"additionalProperties":false},"readiness.schema.json":{"$id":"do-it-readiness/1","title":"plan/READINESS.json: the verdict that lets a build start (G-8)","type":"object","required":["decisions","preflight"],"properties":{"decisions":{"type":["array","object"]},"preflight":{"type":"object","required":["passed"],"properties":{"passed":{"type":"boolean"}}},"credentials":{"type":"array","items":{"type":"string","minLength":1}},"owner_dependent_slices":{"type":"integer","minimum":0},"review_checkpoints":{"type":"object","required":["schema","count","checkpoints"],"properties":{"schema":{"const":"review-checkpoints/1"},"count":{"type":"integer","minimum":0},"level":{"enum":["none","light","standard","heightened","full"]},"checkpoints":{"type":"array","items":{"type":"object","required":["id","kind","evidence"],"properties":{"id":{"type":"string","pattern":"^CP-\\d{2}$"},"kind":{"enum":["phase","wave","adversarial","pre-merge","pre-release"]},"evidence":{"type":"string","minLength":1},"at":{"type":"string"},"review":{"type":"string"},"blocks":{"type":"string"},"gates":{"type":"array","minItems":1,"items":{"enum":["dependents","promotion","merge","release"]}},"covers":{"type":"array","items":{"type":"string","minLength":1}}}}}}},"slices":{"type":"array","items":{"type":"object","required":["id"],"properties":{"id":{"type":"string","minLength":1},"lane":{"type":["string","null"]},"tier":{"type":["string","null"]},"class":{"enum":["deterministic","gather","implementation","hard",null]},"depends_on":{"type":"array","items":{"type":"string"}},"wave":{"type":["string","null"]},"depends_on_owner_answer":{"type":"boolean"}}}}}},"settings.schema.json":{"$id":"do-it-settings/1","title":"do-it settings (workspace, global or merged)","type":"object","additionalProperties":false,"properties":{"version":{"const":1},"interaction":{"type":"object","additionalProperties":false,"properties":{"owner_pack":{"enum":["auto","native","html","markdown"]},"fallback":{"type":"array","items":{"enum":["native","html","markdown"]}}}},"host":{"type":"object","additionalProperties":false,"properties":{"driver":{"type":"string","minLength":1},"alias":{"type":["string","null"]}}},"isolation":{"type":"object","additionalProperties":false,"properties":{"driver":{"type":"string","minLength":1}}},"state":{"type":"object","additionalProperties":false,"properties":{"backend":{"type":"string","minLength":1},"engine":{"type":"object","additionalProperties":false,"properties":{"blobs":{"enum":["rows","r2","fs-mirror"]}}}}},"secrets":{"type":"object","additionalProperties":false,"properties":{"provider":{"enum":["file","env","aws-secrets-manager","onepassword","1password"]},"ref":{"type":"string"}}},"handoff":{"type":"object","additionalProperties":false,"properties":{"mode":{"enum":["auto","ask"]},"max_per_run":{"type":"integer","minimum":1}}},"review":{"type":"object","additionalProperties":false,"properties":{"max_rounds":{"type":"integer","minimum":1},"cost_cap_tokens":{"type":"integer","minimum":1}}},"tiers":{"type":"object","additionalProperties":false,"properties":{"T1":{"type":"string"},"T2":{"type":"string"},"T3":{"type":"string"}}},"ceilings":{"type":"object","additionalProperties":false,"properties":{"warn_tokens":{"type":"integer","minimum":0},"warn_pct":{"type":"number","minimum":0,"maximum":100},"block_tokens":{"type":"integer","minimum":0},"block_pct":{"type":"number","minimum":0,"maximum":100}}},"stop_gate":{"type":"object","additionalProperties":false,"properties":{"patience":{"type":"integer","minimum":0}}},"observability":{"type":"object","additionalProperties":false,"properties":{"provider":{"type":"string","minLength":1}}}}},"token-meter.schema.json":{"$id":"do-it-token-meter/1","title":"token-meter.jsonl row: the event fields plus usage fields","type":"object","required":["ts","run_id","slice_id","stage","persona","tier","model","host","event","parent_id","verdict","tokens_in","tokens_out","cache_read","cache_write","estimated","source"],"properties":{"ts":{"type":"string","minLength":1},"run_id":{"type":"string","minLength":1},"slice_id":{"type":["string","null"]},"stage":{"type":["string","null"]},"persona":{"type":["string","null"]},"tier":{"type":["string","null"]},"model":{"type":["string","null"]},"host":{"type":["string","null"]},"event":{"type":"string","minLength":1},"parent_id":{"type":["string","null"]},"verdict":{"type":["string","null"]},"tokens_in":{"type":["integer","null"],"minimum":0},"tokens_out":{"type":["integer","null"],"minimum":0},"cache_read":{"type":["integer","null"],"minimum":0},"cache_write":{"type":["integer","null"],"minimum":0},"estimated":{"type":"boolean"},"source":{"enum":["provider","estimate","unknown"]},"extra":{"type":["object","null"]}},"additionalProperties":false}};
+const EMBEDDED_SCHEMAS = {"answers.schema.json":{"$id":"do-it-answers/1","title":"answers.json: the parsed owner reply, deterministic (no timestamps)","type":"object","required":["pack_id","answers","pending","complete"],"properties":{"pack_id":{"type":"string","minLength":1},"complete":{"type":"boolean"},"pending":{"type":"array","items":{"type":"integer","minimum":1}},"answers":{"type":"array","items":{"type":"object","required":["n","answer","source","free_text"],"properties":{"n":{"type":"integer","minimum":1},"answer":{"type":"string"},"source":{"enum":["reply","recommendation","default"]},"free_text":{"type":"boolean"}},"additionalProperties":false}}},"additionalProperties":false},"do-it-state.1.schema.json":{"$id":"do-it-state/1","title":"do-it run state (written only by the spine)","type":"object","required":["schema","run_id","preset","request","status","size","host","stage","slices","gates","handoffs","stop_refusals","review","created_at","updated_at"],"properties":{"schema":{"const":"do-it-state/1"},"run_id":{"type":"string","minLength":1},"preset":{"type":["string","null"]},"request":{"type":"string"},"status":{"enum":["INTAKE","PLANNING","AWAIT_RATIFY","BUILDING","VERIFYING","REVIEWING","FIXING","DEPLOYING","PROVING","CONCLUDING","DONE","NEEDS_HUMAN","PARKED","BLOCKED","FAILED","PARTIAL_FAILURE","ROLLED_BACK","ESCALATED"]},"size":{"type":["integer","string","null"]},"host":{"type":["string","null"]},"stage":{"type":["string","null"]},"slices":{"type":"array","items":{"type":"object","required":["id","status"],"properties":{"id":{"type":"string","minLength":1},"lane":{"type":["string","null"]},"tier":{"type":["string","null"]},"wave":{"type":["string","null"]},"status":{"type":"string"},"attempts":{"type":"integer","minimum":0},"escalations":{"type":"integer","minimum":0}}}},"gates":{"type":"object"},"handoffs":{"type":"integer","minimum":0},"stop_refusals":{"type":"integer","minimum":0},"review":{"type":"object","required":["round","exit"],"properties":{"round":{"type":"integer","minimum":0},"exit":{"type":["string","null"]}}},"created_at":{"type":"string","minLength":1},"updated_at":{"type":"string","minLength":1},"ceiling":{"type":["string","object","null"]},"park":{"type":["object","null"]},"handoff_state":{"type":["string","object","null"]},"run_verdict":{"enum":["DONE_ALL_VERIFIED","DONE_WITH_RESIDUALS","BLOCKED","NEEDS_RESET","USAGE_LIMIT",null]},"deploy":{"type":["object","null"]},"last_journal":{"type":["string","null"]}}},"events.schema.json":{"$id":"do-it-event/1","title":"events.jsonl row (trace fields frozen for v2 exporters)","type":"object","required":["ts","run_id","slice_id","stage","persona","tier","model","host","event","parent_id","verdict"],"properties":{"ts":{"type":"string","minLength":1},"run_id":{"type":"string","minLength":1},"slice_id":{"type":["string","null"]},"stage":{"type":["string","null"]},"persona":{"type":["string","null"]},"tier":{"type":["string","null"]},"model":{"type":["string","null"]},"host":{"type":["string","null"]},"event":{"type":"string","minLength":1},"parent_id":{"type":["string","null"]},"verdict":{"type":["string","null"]},"detail":{"type":["object","string","null"]}},"additionalProperties":false},"finish-line.schema.json":{"$id":"do-it-finish-line/1","title":"finish-line.json: rows that must all become terminal","type":"object","required":["rows"],"properties":{"rows":{"type":"array","items":{"type":"object","required":["id","kind","state"],"properties":{"id":{"type":"string","minLength":1},"kind":{"enum":["wave","package","dod"]},"state":{"enum":["OPEN","DONE","PARKED","BLOCKED"]},"evidence":{"type":["string","null"]},"owner_question":{"type":["string","null"]},"reason":{"type":["string","null"]},"archived_to":{"type":["string","null"]},"run_id":{"type":["string","null"]}}}}}},"it-result.1.schema.json":{"$id":"it-result/1","title":"Result file every stage writes as its last act","type":"object","required":["schema","stage","run_id","status","exit_code"],"properties":{"schema":{"const":"it-result/1"},"stage":{"enum":["prompt-it","plan-it","build-it","review-it","deploy-it","conclude-it","reconcile-it"]},"run_id":{"type":"string","minLength":1},"slice_id":{"type":["string","null"]},"version":{"type":["string","null"]},"head_sha":{"type":["string","null"]},"status":{"enum":["ok","needs_human","blocked","failed","context_reset","usage_limit"]},"exit_code":{"type":"integer","minimum":0,"maximum":3},"verdicts":{"type":"array","items":{"type":"object","required":["row","verdict"],"properties":{"row":{"type":"string","minLength":1},"verdict":{"enum":["VERIFIED","IMPLEMENTED-NOT-VERIFIED","BLOCKED"]},"evidence":{"type":["string","null"]},"real":{"type":"boolean"}}}},"reason":{"type":["string","null"]},"run_verdict":{"enum":["DONE_ALL_VERIFIED","DONE_WITH_RESIDUALS","BLOCKED","NEEDS_RESET","USAGE_LIMIT",null]},"next":{"type":["object","null"]},"pending_human":{"type":["object","null"]},"artifacts":{"type":"array","items":{"type":"object","required":["path"],"properties":{"path":{"type":"string"},"kind":{"type":["string","null"]},"sha256":{"type":["string","null"]}}}},"resume":{"type":["object","null"]},"tokens":{"type":["object","null"]},"rollback":{"type":"boolean"},"legs":{"type":"array","items":{"type":"object","required":["leg","state"],"properties":{"leg":{"type":"string","minLength":1},"state":{"enum":["DEPLOYED_VERIFIED","DEPLOYED_UNVERIFIED","HELD","FAILED","NEEDS_HUMAN","ROLLED_BACK","ROLLBACK_FAILED"]},"evidence":{"type":["string","null"]},"compensate":{"type":["string","object","array","null"]}}}}}},"ledger.schema.json":{"$id":"do-it-ledger/1","title":"ledger.json: latest verdict and evidence per DoD row","type":"object","required":["schema","run_id","rows"],"properties":{"schema":{"const":"do-it-ledger/1"},"run_id":{"type":"string","minLength":1},"rows":{"type":"array","items":{"type":"object","required":["row","verdict","evidence","evidence_sha256","real","recorded_at","updated_at"],"properties":{"row":{"type":"string","minLength":1},"verdict":{"enum":["VERIFIED","IMPLEMENTED-NOT-VERIFIED","BLOCKED"]},"evidence":{"type":["string","null"]},"evidence_path":{"type":["string","null"]},"evidence_sha256":{"type":["string","null"]},"real":{"type":"boolean"},"reason":{"type":["string","null"]},"recorded_at":{"type":"string","minLength":1},"updated_at":{"type":"string","minLength":1}}}}}},"owner-pack.schema.json":{"$id":"do-it-owner-pack/1","title":"owner-pack.json: the single set of questions for the human","type":"object","required":["pack_id","run_id","questions","created_at"],"properties":{"pack_id":{"type":["string","null"]},"run_id":{"type":"string","minLength":1},"created_at":{"type":"string","minLength":1},"questions":{"type":"array","items":{"type":"object","required":["n","kind","text","options","recommendation","default","reversible"],"properties":{"n":{"type":"integer","minimum":1},"kind":{"type":"string","minLength":1},"text":{"type":"string","minLength":1},"options":{"type":"array","items":{"type":"string"}},"recommendation":{"type":["string","null"]},"default":{"type":["string","null"]},"reversible":{"type":"boolean"},"source":{"type":"string","minLength":1},"status":{"enum":["withdrawn"]},"withdrawn_at":{"type":"string"},"withdrawn_reason":{"type":"string"}},"additionalProperties":false}}},"additionalProperties":false},"readiness.schema.json":{"$id":"do-it-readiness/1","title":"plan/READINESS.json: the verdict that lets a build start (G-8)","type":"object","required":["decisions","preflight"],"properties":{"decisions":{"type":["array","object"]},"preflight":{"type":"object","required":["passed"],"properties":{"passed":{"type":"boolean"}}},"credentials":{"type":"array","items":{"type":"string","minLength":1}},"owner_dependent_slices":{"type":"integer","minimum":0},"review_checkpoints":{"type":"object","required":["schema","count","checkpoints"],"properties":{"schema":{"const":"review-checkpoints/1"},"count":{"type":"integer","minimum":0},"level":{"enum":["none","light","standard","heightened","full"]},"checkpoints":{"type":"array","items":{"type":"object","required":["id","kind","evidence"],"properties":{"id":{"type":"string","pattern":"^CP-\\d{2}$"},"kind":{"enum":["phase","wave","adversarial","pre-merge","pre-release"]},"evidence":{"type":"string","minLength":1},"at":{"type":"string"},"review":{"type":"string"},"blocks":{"type":"string"},"gates":{"type":"array","minItems":1,"items":{"enum":["dependents","promotion","merge","release"]}},"covers":{"type":"array","items":{"type":"string","minLength":1}}}}}}},"slices":{"type":"array","items":{"type":"object","required":["id"],"properties":{"id":{"type":"string","minLength":1},"lane":{"type":["string","null"]},"tier":{"type":["string","null"]},"class":{"enum":["deterministic","gather","implementation","hard",null]},"depends_on":{"type":"array","items":{"type":"string"}},"wave":{"type":["string","null"]},"depends_on_owner_answer":{"type":"boolean"}}}}}},"settings.schema.json":{"$id":"do-it-settings/1","title":"do-it settings (workspace, global or merged)","type":"object","additionalProperties":false,"properties":{"version":{"const":1},"interaction":{"type":"object","additionalProperties":false,"properties":{"owner_pack":{"enum":["auto","native","html","markdown"]},"fallback":{"type":"array","items":{"enum":["native","html","markdown"]}}}},"host":{"type":"object","additionalProperties":false,"properties":{"driver":{"type":"string","minLength":1},"alias":{"type":["string","null"]}}},"isolation":{"type":"object","additionalProperties":false,"properties":{"driver":{"type":"string","minLength":1}}},"state":{"type":"object","properties":{"backend":{"type":"string","minLength":1}},"additionalProperties":{"type":"object"}},"secrets":{"type":"object","additionalProperties":false,"properties":{"provider":{"enum":["file","env","aws-secrets-manager","onepassword","1password"]},"ref":{"type":"string"}}},"handoff":{"type":"object","additionalProperties":false,"properties":{"mode":{"enum":["auto","ask"]},"max_per_run":{"type":"integer","minimum":1}}},"review":{"type":"object","additionalProperties":false,"properties":{"max_rounds":{"type":"integer","minimum":1},"cost_cap_tokens":{"type":"integer","minimum":1}}},"tiers":{"type":"object","additionalProperties":false,"properties":{"T1":{"type":"string"},"T2":{"type":"string"},"T3":{"type":"string"}}},"ceilings":{"type":"object","additionalProperties":false,"properties":{"warn_tokens":{"type":"integer","minimum":0},"warn_pct":{"type":"number","minimum":0,"maximum":100},"block_tokens":{"type":"integer","minimum":0},"block_pct":{"type":"number","minimum":0,"maximum":100}}},"stop_gate":{"type":"object","additionalProperties":false,"properties":{"patience":{"type":"integer","minimum":0}}},"observability":{"type":"object","additionalProperties":false,"properties":{"provider":{"type":"string","minLength":1}}}}},"token-meter.schema.json":{"$id":"do-it-token-meter/1","title":"token-meter.jsonl row: the event fields plus usage fields","type":"object","required":["ts","run_id","slice_id","stage","persona","tier","model","host","event","parent_id","verdict","tokens_in","tokens_out","cache_read","cache_write","estimated","source"],"properties":{"ts":{"type":"string","minLength":1},"run_id":{"type":"string","minLength":1},"slice_id":{"type":["string","null"]},"stage":{"type":["string","null"]},"persona":{"type":["string","null"]},"tier":{"type":["string","null"]},"model":{"type":["string","null"]},"host":{"type":["string","null"]},"event":{"type":"string","minLength":1},"parent_id":{"type":["string","null"]},"verdict":{"type":["string","null"]},"tokens_in":{"type":["integer","null"],"minimum":0},"tokens_out":{"type":["integer","null"],"minimum":0},"cache_read":{"type":["integer","null"],"minimum":0},"cache_write":{"type":["integer","null"],"minimum":0},"estimated":{"type":"boolean"},"source":{"enum":["provider","estimate","unknown"]},"extra":{"type":["object","null"]}},"additionalProperties":false}};
 
 // ---- answer.mjs ----
 function answersPath(ctx, runId) { return path.join(runDir(ctx, runId), 'answers.json'); }
@@ -27,7 +27,7 @@ function packGuard(ctx, runId, pack) {
   const rec = readJsonIfExists(renderRecordPath(ctx, runId));
   let shown = rec ? rec.pack_id : null;
   if (rec && rec.file && fs.existsSync(rec.file) && fs.statSync(rec.file).isFile()) {
-    const text = fs.readFileSync(rec.file, 'utf8');
+    const text = readText(rec.file);
     const m = /name="pack-id" content="([0-9a-f]+)"/.exec(text) || /<!-- pack-id: ([0-9a-f]+) -->/.exec(text);
     if (m) shown = m[1];
   }
@@ -54,13 +54,19 @@ function cmdAnswer(ctx, args) {
   const runId = selectRunId(ctx, f);
   const state = loadState(ctx, runId);
   const pack = loadPackChecked(ctx, runId);
-  if (!pack.questions.length) return { outcome: 'NO_QUESTIONS', exit: 0, run_id: runId };
+  if (!pack.questions.some((q) => q.status !== 'withdrawn')) return { outcome: 'NO_QUESTIONS', exit: 0, run_id: runId };
   if (hasReply || f.finalize) return answerApply(ctx, runId, state, pack, f, hasReply);
   return answerRender(ctx, runId, state, pack, f);
 }
 
-function answerApply(ctx, runId, state, pack, f, hasReply) {
-  const packId = packGuard(ctx, runId, pack);
+// Withdrawn questions stay in owner-pack.json (and in its id) but are never asked or counted.
+function activePack(pack) {
+  return { ...pack, questions: pack.questions.filter((q) => q.status !== 'withdrawn') };
+}
+
+function answerApply(ctx, runId, state, fullPack, f, hasReply) {
+  const packId = packGuard(ctx, runId, fullPack);
+  const pack = activePack(fullPack);
   const byN = new Map(pack.questions.map((q) => [q.n, q]));
   const existing = readAnswers(ctx, runId).filter((a) => byN.has(a.n));
   const have = new Map(existing.map((a) => [a.n, a]));
@@ -122,8 +128,8 @@ function answerApply(ctx, runId, state, pack, f, hasReply) {
   if (errors.length) throw fail('ANSWER_INVALID', 1, { errors });
   const text = JSON.stringify(doc, null, 2) + '\n';
   const file = answersPath(ctx, runId);
-  const before = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null;
-  if (before !== text) atomicWrite(file, text);
+  const before = fs.existsSync(file) ? readText(file) : null;
+  if (before !== text) atomicWrite(file, text, { cap: STATE_READ_CAP });
   for (const n of added) {
     const a = have.get(n);
     emit(ctx, runId, state, a.source === 'default' ? 'default_applied' : 'answer_recorded', a.source, { n, answer: a.answer, source: a.source });
@@ -143,7 +149,8 @@ function renderTo(ctx, runId, mode, file, content) {
   return file;
 }
 
-function answerRender(ctx, runId, state, pack, f) {
+function answerRender(ctx, runId, state, fullPack, f) {
+  const pack = activePack(fullPack);
   const settings = loadSettings(ctx, []).values;
   const nativeMax = f['native-max'] === undefined ? 4 : Number(f['native-max']);
   if (!Number.isInteger(nativeMax) || nativeMax < 0) throw fail('USAGE', 1, { message: '--native-max must be a non-negative integer' });
@@ -154,7 +161,7 @@ function answerRender(ctx, runId, state, pack, f) {
   if (requested === 'auto') chain = fallback.slice();
   else chain = [requested, ...fallback.filter((m) => m !== requested && m !== 'native')];
   if (!chain.includes('markdown')) chain.push('markdown');
-  const packId = packIdOf(pack.questions);
+  const packId = packIdOf(fullPack.questions);
   const dir = runDir(ctx, runId);
   for (const mode of chain) {
     if (mode === 'native') {
@@ -237,8 +244,8 @@ function gateCeiling(ctx, args) {
 }
 
 // ---- cli.mjs ----
-const BOOL_FLAGS = new Set(['json', 'migrate', 'install', 'secrets', 'append', 'force', 'finalize', 'help', 'version', 'verbose', 'dry-run']);
-const COMMANDS = ['init', 'start', 'next', 'record', 'gate', 'answer', 'handoff', 'resume', 'park', 'status', 'meter', 'doctor'];
+const BOOL_FLAGS = new Set(['json', 'migrate', 'install', 'secrets', 'append', 'force', 'finalize', 'help', 'version', 'verbose', 'dry-run', 'take-over']);
+const COMMANDS = ['init', 'start', 'next', 'record', 'gate', 'answer', 'handoff', 'resume', 'park', 'pack', 'status', 'meter', 'doctor'];
 
 function parseArgs(argv) {
   const out = { positionals: [], flags: {}, sets: [] };
@@ -296,6 +303,7 @@ function dispatch(ctx, args) {
     case 'handoff': return cmdHandoff(ctx, args);
     case 'resume': return cmdResume(ctx, args);
     case 'park': return cmdPark(ctx, args);
+    case 'pack': return cmdPack(ctx, args);
     default:
       throw fail('USAGE', 1, { message: 'unknown command', commands: COMMANDS });
   }
@@ -316,7 +324,12 @@ function cliMain(argv, opts) {
     if (!args.positionals.length || args.flags.help) {
       result = { outcome: 'USAGE', exit: args.flags.help ? 0 : 1, commands: COMMANDS };
     } else {
-      ctx = makeCtx({ cwd: opts && opts.cwd, env: opts && opts.env });
+      // CP-03 R5-S1-M11: a hook stop names the host's cwd with --cwd and may run the spine from anywhere (the
+      // hook spawns it from the plugin root, which always exists). The cwd's home is found from --cwd; when
+      // that folder is gone or cannot be entered there is no cwd home, and the registry homes still gate.
+      const stopCwd = args.positionals[0] === 'gate' && args.positionals[1] === 'stop' && typeof args.flags.cwd === 'string' && args.flags.cwd
+        ? path.resolve((opts && opts.cwd) || '.', args.flags.cwd) : null;
+      ctx = makeCtx({ cwd: stopCwd || (opts && opts.cwd), env: opts && opts.env });
       redactInit(ctx);
       result = dispatch(ctx, args);
     }
@@ -333,7 +346,11 @@ function cliMain(argv, opts) {
     if (result.root === undefined) result.root = ctx.root;
     if (result.home === undefined) result.home = ctx.home;
   }
-  const stdout = redactText(json ? JSON.stringify(result) + '\n' : renderHuman(result));
+  // CP-03 R4-L4: redact after the outcome is decided. Every free-text field is redacted; the protocol
+  // fields (outcome, exit) are the spine's own words and are never rewritten, so no secret value can turn
+  // a STOP_REFUSED into something a host reads as "allowed".
+  const shown = { ...redactValue(result), outcome: result.outcome, exit };
+  const stdout = json ? JSON.stringify(shown) + '\n' : renderHuman(shown);
   if (ctx) redactFlushEvents(ctx, result);
   return { exit, stdout };
 }
@@ -343,13 +360,14 @@ function cmdStart(ctx, args) {
   if (typeof f.request !== 'string' || !f.request.trim()) throw fail('USAGE', 1, { message: 'start requires --request "<text>"' });
   const settings = loadSettings(ctx, args.sets);
   const runId = newRunId(ctx);
+  const session = resolveSession(ctx, f);
   const size = f.size === undefined ? null : (/^\d+$/.test(String(f.size)) ? Number(f.size) : String(f.size));
   const state = newState(ctx, runId, {
     preset: typeof f.preset === 'string' ? f.preset : null,
     request: f.request,
     size,
     host: typeof f.host === 'string' ? f.host : settings.values.host.driver,
-    owner: { session_id: typeof f.session === 'string' && f.session ? f.session : (ctx.env.DO_IT_SESSION_ID || null), cwd: ctx.cwd },
+    owner: { session_id: session.id, cwd: ctx.cwd },
   });
   const routed = state.preset ? null : route(f.request);
   if (routed && routed.preset) {
@@ -362,7 +380,13 @@ function cmdStart(ctx, args) {
   if (routed && routed.preset) {
     appendEvent(ctx, runId, { event: 'route', stage: state.stage, host: state.host, verdict: routed.preset, detail: { rule: routed.rule, model_call: false } });
   }
-  return { outcome: 'STARTED', exit: 0, run_id: runId, status: state.status, preset: state.preset, root: ctx.root, home: ctx.home };
+  const out = { outcome: 'STARTED', exit: 0, run_id: runId, status: state.status, preset: state.preset, root: ctx.root, home: ctx.home };
+  // the stop gate finds this run from any cwd the session stops in (CP-03 R3-S1-H7)
+  const regErr = registerSessionRun(ctx, session.id, runId);
+  if (regErr) out.session_registry_error = regErr;
+  // an explicit id outranks the host's live one (2.1); say so, since only the recorded id is gated
+  if (session.conflict) out.session_conflict = session.conflict;
+  return out;
 }
 
 function cmdStatus(ctx, args) {
@@ -383,8 +407,10 @@ function cmdStatus(ctx, args) {
     handoffs: state.handoffs,
     stop_refusals: state.stop_refusals,
     run_verdict: state.run_verdict === undefined ? null : state.run_verdict,
-    board: renderBoard(readFinishLine(ctx)),
+    last_take_over: takeOvers(state).pop() || null,
+    board: renderBoard(rowsForRun(readFinishLine(ctx), runId, adoptsUnattributed(state))),
     stale_tmp_removed: removed,
+    unreadable_runs: unreadableRuns(ctx),
   };
 }
 
@@ -398,8 +424,9 @@ function cmdGate(ctx, args) {
     case 'stop': return gateStop(ctx, args);
     case 'route': return gateRoute(ctx, args);
     case 'ceiling': return gateCeiling(ctx, args);
+    case 'escalate': return gateEscalate(ctx, args);
     default:
-      throw fail('USAGE', 1, { message: 'gate needs a subcommand', subcommands: ['verify', 'conclude', 'advance', 'build', 'stop', 'route', 'ceiling'] });
+      throw fail('USAGE', 1, { message: 'gate needs a subcommand', subcommands: ['verify', 'conclude', 'advance', 'build', 'stop', 'route', 'ceiling', 'escalate'] });
   }
 }
 
@@ -410,6 +437,51 @@ function gateAdvance(ctx, args) {
   const state = loadState(ctx, runId);
   const moved = advanceRunStatus(ctx, state, to);
   return { outcome: 'ADVANCED', exit: 0, run_id: runId, from: moved.from, status: moved.to };
+}
+
+// gate escalate --reason "<text>": hand a run that already waits on the owner (NEEDS_HUMAN, with an open
+// owner-pack question) or has FAILED over to the owner for good. It starts only from a status that already
+// does not gate a stop, so it never switches a gate off (CP-03 R3-S1-H6); the reason is kept in the event.
+const ESCALATE_FROM = ['NEEDS_HUMAN', 'FAILED'];
+function gateEscalate(ctx, args) {
+  const f = args.flags;
+  // CP-03 R6-S1-L4: the same reason rule as every status that ends the gate (no placeholder, no invisible text)
+  const reason = cleanReason(f.reason);
+  if (!reason) throw fail('USAGE', 1, { message: 'gate escalate requires --reason "<why the owner must take the run>" (a placeholder or invisible text is no reason)' });
+  const runId = selectRunId(ctx, f);
+  const state = loadState(ctx, runId);
+  if (!ESCALATE_FROM.includes(state.status)) {
+    throw fail('TRANSITION_REFUSED', 1, { from: state.status, to: 'ESCALATED', allowed_from: ESCALATE_FROM, message: 'gate escalate starts only from a run that already waits on the owner or has failed' });
+  }
+  const open = openPackQuestions(ctx, runId);
+  if (state.status === 'NEEDS_HUMAN' && !open.length) {
+    throw fail('TRANSITION_REFUSED', 1, { from: state.status, to: 'ESCALATED', message: 'no open owner-pack question: nothing hands the run to the owner' });
+  }
+  // CP-03 R4-S1-H8: ESCALATED is terminal, so the owner must find it waiting in the pack. From FAILED with no
+  // open question, the reason itself becomes one (and the failure's recorded cause goes with it).
+  let question = null;
+  if (state.status === 'FAILED' && !open.length) {
+    const cause = state.status_reason && state.status_reason.status === 'FAILED' ? state.status_reason.reason : null;
+    const added = packAppend(ctx, runId, [{
+      kind: 'escalation',
+      source: 'gate-escalate',
+      text: 'The run failed and was escalated to you: ' + reason + (cause ? ' (recorded cause: ' + cause + ')' : '') + '. Restart it, or close it with its open rows as residuals?',
+      options: ['restart run', 'close with residuals'],
+      recommendation: 'restart run',
+      default: null,
+      reversible: true,
+    }]);
+    if (!added.length && !openPackQuestions(ctx, runId).length) {
+      throw fail('TRANSITION_REFUSED', 1, { from: state.status, to: 'ESCALATED', message: 'the escalation question could not be written to the owner pack' });
+    }
+    question = added.length ? added[0].n : null;
+  }
+  const from = state.status;
+  state.status = 'ESCALATED';
+  state.status_reason = { status: 'ESCALATED', reason, stage: state.stage, at: ctx.now() };
+  writeState(ctx, state);
+  appendEvent(ctx, runId, { event: 'escalated', stage: state.stage, host: state.host, verdict: 'ESCALATED', detail: { from, reason, ...(question ? { question } : {}) } });
+  return { outcome: 'ESCALATED', exit: 0, run_id: runId, from, status: 'ESCALATED', reason, ...(question ? { pack_question: question } : {}) };
 }
 
 // ---- conclude.mjs ----
@@ -425,9 +497,9 @@ function computeRunVerdict(ledger, fl) {
 function gateConclude(ctx, args) {
   const runId = selectRunId(ctx, args.flags);
   const state = loadState(ctx, runId);
-  const reverified = verifyEvidence(ctx, runId);
+  const reverified = verifyEvidence(ctx, runId, state);
   const ledger = readLedger(ctx, runId);
-  const fl = readFinishLine(ctx);
+  const fl = rowsForRun(readFinishLine(ctx), runId, adoptsUnattributed(state));
   const reasons = [];
 
   const inLedger = new Set(ledger.rows.map((r) => r.row));
@@ -460,9 +532,10 @@ function gateConclude(ctx, args) {
   state.run_verdict = runVerdict;
   state.stage = 'conclude-it';
   writeState(ctx, state);
-  appendEvent(ctx, runId, { event: 'concluded', stage: 'conclude-it', host: state.host, verdict: runVerdict });
+  const taken = takeOvers(state);
+  appendEvent(ctx, runId, { event: 'concluded', stage: 'conclude-it', host: state.host, verdict: runVerdict, ...(taken.length ? { detail: { take_overs: taken } } : {}) });
   const residuals = ledger.rows.filter((r) => r.verdict !== 'VERIFIED').map((r) => r.row);
-  return { outcome: 'CONCLUDED', exit: 0, run_id: runId, status: 'DONE', run_verdict: runVerdict, residuals, reverified: reverified.map((c) => c.row) };
+  return { outcome: 'CONCLUDED', exit: 0, run_id: runId, status: 'DONE', run_verdict: runVerdict, residuals, reverified: reverified.map((c) => c.row), take_overs: taken };
 }
 
 // ---- ctx.mjs ----
@@ -517,7 +590,7 @@ function makeCtx(opts) {
 // ---- doctor.mjs ----
 function cmdDoctor(ctx, args) {
   const f = args.flags;
-  if (f.install) return typeof f.host === 'string' ? cmdInstallCompanions(ctx, args) : cmdInstall(ctx);
+  if (f.install) return typeof f.host === 'string' ? cmdInstallCompanions(ctx, args) : cmdInstall(ctx, args);
   if (f.migrate) return cmdMigrate(ctx);
   if (f.secrets) return doctorSecrets(ctx, args);
   const loaded = loadSettings(ctx, args.sets);
@@ -572,7 +645,7 @@ function appendEvent(ctx, runId, fields) {
   const row = buildEventRow(ctx, runId, fields);
   const errors = validateSchema(loadSchemaFile('events.schema.json'), row);
   if (errors.length) throw fail('EVENT_INVALID', 1, { errors });
-  appendLine(eventsPath(ctx, runId), JSON.stringify(row));
+  appendJsonLine(eventsPath(ctx, runId), row);
   return row;
 }
 
@@ -640,9 +713,33 @@ function finishLinePath(ctx) {
   return path.join(ctx.home, 'finish-line.json');
 }
 
-function readFinishLine(ctx) {
-  const fl = readJsonIfExists(finishLinePath(ctx));
-  if (!fl || !Array.isArray(fl.rows)) return { rows: [] };
+// CP-03 R5-S1-L4: a board that cannot be read is a named refusal (FINISH_LINE_UNREADABLE, with the file and
+// the cause, never its content), not an INTERNAL_ERROR, so `next` after a park tells the agent what to fix.
+function readFinishLine(ctx, opts) {
+  const file = finishLinePath(ctx);
+  let fl;
+  try { fl = readJsonRegular(file, STATE_READ_CAP); } catch (e) {
+    const error = String(e && e.code ? e.code + ': ' + e.message : (e && e.message) || e);
+    throw fail('FINISH_LINE_UNREADABLE', 1, { file, error, message: 'finish-line.json cannot be read (' + error + '); restore it from git or fix it by hand, then run the command again' });
+  }
+  if (!fl || !Array.isArray(fl.rows)) {
+    // CP-03 R5-S1-L2: on the stop path a board that parses but is not { rows: [...] } is as unknown as one
+    // that does not parse (A16 fails closed); a missing board is still an empty one
+    if (opts && opts.strict && fs.existsSync(file)) {
+      const error = 'EBOARD: rows is not a list in ' + file;
+      throw fail('FINISH_LINE_UNREADABLE', 1, { file, error, message: 'finish-line.json cannot be read (' + error + '); restore it from git or fix it by hand, then run the command again' });
+    }
+    return { rows: [] };
+  }
+  // CP-03 R6-S1-L3: on the stop path every row must be a row (an object with a string id and state); a null or
+  // a number in rows is as unknown as a garbled board, never an INTERNAL_ERROR or an empty board
+  if (opts && opts.strict) {
+    const bad = fl.rows.findIndex((r) => !r || typeof r !== 'object' || Array.isArray(r) || typeof r.id !== 'string' || typeof r.state !== 'string');
+    if (bad !== -1) {
+      const error = 'EBOARD: row ' + bad + ' is not an object with a string id and state in ' + file;
+      throw fail('FINISH_LINE_UNREADABLE', 1, { file, error, message: 'finish-line.json cannot be read (' + error + '); restore it from git or fix it by hand, then run the command again' });
+    }
+  }
   return fl;
 }
 
@@ -652,14 +749,51 @@ function writeFinishLine(ctx, fl) {
   atomicWriteJson(finishLinePath(ctx), fl);
 }
 
-function finishLineUpsert(fl, id, patch) {
-  let row = fl.rows.find((r) => r.id === id);
+// A row's identity is (run_id, id): row ids are namespaced per run, so two runs of one preset (or two
+// plans with the same slice ids) each get their own rows (CP-03 S1-H1). A row written before run_id
+// existed has none. Only a legacy run (state with no owner object, written by 1.0.x) may adopt such a
+// row; a 1.1 run never does, or a 1.0.x board's rows would stand in for the run's own and it would
+// seed nothing (CP-03 R2-S1-H3). `adopt` is false unless the caller passes adoptsUnattributed(state).
+// A legacy run that `resume` later bound to a session keeps adopting (owner.adopted_legacy, CP-03 R3-L7).
+function adoptsUnattributed(state) {
+  if (!state) return false;
+  const o = state.owner;
+  return !(o && typeof o === 'object') || o.adopted_legacy === true;
+}
+
+function findRow(fl, id, runId, adopt) {
+  const rid = runId || null;
+  if (rid) {
+    const own = fl.rows.find((r) => r.id === id && r.run_id === rid);
+    if (own) return own;
+    if (!adopt) return null;
+  }
+  return fl.rows.find((r) => r.id === id && !r.run_id) || null;
+}
+
+function hasRow(fl, id, runId, adopt) {
+  return !!findRow(fl, id, runId, adopt);
+}
+
+function finishLineUpsert(fl, id, patch, runId, adopt) {
+  let row = findRow(fl, id, runId, adopt);
   if (!row) {
     row = { id, kind: 'dod', state: 'OPEN', evidence: null, owner_question: null, reason: null, archived_to: null };
+    if (runId) row.run_id = runId;
     fl.rows.push(row);
+  } else if (runId && !row.run_id) {
+    row.run_id = runId;
   }
   Object.assign(row, patch);
   return row;
+}
+
+// The rows one run answers for: its own, plus unattributed rows of an older board only when the run may
+// adopt them. Every caller passes adoptsUnattributed(state), the same rule seeding uses: next, status,
+// handoff, conclude and both stop paths (CP-03 R3-S1-M6). A 1.1 run therefore never answers for, and is
+// never held by, a 1.0.x row that `record` would refuse to let it close; a legacy run still counts them.
+function rowsForRun(fl, runId, includeUnattributed) {
+  return { rows: fl.rows.filter((r) => r.run_id === runId || (includeUnattributed && !r.run_id)) };
 }
 
 function nonEmpty(v) {
@@ -681,12 +815,21 @@ function rowClosed(row) {
 // A package row (a slice) closes by itself once every one of its case rows
 // (`T-<slice>-<n>`) is terminal: DONE when all are DONE, else BLOCKED naming the
 // ones that are not. A package with no case rows, or with one still open, is left alone.
-function autoClosePackages(fl) {
+// Case rows count only for the package of the same run (rows are namespaced per run). An unattributed
+// row (an older board) pairs only with an unattributed package, or with the legacy run named by
+// `legacyRunId` (the one run allowed to adopt it): a 1.1 package never closes on a 1.0.x case row.
+function sameRun(pkg, c, legacyRunId) {
+  if ((pkg.run_id || null) === (c.run_id || null)) return true;
+  if (!legacyRunId) return false;
+  return (!c.run_id && pkg.run_id === legacyRunId) || (!pkg.run_id && c.run_id === legacyRunId);
+}
+
+function autoClosePackages(fl, legacyRunId) {
   const closed = [];
   for (const pkg of fl.rows) {
     if (pkg.kind !== 'package' || pkg.state !== 'OPEN' || pkg.id.includes(':')) continue;
     const re = new RegExp('^T-' + pkg.id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '-\\d');
-    const cases = fl.rows.filter((r) => r.kind === 'dod' && re.test(r.id));
+    const cases = fl.rows.filter((r) => r.kind === 'dod' && sameRun(pkg, r, legacyRunId) && re.test(r.id));
     if (!cases.length || !cases.every(rowTerminal)) continue;
     const notDone = cases.filter((r) => r.state !== 'DONE');
     if (notDone.length) {
@@ -748,13 +891,18 @@ const TMP_PATTERN = /\.tmp-\d+-[0-9a-f]{8}$/;
 
 // temp file in the same directory, fsync, rename. opts.faultAfterTmp is the
 // DO_IT_FAULT=after_tmp test hook: stop after the temp file is durable.
+// CP-03 R7-S1-M14: opts.cap refuses, before anything touches disk, a write the spine could not read back
+// through its own capped reader. The previous file stays intact and the error is STATE_TOO_LARGE.
 function atomicWrite(file, data, opts) {
+  const buf = typeof data === 'string' ? Buffer.from(redactText(data), 'utf8') : data;
+  assertWithinCap(file, buf.length, opts && opts.cap);
   const dir = path.dirname(file);
   fs.mkdirSync(dir, { recursive: true });
   const tmp = path.join(dir, '.' + path.basename(file) + '.tmp-' + process.pid + '-' + crypto.randomBytes(4).toString('hex'));
   const fd = fs.openSync(tmp, 'w');
   try {
-    fs.writeSync(fd, typeof data === 'string' ? redactText(data) : data);
+    let off = 0;
+    while (off < buf.length) off += fs.writeSync(fd, buf, off, buf.length - off);
     fs.fsyncSync(fd);
   } finally {
     fs.closeSync(fd);
@@ -769,19 +917,124 @@ function atomicWrite(file, data, opts) {
   }
 }
 
+// JSON is redacted value by value (keys untouched, R5-S1-L3), then written as bytes so it is not redacted again.
+function jsonBytes(value) {
+  return Buffer.from(JSON.stringify(redactJsonValues(value), null, 2) + '\n', 'utf8');
+}
+
+// Every JSON file the spine writes is read back through readJsonIfExists/readJsonRegular, capped at
+// STATE_READ_CAP unless the caller names a tighter cap (the session registry: REGISTRY_READ_CAP).
 function atomicWriteJson(file, value, opts) {
-  atomicWrite(file, JSON.stringify(value, null, 2) + '\n', opts);
+  atomicWrite(file, jsonBytes(value), { cap: STATE_READ_CAP, ...(opts || {}) });
+}
+
+function assertWithinCap(file, size, cap) {
+  if (cap && size > cap) {
+    throw fail('STATE_TOO_LARGE', 1, { file, bytes: size, cap, message: path.basename(file) + ' would be ' + size + ' bytes, above the ' + cap + '-byte read cap; nothing was written' });
+  }
+}
+
+// CP-03 R6-S1-M13: every append goes through appendRegular. Opening a FIFO for writing blocks until a reader
+// appears, which no timer inside the spine can break; O_NONBLOCK makes a reader-less FIFO fail with ENXIO at
+// once, and anything that is not a regular file (FIFO, device, socket, directory, symlink) is refused.
+function appendRegular(file, text) {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  let st = null;
+  try { st = fs.lstatSync(file); } catch (e) { if (e.code !== 'ENOENT') throw e; }
+  if (st && !st.isFile()) throw codedError('ENOTREG', 'not a regular file (' + fileKind(st) + '): ' + file);
+  const c = fs.constants;
+  const flags = c.O_WRONLY | c.O_APPEND | c.O_CREAT | (c.O_NONBLOCK || 0) | (c.O_NOFOLLOW || 0);
+  const fd = fs.openSync(file, flags, 0o666);
+  try {
+    if (!fs.fstatSync(fd).isFile()) throw codedError('ENOTREG', 'not a regular file: ' + file);
+    const buf = Buffer.from(text, 'utf8');
+    let off = 0;
+    while (off < buf.length) off += fs.writeSync(fd, buf, off, buf.length - off);
+  } finally {
+    fs.closeSync(fd);
+  }
 }
 
 function appendLine(file, line) {
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.appendFileSync(file, redactText(line) + '\n');
+  appendRegular(file, redactText(line) + '\n');
 }
 
+function appendJsonLine(file, value) {
+  appendRegular(file, JSON.stringify(redactJsonValues(value)) + '\n');
+}
+
+// CP-03 R5-S1-M10: a FIFO, a device or an endless file must never hang the spine. readRegularFile reads only a
+// regular file, at most `cap` bytes. opts.noFollow refuses a symlink outright (lstat; the session registry
+// never follows one); otherwise a symlink is followed but must still end at a regular file.
+// Errors carry a code (ENOENT, ENOTREG, EFBIG, ...) and never quote the file's content.
+const REGISTRY_READ_CAP = 64 * 1024;
+const STATE_READ_CAP = 16 * 1024 * 1024;
+// CP-03 R8-S1-M15: what the spine ACCEPTS into a state (or board) it seeds leaves 1 MiB of headroom under the
+// read cap, so the run's own later bookkeeping (stop refusals, signatures, statuses) never meets the cap.
+// Sizes are measured as written: jsonBytes, after redaction.
+const STATE_HEADROOM = 1024 * 1024;
+const STATE_ACCEPT_CAP = STATE_READ_CAP - STATE_HEADROOM;
+// files the spine hashes or copies whole (results, evidence, migrated files) and append-only logs
+const BULK_READ_CAP = 256 * 1024 * 1024;
+
+function fileKind(st) {
+  if (st.isSymbolicLink()) return 'symlink';
+  if (st.isFIFO()) return 'fifo';
+  if (st.isDirectory()) return 'directory';
+  if (st.isSocket()) return 'socket';
+  if (st.isCharacterDevice() || st.isBlockDevice()) return 'device';
+  return 'other';
+}
+
+function codedError(code, message) {
+  const e = new Error(message);
+  e.code = code;
+  return e;
+}
+
+function readRegularFile(file, cap, opts) {
+  const st = opts && opts.noFollow ? fs.lstatSync(file) : fs.statSync(file);
+  if (!st.isFile()) throw codedError('ENOTREG', 'not a regular file (' + fileKind(st) + '): ' + file);
+  if (st.size > cap) throw codedError('EFBIG', 'larger than ' + cap + ' bytes: ' + file);
+  const flags = fs.constants.O_RDONLY | (fs.constants.O_NONBLOCK || 0) | (opts && opts.noFollow ? (fs.constants.O_NOFOLLOW || 0) : 0);
+  const fd = fs.openSync(file, flags);
+  try {
+    if (!fs.fstatSync(fd).isFile()) throw codedError('ENOTREG', 'not a regular file: ' + file);
+    const buf = Buffer.alloc(Math.min(cap, Math.max(st.size, 0)) + 1);
+    let n = 0;
+    for (;;) {
+      const got = fs.readSync(fd, buf, n, buf.length - n, null);
+      if (!got) break;
+      n += got;
+      if (n > cap) throw codedError('EFBIG', 'larger than ' + cap + ' bytes: ' + file);
+      if (n === buf.length) break;
+    }
+    return buf.subarray(0, n);
+  } finally {
+    fs.closeSync(fd);
+  }
+}
+
+// JSON from a regular file; a parse error is reported without the file's content.
+function readJsonRegular(file, cap, opts) {
+  let bytes;
+  try { bytes = readRegularFile(file, cap, opts); } catch (e) {
+    if (e.code === 'ENOENT') return null;
+    throw e;
+  }
+  try { return JSON.parse(bytes.toString('utf8')); } catch { throw codedError('EJSON', 'not valid JSON: ' + file); }
+}
+
+// CP-03 R6-S1-M13: the spine reads no file but through readRegularFile (a source lint holds this).
+function readText(file, cap) {
+  return readRegularFile(file, cap || STATE_READ_CAP).toString('utf8');
+}
+
+// null when absent; a parse error is a SyntaxError as before; a FIFO or a device is ENOTREG, never a hang.
 function readJsonIfExists(file) {
   let text;
   try {
-    text = fs.readFileSync(file, 'utf8');
+    text = readText(file, STATE_READ_CAP);
   } catch (e) {
     if (e.code === 'ENOENT') return null;
     throw e;
@@ -839,7 +1092,7 @@ function resumeCommand(runId) {
 
 function lastEvents(ctx, runId, n) {
   let lines = [];
-  try { lines = fs.readFileSync(eventsPath(ctx, runId), 'utf8').split('\n').filter(Boolean); } catch { /* none yet */ }
+  try { lines = readText(eventsPath(ctx, runId), BULK_READ_CAP).split('\n').filter(Boolean); } catch { /* none yet */ }
   return lines.slice(-n).map((l) => (l.length > HANDOFF_EVENT_CLIP ? l.slice(0, HANDOFF_EVENT_CLIP) : l));
 }
 
@@ -898,7 +1151,7 @@ function cmdHandoff(ctx, args) {
 
   const { files, missing } = collectStateFiles(ctx, runId, state);
   if (missing.length) throw fail('HANDOFF_PATH_INVALID', 1, { run_id: runId, missing });
-  const board = renderBoard(readFinishLine(ctx));
+  const board = renderBoard(rowsForRun(readFinishLine(ctx), runId, adoptsUnattributed(state)));
   const events = lastEvents(ctx, runId, HANDOFF_EVENTS);
   let text = renderHandoff(ctx, state, files, board, events);
   if (text.length > HANDOFF_MAX_CHARS) text = renderHandoff(ctx, state, files, board.slice(0, 1200), events.map((e) => e.slice(0, 200))).slice(0, HANDOFF_MAX_CHARS);
@@ -932,7 +1185,7 @@ function sha256Bytes(buf) {
 }
 
 function sha256File(file) {
-  return sha256Bytes(fs.readFileSync(file));
+  return sha256Bytes(readRegularFile(file, BULK_READ_CAP));
 }
 
 function canonicalJson(value) {
@@ -956,7 +1209,7 @@ const GITIGNORE_LINES = ['.do-it/runs/', '.secrets/'];
 
 function writeIfDifferent(file, text) {
   let current = null;
-  try { current = fs.readFileSync(file, 'utf8'); } catch { /* absent */ }
+  try { current = readText(file); } catch { /* absent */ }
   if (current === text) return false;
   atomicWrite(file, text);
   return true;
@@ -972,7 +1225,7 @@ function cmdInit(ctx, args) {
   let settings;
   let existed = fs.existsSync(settingsFile);
   if (existed) {
-    try { settings = JSON.parse(fs.readFileSync(settingsFile, 'utf8')); } catch (e) {
+    try { settings = JSON.parse(readText(settingsFile)); } catch (e) {
       throw fail('SETTINGS_INVALID', 1, { errors: [{ file: settingsFile, pointer: '', message: 'JSON parse error: ' + e.message }] });
     }
   } else {
@@ -995,7 +1248,7 @@ function cmdInit(ctx, args) {
 
   const ignoreFile = path.join(ctx.repo, '.gitignore');
   let ignoreText = '';
-  try { ignoreText = fs.readFileSync(ignoreFile, 'utf8'); } catch { /* absent */ }
+  try { ignoreText = readText(ignoreFile); } catch { /* absent */ }
   const present = new Set(ignoreText.split(/\r?\n/).map((l) => l.trim()));
   const missing = GITIGNORE_LINES.filter((l) => !present.has(l));
   if (missing.length) {
@@ -1020,13 +1273,15 @@ function installSource() {
   return path.join(path.dirname(self), '..', 'do-it.mjs');
 }
 
-function cmdInstall(ctx) {
+function cmdInstall(ctx, args = { flags: {} }) {
   const source = installSource();
   if (!fs.existsSync(source)) throw fail('INSTALL_NO_BUILD', 1, { message: 'run node core/spine/build.mjs first', source });
   const binDir = ctx.env.DO_IT_BIN_DIR ? path.resolve(ctx.cwd, ctx.env.DO_IT_BIN_DIR) : path.join(ctx.userHome, '.do-it', 'bin');
   const dest = path.join(binDir, 'do-it');
+  // --dry-run never touches disk: it reports the plan only (CP-04 part A, D1).
+  if (args && args.flags && args.flags['dry-run']) return { outcome: 'INSTALL_PLANNED', exit: 0, dry_run: true, bin_dir: binDir, path: dest, version: DO_IT_VERSION, source };
   fs.mkdirSync(binDir, { recursive: true });
-  atomicWrite(dest, fs.readFileSync(source));
+  atomicWrite(dest, readRegularFile(source, BULK_READ_CAP));
   fs.chmodSync(dest, 0o755);
   let printed = '';
   try {
@@ -1044,7 +1299,7 @@ function loadCompanions(ctx) {
     path.join(ctx.root, 'core', 'companions.json'),
   ];
   for (const file of candidates) {
-    if (fs.existsSync(file)) return JSON.parse(fs.readFileSync(file, 'utf8'));
+    if (fs.existsSync(file)) return JSON.parse(readText(file));
   }
   throw fail('INSTALL_NO_COMPANIONS', 1, { message: 'core/companions.json not found', tried: candidates });
 }
@@ -1058,13 +1313,17 @@ function cmdInstallCompanions(ctx, args) {
   const required = loadCompanions(ctx).companions.filter((c) => c.required);
   const stateFile = path.join(ctx.home, 'companions-installed.json');
   let done = {};
-  try { done = JSON.parse(fs.readFileSync(stateFile, 'utf8')); } catch { done = {}; }
+  try { done = JSON.parse(readText(stateFile)); } catch { done = {}; }
   const have = new Set(done[host] || []);
   const cmdOf = (c) => ['skills', 'add', c.repo, '-a', host];
   const todo = required.filter((c) => !have.has(c.name));
   const finished = required.filter((c) => have.has(c.name)).map((c) => c.name);
   if (dry) {
-    return { outcome: 'INSTALL_DRY_RUN', exit: 0, host, lines: todo.map((c) => 'npx ' + cmdOf(c).join(' ')) };
+    // Optional companions are listed (never installed by this command) so the owner can opt in by hand.
+    const optional = loadCompanions(ctx).companions.filter((c) => !c.required && c.status === 'published');
+    const lines = todo.map((c) => 'npx ' + cmdOf(c).join(' '));
+    for (const c of optional) lines.push('optional: npx ' + cmdOf(c).join(' ') + '  # ' + c.name + ' ' + c.version);
+    return { outcome: 'INSTALL_DRY_RUN', exit: 0, host, lines };
   }
   for (const c of todo) {
     const r = cp.spawnSync('npx', cmdOf(c), { encoding: 'utf8', env: ctx.env, stdio: ['ignore', 'pipe', 'pipe'] });
@@ -1325,7 +1584,7 @@ function cmdMeter(ctx, args) {
   if (input.extra !== undefined) row.extra = input.extra;
   const errors = validateSchema(loadSchemaFile('token-meter.schema.json'), row);
   if (errors.length) throw fail('METER_ROW_INVALID', 1, { errors });
-  appendLine(meterPath(ctx, runId), JSON.stringify(row));
+  appendJsonLine(meterPath(ctx, runId), row);
   return { outcome: 'METER_APPENDED', exit: 0, run_id: runId, row };
 }
 
@@ -1358,7 +1617,7 @@ function cmdMigrate(ctx) {
   }
   const manifestFile = path.join(ctx.home, 'migration.json');
   let manifest = { schema: 'do-it-migration/1', files: [] };
-  try { manifest = JSON.parse(fs.readFileSync(manifestFile, 'utf8')); } catch { /* first migration */ }
+  try { manifest = JSON.parse(readText(manifestFile)); } catch { /* first migration */ }
   const known = new Map(manifest.files.map((x) => [x.source, x]));
   const copied = [];
   for (const m of MIGRATION_MAP) {
@@ -1367,13 +1626,12 @@ function cmdMigrate(ctx) {
     for (const file of migrateWalk(base, '', [])) {
       const source = m.legacy + '/' + file.rel;
       const dest = '.do-it/' + m.dest + '/' + file.rel;
-      const bytes = fs.readFileSync(file.abs);
+      const bytes = readRegularFile(file.abs, BULK_READ_CAP);
       const sha = sha256Bytes(bytes);
       const prior = known.get(source);
       const destAbs = path.join(ctx.home, m.dest, file.rel);
       if (prior && prior.sha256 === sha && fs.existsSync(destAbs) && sha256File(destAbs) === sha) continue;
-      fs.mkdirSync(path.dirname(destAbs), { recursive: true });
-      fs.writeFileSync(destAbs, bytes);
+      atomicWrite(destAbs, bytes);
       const row = { source, dest, sha256: sha };
       known.set(source, row);
       copied.push(row);
@@ -1425,16 +1683,18 @@ function nextSlice(ctx, state, runId) {
 function nextWave(ctx, state, runId, fl) {
   const pipe = loadPipeline(ctx, state.preset);
   if (!pipe || !pipe.steps.length) return { pipe: null };
+  // a 1.1 run seeds and reads only its own rows; a 1.0.x board's rows with the same step ids are not its own
+  const adopt = adoptsUnattributed(state);
   let seeded = false;
   for (const st of pipe.steps) {
-    if (!fl.rows.some((r) => r.id === st.id)) { finishLineUpsert(fl, st.id, { kind: 'wave' }); seeded = true; }
+    if (!hasRow(fl, st.id, runId, adopt)) { finishLineUpsert(fl, st.id, { kind: 'wave' }, runId, adopt); seeded = true; }
   }
   if (seeded) writeFinishLine(ctx, fl);
-  const rowOf = (id) => fl.rows.find((r) => r.id === id);
+  const rowOf = (id) => findRow(fl, id, runId, adopt);
   for (const st of pipe.steps) {
     const row = rowOf(st.id);
     if (row.state !== 'OPEN') continue;
-    if (!st.needs.every((n) => rowClosed(rowOf(n)))) continue;
+    if (!st.needs.every((n) => { const r = rowOf(n); return !!r && rowClosed(r); })) continue;
     const type = st.type || 'persona';
     const klass = st.class || STEP_CLASS[type] || 'implementation';
     return {
@@ -1470,7 +1730,7 @@ function cmdNext(ctx, args) {
   if (state.status === 'PARKED') return { outcome: 'NEXT', exit: 3, run_id: runId, action: 'NONE', reason: 'parked' };
   if (state.status === 'NEEDS_HUMAN') return { outcome: 'NEXT', exit: 2, run_id: runId, action: 'NONE', reason: 'needs_human' };
   if (state.status === 'BLOCKED') {
-    const fl = readFinishLine(ctx);
+    const fl = rowsForRun(readFinishLine(ctx), runId, adoptsUnattributed(state));
     return { outcome: 'BLOCKED', exit: 3, run_id: runId, action: 'NONE', reason: 'blocked', board: renderBoard(fl) };
   }
 
@@ -1485,7 +1745,11 @@ function cmdNext(ctx, args) {
     };
   }
 
-  const fl = readFinishLine(ctx);
+  const board = readFinishLine(ctx);
+  // this run's rows only: another run's rows never decide it, and an unattributed row of an older board counts
+  // only for a legacy run, the one run that may adopt it (CP-03 R3-S1-M6, the same rule as seeding)
+  const adopt = adoptsUnattributed(state);
+  const fl = rowsForRun(board, runId, adopt);
   if (state.slices.length) {
     const out = nextSlice(ctx, state, runId);
     if (out) return out;
@@ -1496,8 +1760,9 @@ function cmdNext(ctx, args) {
     return none(runId, 'awaiting_verification', { board: renderBoard(fl) });
   }
 
-  const wave = nextWave(ctx, state, runId, fl);
+  const wave = nextWave(ctx, state, runId, board);
   if (wave.out) return wave.out;
+  fl.rows = rowsForRun(board, runId, adopt).rows;
   if (wave.pipe) {
     if (!openRows(fl).length) return { outcome: 'FINISH_LINE_REACHED', exit: 0, run_id: runId, action: 'NONE', board: renderBoard(fl) };
     return none(runId, 'waiting', { board: renderBoard(fl) });
@@ -1529,13 +1794,35 @@ function packIdOf(questions) {
 }
 
 // Stages only append questions; numbering is stable and duplicates by text are ignored (ruling D7).
-function packAppend(ctx, runId, questions) {
+// CP-03 R9-S1-M16: the pack is stored redacted, so a text is compared both as given and as it is stored.
+// opts.stopGate (the gate's own park question only): nothing is added while the run already has an open
+// question the gate wrote (stopGateMarks), so a park that is retried never asks the owner twice.
+function packAppend(ctx, runId, questions, opts) {
   const file = packPath(ctx, runId);
   const pack = readJsonIfExists(file) || { pack_id: null, run_id: runId, questions: [], created_at: ctx.now() };
   const added = [];
+  // CP-03 R10-S1-M17: the gate's own question is deduped only against OPEN questions (not withdrawn, not
+  // answered): once the owner answered a park, the next park with the same rows asks again.
+  const stop = !!(opts && opts.stopGate);
+  const open = stop ? openOf(ctx, runId, pack, opts.onAnswersError) : null;
+  const held = stop ? openStopGateQuestion(ctx, runId, pack, open) : null;
+  if (held) {
+    // CP-03 R10 L-d: the park reuses the gate's open question; its text is brought up to the current rows.
+    // Only a row that is still the gate's own sentence is rewritten (an event can be forged, a text cannot).
+    const q = questions[0];
+    const row = pack.questions.find((x) => x.n === held.n);
+    if (row && q && typeof q.text === 'string' && STOP_GATE_TEXT.test(q.text) && STOP_GATE_TEXT.test(row.text) && row.text !== q.text && row.text !== redactJsonValues(q.text)) {
+      row.text = q.text;
+      pack.pack_id = packIdOf(pack.questions);
+      atomicWriteJson(file, pack);
+    }
+    return added;
+  }
   for (const q of questions) {
     if (!q || typeof q.text !== 'string' || !q.text.trim()) continue;
-    if (pack.questions.some((x) => x.text === q.text)) continue;
+    const stored = redactJsonValues(q.text);
+    const same = (x) => x.text === q.text || x.text === stored;
+    if (stop ? open.some(same) : pack.questions.some((x) => same(x) && x.status !== 'withdrawn')) continue;
     const n = pack.questions.reduce((m, x) => Math.max(m, x.n), 0) + 1;
     const row = {
       n,
@@ -1546,6 +1833,7 @@ function packAppend(ctx, runId, questions) {
       default: q.default === undefined ? null : q.default,
       reversible: q.reversible === undefined ? true : !!q.reversible,
     };
+    if (typeof q.source === 'string' && q.source) row.source = q.source;
     pack.questions.push(row);
     added.push(row);
   }
@@ -1554,6 +1842,125 @@ function packAppend(ctx, runId, questions) {
     atomicWriteJson(file, pack);
   }
   return added;
+}
+
+// Questions still waiting on the owner: not withdrawn and not answered in answers.json.
+// onAnswersError (the stop gate only, CP-03 R10 L-g): an answers.json that cannot be read counts as no
+// answers and the error is handed to it, so a garbled file never blocks a park. Without it the read throws.
+function openPackQuestions(ctx, runId, onAnswersError) {
+  return openOf(ctx, runId, readJsonIfExists(packPath(ctx, runId)), onAnswersError);
+}
+
+function openOf(ctx, runId, pack, onAnswersError) {
+  if (!pack || !Array.isArray(pack.questions)) return [];
+  let doc = null;
+  try { doc = readJsonIfExists(path.join(ctx.home, 'runs', runId, 'answers.json')); } catch (e) {
+    if (typeof onAnswersError !== 'function') throw e;
+    onAnswersError(e);
+  }
+  const answered = new Set((doc && Array.isArray(doc.answers) ? doc.answers : []).map((a) => a.n));
+  return pack.questions.filter((q) => q.status !== 'withdrawn' && !answered.has(q.n));
+}
+
+// The sentence the stop gate writes when it parks a run at patience. `record` refuses a result question that
+// starts with it (STOP_GATE_TEXT_RESERVED), so only the gate writes it.
+const STOP_GATE_TEXT = /^The run stopped with \d+ open row\(s\) after \d+ refusals: /;
+const STOP_GATE_IDS = /^The run stopped with \d+ open row\(s\) after \d+ refusals: (.*)\. Resume the run or close it with the open rows as residuals\?$/;
+
+// CP-03 R5-S1-H10: which questions did the stop gate itself write? Only the gate writes `stop_parked` events:
+// since 1.1 the event names the question's number; a 1.0.x (or pre-release 1.1) event names the open rows,
+// which the question's text repeats. A `source` field proves nothing: a result file could set one.
+function stopGateMarks(ctx, runId) {
+  const numbers = new Set();
+  const openLists = new Set();
+  let lines = [];
+  try { lines = readText(eventsPath(ctx, runId), BULK_READ_CAP).split('\n'); } catch { /* no events */ }
+  for (const line of lines) {
+    if (!line.includes('"stop_parked"')) continue;
+    let ev;
+    try { ev = JSON.parse(line); } catch { continue; }
+    if (!ev || ev.event !== 'stop_parked' || !ev.detail || typeof ev.detail !== 'object') continue;
+    if (Number.isInteger(ev.detail.question)) numbers.add(ev.detail.question);
+    else if (Array.isArray(ev.detail.open)) openLists.add(ev.detail.open.join(', '));
+  }
+  return { numbers, openLists };
+}
+
+// The run's open (not withdrawn, not answered) question that the stop gate itself wrote, or null.
+// `open` (optional): the run's open questions, already read; `onAnswersError` as in openPackQuestions.
+function openStopGateQuestion(ctx, runId, pack, open, onAnswersError) {
+  const marks = stopGateMarks(ctx, runId);
+  if (!marks.numbers.size && !marks.openLists.size) return null;
+  if (!open) open = pack ? openOf(ctx, runId, pack, onAnswersError) : openPackQuestions(ctx, runId, onAnswersError);
+  return open.find((q) => isStopGateQuestion(q, marks)) || null;
+}
+
+function isStopGateQuestion(q, marks) {
+  if (!q || !marks) return false;
+  if (marks.numbers.has(q.n)) return true;
+  if (q.kind !== 'default' || typeof q.text !== 'string') return false;
+  const m = STOP_GATE_IDS.exec(q.text);
+  return !!m && marks.openLists.has(m[1]);
+}
+
+const WITHDRAW_REASON = 'withdrawn: the stop gate raised this for a run it should not have gated';
+
+// pack withdraw --by stop-gate [--run <id>] [--reason <text>] (D10): unanswered stop-gate questions
+// become `withdrawn` and stay in the pack with the date and the reason. Answered questions and stage
+// questions are untouched. Without --run every run's pack is considered. A second call changes nothing.
+function cmdPack(ctx, args) {
+  const f = args.flags;
+  if (args.positionals[1] !== 'withdraw') throw fail('USAGE', 1, { message: 'pack needs a subcommand', subcommands: ['withdraw'] });
+  if (f.by !== 'stop-gate') throw fail('USAGE', 1, { message: 'pack withdraw requires --by stop-gate' });
+  let ids;
+  if (f.run) {
+    if (!fs.existsSync(packPath(ctx, f.run)) && !fs.existsSync(path.join(ctx.home, 'runs', f.run))) throw fail('RUN_NOT_FOUND', 1, { run_id: f.run });
+    ids = [f.run];
+  } else {
+    ids = listRunIds(ctx);
+  }
+  const reason = typeof f.reason === 'string' && f.reason ? f.reason : WITHDRAW_REASON;
+  const withdrawn = [];
+  const kept = [];
+  const refused = [];
+  for (const id of ids) {
+    const file = packPath(ctx, id);
+    const pack = readJsonIfExists(file);
+    if (!pack || !Array.isArray(pack.questions)) continue;
+    const answersDoc = readJsonIfExists(path.join(ctx.home, 'runs', id, 'answers.json'));
+    const answered = new Set((answersDoc && Array.isArray(answersDoc.answers) ? answersDoc.answers : []).map((a) => a.n));
+    const marks = stopGateMarks(ctx, id);
+    const now = ctx.now();
+    const picks = [];
+    for (const q of pack.questions) {
+      if (q.status === 'withdrawn' || !isStopGateQuestion(q, marks)) continue;
+      if (answered.has(q.n)) { kept.push({ run_id: id, n: q.n }); continue; }
+      picks.push(q);
+    }
+    if (!picks.length) continue;
+    let st = null;
+    try { st = loadState(ctx, id); } catch { /* the event still records the withdrawal */ }
+    // CP-03 R5-S1-H10: a NEEDS_HUMAN run waits on its open questions. Withdrawing the last one would leave it
+    // waiting on nobody, outside the stop gate for good, so the withdrawal is refused for that run.
+    const left = pack.questions.filter((q) => q.status !== 'withdrawn' && !answered.has(q.n) && !picks.includes(q));
+    if (st && st.status === 'NEEDS_HUMAN' && !left.length) {
+      refused.push({ run_id: id, questions: picks.map((q) => q.n), reason: 'run ' + id + ' is NEEDS_HUMAN and these are its last open owner-pack questions; answer them (do-it answer) instead' });
+      continue;
+    }
+    for (const q of picks) {
+      q.status = 'withdrawn';
+      q.withdrawn_at = now;
+      q.withdrawn_reason = reason;
+      withdrawn.push({ run_id: id, n: q.n });
+    }
+    pack.pack_id = packIdOf(pack.questions);
+    atomicWriteJson(file, pack);
+    appendEvent(ctx, id, { event: 'pack_withdrawn', stage: (st && st.stage) || null, host: (st && st.host) || null, verdict: 'WITHDRAWN', detail: { by: 'stop-gate', count: picks.length } });
+  }
+  if (refused.length && (f.run || !withdrawn.length)) {
+    throw fail('PACK_WITHDRAW_REFUSED', 1, { by: 'stop-gate', refused, withdrawn, message: refused.map((r) => r.reason).join('; ') });
+  }
+  return { outcome: withdrawn.length ? 'PACK_WITHDRAWN' : 'PACK_NOOP', exit: 0, by: 'stop-gate', withdrawn, kept_answered: kept, ...(refused.length ? { refused } : {}) };
 }
 
 // ---- park.mjs ----
@@ -1622,7 +2029,7 @@ function loadPipeline(ctx, preset) {
   if (!preset) return null;
   const file = pipelineFile(ctx, preset);
   if (!file) return null;
-  const doc = parseYamlLite(fs.readFileSync(file, 'utf8'));
+  const doc = parseYamlLite(readText(file));
   const raw = doc && Array.isArray(doc.steps) ? doc.steps : null;
   if (!raw) throw fail('PIPELINE_INVALID', 1, { file, message: 'a preset needs a steps list' });
   const ids = new Set();
@@ -1663,8 +2070,10 @@ function decisionList(decisions) {
 function checkReadiness(ctx) {
   const file = readinessPath(ctx);
   let bytes;
-  try { bytes = fs.readFileSync(file); } catch (e) {
+  try { bytes = readRegularFile(file, STATE_READ_CAP); } catch (e) {
     if (e.code === 'ENOENT') return { ok: false, outcome: 'READINESS_MISSING', extra: { file } };
+    // CP-03 R6-S1-M13: a FIFO, a device or an oversized file is an invalid verdict, never a hang
+    if (e.code === 'ENOTREG' || e.code === 'EFBIG') return { ok: false, outcome: 'READINESS_INVALID', extra: { file, errors: [{ pointer: '', message: e.message }] } };
     throw e;
   }
   let data;
@@ -1772,9 +2181,20 @@ function seedCheckpoints(state, fl, data) {
   };
   for (const c of block.checkpoints) {
     const id = CHECKPOINT_ROW_PREFIX + c.id;
-    if (!fl.rows.some((r) => r.id === id)) finishLineUpsert(fl, id, { kind: 'package' });
+    if (!hasRow(fl, id, state.run_id, adoptsUnattributed(state))) finishLineUpsert(fl, id, { kind: 'package' }, state.run_id, adoptsUnattributed(state));
   }
   return block.count;
+}
+
+// CP-03 R8-S1-M15: measured exactly as atomicWrite will write it (jsonBytes = after redaction), and accepted
+// only up to the read cap minus the headroom the run's own bookkeeping needs.
+function planTooLarge(state, fl) {
+  const limit = 'the ' + STATE_ACCEPT_CAP + '-byte limit (the ' + STATE_READ_CAP + '-byte state cap less ' + STATE_HEADROOM + ' bytes of headroom)';
+  const stateBytes = jsonBytes(state).length;
+  if (stateBytes > STATE_ACCEPT_CAP) return { pointer: '/slices', message: 'the plan seeds a state of ' + stateBytes + ' bytes, above ' + limit + ' (' + state.slices.length + ' slices); split the plan' };
+  const flBytes = jsonBytes(fl).length;
+  if (flBytes > STATE_ACCEPT_CAP) return { pointer: '/slices', message: 'the plan seeds a finish line of ' + flBytes + ' bytes, above ' + limit + '; split the plan' };
+  return null;
 }
 
 function seedSlices(state, data) {
@@ -1815,26 +2235,37 @@ function gateBuild(ctx, args) {
     const provider = settings.values.secrets.provider;
     const reason = 'missing credential ' + missing.map((m) => m.name).join(', ') + ' via provider ' + provider;
     const from = state.status;
+    // CP-03 R5-S1-H9: BLOCKED goes through the one status-entry guard, and the reason is kept in state
+    const stored = guardStatusEntry(from, 'BLOCKED', { reason });
     state.status = 'BLOCKED';
+    if (stored) state.status_reason = { status: 'BLOCKED', reason: stored, stage: state.stage, at: now };
     writeState(ctx, state);
-    finishLineUpsert(fl, CRED_ROW_ID, { kind: 'package', state: 'BLOCKED', reason, evidence: null });
+    finishLineUpsert(fl, CRED_ROW_ID, { kind: 'package', state: 'BLOCKED', reason, evidence: null }, runId, adoptsUnattributed(state));
     writeFinishLine(ctx, fl);
     appendEvent(ctx, runId, { event: 'build_blocked', stage: state.stage, host: state.host, verdict: 'CREDENTIAL_MISSING', detail: { from, credentials: missing.map((m) => m.name), provider } });
     return { outcome: 'BLOCKED', exit: 3, run_id: runId, status: 'BLOCKED', reason, missing: missing.map((m) => m.name), provider };
   }
   const from = state.status;
+  const adopt = adoptsUnattributed(state);
   seedSlices(state, v.data);
   const checkpoints = seedCheckpoints(state, fl, v.data);
   state.gates.build = { approved: true, owner: 'readiness', date: now, readiness_sha256: v.sha256 };
   state.status = 'BUILDING';
-  writeState(ctx, state);
   for (const s of state.slices) {
-    if (!fl.rows.some((r) => r.id === s.id)) finishLineUpsert(fl, s.id, { kind: 'package' });
+    if (!hasRow(fl, s.id, runId, adopt)) finishLineUpsert(fl, s.id, { kind: 'package' }, runId, adopt);
   }
-  const credRow = fl.rows.find((r) => r.id === CRED_ROW_ID);
+  const credRow = findRow(fl, CRED_ROW_ID, runId, adopt);
   if (credRow && credRow.state === 'BLOCKED') {
-    finishLineUpsert(fl, CRED_ROW_ID, { state: 'DONE', reason: null, evidence: path.relative(ctx.repo, readinessPath(ctx)) });
+    finishLineUpsert(fl, CRED_ROW_ID, { state: 'DONE', reason: null, evidence: path.relative(ctx.repo, readinessPath(ctx)) }, runId, adopt);
   }
+  // CP-03 R7-S1-M14: a plan whose seeded state or board would pass the spine's own read cap is refused
+  // before anything is written, so the run stays where it was (gated) and the error names the plan.
+  const tooBig = planTooLarge(state, fl);
+  if (tooBig) {
+    appendEvent(ctx, runId, { event: 'build_refused', stage: state.stage, host: state.host, verdict: 'READINESS_INVALID', detail: { errors: [tooBig] } });
+    throw fail('READINESS_INVALID', 1, { run_id: runId, status: from, file: readinessPath(ctx), errors: [tooBig] });
+  }
+  writeState(ctx, state);
   writeFinishLine(ctx, fl);
   appendEvent(ctx, runId, { event: 'build_approved', stage: state.stage, host: state.host, verdict: 'READINESS_OK', detail: { from, readiness_sha256: v.sha256, slices: state.slices.length, review_checkpoints: checkpoints } });
   return { outcome: 'READINESS_OK', exit: 0, run_id: runId, status: 'BUILDING', slices: state.slices.map((s) => s.id), review_checkpoints: checkpoints };
@@ -1875,7 +2306,10 @@ function cmdRecord(ctx, args) {
 
   const resultFile = path.resolve(ctx.cwd, f.result);
   let bytes;
-  try { bytes = fs.readFileSync(resultFile); } catch (e) {
+  // CP-03 R7-S1-M14: a result is copied into the journal and the state, which are read back capped at
+  // STATE_READ_CAP, so a larger result is refused before anything is written (R8-S1-M15: accepted only up to
+  // STATE_ACCEPT_CAP, the cap less the run's bookkeeping headroom).
+  try { bytes = readRegularFile(resultFile, STATE_ACCEPT_CAP); } catch (e) {
     throw fail('RESULT_UNREADABLE', 1, { file: f.result, message: e.message });
   }
   const resultSha = sha256Bytes(bytes);
@@ -1933,8 +2367,9 @@ function applyJournal(ctx, j, allowFault) {
   if (!fs.existsSync(copy)) atomicWrite(copy, j.result_text);
   if (j.fl_ops.length) {
     const fl = readFinishLine(ctx);
-    for (const op of j.fl_ops) finishLineUpsert(fl, op.id, op.patch);
-    autoClosePackages(fl);
+    const adopt = adoptsUnattributed(j.next_state);
+    for (const op of j.fl_ops) finishLineUpsert(fl, op.id, op.patch, runId, adopt);
+    autoClosePackages(fl, adopt ? runId : null);
     writeFinishLine(ctx, fl);
   }
   if (j.questions.length) packAppend(ctx, runId, j.questions);
@@ -1965,7 +2400,7 @@ function checkpointVerdictProblem(ctx, state, row, r) {
     if (!want.includes(r.abs)) return 'evidence must be the checkpoint verdict file ' + cp.evidence + ', got ' + r.path;
   }
   let text;
-  try { text = fs.readFileSync(r.abs, 'utf8'); } catch (e) { return 'cannot read ' + r.path + ': ' + (e.code || e.message); }
+  try { text = readText(r.abs, BULK_READ_CAP); } catch (e) { return 'cannot read ' + r.path + ': ' + (e.code || e.message); }
   const v = parseVerdict(text, id);
   return v.state === 'pass' ? null : v.state + ': ' + v.reason;
 }
@@ -2080,7 +2515,20 @@ function planRecord(ctx, runId, state, result) {
     };
   }
 
+  // CP-03 R5-S1-H9: the cause a status entry needs (guardStatusEntry, below) is collected on every path.
+  let causeReason = null;
   if (isDeploy) {
+    // deploy legs belong to a run that is deploying: from any other status a leg result could take the run
+    // straight to FAILED (non-gating) without ever passing through DEPLOYING
+    if (!DEPLOY_STATUSES.includes(state.status)) {
+      throw fail('DEPLOY_OUT_OF_ORDER', 1, { status: state.status, allowed_from: DEPLOY_STATUSES, message: 'a deploy-legs result is recorded only while the run is ' + DEPLOY_STATUSES.join(', ') + ' (gate advance --to DEPLOYING first)' });
+    }
+    // a leg that did not make it says why: its evidence, or the result's reason
+    const silent = result.legs.filter((l) => (l.state === 'FAILED' || l.state === 'NEEDS_HUMAN' || l.state === 'ROLLBACK_FAILED') && !cleanReason(l.evidence) && !cleanReason(result.reason));
+    if (silent.length) {
+      throw fail('FAIL_REASON_REQUIRED', 1, { legs: silent.map((l) => l.leg), message: 'a FAILED or NEEDS_HUMAN leg needs evidence or the result needs a reason' });
+    }
+    causeReason = cleanReason(result.reason) || result.legs.filter((l) => l.state !== LEG_PASSED && cleanReason(l.evidence)).map((l) => 'leg ' + l.leg + ' ' + l.state + ': ' + cleanReason(l.evidence)).join('; ') || null;
     const resolveLeg = (leg) => legResolved.get(leg.leg) || null;
     if (state.status === 'ROLLED_BACK' && !legsLookRolledBack(state, result) && result.legs.every((l) => l.state === 'DEPLOYED_VERIFIED')) {
       const stale = staleLegsAfterRollback(state, result.legs, resolveLeg);
@@ -2102,17 +2550,31 @@ function planRecord(ctx, runId, state, result) {
       reason = blockReason(result);
       if (!reason) throw fail('BLOCK_REASON_REQUIRED', 1, { slice_id: slice.id, message: 'a BLOCKED slice needs a reason' });
     }
+    // CP-03 R4-S1-H8: a run-level result that takes the run to BLOCKED or FAILED switches the stop gate off
+    // (both are non-gating, CONTRACT 3.1), so it must say why (checked by guardStatusEntry below).
+    if (!slice && (result.status === 'blocked' || result.status === 'failed')) {
+      causeReason = result.status === 'blocked' ? blockReason(result) : failReason(result);
+    }
     applyStatusToState(next, result);
     next.stage = result.stage;
     if (slice && outcome === 'RECORDED') {
       const sl = planSliceOutcome(plan, next, result, slice, reason);
       if (sl) { outcome = sl.outcome; exit = sl.exit; }
+      // the run settled to BLOCKED because only blocked slices are left: their own reasons are the cause
+      if (next.status === 'BLOCKED') causeReason = 'every remaining slice is blocked: ' + next.slices.filter((x) => x.status === 'BLOCKED').map((x) => x.id).join(', ') + (reason ? ' (' + reason + ')' : '');
     }
   }
 
   // A BLOCKED slice (owner-gate) also routes its question into the owner pack (R4 T-R4-19, B10).
   if ((result.status === 'needs_human' || result.status === 'blocked') && result.pending_human && result.pending_human.questions_path) {
-    const qs = readQuestionsFile(ctx, result.pending_human.questions_path);
+    // a question with no text is no question: the pack would drop it (packAppend), so it decides nothing
+    // CP-03 R5-S1-H10: only the spine says where a question came from, so a result's own `source` is dropped,
+    // and the stop gate's sentence is reserved (pack withdraw must never mistake a result question for it)
+    const qs = readQuestionsFile(ctx, result.pending_human.questions_path)
+      .filter((q) => q && typeof q.text === 'string' && q.text.trim())
+      .map((q) => { const { source, ...rest } = q; return rest; });
+    const reserved = qs.filter((q) => STOP_GATE_TEXT.test(q.text.trim()));
+    if (reserved.length) throw fail('STOP_GATE_TEXT_RESERVED', 1, { texts: reserved.map((q) => q.text.slice(0, 120)), message: 'a result question may not use the stop gate\'s own sentence; word the question in your own terms' });
     const midrun = result.status === 'needs_human' && !isDeploy && state.status === 'BUILDING' ? qs.filter((q) => q && q.kind !== 'owner-gate') : [];
     if (midrun.length) {
       // G-8: no question to the owner mid-run; the recommendation decides and the end report shows it.
@@ -2130,6 +2592,19 @@ function planRecord(ctx, runId, state, result) {
       plan.questions.push(...qs);
     }
   }
+  // CP-03 R4-S1-H8 / R5-S1-H9: one guard for every way this result moves the run into FAILED, BLOCKED or
+  // NEEDS_HUMAN (run-level, slice settle, deploy legs). NEEDS_HUMAN needs a question that lands open in the
+  // owner pack; FAILED and BLOCKED need a reason, kept as status_reason. G-8 keeps autonomy: from BUILDING a
+  // mid-run question becomes a default and the status does not change, so the guard is not reached.
+  const stored = guardStatusEntry(state.status, next.status, {
+    reason: causeReason,
+    openQuestion: next.status === 'NEEDS_HUMAN' ? questionsLandOpen(ctx, runId, plan.questions) : false,
+  }, { slice_id: result.slice_id || null, status: result.status });
+  if (stored) {
+    next.status_reason = { status: next.status, reason: stored, stage: result.stage, at: now };
+    if (!isDeploy && !result.slice_id) plan.events.push({ event: result.status === 'blocked' ? 'run_blocked' : 'run_failed', stage: result.stage, verdict: next.status, detail: { reason: stored } });
+    plan.extra.reason = stored;
+  }
   if (result.run_verdict !== undefined && result.run_verdict !== null) plan.extra.reported_run_verdict = result.run_verdict;
   plan.outcome = outcome;
   plan.exit = exit;
@@ -2137,10 +2612,35 @@ function planRecord(ctx, runId, state, result) {
   return plan;
 }
 
+// The statuses that have deploy legs (D17): only then may a result carry them.
+const DEPLOY_STATUSES = ['DEPLOYING', 'PROVING', 'PARTIAL_FAILURE', 'ROLLED_BACK'];
+
+// CP-03 R6-S1-L1: a slice reason obeys the same rule as a run reason (cleanReason: no placeholder, no
+// invisible-only text); the sentence the spine builds around it would otherwise always pass the guard.
 function blockReason(result) {
-  if (typeof result.reason === 'string' && result.reason.trim()) return result.reason.trim();
-  const v = (result.verdicts || []).find((x) => x.verdict === 'BLOCKED' && typeof x.evidence === 'string' && x.evidence.trim());
-  return v ? v.evidence.trim() : null;
+  const r = cleanReason(result.reason);
+  if (r) return r;
+  const v = (result.verdicts || []).find((x) => x.verdict === 'BLOCKED' && cleanReason(x.evidence));
+  return v ? cleanReason(v.evidence) : null;
+}
+
+// A run-level failure names its cause: the result's reason, else the evidence of a verdict that did not verify.
+function failReason(result) {
+  const r = cleanReason(result.reason);
+  if (r) return r;
+  const v = (result.verdicts || []).find((x) => x.verdict !== 'VERIFIED' && cleanReason(x.evidence));
+  return v ? cleanReason(v.evidence) : null;
+}
+
+// True when at least one of `questions` will be open in the run's owner pack once appended: a new text
+// (packAppend adds it), or a text already there that is neither withdrawn nor answered.
+function questionsLandOpen(ctx, runId, questions) {
+  const valid = (questions || []).filter((q) => q && typeof q.text === 'string' && q.text.trim());
+  if (!valid.length) return false;
+  const pack = readJsonIfExists(packPath(ctx, runId));
+  const have = pack && Array.isArray(pack.questions) ? pack.questions.filter((x) => x.status !== 'withdrawn') : [];
+  const open = new Set(openPackQuestions(ctx, runId).map((x) => x.text));
+  return valid.some((q) => !have.some((x) => x.text === q.text) || open.has(q.text));
 }
 
 // Slice-attached results (D14, CONTRACT M1): FAILED, ESCALATED, BLOCKED and the
@@ -2174,7 +2674,7 @@ function planSliceOutcome(plan, next, result, slice, reason) {
 
 function readQuestionsFile(ctx, file) {
   try {
-    const j = JSON.parse(fs.readFileSync(path.resolve(ctx.repo, file), 'utf8'));
+    const j = JSON.parse(readText(path.resolve(ctx.repo, file)));
     const list = Array.isArray(j) ? j : (j && Array.isArray(j.questions) ? j.questions : []);
     return list;
   } catch {
@@ -2214,8 +2714,19 @@ const REDACT_MIN_LENGTH = 6;
 const REDACT_VALUES = new Map();
 const REDACT_HITS = new Set();
 
+// CP-03 R4-L4: words of the spine's own protocol are never secrets. A planted secret file whose value is a
+// run status or a gate outcome would otherwise rewrite state.json ("status":"[REDACTED:x]", which then
+// fails its checks) or a gate answer, and switch the stop gate off. Run statuses are the state schema's
+// enum (a drift test keeps this list equal to it); the outcomes are the ones a host maps.
+const PROTOCOL_WORDS = new Set([
+  'INTAKE', 'PLANNING', 'AWAIT_RATIFY', 'BUILDING', 'VERIFYING', 'REVIEWING', 'FIXING', 'DEPLOYING', 'PROVING', 'CONCLUDING', 'DONE',
+  'NEEDS_HUMAN', 'PARKED', 'BLOCKED', 'FAILED', 'PARTIAL_FAILURE', 'ROLLED_BACK', 'ESCALATED',
+  'STOP_REFUSED', 'STOP_ALLOWED',
+]);
+
 function redactAdd(name, value) {
   if (typeof value !== 'string' || value.length < REDACT_MIN_LENGTH) return;
+  if (PROTOCOL_WORDS.has(value.trim())) return;
   const forms = [value];
   const escaped = JSON.stringify(value).slice(1, -1);
   if (escaped !== value) forms.push(escaped);
@@ -2240,15 +2751,41 @@ function redactText(text) {
   return out;
 }
 
+// Redacts every string of a JSON value (keys too), leaving the structure as it is.
+function redactValue(v) {
+  if (typeof v === 'string') return redactText(v);
+  if (Array.isArray(v)) return v.map(redactValue);
+  if (v && typeof v === 'object') {
+    const out = {};
+    for (const [k, x] of Object.entries(v)) out[redactText(k)] = redactValue(x);
+    return out;
+  }
+  return v;
+}
+
+// CP-03 R5-S1-L3: the spine's own JSON files (state.json, finish-line.json, events, packs, the registry) are
+// redacted value by value; keys are the spine's vocabulary and are never rewritten, so a planted secret equal
+// to "session_id" or "evidence" cannot break the file's shape.
+function redactJsonValues(v) {
+  if (typeof v === 'string') return redactText(v);
+  if (Array.isArray(v)) return v.map(redactJsonValues);
+  if (v && typeof v === 'object') {
+    const out = {};
+    for (const [k, x] of Object.entries(v)) out[k] = redactJsonValues(x);
+    return out;
+  }
+  return v;
+}
+
 // Names the project declares: READINESS credentials and .env.example NAME= lines.
 function redactDeclaredNames(ctx) {
   const names = new Set();
   try {
-    const r = JSON.parse(fs.readFileSync(path.join(ctx.home, 'plan', 'READINESS.json'), 'utf8'));
+    const r = JSON.parse(readText(path.join(ctx.home, 'plan', 'READINESS.json')));
     for (const n of Array.isArray(r.credentials) ? r.credentials : []) if (typeof n === 'string' && n) names.add(n);
   } catch { /* no readiness yet */ }
   try {
-    for (const line of fs.readFileSync(path.join(ctx.home, '.env.example'), 'utf8').split(/\r?\n/)) {
+    for (const line of readText(path.join(ctx.home, '.env.example'), REGISTRY_READ_CAP).split(/\r?\n/)) {
       const m = /^([A-Za-z_][A-Za-z0-9_]*)=/.exec(line);
       if (m) names.add(m[1]);
     }
@@ -2265,7 +2802,7 @@ function redactInit(ctx) {
     for (const n of fs.readdirSync(dir)) {
       const f = path.join(dir, n);
       const st = fs.statSync(f);
-      if (st.isFile() && st.size <= 65536) redactAdd(n, fs.readFileSync(f, 'utf8').replace(/\r?\n$/, ''));
+      if (st.isFile() && st.size <= 65536) redactAdd(n, readText(f, 65536).replace(/\r?\n$/, ''));
     }
   } catch { /* no .secrets */ }
   for (const n of redactDeclaredNames(ctx)) redactAdd(n, ctx.env[n]);
@@ -2353,15 +2890,70 @@ function parseReply(text, questions) {
 }
 
 // ---- resume.mjs ----
+// Statuses a run never leaves (FAILED can go back to BUILDING): re-binding one hands over nothing that gates.
+const TERMINAL = ['DONE', 'ESCALATED'];
+
+// Which run does `resume` with no --run mean? Never "the newest run in the repo" (CP-03 S1-H2): the
+// caller's own runs first (a parked one before the rest), then a run with no session inside the caller's
+// cwd. Only when the caller owns nothing does it look at the newest run, and the ownership check below
+// refuses that one when another session owns it. A caller with no session id never re-binds anything.
+function pickRun(ctx, flags, session) {
+  if (flags.run || !session) return selectRunId(ctx, flags);
+  const mine = selectScopedRunId(ctx, { session, cwd: ctx.cwd }).ranked;
+  if (mine.length) return (mine.find((r) => r.status === 'PARKED') || mine[0]).id;
+  const unowned = selectScopedRunId(ctx, { session: null, cwd: ctx.cwd }).ranked;
+  if (unowned.length) return (unowned.find((r) => r.status === 'PARKED') || unowned[0]).id;
+  return selectRunId(ctx, flags);
+}
+
 // resume works from a fresh process using state alone. It clears a ceiling block
 // (after a handoff exists) or un-parks a parked run, re-queues RUNNING slices
 // without counting an attempt, and re-reads every VERIFIED row by hash.
+//
+// Ownership (CP-03 S1-H2, CONTRACT 3.1 / S1-00): the session that resumes owns the run from then on.
+// A run whose recorded session is another, non-null id is re-bound only with an explicit
+// `--run <id> --take-over` (the takeover is kept in owner.history and logged as `owner_taken_over`);
+// without it resume refuses with OWNED_BY_OTHER_SESSION and names the owner. Nothing on disk tells a
+// session that ended (/clear) from one that is still running, so the caller must say so. A run with no
+// session, a legacy run, or a terminal one re-binds without --take-over: no live session loses a gate.
 function cmdResume(ctx, args) {
-  const runId = selectRunId(ctx, args.flags);
+  const f = args.flags;
+  const session = resolveSessionId(ctx, f);
+  const takeOver = !!f['take-over'];
+  if (takeOver && typeof f.run !== 'string') throw fail('USAGE', 1, { message: 'resume --take-over needs --run <id>: a takeover names the run it takes' });
+  const runId = pickRun(ctx, f, session);
   const state = loadState(ctx, runId);
-  const force = !!args.flags.force;
+  const force = !!f.force;
   const ceilingHeld = state.ceiling === 'BLOCKED';
-  if (state.status !== 'PARKED' && !ceilingHeld) throw fail('NOT_PARKED', 1, { run_id: runId, status: state.status });
+  const was = state.owner && typeof state.owner === 'object' ? state.owner : null;
+  const foreign = !!(session && was && was.session_id && was.session_id !== session);
+  if (foreign && !takeOver && !TERMINAL.includes(state.status)) {
+    throw fail('OWNED_BY_OTHER_SESSION', 1, {
+      run_id: runId, status: state.status, owner_session: was.session_id, session,
+      message: 'run ' + runId + ' is owned by session ' + was.session_id + '. If that session has ended (after /clear), take the run over with: resume --run ' + runId + ' --take-over',
+    });
+  }
+  const rebind = () => {
+    // a legacy run (no owner object) keeps adopting its 1.0.x rows after it is bound to a session, or it would
+    // re-seed its pipeline and start again at intake (CP-03 R3-L7)
+    const prev = was || { session_id: null, cwd: ctx.cwd, adopted_legacy: true };
+    if (!session || prev.session_id === session) return null;
+    const reason = foreign ? 'take_over' : 'resume';
+    state.owner = { ...prev, session_id: session, history: [...(Array.isArray(prev.history) ? prev.history : []), { session_id: prev.session_id || null, until: ctx.now(), reason }] };
+    return { from: prev.session_id || null, to: session, taken_over: foreign };
+  };
+  const logRebind = (moved) => appendEvent(ctx, runId, {
+    event: moved.taken_over ? 'owner_taken_over' : 'owner_rebound', stage: state.stage, host: state.host,
+    verdict: moved.taken_over ? 'TAKEN_OVER' : 'REBOUND', detail: moved,
+  });
+  if (state.status !== 'PARKED' && !ceilingHeld) {
+    const moved = rebind();
+    if (!moved) throw fail('NOT_PARKED', 1, { run_id: runId, status: state.status });
+    writeState(ctx, state);
+    logRebind(moved);
+    const regErr = registerSessionRun(ctx, session, runId);
+    return { outcome: moved.taken_over ? 'TAKEN_OVER' : 'REBOUND', exit: 0, run_id: runId, status: state.status, owner: state.owner, previous_owner: moved.from, ...(regErr ? { session_registry_error: regErr } : {}) };
+  }
 
   if (state.status === 'PARKED') {
     const park = readJsonIfExists(parkPath(ctx, runId));
@@ -2376,7 +2968,7 @@ function cmdResume(ctx, args) {
   for (const s of state.slices) {
     if (s.status === 'RUNNING') { s.status = 'READY'; requeued.push(s.id); }
   }
-  const changed = verifyEvidence(ctx, runId);
+  const changed = verifyEvidence(ctx, runId, state);
   const reopened = [];
   for (const c of changed) {
     const s = state.slices.find((x) => x.id === c.row);
@@ -2386,12 +2978,19 @@ function cmdResume(ctx, args) {
   if (state.status === 'PARKED') state.status = 'BUILDING';
   if (ceilingHeld) state.ceiling = 'OK';
   state.park = null;
+  const rebound = rebind();
   writeState(ctx, state);
+  if (rebound) logRebind(rebound);
+  // the resuming session owns the run now (or still does): record its home for the stop gate (R3-S1-H7)
+  const owner = state.owner && typeof state.owner === 'object' ? state.owner.session_id : null;
+  const regErr = owner ? registerSessionRun(ctx, owner, runId) : null;
   const wake = consumeWake(ctx, runId);
   appendEvent(ctx, runId, { event: 'run_resumed', stage: state.stage, host: state.host, verdict: 'RESUMED', detail: { from, requeued, reopened, warnings: changed.length, forced: force, ceiling_cleared: ceilingHeld } });
   return {
     outcome: 'RESUMED', exit: 0, run_id: runId, status: state.status, requeued, reopened, warnings: changed.length,
-    changed: changed.map((c) => c.row), wake: wake ? wake.status : null, ceiling: state.ceiling || null,
+    changed: changed.map((c) => c.row), wake: wake ? wake.status : null, ceiling: state.ceiling || null, owner: state.owner || null,
+    previous_owner: rebound ? rebound.from : undefined, taken_over: rebound ? rebound.taken_over : undefined,
+    ...(regErr ? { session_registry_error: regErr } : {}),
   };
 }
 
@@ -2540,7 +3139,7 @@ function loadSchemaFile(name) {
   const here = path.dirname(fileURLToPath(import.meta.url));
   const file = path.join(here, '..', '..', 'schemas', name);
   if (!fs.existsSync(file)) throw fail('SCHEMA_NOT_FOUND', 1, { schema: name });
-  return JSON.parse(fs.readFileSync(file, 'utf8'));
+  return JSON.parse(readText(file));
 }
 
 // ---- secrets.mjs ----
@@ -2599,13 +3198,243 @@ function redactFlushEvents(ctx, result) {
   } catch { /* redaction must never fail a command */ }
 }
 
+// ---- session.mjs ----
+// Which session is calling? Core names no host (R3): the host layer says which environment
+// variables carry its session id by exporting DO_IT_SESSION_ENV (comma-separated names).
+// Precedence (CONTRACT 2.1, unchanged): --session, then DO_IT_SESSION_ID, then the first named host
+// variable that is set. An explicit id therefore outranks the host's live id, so a stale
+// DO_IT_SESSION_ID export would bind the run to a session no hook ever reports; `start` says so in
+// `session_conflict` (CP-03 S1-L1). A blank or whitespace-only value counts as absent and is never
+// recorded (CP-03 S1-L2).
+function cleanSessionId(v) {
+  return typeof v === 'string' && v.trim() ? v.trim() : null;
+}
+
+function resolveSession(ctx, flags) {
+  const env = ctx.env || {};
+  let host = null;
+  for (const name of String(env.DO_IT_SESSION_ENV || '').split(',').map((s) => s.trim()).filter(Boolean)) {
+    host = cleanSessionId(env[name]);
+    if (host) break;
+  }
+  const id = cleanSessionId(flags && flags.session) || cleanSessionId(env.DO_IT_SESSION_ID) || host;
+  return { id, host, conflict: id && host && id !== host ? { recorded: id, host } : null };
+}
+
+function resolveSessionId(ctx, flags) {
+  return resolveSession(ctx, flags).id;
+}
+
+// ---- sessions.mjs ----
+// Session registry (CP-03 R3-S1-H7). A session can start a run in one repo and stop while its cwd is in
+// another repo, or in a folder that is no repo at all. The stop gate keys on the session owning the run
+// (CONTRACT 3.1 row 1), not on the cwd, so `start`, `resume` and a take-over record where each run lives:
+//   <user do-it home>/sessions/h-<sha256(session id), 32 hex>/<run id>.json  ->  { session_id, run_id, home, root }
+// One file per run (CP-03 R4-S1-M8): a write never rewrites another run's entry, so starts that run at the
+// same time cannot lose each other, and pruning deletes only the stale run's own file. Each file is written
+// atomically (temp file, then rename). The 1.1 pre-release layout, one `<session id>.json` holding
+// { session_id, runs: [...] }, is still read, and is migrated to per-run files on the next write or read.
+// The user do-it home is DO_IT_USER_HOME when set (tests), else <HOME>/.do-it. `gate stop --session` looks in
+// every home on that list as well as the cwd's. An entry whose home or run is gone, whose run is over
+// (DONE, ESCALATED) or now belongs to another session is pruned when the list is read; an entry whose own
+// session_id is not the reader's exact id is never read or pruned (R5-S1-M12).
+const OVER = ['DONE', 'ESCALATED'];
+
+function userDoItHome(ctx) {
+  const env = ctx.env || {};
+  return env.DO_IT_USER_HOME ? path.resolve(ctx.cwd, env.DO_IT_USER_HOME) : path.join(ctx.userHome, '.do-it');
+}
+
+// An id becomes a file name as is when it is a plain name, else by digest (never a path). Used for run ids,
+// and for the session folders of the round-4 layout (read and migrated only).
+function safeName(id) {
+  return /^[A-Za-z0-9._-]{1,128}$/.test(id) && !/^\.+$/.test(id) ? id : 'h-' + sha256Bytes(id).slice(0, 32);
+}
+
+// CP-03 R5-S1-M12: a session folder is always named by the digest of the exact session id (lowercase hex), so
+// two ids that differ only in letter case never share a folder on a case-insensitive disk. Each entry keeps a
+// readable copy of the id (session_id), and only entries whose copy equals the reader's id exactly are used.
+function sessionFolderName(sessionId) {
+  return 'h-' + sha256Bytes(sessionId).slice(0, 32);
+}
+
+// The folder holding one file per run of `sessionId`.
+function sessionDir(ctx, sessionId) {
+  return path.join(userDoItHome(ctx), 'sessions', sessionFolderName(sessionId));
+}
+
+// The round-4 folder (plain ids kept their own name): read and migrated, never written.
+function oldSessionDir(ctx, sessionId) {
+  return path.join(userDoItHome(ctx), 'sessions', safeName(sessionId));
+}
+
+// The pre-release single-file layout (read and migrated, never written).
+function legacySessionFile(ctx, sessionId) {
+  return oldSessionDir(ctx, sessionId) + '.json';
+}
+
+function runFile(ctx, sessionId, runId) {
+  return path.join(sessionDir(ctx, sessionId), safeName(runId) + '.json');
+}
+
+const isEntry = (e) => e && typeof e.run_id === 'string' && typeof e.home === 'string';
+
+// CP-03 R5-S1-M10: registry files are read with lstat first: only a regular file (never a symlink, FIFO or
+// device), at most 64 KiB. Anything else is reported, never followed or read.
+const readRegistryJson = (file) => readJsonRegular(file, REGISTRY_READ_CAP, { noFollow: true });
+
+function readLegacy(file, sessionId) {
+  const doc = readRegistryJson(file);
+  // the file of a case twin (same folder name on a case-insensitive disk) is not this session's
+  if (!doc || doc.session_id !== sessionId) return [];
+  return Array.isArray(doc.runs) ? doc.runs.filter(isEntry) : [];
+}
+
+// Moves a legacy single file into per-run files: every entry is written first (an existing per-run file
+// wins), then the old file is removed, so a crash in between loses nothing.
+function migrateLegacy(ctx, sessionId, skip) {
+  const file = legacySessionFile(ctx, sessionId);
+  if (!fs.existsSync(file)) return;
+  for (const e of readLegacy(file, sessionId)) {
+    if (skip && skip.has(e.run_id + '\0' + e.home)) continue;
+    const f = runFile(ctx, sessionId, e.run_id);
+    if (!fs.existsSync(f)) atomicWriteJson(f, { session_id: sessionId, run_id: e.run_id, home: e.home, root: typeof e.root === 'string' ? e.root : path.dirname(e.home) }, { cap: REGISTRY_READ_CAP });
+  }
+  const doc = readRegistryJson(file);
+  if (doc && doc.session_id === sessionId) fs.rmSync(file, { force: true });
+}
+
+// Moves this session's entries out of the round-4 folder (named by the plain id) into the digest folder. Only
+// entries whose session_id equals this id exactly move; a case twin's entries stay where they are.
+function migrateOldDir(ctx, sessionId, skip) {
+  const old = oldSessionDir(ctx, sessionId);
+  if (old === sessionDir(ctx, sessionId)) return;
+  let names;
+  try {
+    if (!fs.lstatSync(old).isDirectory()) return;
+    names = fs.readdirSync(old);
+  } catch { return; }
+  for (const n of names) {
+    if (n.startsWith('.') || !n.endsWith('.json')) continue;
+    const from = path.join(old, n);
+    let doc;
+    try { doc = readRegistryJson(from); } catch { continue; }
+    if (!isEntry(doc) || doc.session_id !== sessionId) continue;
+    if (!(skip && skip.has(doc.run_id + '\0' + doc.home))) {
+      const to = runFile(ctx, sessionId, doc.run_id);
+      if (!fs.existsSync(to)) atomicWriteJson(to, { session_id: sessionId, run_id: doc.run_id, home: doc.home, root: typeof doc.root === 'string' ? doc.root : path.dirname(doc.home) }, { cap: REGISTRY_READ_CAP });
+    }
+    fs.rmSync(from, { force: true });
+  }
+  try { fs.rmdirSync(old); } catch { /* not empty: a case twin's entries are still there */ }
+}
+
+// Every entry of the session: { entries: [{ run_id, home, root, file }], errors: [{ file, error }] }.
+// CP-03 R4-S1-M7: a registry file that cannot be read or parsed is reported, never thrown, so one bad file
+// cannot take the gate down for the session's other runs (or for the cwd's own run).
+function readEntries(ctx, sessionId) {
+  const out = [];
+  const errors = [];
+  // the error names the file and the cause, never the file's content (R5-L5)
+  const note = (file, e) => errors.push({ file, error: String(e && e.code ? e.code + ': ' + e.message : (e && e.message) || e) });
+  const legacy = legacySessionFile(ctx, sessionId);
+  try { for (const e of readLegacy(legacy, sessionId)) out.push({ ...e, file: null, legacy: 'file' }); } catch (e) { note(legacy, e); }
+  const readDir = (dir, kind) => {
+    let names = [];
+    try {
+      const st = fs.lstatSync(dir);
+      if (!st.isDirectory()) note(dir, Object.assign(new Error('not a directory' + (st.isSymbolicLink() ? ' (symlink, not followed)' : '')), { code: 'ENOTDIR' }));
+      else names = fs.readdirSync(dir);
+    } catch (e) { if (e.code !== 'ENOENT') note(dir, e); }
+    for (const n of names.sort()) {
+      if (n.startsWith('.') || !n.endsWith('.json')) continue; // temp files of a write in flight
+      const file = path.join(dir, n);
+      try {
+        const doc = readRegistryJson(file);
+        if (!isEntry(doc)) { if (doc !== null) note(file, new Error('not a registry entry')); continue; }
+        // R5-S1-M12: an entry is this session's only when its own copy of the id is this exact id
+        if (doc.session_id !== sessionId) continue;
+        out.push({ run_id: doc.run_id, home: doc.home, root: doc.root, file, ...(kind ? { legacy: kind } : {}) });
+      } catch (e) { note(file, e); }
+    }
+  };
+  readDir(sessionDir(ctx, sessionId), null);
+  if (oldSessionDir(ctx, sessionId) !== sessionDir(ctx, sessionId)) readDir(oldSessionDir(ctx, sessionId), 'dir');
+  return { entries: out, errors };
+}
+
+// Records that `runId`, in ctx's home, is owned by `sessionId`. Returns null, or the error text when the
+// registry could not be written (the caller reports it: the run then gates only from its own repo).
+function registerSessionRun(ctx, sessionId, runId) {
+  if (!sessionId) return null;
+  try {
+    atomicWriteJson(runFile(ctx, sessionId, runId), { session_id: sessionId, run_id: runId, home: realpathSafe(ctx.home), root: realpathSafe(ctx.root) }, { cap: REGISTRY_READ_CAP });
+    try { migrateLegacy(ctx, sessionId); } catch { /* the legacy file is still read */ }
+    try { migrateOldDir(ctx, sessionId); } catch { /* the old folder is still read */ }
+    return null;
+  } catch (e) {
+    return String(e && e.message ? e.message : e);
+  }
+}
+
+function liveEntry(e, sessionId) {
+  // a forged run id never walks out of the home's runs folder
+  if (!/^[A-Za-z0-9._-]{1,128}$/.test(e.run_id) || /^\.+$/.test(e.run_id)) return false;
+  const file = path.join(e.home, 'runs', e.run_id, 'state.json');
+  try {
+    const st = readJsonRegular(file, STATE_READ_CAP);
+    if (!st || OVER.includes(st.status)) return false;
+    const o = st.owner;
+    return !!(o && typeof o === 'object' && o.session_id === sessionId);
+  } catch (err) {
+    // a FIFO, device or oversized file is no run state (R5-S1-M10): never read it, drop the entry
+    if (err && (err.code === 'ENOTREG' || err.code === 'EFBIG')) return false;
+    // a run that is there but unreadable stays listed: the gate reports it, it does not forget it
+    return fs.existsSync(file);
+  }
+}
+
+// Every home that holds a live run of `sessionId`, pruning stale entries.
+// Returns { homes: [{ home, root }], errors: [{ file, error }] }; it never throws (R4-S1-M7).
+function sessionHomes(ctx, sessionId) {
+  if (!sessionId) return { homes: [], errors: [] };
+  let all;
+  let errors;
+  try {
+    ({ entries: all, errors } = readEntries(ctx, sessionId));
+  } catch (e) {
+    return { homes: [], errors: [{ file: sessionDir(ctx, sessionId), error: String(e && e.message ? e.message : e) }] };
+  }
+  if (!all.length) return { homes: [], errors };
+  const keep = all.filter((e) => liveEntry(e, sessionId));
+  const stale = all.filter((e) => !keep.includes(e));
+  // pruning is best effort and touches only the stale run's own file; the live entries are still used
+  for (const e of stale) if (e.file && !e.legacy) { try { fs.rmSync(e.file, { force: true }); } catch { /* best effort */ } }
+  // older layouts move to the digest folder; a stale entry is simply not carried over
+  const skip = new Set(stale.filter((e) => e.legacy).map((e) => e.run_id + '\0' + e.home));
+  if (all.some((e) => e.legacy === 'file')) { try { migrateLegacy(ctx, sessionId, skip); } catch { /* still read next time */ } }
+  if (all.some((e) => e.legacy === 'dir')) { try { migrateOldDir(ctx, sessionId, skip); } catch { /* still read next time */ } }
+  // each home also names the session's run ids in it (CP-03 R9-L-b: the gate's fallback when the home's runs
+  // folder exists but cannot be listed)
+  const byHome = new Map();
+  const homes = [];
+  for (const e of keep) {
+    const home = realpathSafe(e.home);
+    if (byHome.has(home)) { if (!byHome.get(home).runs.includes(e.run_id)) byHome.get(home).runs.push(e.run_id); continue; }
+    const h = { home, root: typeof e.root === 'string' ? e.root : path.dirname(home), runs: [e.run_id] };
+    byHome.set(home, h);
+    homes.push(h);
+  }
+  return { homes, errors };
+}
+
 // ---- settings.mjs ----
 const SETTINGS_DEFAULTS = {
   version: 1,
   interaction: { owner_pack: 'auto', fallback: ['native', 'html', 'markdown'] },
   host: { driver: 'auto', alias: null },
   isolation: { driver: 'worktree' },
-  state: { backend: 'local', engine: { blobs: 'rows' } },
+  state: { backend: 'local' },
   secrets: { provider: 'file', ref: '.secrets/' },
   handoff: { mode: 'auto', max_per_run: 5 },
   review: { max_rounds: 3, cost_cap_tokens: 600000 },
@@ -2614,6 +3443,55 @@ const SETTINGS_DEFAULTS = {
   stop_gate: { patience: 3 },
   observability: { provider: 'none' },
 };
+
+// Host-owned settings: `state.<backend>` is one object keyed by the backend name. Core does not know its
+// shape; the host that provides the backend declares it in the `state_store.settings_schema` entry of
+// hosts/<name>/adapter.manifest.json. Returns { schema } | { absent: true } (no hosts folder reachable at all:
+// a lone copy of the bundle, accepted unchecked) | { error } (host or schema missing).
+function settingsHostsDirs(ctx) {
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  // Source tree (../../hosts), a bundle one level deeper, and the installed plugin, which ships the host
+  // manifests and settings schemas next to its scripts folder (../hosts). An explicit override is tried first.
+  const cands = [ctx.env.DO_IT_HOSTS_DIR, path.join(here, '..', '..', 'hosts'), path.join(here, '..', '..', '..', 'hosts'), path.join(here, '..', 'hosts')];
+  return cands
+    .filter(Boolean).map((d) => path.resolve(d)).filter((d) => fs.existsSync(d) && fs.statSync(d).isDirectory());
+}
+
+function settingsHostSchema(ctx, name) {
+  const dirs = settingsHostsDirs(ctx);
+  if (!dirs.length) return { absent: true };
+  const dir = dirs.find((d) => fs.existsSync(path.join(d, name, 'adapter.manifest.json')));
+  if (!dir) return { error: 'no host "' + name + '" is installed to validate state.' + name };
+  let entry;
+  try {
+    entry = JSON.parse(readText(path.join(dir, name, 'adapter.manifest.json'))).state_store;
+  } catch (e) {
+    return { error: 'host "' + name + '" manifest is unreadable: ' + e.message };
+  }
+  if (!entry || !entry.settings_schema) return { error: 'host "' + name + '" declares no state_store.settings_schema for state.' + name };
+  const file = path.join(dir, name, entry.settings_schema);
+  try {
+    return { schema: JSON.parse(readText(file)) };
+  } catch (e) {
+    return { error: 'host "' + name + '" settings schema is unreadable: ' + e.message };
+  }
+}
+
+// Errors for the host-owned part of `state`, with pointers under /state/<name>.
+function settingsHostErrors(ctx, data) {
+  const state = data && data.state;
+  if (!isPlainObject(state)) return [];
+  const errors = [];
+  const names = Object.keys(state).filter((k) => k !== 'backend' && isPlainObject(state[k]));
+  // Any installed host may hold its object here, active backend or not (a dormant block is valid, as in 1.0.5).
+  for (const name of names) {
+    const h = settingsHostSchema(ctx, name);
+    if (h.absent) continue;
+    if (h.error) { errors.push({ pointer: '/state/' + schemaEscape(name), message: h.error }); continue; }
+    for (const e of validateSchema(h.schema, state[name], '/state/' + schemaEscape(name))) errors.push(e);
+  }
+  return errors;
+}
 
 const SECRET_KEY_NAMES = /^(value|token|password|passwd|secret|api_?key|apikey|private_?key|access_?key)$/i;
 const SECRET_SHAPES = [
@@ -2721,7 +3599,7 @@ function loadSettings(ctx, setFlags) {
     if (!exists) continue;
     let parsed;
     try {
-      parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
+      parsed = JSON.parse(readRegularFile(file, REGISTRY_READ_CAP).toString('utf8'));
     } catch (e) {
       parseErrors.push({ file, pointer: '', message: 'JSON parse error: ' + e.message });
       continue;
@@ -2740,6 +3618,7 @@ function loadSettings(ctx, setFlags) {
   const errors = parseErrors.slice();
   for (const layer of layers) {
     for (const e of validateSchema(schema, layer.data)) errors.push({ file: layer.file, pointer: e.pointer, message: e.message });
+    for (const e of settingsHostErrors(ctx, layer.data)) errors.push({ file: layer.file, pointer: e.pointer, message: e.message });
   }
   if (errors.length) throw fail('SETTINGS_INVALID', 1, { errors });
 
@@ -2754,14 +3633,15 @@ function loadSettings(ctx, setFlags) {
   for (const pair of setFlags || []) {
     const eq = pair.indexOf('=');
     const key = eq === -1 ? pair : pair.slice(0, eq);
-    if (eq === -1 || !Object.prototype.hasOwnProperty.call(defaultLeaves, key)) {
+    const hostKey = /^state\.[^.]+\.[^.]+/.test(key) && key.split('.')[1] !== 'backend' && !settingsHostSchema(ctx, key.split('.')[1]).error;
+    if (eq === -1 || !(Object.prototype.hasOwnProperty.call(defaultLeaves, key) || hostKey)) {
       throw fail('SETTINGS_UNKNOWN_KEY', 1, { key });
     }
     settingsSetPath(merged, key, parseSetValue(pair.slice(eq + 1), defaultLeaves[key]));
     sources[key] = 'run-flag';
   }
   if (setFlags && setFlags.length) {
-    const flagErrors = validateSchema(schema, merged).map((e) => ({ file: 'run-flag', pointer: e.pointer, message: e.message }));
+    const flagErrors = validateSchema(schema, merged).concat(settingsHostErrors(ctx, merged)).map((e) => ({ file: 'run-flag', pointer: e.pointer, message: e.message }));
     if (flagErrors.length) throw fail('SETTINGS_INVALID', 1, { errors: flagErrors });
   }
   const leaves = flattenSettings(merged, '', {});
@@ -2802,15 +3682,24 @@ function newState(ctx, runId, fields) {
   };
 }
 
+// The bytes writeState would write, after the same checks (schema, then the read cap measured as written,
+// after redaction). Nothing touches disk. CP-03 R9-S1-M16: the stop gate test-serialises a park with it
+// before it adds the park question to the owner pack.
+function stateBytes(ctx, state) {
+  const errors = validateSchema(loadSchemaFile('do-it-state.1.schema.json'), state);
+  if (errors.length) throw fail('STATE_INVALID', 1, { errors });
+  const bytes = jsonBytes(state);
+  assertWithinCap(path.join(runDir(ctx, state.run_id), 'state.json'), bytes.length, STATE_READ_CAP);
+  return bytes;
+}
+
 // Validate, then temp-fsync-rename state.json and its .state.sha256 sidecar.
 function writeState(ctx, state) {
   state.updated_at = ctx.now();
-  const errors = validateSchema(loadSchemaFile('do-it-state.1.schema.json'), state);
-  if (errors.length) throw fail('STATE_INVALID', 1, { errors });
+  const bytes = stateBytes(ctx, state);
   const dir = runDir(ctx, state.run_id);
-  const bytes = redactText(JSON.stringify(state, null, 2) + '\n');
   const fault = ctx.env.DO_IT_FAULT === 'after_tmp';
-  atomicWrite(path.join(dir, 'state.json'), bytes, { faultAfterTmp: fault });
+  atomicWrite(path.join(dir, 'state.json'), bytes, { faultAfterTmp: fault, cap: STATE_READ_CAP });
   atomicWrite(path.join(dir, '.state.sha256'), sha256Bytes(bytes) + '\n');
   return state;
 }
@@ -2830,27 +3719,36 @@ function loadState(ctx, runId) {
   const dir = runDir(ctx, runId);
   let bytes;
   try {
-    bytes = fs.readFileSync(path.join(dir, 'state.json'));
+    bytes = readRegularFile(path.join(dir, 'state.json'), STATE_READ_CAP);
   } catch (e) {
     if (e.code === 'ENOENT') throw fail('RUN_NOT_FOUND', 1, { run_id: runId });
     throw e;
   }
   let sidecar = null;
-  try { sidecar = fs.readFileSync(path.join(dir, '.state.sha256'), 'utf8').trim(); } catch { /* missing */ }
+  try { sidecar = readRegularFile(path.join(dir, '.state.sha256'), REGISTRY_READ_CAP).toString('utf8').trim(); } catch { /* missing, or not a regular file */ }
   if (sidecar === null) throw tamperFail(ctx, runId, 'sidecar_missing');
   if (sidecar !== sha256Bytes(bytes)) throw tamperFail(ctx, runId, 'digest_mismatch');
   let state;
   try { state = JSON.parse(bytes.toString('utf8')); } catch { throw tamperFail(ctx, runId, 'unparseable'); }
   const errors = validateSchema(loadSchemaFile('do-it-state.1.schema.json'), state);
   if (errors.length) throw tamperFail(ctx, runId, 'schema_invalid');
+  // a run folder holds only its own run: a copied runs/<id>z with the same run_id is not that run (CP-03 R2-L10)
+  if (state.run_id !== runId) throw tamperFail(ctx, runId, 'run_id_mismatch');
   return state;
 }
 
 function listRunIds(ctx) {
+  return listRunIdsChecked(ctx).ids;
+}
+
+// { ids, error }: error is set when the runs folder exists but cannot be listed (EACCES on a 0311 folder, ...).
+function listRunIdsChecked(ctx) {
   const base = path.join(ctx.home, 'runs');
   let names = [];
-  try { names = fs.readdirSync(base); } catch { return []; }
-  return names.filter((n) => fs.existsSync(path.join(base, n, 'state.json'))).sort();
+  try { names = fs.readdirSync(base); } catch (e) {
+    return { ids: [], error: e && e.code === 'ENOENT' ? null : String(e && e.code ? e.code : (e && e.message) || e) };
+  }
+  return { ids: names.filter((n) => fs.existsSync(path.join(base, n, 'state.json'))).sort(), error: null };
 }
 
 // Newest run by created_at (ties by id); --run picks one explicitly.
@@ -2864,44 +3762,93 @@ function selectRunId(ctx, flags) {
   let best = null;
   for (const id of ids) {
     let created = '';
-    try { created = JSON.parse(fs.readFileSync(path.join(runDir(ctx, id), 'state.json'), 'utf8')).created_at || ''; } catch { /* tampered: still selectable */ }
+    try { created = JSON.parse(readText(path.join(runDir(ctx, id), 'state.json'))).created_at || ''; } catch { /* tampered: still selectable */ }
     if (!best || created > best.created || (created === best.created && id > best.id)) best = { id, created };
   }
   return best.id;
 }
 
-// Which run does this session (or this cwd) own? Ownership is recorded once, at `start`:
-// the session id when the host gave one, always the cwd. A run with no owner field (state
-// written before this existed) belongs to nobody in particular and stays gated for everyone.
-// Returns { run: id|null, owned: bool } for the newest owned run, else the newest unowned
-// one, else null.
+// Statuses that never gate a stop (CONTRACT 3.1): the run is waiting on a human, parked, or over.
+// Every other status gates.
+const NON_GATING_STATUSES = ['PARKED', 'NEEDS_HUMAN', 'BLOCKED', 'AWAIT_RATIFY', 'DONE', 'ESCALATED', 'FAILED'];
+
+function cwdInside(ownerCwd, cwd) {
+  const rel = path.relative(realpathSafe(ownerCwd), realpathSafe(cwd));
+  return rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel));
+}
+
+// Which run does the hook's session own? Ownership is recorded once, at `start`, in
+// owner.session_id. A hook that names a session matches on that id only. The cwd is a fallback
+// only for a host that gave no session and a run that has none (a run whose session is null).
+// A run with no owner object (state written before ownership existed) is never owned.
+// Returns { run, owned, status, legacy, unreadable, ranked }: the newest owned run that still gates (else the
+// newest owned run), the count of legacy runs, the ids whose state.json cannot be parsed, and every owned
+// run ranked the same way ({ id, created, status }).
+// CP-03 R9-L-b: when the runs folder exists but cannot be listed, the run ids the session registry names for
+// this home (scope.knownIds) are looked up by path instead, and `unlistable` carries the error.
 function selectScopedRunId(ctx, scope) {
   const owned = [];
-  const legacy = [];
-  for (const id of listRunIds(ctx)) {
-    let st = {};
-    try { st = JSON.parse(fs.readFileSync(path.join(runDir(ctx, id), 'state.json'), 'utf8')); } catch { /* tampered: gated by its own load */ }
-    const o = st.owner;
-    const row = { id, created: st.created_at || '' };
-    if (!o || typeof o !== 'object') { legacy.push(row); continue; }
-    let mine = false;
-    if (o.session_id && scope.session) mine = o.session_id === scope.session;
-    else if (o.cwd && scope.cwd) {
-      const rel = path.relative(realpathSafe(o.cwd), realpathSafe(scope.cwd));
-      mine = rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel));
-    }
-    if (mine) owned.push(row);
+  const unreadable = [];
+  let legacy = 0;
+  const listing = listRunIdsChecked(ctx);
+  let ids = listing.ids;
+  if (listing.error && Array.isArray(scope.knownIds)) {
+    ids = scope.knownIds.filter((id) => /^[A-Za-z0-9._-]{1,128}$/.test(id) && !/^\.+$/.test(id) && fs.existsSync(path.join(runDir(ctx, id), 'state.json'))).sort();
   }
-  const newest = (rows) => rows.sort((a, b) => (a.created === b.created ? (a.id < b.id ? 1 : -1) : (a.created < b.created ? 1 : -1)))[0];
-  if (owned.length) return { run: newest(owned).id, owned: true };
-  if (legacy.length) return { run: newest(legacy).id, owned: false };
-  return { run: null, owned: false };
+  for (const id of ids) {
+    let st;
+    try { st = JSON.parse(readRegularFile(path.join(runDir(ctx, id), 'state.json'), STATE_READ_CAP).toString('utf8')); } catch { unreadable.push(id); continue; }
+    const o = st && st.owner;
+    if (!o || typeof o !== 'object') { legacy += 1; continue; }
+    let mine = false;
+    if (scope.session) mine = !!o.session_id && o.session_id === scope.session;
+    else if (!o.session_id && o.cwd && scope.cwd) mine = cwdInside(o.cwd, scope.cwd);
+    if (mine) owned.push({ id, created: st.created_at || '', status: st.status });
+  }
+  owned.sort((a, b) => (a.created === b.created ? (a.id < b.id ? 1 : -1) : (a.created < b.created ? 1 : -1)));
+  const gating = owned.filter((r) => !NON_GATING_STATUSES.includes(r.status));
+  // ranked: every owned run, the gating ones first, each group newest first
+  const ranked = [...gating, ...owned.filter((r) => NON_GATING_STATUSES.includes(r.status))];
+  const pick = ranked[0] || null;
+  return { run: pick ? pick.id : null, owned: !!pick, status: pick ? pick.status : null, legacy, unreadable, ranked, unlistable: listing.error };
+}
+
+// Runs whose state.json fails the same checks loadState makes, reported without side effects.
+function unreadableRuns(ctx) {
+  const bad = [];
+  for (const id of listRunIds(ctx)) {
+    const dir = runDir(ctx, id);
+    try {
+      const bytes = readRegularFile(path.join(dir, 'state.json'), STATE_READ_CAP);
+      const sidecar = readText(path.join(dir, '.state.sha256'), REGISTRY_READ_CAP).trim();
+      if (sidecar !== sha256Bytes(bytes)) throw new Error('digest');
+      const st = JSON.parse(bytes.toString('utf8'));
+      if (validateSchema(loadSchemaFile('do-it-state.1.schema.json'), st).length) throw new Error('schema');
+      if (st.run_id !== id) throw new Error('run_id');
+    } catch { bad.push(id); }
+  }
+  return bad;
+}
+
+// Every explicit take-over of the run (resume --run <id> --take-over), oldest first: { from, to, at }.
+// owner.history records the session that was replaced and when; the next entry (or the current owner)
+// is the session that took over. `status` shows the last one and `conclude` lists them (CP-03 R2-L1).
+function takeOvers(state) {
+  const o = state && state.owner && typeof state.owner === 'object' ? state.owner : null;
+  const h = o && Array.isArray(o.history) ? o.history : [];
+  const out = [];
+  h.forEach((e, i) => {
+    if (!e || e.reason !== 'take_over') return;
+    const next = h[i + 1];
+    out.push({ from: e.session_id || null, to: next ? (next.session_id || null) : (o.session_id || null), at: e.until || null });
+  });
+  return out;
 }
 
 // Raw read for callers that only need to know whether a run is in flight.
 function peekRunStatus(ctx, runId) {
   try {
-    return JSON.parse(fs.readFileSync(path.join(runDir(ctx, runId), 'state.json'), 'utf8')).status;
+    return JSON.parse(readText(path.join(runDir(ctx, runId), 'state.json'))).status;
   } catch {
     return 'UNREADABLE';
   }
@@ -2928,9 +3875,70 @@ const RUN_TRANSITIONS = {
   DONE: [],
 };
 
-// gate advance --to STATUS: a move along the M1 lifecycle, nothing else.
+// The command that owns each non-gating status (CP-03 R3-S1-H6). A run enters a status that does not gate a
+// stop only through the command that checks what that status claims: DONE through `gate conclude` (G-13:
+// every row accounted, no live worker, no pending wake, deploy legs re-verified), PARKED through `park` or
+// the stop gate at patience, NEEDS_HUMAN / AWAIT_RATIFY through an owner-pack question, BLOCKED / FAILED /
+// ESCALATED through `record` with a reason. `gate advance` never reaches one, or the agent the gate holds
+// could switch the gate off with two commands.
+const NON_GATING_OWNERS = {
+  DONE: 'gate conclude',
+  PARKED: 'park (or the stop gate at patience)',
+  NEEDS_HUMAN: 'record (a needs_human result with at least one owner-pack question)',
+  AWAIT_RATIFY: 'the owner pack / readiness (gate build)',
+  BLOCKED: 'record (a blocked result with a reason) or gate build on a blocked readiness',
+  FAILED: 'record (a failed result with a reason, or a deploy-legs result while deploying whose failed legs carry evidence)',
+  ESCALATED: 'record (ladder or rollback), handoff at its cap, or gate escalate --reason from NEEDS_HUMAN or FAILED',
+};
+
+// CP-03 R5-S1-H9: the one guard on every path into FAILED, BLOCKED or NEEDS_HUMAN. All three switch the stop
+// gate off (CONTRACT 3.1), so the run must say why: FAILED and BLOCKED need a reason (kept as
+// state.status_reason), NEEDS_HUMAN needs a question that lands open in the owner pack. `record` (run-level,
+// slice settle and deploy legs alike) and `gate build` (missing credential) call it before they write.
+const CAUSE_REQUIRED = { FAILED: 'FAIL_REASON_REQUIRED', BLOCKED: 'BLOCK_REASON_REQUIRED', NEEDS_HUMAN: 'NEEDS_HUMAN_WITHOUT_QUESTION' };
+
+// A reason is text with something in it: invisible and space characters are stripped first, and a
+// placeholder (".", "x", "n/a", "TODO", "-", ...) or text with fewer than 3 letters or digits is no reason
+// (CP-03 R5-S1-L1). A code such as STALE_HEAD or NO_CHANNEL_REACHED is a reason.
+const PLACEHOLDER_REASONS = new Set(['n/a', 'na', 'none', 'null', 'nil', 'todo', 'tbd', 'tba', 'fixme', 'wip', 'unknown', 'reason', 'no reason', 'xxx', 'xx', 'x', '?', '...', '-', '--', '.']);
+function cleanReason(text) {
+  if (typeof text !== 'string') return null;
+  const t = text.replace(/[\p{White_Space}\u200B-\u200D\u2060\uFEFF\u00AD]+/gu, ' ').trim();
+  if (!t) return null;
+  if (PLACEHOLDER_REASONS.has(t.toLowerCase())) return null;
+  if ((t.match(/[\p{L}\p{N}]/gu) || []).length < 3) return null;
+  return t;
+}
+
+// Returns the reason to store (FAILED, BLOCKED) or null; throws the status's refusal code when the cause is missing.
+// cause: { reason?: string, openQuestion?: boolean }; extra goes into the refusal.
+function guardStatusEntry(from, to, cause, extra) {
+  if (!Object.prototype.hasOwnProperty.call(CAUSE_REQUIRED, to) || from === to) return null;
+  const c = cause || {};
+  if (to === 'NEEDS_HUMAN') {
+    if (c.openQuestion) return null;
+    throw fail(CAUSE_REQUIRED.NEEDS_HUMAN, 1, {
+      from, to, ...(extra || {}),
+      message: 'a needs_human result must bring at least one owner-pack question (pending_human.questions_path); with none, nothing waits on the owner and the run would leave the stop gate',
+    });
+  }
+  const reason = cleanReason(c.reason);
+  if (reason) return reason;
+  throw fail(CAUSE_REQUIRED[to], 1, {
+    from, to, ...(extra || {}),
+    message: 'entering ' + to + ' needs a non-empty reason: it ends the stop gate for this run',
+  });
+}
+
+// gate advance --to STATUS: a move along the M1 lifecycle between statuses that gate, nothing else.
 function advanceRunStatus(ctx, state, to) {
-  const allowed = RUN_TRANSITIONS[state.status] || [];
+  if (NON_GATING_STATUSES.includes(to)) {
+    throw fail('TRANSITION_REFUSED', 1, {
+      from: state.status, to, owner: NON_GATING_OWNERS[to],
+      message: to + ' does not gate a stop, so gate advance never enters it; only ' + NON_GATING_OWNERS[to] + ' does',
+    });
+  }
+  const allowed = (RUN_TRANSITIONS[state.status] || []).filter((s) => !NON_GATING_STATUSES.includes(s));
   if (!allowed.includes(to)) throw fail('TRANSITION_REFUSED', 1, { from: state.status, to, allowed });
   const from = state.status;
   state.status = to;
@@ -2940,54 +3948,310 @@ function advanceRunStatus(ctx, state, to) {
 }
 
 // ---- stopgate.mjs ----
-// G-9: refuse to stop with open rows, with the board, `patience` times without
-// progress; the next call parks the run and asks the owner.
-function gateStop(ctx, args) {
-  const f = args.flags;
-  const scope = { session: typeof f.session === 'string' ? f.session : null, cwd: typeof f.cwd === 'string' ? f.cwd : null };
-  let runId;
-  if (f.run || (!scope.session && !scope.cwd)) {
-    runId = selectRunId(ctx, f);
-  } else {
-    // A hook names its session and cwd: only the run they own is gated.
-    const scoped = selectScopedRunId(ctx, scope);
-    if (!scoped.run) return { outcome: 'STOP_ALLOWED', exit: 0, owned: false, reason: 'no run is owned by this session or cwd' };
-    runId = scoped.run;
+function allowed(extra) {
+  return { outcome: 'STOP_ALLOWED', exit: 0, ...extra };
+}
+
+function logQuiet(ctx, runId, row) {
+  try { appendEvent(ctx, runId, row); } catch { /* the hook still fails open */ }
+}
+
+// An unreadable run is logged once, not on every stop of every session: skip when the run's last event is
+// already this one (a run we do not own must not grow an events file just because we looked at it).
+function lastEventIs(ctx, runId, name) {
+  try {
+    const lines = readRegularFile(eventsPath(ctx, runId), STATE_READ_CAP).toString('utf8').split('\n').filter(Boolean);
+    return JSON.parse(lines[lines.length - 1]).event === name;
+  } catch { return false; }
+}
+
+function logUnreadableOnce(ctx, runId, detail) {
+  if (lastEventIs(ctx, runId, 'stop_gate_state_unreadable')) return;
+  logQuiet(ctx, runId, { event: 'stop_gate_state_unreadable', stage: null, verdict: 'STATE_ERROR', detail });
+}
+
+const DEFAULT_PATIENCE = 3;
+
+// a Node error's message already starts with its code ("EACCES: permission denied, ..."): do not repeat it
+const errText = (e) => String(e && e.code && !String(e.message || '').startsWith(e.code) ? e.code + ': ' + e.message : (e && e.message) || e);
+
+// CP-03 R8-S1-M15 (supersedes the R5-S1-M9 fail-open): CONTRACT 3.1 fails open ONLY when state.json cannot
+// be read. Once a run's state was read and it gates with open rows, a refusal whose bookkeeping (count,
+// signature, park, events) cannot be written is STILL a refusal: it is reported in `unwritable` and marked
+// `refusal_uncounted`. Patience cannot advance without a write, so such a run is never parked by the gate;
+// it is refused on every stop until the write error is fixed or its rows close.
+function eachRefusal(ctx, runs, fn, unwritable) {
+  const refused = [];
+  const parked = [];
+  for (const w of runs) {
+    let r;
+    try { r = fn(w); } catch (e) {
+      // anything refuseOrPark did not catch itself: still a refusal, uncounted
+      r = { parked: false, ids: (w.open || [{ id: 'finish-line.json unreadable' }]).map((x) => x.id), refusals: w.state.stop_refusals, uncounted: errText(e) };
+    }
+    if (r.uncounted) unwritable.push({ run_id: w.id, error: r.uncounted, refused: true, refusal_uncounted: true });
+    if (r.logError) unwritable.push({ run_id: w.id, error: r.logError, refused: true });
+    (r.parked ? parked : refused).push({ id: w.id, refusals: r.refusals, ids: r.ids, uncounted: r.uncounted || null });
   }
-  const state = loadState(ctx, runId);
-  const fl = readFinishLine(ctx);
-  const open = openRows(fl);
-  const board = renderBoard(fl);
-  if (!open.length) {
-    return { outcome: 'STOP_ALLOWED', exit: 0, run_id: runId, stop_refusals: state.stop_refusals, board };
-  }
-  const patience = loadSettings(ctx, []).values.stop_gate.patience;
+  // a counted refusal is the one shown first; an uncounted one never hides it
+  refused.sort((a, b) => (a.uncounted ? 1 : 0) - (b.uncounted ? 1 : 0));
+  return { refused, parked };
+}
+
+// The fields every STOP_REFUSED answer carries when a refusal could not be counted.
+function uncountedNote(refused) {
+  const lost = refused.filter((r) => r.uncounted);
+  if (!lost.length) return { note: '', extra: {} };
+  const note = '; the refusal of ' + lost.map((r) => r.id + ' (' + r.uncounted + ')').join(', ') + ' could not be written, so it is not counted: patience cannot advance and the run will not park on its own until the write error is fixed';
+  return { note, extra: { refusal_uncounted: true, uncounted_runs: lost.map((r) => r.id) } };
+}
+
+function refuseUnreadableBoard(ctx, gating, patience, error, extra, unwritable) {
+  const id = 'finish-line.json unreadable';
+  const { refused, parked } = eachRefusal(ctx, gating, (g) => refuseOrPark(ctx, g.id, g.state, { rows: [] }, [{ id }], patience), unwritable);
+  const more = unwritable.length ? { unwritable } : {};
+  const lost = uncountedNote(refused);
+  extra = { ...extra, ...more, ...lost.extra };
+  const board = 'FINISH LINE: unreadable (' + error + ')';
+  if (!refused.length) return { outcome: 'PARKED', exit: 2, owned: true, run_id: parked[0].id, status: 'PARKED', open: [id], board, board_error: error, ...extra };
+  throw fail('STOP_REFUSED', 1, { owned: true, run_id: refused[0].id, reason: 'finish-line.json cannot be read, so the open rows are unknown: ' + error + lost.note, stop_refusals: refused[0].refusals, patience, open: [id], board, board_error: error, ...(gating.length > 1 ? { runs: gating.map((g) => g.id) } : {}), ...extra });
+}
+
+// One run's refusal bookkeeping: the patience counter resets when its rows changed since the last stop;
+// at patience the run is parked with one owner-pack question. Returns { parked, ids, refusals }.
+function refuseOrPark(ctx, runId, state, fl, open, patience) {
+  const ids = open.map((r) => r.id);
   const sig = rowsSignature(fl);
+  const stored = state.stop_refusals;
   const prev = state.gates.stop_gate;
   if (prev && prev.sig !== sig) state.stop_refusals = 0;
+  // CP-03 R7-S1-L5: once the state write holds the refusal, a log line or a park that cannot be written
+  // never turns it into an allow. A park that fails is a plain refusal; a lost event is reported in log_error.
+  let logError = null;
+  const logEvent = (row) => { try { appendEvent(ctx, runId, row); } catch (e) { logError = errText(e); } };
+  let parkError = null;
+  // CP-03 R10 L-g: an unreadable answers.json counts as no answers for the park and is reported on its event
+  let answersError = null;
+  const onAnswersError = (e) => { answersError = errText(e); };
+  // CP-03 R8-S1-M15: the state write itself failed (STATE_TOO_LARGE, EACCES, ...): refuse anyway, uncounted
+  const uncounted = (e) => {
+    const err = errText(e);
+    logEvent({ event: 'stop_refused', stage: state.stage, host: state.host, verdict: 'STOP_REFUSED', detail: { refusals: stored, open: ids, refusal_uncounted: true, write_error: err, ...(parkError ? { park_error: parkError } : {}) } });
+    return { parked: false, ids, refusals: stored, uncounted: err, logError: logError || parkError };
+  };
+  const text = 'The run stopped with ' + ids.length + ' open row(s) after ' + patience + ' refusals: ' + ids.join(', ') + '. Resume the run or close it with the open rows as residuals?';
   if (state.stop_refusals >= patience) {
-    const ids = open.map((r) => r.id);
-    packAppend(ctx, runId, [{
-      kind: 'default',
-      text: 'The run stopped with ' + ids.length + ' open row(s) after ' + patience + ' refusals: ' + ids.join(', ') + '. Resume the run or close it with the open rows as residuals?',
-      options: ['resume run', 'close with residuals'],
-      recommendation: 'resume run',
-      default: 'resume run',
-      reversible: true,
-    }]);
+    // CP-03 R9-S1-M16: the park is test-serialised (schema, cap as written) before its question reaches the
+    // pack. A park that could not be written adds nothing and stays a plain refusal, uncounted.
+    const would = { ...state, stop_refusals: 0, gates: { ...state.gates, stop_gate: { sig } }, status: 'PARKED', updated_at: ctx.now() };
+    try { stateBytes(ctx, would); } catch (e) { return uncounted(e); }
+    try {
+      packAppend(ctx, runId, [{
+        kind: 'default',
+        source: 'stop-gate',
+        text,
+        options: ['resume run', 'close with residuals'],
+        recommendation: 'resume run',
+        default: 'resume run',
+        reversible: true,
+      }], { stopGate: true, onAnswersError });
+    } catch (e) { parkError = errText(e); }
+  }
+  if (state.stop_refusals >= patience && !parkError) {
     state.stop_refusals = 0;
     state.gates.stop_gate = { sig };
     const from = state.status;
     state.status = 'PARKED';
-    writeState(ctx, state);
-    appendEvent(ctx, runId, { event: 'stop_parked', stage: state.stage, host: state.host, verdict: 'PARKED', detail: { from, open: ids } });
-    return { outcome: 'PARKED', exit: 2, run_id: runId, status: 'PARKED', open: ids, board };
+    try { writeState(ctx, state); } catch (e) { return uncounted(e); }
+    // CP-03 R5-S1-H10: the event is the gate's own mark on the question (pack withdraw trusts nothing else)
+    let q = null;
+    try {
+      const stored = redactJsonValues(text);
+      q = openPackQuestions(ctx, runId, onAnswersError).find((x) => x.text === text || x.text === stored) || openStopGateQuestion(ctx, runId, null, null, onAnswersError);
+    } catch { /* the park stands */ }
+    logEvent({ event: 'stop_parked', stage: state.stage, host: state.host, verdict: 'PARKED', detail: { from, open: ids, ...(q ? { question: q.n } : {}), ...(answersError ? { answers_error: answersError } : {}) } });
+    return { parked: true, ids, refusals: 0, logError };
   }
   state.stop_refusals += 1;
   state.gates.stop_gate = { sig };
-  writeState(ctx, state);
-  appendEvent(ctx, runId, { event: 'stop_refused', stage: state.stage, host: state.host, verdict: 'STOP_REFUSED', detail: { refusals: state.stop_refusals, open: open.map((r) => r.id) } });
-  throw fail('STOP_REFUSED', 1, { run_id: runId, stop_refusals: state.stop_refusals, patience, open: open.map((r) => r.id), board });
+  try { writeState(ctx, state); } catch (e) { return uncounted(e); }
+  logEvent({ event: 'stop_refused', stage: state.stage, host: state.host, verdict: 'STOP_REFUSED', detail: { refusals: state.stop_refusals, open: ids, ...(parkError ? { park_error: parkError } : {}) } });
+  return { parked: false, ids, refusals: state.stop_refusals, logError: logError || parkError };
+}
+
+// An explicit `gate stop --run <id>` (or no session and no cwd): gates the run it names, as before.
+function explicitStop(ctx, f) {
+  const runId = selectRunId(ctx, f);
+  const state = loadState(ctx, runId);
+  if (NON_GATING_STATUSES.includes(state.status)) {
+    return allowed({ owned: true, run_id: runId, status: state.status, reason: 'run is ' + state.status + ', it does not gate', stop_refusals: state.stop_refusals });
+  }
+  const fl = rowsForRun(readFinishLine(ctx, { strict: true }), runId, adoptsUnattributed(state));
+  const open = openRows(fl);
+  const board = renderBoard(fl);
+  if (!open.length) return allowed({ owned: true, run_id: runId, reason: 'no open rows for this run', stop_refusals: state.stop_refusals, board });
+  const patience = loadSettings(ctx, []).values.stop_gate.patience;
+  const r = refuseOrPark(ctx, runId, state, fl, open, patience);
+  if (r.parked) return { outcome: 'PARKED', exit: 2, owned: true, run_id: runId, status: 'PARKED', open: r.ids, board };
+  const lost = uncountedNote([{ id: runId, uncounted: r.uncounted }]);
+  const unwritable = [
+    ...(r.uncounted ? [{ run_id: runId, error: r.uncounted, refused: true, refusal_uncounted: true }] : []),
+    ...(r.logError ? [{ run_id: runId, error: r.logError, refused: true }] : []),
+  ];
+  throw fail('STOP_REFUSED', 1, { owned: true, run_id: runId, reason: 'finish-line rows are still open' + lost.note, stop_refusals: r.refusals, patience, open: r.ids, board, ...(unwritable.length ? { unwritable } : {}), ...lost.extra });
+}
+
+// G-1 (1.1): a hook stop is gated by EVERY active run owned by the hook's session (CONTRACT 3.1 row 1
+// applies to each owned active run; CP-03 R2-S1-H4: a second, newer run with no open rows must not hide
+// an older one that has some). Everyone else is allowed, and the answer says whether a run was theirs
+// (`owned`) and why they may stop (`reason`). An unreadable run is logged and skipped; the hook fails open
+// only when no owned run is readable (S1-M1). Each gated run counts its own patience and is parked alone.
+function gateStop(ctx, args) {
+  const f = args.flags;
+  const scope = { session: cleanSessionId(f.session), cwd: typeof f.cwd === 'string' ? f.cwd : null };
+  const hook = !f.run && !!(scope.session || scope.cwd);
+  if (!hook) return explicitStop(ctx, f);
+
+  // CP-03 R3-S1-H7: the session's runs may live in other repos than the cwd's. Every home the session
+  // registered a run in is gated as well as the cwd's, with the same rule; any refusal refuses the stop.
+  // CP-03 R4-S1-M7: a registry that cannot be read is reported (registry_unreadable) and leaves the cwd-only
+  // rule; another home that cannot be evaluated is reported (unreadable_homes) and fails open for that home
+  // alone. The cwd's own home is always evaluated, and its answer (a refusal above all) stands.
+  const here = realpathSafe(ctx.home);
+  const reg = sessionHomes(ctx, scope.session);
+  const notes = reg.errors.length ? { registry_unreadable: reg.errors } : {};
+  const known = (home) => { const h = reg.homes.find((x) => x.home === home); return h && Array.isArray(h.runs) ? h.runs : []; };
+  const homes = [{ ctx, home: here, own: true, scope: { ...scope, knownIds: known(here) } }];
+  for (const h of reg.homes) {
+    if (h.home !== here) homes.push({ ctx: { ...ctx, home: h.home, root: h.root }, home: h.home, own: false, scope: { ...scope, knownIds: known(h.home) } });
+  }
+  if (homes.length === 1) return withNotes(() => hookStopIn(ctx, homes[0].scope), notes);
+  const answers = [];
+  const unreadableHomes = [];
+  let firstError = null;
+  for (const h of homes) {
+    try {
+      answers.push({ home: h.home, out: hookStopIn(h.ctx, h.scope) });
+    } catch (e) {
+      if (e instanceof CliError && e.outcome === 'STOP_REFUSED') { answers.push({ home: h.home, refused: e }); continue; }
+      // CP-03 R5-S1-M9: the cwd's home is reported like any other; it never hides the other homes' answers
+      if (!firstError) firstError = e;
+      unreadableHomes.push({ home: h.home, error: String(e && e.message ? e.message : e), ...(h.own ? { cwd_home: true } : {}) });
+    }
+  }
+  if (unreadableHomes.length) notes.unreadable_homes = unreadableHomes;
+  if (!answers.length) throw addNotes(firstError, notes);
+  // every home's write errors are reported, whichever home's answer is shown
+  const unwritable = answers.flatMap((a) => ((a.out || (a.refused && a.refused.extra) || {}).unwritable || []).map((u) => ({ ...u, home: a.home })));
+  if (unwritable.length) notes.unwritable = unwritable;
+  if (unwritable.some((u) => u.refusal_uncounted)) notes.refusal_uncounted = true;
+  const unlistable = answers.flatMap((a) => ((a.out || (a.refused && a.refused.extra) || {}).runs_unlistable || []).map((u) => ({ ...u, home: a.home })));
+  if (unlistable.length) notes.runs_unlistable = unlistable;
+  const searched = homes.map((h) => h.home);
+  const refused = answers.filter((a) => a.refused);
+  if (refused.length) {
+    const first = refused[0];
+    const boards = refused.map((a) => (refused.length > 1 ? 'home ' + a.home + '\n' : '') + (a.refused.extra.board || ''));
+    throw fail('STOP_REFUSED', 1, { ...first.refused.extra, run_home: first.home, board: boards.join('\n\n'), refused_homes: refused.map((a) => a.home), homes: searched, ...notes });
+  }
+  const parked = answers.find((a) => a.out.outcome === 'PARKED');
+  if (parked) return { ...parked.out, run_home: parked.home, homes: searched, ...notes };
+  const pick = answers.find((a) => a.out.owned) || answers[0];
+  return { ...pick.out, run_home: pick.home, homes: searched, ...notes };
+}
+
+function addNotes(e, notes) {
+  if (e instanceof CliError && Object.keys(notes).length) e.extra = { ...e.extra, ...notes };
+  return e;
+}
+
+function withNotes(fn, notes) {
+  try { return { ...fn(), ...notes }; } catch (e) { throw addNotes(e, notes); }
+}
+
+// The hook-path rule inside one home (CONTRACT 3.1). CP-03 R9-L-b: a runs folder that exists but cannot be
+// listed is reported (runs_unlistable) on every answer; the registry's runs for this home are still gated.
+function hookStopIn(ctx, scope) {
+  const scoped = selectScopedRunId(ctx, scope);
+  if (!scoped.unlistable) return hookStopScoped(ctx, scope, scoped);
+  const note = { runs_unlistable: [{ home: ctx.home, error: scoped.unlistable, registry_runs: scope.knownIds || [] }] };
+  return withNotes(() => hookStopScoped(ctx, scope, scoped), note);
+}
+
+function hookStopScoped(ctx, scope, scoped) {
+  if (!scoped.run) {
+    if (scoped.unreadable.length) {
+      for (const id of scoped.unreadable) logUnreadableOnce(ctx, id, { fail_open: true });
+      return allowed({ owned: false, reason: 'state unreadable', unreadable: scoped.unreadable });
+    }
+    return allowed({ owned: false, reason: scoped.legacy ? 'legacy run has no owner' : 'no run is owned by this session or cwd' });
+  }
+  const readable = [];
+  const skipped = [];
+  const unwritable = [];
+  for (const c of scoped.ranked) {
+    try {
+      readable.push({ id: c.id, state: loadState(ctx, c.id) });
+    } catch (e) {
+      // CP-03 R5-S1-M9: any read error (EACCES, EISDIR, ...) skips this run alone, like a tampered state
+      const cause = e instanceof CliError ? e.outcome : (e && e.code) || 'STATE_ERROR';
+      logUnreadableOnce(ctx, c.id, { fail_open: true, cause });
+      skipped.push({ run_id: c.id, state_error: cause });
+    }
+  }
+  if (!readable.length) {
+    return allowed({ owned: true, run_id: skipped[0].run_id, reason: 'state unreadable', state_error: skipped[0].state_error, unreadable: skipped.map((x) => x.run_id) });
+  }
+  const extra = skipped.length ? { unreadable: skipped.map((x) => x.run_id) } : {};
+  const gating = readable.filter((r) => !NON_GATING_STATUSES.includes(r.state.status));
+  if (!gating.length) {
+    const top = readable[0];
+    return allowed({ owned: true, run_id: top.id, status: top.state.status, reason: 'run is ' + top.state.status + ', it does not gate', stop_refusals: top.state.stop_refusals, ...extra });
+  }
+  // CP-03 R4-S1-M7 (and R4-L9): a board that cannot be read is no proof the rows are closed, so every
+  // gating run here is refused with that reason (fail closed), counting patience like any refusal.
+  let patience;
+  try { patience = loadSettings(ctx, []).values.stop_gate.patience; } catch { patience = DEFAULT_PATIENCE; }
+  let board;
+  try { board = readFinishLine(ctx, { strict: true }); } catch (e) {
+    const why = e instanceof CliError && e.extra && e.extra.error ? e.extra.error : String(e && e.message ? e.message : e);
+    return refuseUnreadableBoard(ctx, gating, patience, why, extra, unwritable);
+  }
+  // the same row rule as every view: an owned (1.1) run answers only for rows tagged with its id
+  const withOpen = [];
+  for (const g of gating) {
+    const fl = rowsForRun(board, g.id, adoptsUnattributed(g.state));
+    const open = openRows(fl);
+    if (open.length) withOpen.push({ ...g, fl, open });
+  }
+  if (!withOpen.length) {
+    const top = gating[0];
+    const ids = gating.map((g) => g.id);
+    return allowed({ owned: true, run_id: top.id, runs: ids, reason: 'no open rows for ' + (ids.length > 1 ? 'any owned run' : 'this run'), stop_refusals: top.state.stop_refusals, board: renderBoard(rowsForRun(board, top.id, adoptsUnattributed(top.state))), ...extra });
+  }
+  const openByRun = {};
+  const boards = [];
+  const { refused, parked } = eachRefusal(ctx, withOpen, (w) => refuseOrPark(ctx, w.id, w.state, w.fl, w.open, patience), unwritable);
+  for (const w of withOpen) {
+    const r = refused.find((x) => x.id === w.id) || parked.find((x) => x.id === w.id);
+    if (!r) continue;
+    openByRun[w.id] = r.ids;
+    boards.push((withOpen.length > 1 ? 'run ' + w.id + '\n' : '') + renderBoard(w.fl));
+  }
+  if (unwritable.length) extra.unwritable = unwritable;
+  const many = withOpen.length > 1 ? { runs: withOpen.map((w) => w.id), open_by_run: openByRun } : {};
+  const text = boards.join('\n\n');
+  if (!refused.length) {
+    const first = parked[0].id;
+    return { outcome: 'PARKED', exit: 2, owned: true, run_id: first, status: 'PARKED', open: openByRun[first], board: text, ...many, ...(withOpen.length > 1 ? { parked: parked.map((p) => p.id) } : {}), ...extra };
+  }
+  const first = refused[0];
+  const lost = uncountedNote(refused);
+  throw fail('STOP_REFUSED', 1, {
+    ...lost.extra,
+    owned: true, run_id: first.id, reason: 'finish-line rows are still open' + lost.note, stop_refusals: first.refusals, patience,
+    open: openByRun[first.id], board: text, ...many, ...(parked.length ? { parked: parked.map((p) => p.id) } : {}), ...extra,
+  });
 }
 
 // ---- verdict-file.mjs ----
@@ -3060,7 +4324,7 @@ function parseVerdict(text, id) {
 // ---- verify.mjs ----
 // Re-read the world: recompute every VERIFIED row's evidence hash (never mtime).
 // A changed or missing file downgrades the row and reopens its finish-line row.
-function verifyEvidence(ctx, runId) {
+function verifyEvidence(ctx, runId, state) {
   const ledger = readLedger(ctx, runId);
   const changed = [];
   const now = ctx.now();
@@ -3077,8 +4341,9 @@ function verifyEvidence(ctx, runId) {
   if (changed.length) {
     writeLedger(ctx, ledger);
     const fl = readFinishLine(ctx);
+    const adopt = adoptsUnattributed(state || loadState(ctx, runId));
     for (const c of changed) {
-      if (fl.rows.some((r) => r.id === c.row)) finishLineUpsert(fl, c.row, { state: 'OPEN', evidence: null, reason: 'evidence_changed' });
+      if (hasRow(fl, c.row, runId, adopt)) finishLineUpsert(fl, c.row, { state: 'OPEN', evidence: null, reason: 'evidence_changed' }, runId, adopt);
       appendEvent(ctx, runId, { event: 'evidence_changed', verdict: 'IMPLEMENTED-NOT-VERIFIED', detail: { row: c.row, reason: c.reason } });
     }
     writeFinishLine(ctx, fl);
@@ -3088,15 +4353,15 @@ function verifyEvidence(ctx, runId) {
 
 function gateVerify(ctx, args) {
   const runId = selectRunId(ctx, args.flags);
-  loadState(ctx, runId);
-  const changed = verifyEvidence(ctx, runId);
+  const state = loadState(ctx, runId);
+  const changed = verifyEvidence(ctx, runId, state);
   if (changed.length) throw fail('EVIDENCE_CHANGED', 1, { run_id: runId, rows: changed.map((c) => c.row), changed });
   const ledger = readLedger(ctx, runId);
   return { outcome: 'VERIFY_OK', exit: 0, run_id: runId, checked: ledger.rows.filter((r) => r.verdict === 'VERIFIED').length };
 }
 
 // ---- version.mjs ----
-const DO_IT_VERSION = '1.0.4';
+const DO_IT_VERSION = '1.1.0';
 
 // ---- wake.mjs ----
 const NO_WAKE_TEXT = 'no wake: parked; run do-it resume after the reset';
@@ -3435,7 +4700,10 @@ function secretsFileResolve(name, ref, ctx) {
   const rel = path.relative(dir, file);
   if (!rel || rel.startsWith('..') || path.isAbsolute(rel)) return { ok: false, detail: 'name_outside_ref' };
   let text;
-  try { text = fs.readFileSync(file, 'utf8'); } catch { return { ok: false, detail: 'file_missing' }; }
+  // CP-03 R7-S1-L6: a FIFO or a device at .secrets/<name> is refused at once, never read (a raw read hung)
+  try { text = readRegularFile(file, REGISTRY_READ_CAP).toString('utf8'); } catch (e) {
+    return { ok: false, detail: e && e.code && e.code !== 'ENOENT' ? 'file_unreadable' : 'file_missing' };
+  }
   const value = text.replace(/\r?\n$/, '');
   if (!value) return { ok: false, detail: 'file_empty' };
   return { ok: true, value, length: value.length };

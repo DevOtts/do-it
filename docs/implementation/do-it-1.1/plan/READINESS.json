@@ -1,0 +1,275 @@
+{
+  "schema": "do-it-readiness/1",
+  "decisions": [
+    {
+      "id": "D1",
+      "status": "RESOLVED"
+    },
+    {
+      "id": "D2",
+      "status": "RESOLVED"
+    },
+    {
+      "id": "D3",
+      "status": "RESOLVED"
+    },
+    {
+      "id": "D4",
+      "status": "RESOLVED"
+    },
+    {
+      "id": "D5",
+      "status": "RESOLVED"
+    },
+    {
+      "id": "D6",
+      "status": "RESOLVED"
+    },
+    {
+      "id": "D7",
+      "status": "RESOLVED"
+    },
+    {
+      "id": "D8",
+      "status": "RESOLVED"
+    },
+    {
+      "id": "D9",
+      "status": "RESOLVED"
+    },
+    {
+      "id": "D10",
+      "status": "RESOLVED"
+    },
+    {
+      "id": "D11",
+      "status": "RESOLVED"
+    },
+    {
+      "id": "D12",
+      "status": "RESOLVED"
+    },
+    {
+      "id": "D13",
+      "status": "RESOLVED"
+    },
+    {
+      "id": "D14",
+      "status": "RESOLVED"
+    }
+  ],
+  "preflight": {
+    "passed": true,
+    "evidence": "ENV-FACTS.md"
+  },
+  "credentials": [],
+  "owner_dependent_slices": 0,
+  "slices": [
+    {
+      "id": "S1",
+      "lane": "DevOtts/do-it",
+      "tier": "sonnet",
+      "class": "implementation",
+      "depends_on": [],
+      "depends_on_owner_answer": false,
+      "wave": "W0"
+    },
+    {
+      "id": "A1",
+      "lane": "DevOtts/build-it+conclude-it",
+      "tier": "opus",
+      "class": "hard",
+      "depends_on": [
+        "K1"
+      ],
+      "depends_on_owner_answer": false,
+      "wave": "W0"
+    },
+    {
+      "id": "B1",
+      "lane": "DevOtts/do-it",
+      "tier": "haiku",
+      "class": "deterministic",
+      "depends_on": [],
+      "depends_on_owner_answer": false,
+      "wave": "W0"
+    },
+    {
+      "id": "I1",
+      "lane": "DevOtts/init-it",
+      "tier": "haiku",
+      "class": "deterministic",
+      "depends_on": [],
+      "depends_on_owner_answer": false,
+      "wave": "W0"
+    },
+    {
+      "id": "E1",
+      "lane": "DevOtts/do-it",
+      "tier": "sonnet",
+      "class": "implementation",
+      "depends_on": [],
+      "depends_on_owner_answer": false,
+      "wave": "W0"
+    },
+    {
+      "id": "H1",
+      "lane": "DevOtts/prompt-it+reconcile-it+do-it",
+      "tier": "haiku",
+      "class": "deterministic",
+      "depends_on": [],
+      "depends_on_owner_answer": false,
+      "wave": "W0"
+    },
+    {
+      "id": "L1",
+      "lane": "DevOtts/plan-it",
+      "tier": "sonnet",
+      "class": "implementation",
+      "depends_on": [
+        "K1"
+      ],
+      "depends_on_owner_answer": false,
+      "wave": "W1"
+    },
+    {
+      "id": "V1",
+      "lane": "DevOtts/plan-it",
+      "tier": "sonnet",
+      "class": "implementation",
+      "depends_on": [
+        "K1"
+      ],
+      "depends_on_owner_answer": false,
+      "wave": "W1"
+    },
+    {
+      "id": "Q1",
+      "lane": "DevOtts/review-it",
+      "tier": "opus",
+      "class": "hard",
+      "depends_on": [
+        "L1"
+      ],
+      "depends_on_owner_answer": false,
+      "wave": "W2"
+    },
+    {
+      "id": "K1",
+      "lane": "DevOtts/doc-it",
+      "tier": "sonnet",
+      "class": "implementation",
+      "depends_on": [],
+      "depends_on_owner_answer": false,
+      "wave": "W0"
+    },
+    {
+      "id": "K2",
+      "lane": "DevOtts/conclude-it+plan-it+review-it+do-it",
+      "tier": "sonnet",
+      "class": "implementation",
+      "depends_on": [
+        "K1",
+        "V1",
+        "Q1"
+      ],
+      "depends_on_owner_answer": false,
+      "wave": "W2"
+    }
+  ],
+  "review_checkpoints": {
+    "schema": "review-checkpoints/1",
+    "policy": "CHECKPOINT-POLICY v1",
+    "inputs": {
+      "tasks": 55,
+      "epics": 11,
+      "waves": [
+        "W0",
+        "W1",
+        "W2"
+      ],
+      "flags": {
+        "cross_cutting": "touches seven repos (do-it spine, doc-it new, build-it close-in-place, conclude-it S4, plan-it gate-check, review-it) and the only path to 0-done",
+        "owner_gated": "D1 public init-it repo, D11 public doc-it repo, D3 prompt-it tag, D4 marketplace ref pins and the release tags need Fernando's yes",
+        "new_surface": "doc-it CLI (check archive/checkout/expiry, tiers), gate-check claims, review-it --audit mode, two new public repos (init-it, doc-it)",
+        "data": "status.json boards and finish-line rows are run state the owner reads as truth",
+        "money": null,
+        "security": null,
+        "prod_facing": "tagged releases of do-it and five companions installed by every session; the public README"
+      },
+      "merge_model": "incremental"
+    },
+    "score": {
+      "size": 3,
+      "complexity": 3,
+      "importance": 2,
+      "total": 8
+    },
+    "level": "full",
+    "count": 4,
+    "checkpoints": [
+      {
+        "id": "CP-01",
+        "kind": "wave",
+        "at": "after W0",
+        "review": "contract cases of the finished waves, on the merged tree",
+        "blocks": "slices that depend on W0 work, and promotion of W0 work",
+        "gates": [
+          "dependents",
+          "promotion"
+        ],
+        "covers": [
+          "W0"
+        ],
+        "evidence": "plan/reviews/CP-01-wave-w0.md"
+      },
+      {
+        "id": "CP-02",
+        "kind": "wave",
+        "at": "after W1",
+        "review": "contract cases of the finished waves, on the merged tree",
+        "blocks": "slices that depend on W1 work, and promotion of W1 work",
+        "gates": [
+          "dependents",
+          "promotion"
+        ],
+        "covers": [
+          "W1"
+        ],
+        "evidence": "plan/reviews/CP-02-wave-w1.md"
+      },
+      {
+        "id": "CP-03",
+        "kind": "adversarial",
+        "at": "after W2, before release",
+        "review": "adversarial: try to get a false pass through every gate and writer",
+        "blocks": "tag, publish or deploy",
+        "gates": [
+          "release"
+        ],
+        "covers": [
+          "W0",
+          "W1",
+          "W2"
+        ],
+        "evidence": "plan/reviews/CP-03-adversarial.md"
+      },
+      {
+        "id": "CP-04",
+        "kind": "pre-release",
+        "at": "after the last merge to main, before tag, publish or deploy",
+        "review": "the whole Test Contract on main, plus deploy-verify and the [REAL] cases on the released artifact when it is prod-facing",
+        "blocks": "tag, publish or deploy",
+        "gates": [
+          "release"
+        ],
+        "covers": [
+          "W0",
+          "W1",
+          "W2"
+        ],
+        "evidence": "plan/reviews/CP-04-pre-release.md"
+      }
+    ]
+  }
+}

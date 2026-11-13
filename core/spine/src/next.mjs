@@ -1,6 +1,6 @@
 import { appendEvent } from './events.mjs';
 import { fail } from './errors.mjs';
-import { finishLineUpsert, openRows, readFinishLine, renderBoard, rowClosed, writeFinishLine } from './finish-line.mjs';
+import { adoptsUnattributed, findRow, finishLineUpsert, hasRow, openRows, readFinishLine, renderBoard, rowClosed, rowsForRun, writeFinishLine } from './finish-line.mjs';
 import { ladderRetry, RETRY_REASON } from './ladder.mjs';
 import { loadPipeline } from './pipeline.mjs';
 import { CLASS_TIER, rereadReadiness } from './readiness.mjs';
@@ -47,16 +47,18 @@ export function nextSlice(ctx, state, runId) {
 export function nextWave(ctx, state, runId, fl) {
   const pipe = loadPipeline(ctx, state.preset);
   if (!pipe || !pipe.steps.length) return { pipe: null };
+  // a 1.1 run seeds and reads only its own rows; a 1.0.x board's rows with the same step ids are not its own
+  const adopt = adoptsUnattributed(state);
   let seeded = false;
   for (const st of pipe.steps) {
-    if (!fl.rows.some((r) => r.id === st.id)) { finishLineUpsert(fl, st.id, { kind: 'wave' }); seeded = true; }
+    if (!hasRow(fl, st.id, runId, adopt)) { finishLineUpsert(fl, st.id, { kind: 'wave' }, runId, adopt); seeded = true; }
   }
   if (seeded) writeFinishLine(ctx, fl);
-  const rowOf = (id) => fl.rows.find((r) => r.id === id);
+  const rowOf = (id) => findRow(fl, id, runId, adopt);
   for (const st of pipe.steps) {
     const row = rowOf(st.id);
     if (row.state !== 'OPEN') continue;
-    if (!st.needs.every((n) => rowClosed(rowOf(n)))) continue;
+    if (!st.needs.every((n) => { const r = rowOf(n); return !!r && rowClosed(r); })) continue;
     const type = st.type || 'persona';
     const klass = st.class || STEP_CLASS[type] || 'implementation';
     return {
@@ -92,7 +94,7 @@ export function cmdNext(ctx, args) {
   if (state.status === 'PARKED') return { outcome: 'NEXT', exit: 3, run_id: runId, action: 'NONE', reason: 'parked' };
   if (state.status === 'NEEDS_HUMAN') return { outcome: 'NEXT', exit: 2, run_id: runId, action: 'NONE', reason: 'needs_human' };
   if (state.status === 'BLOCKED') {
-    const fl = readFinishLine(ctx);
+    const fl = rowsForRun(readFinishLine(ctx), runId, adoptsUnattributed(state));
     return { outcome: 'BLOCKED', exit: 3, run_id: runId, action: 'NONE', reason: 'blocked', board: renderBoard(fl) };
   }
 
@@ -107,7 +109,11 @@ export function cmdNext(ctx, args) {
     };
   }
 
-  const fl = readFinishLine(ctx);
+  const board = readFinishLine(ctx);
+  // this run's rows only: another run's rows never decide it, and an unattributed row of an older board counts
+  // only for a legacy run, the one run that may adopt it (CP-03 R3-S1-M6, the same rule as seeding)
+  const adopt = adoptsUnattributed(state);
+  const fl = rowsForRun(board, runId, adopt);
   if (state.slices.length) {
     const out = nextSlice(ctx, state, runId);
     if (out) return out;
@@ -118,8 +124,9 @@ export function cmdNext(ctx, args) {
     return none(runId, 'awaiting_verification', { board: renderBoard(fl) });
   }
 
-  const wave = nextWave(ctx, state, runId, fl);
+  const wave = nextWave(ctx, state, runId, board);
   if (wave.out) return wave.out;
+  fl.rows = rowsForRun(board, runId, adopt).rows;
   if (wave.pipe) {
     if (!openRows(fl).length) return { outcome: 'FINISH_LINE_REACHED', exit: 0, run_id: runId, action: 'NONE', board: renderBoard(fl) };
     return none(runId, 'waiting', { board: renderBoard(fl) });

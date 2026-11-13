@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { appendEvent } from './events.mjs';
 import { fail } from './errors.mjs';
-import { atomicWrite, atomicWriteJson, readJsonIfExists } from './fs-atomic.mjs';
+import { STATE_READ_CAP, atomicWrite, atomicWriteJson, readJsonIfExists, readText } from './fs-atomic.mjs';
 import { packPath, packIdOf } from './pack.mjs';
 import { parseReply } from './reply.mjs';
 import { loadSchemaFile, validateSchema } from './schema.mjs';
@@ -29,7 +29,7 @@ export function packGuard(ctx, runId, pack) {
   const rec = readJsonIfExists(renderRecordPath(ctx, runId));
   let shown = rec ? rec.pack_id : null;
   if (rec && rec.file && fs.existsSync(rec.file) && fs.statSync(rec.file).isFile()) {
-    const text = fs.readFileSync(rec.file, 'utf8');
+    const text = readText(rec.file);
     const m = /name="pack-id" content="([0-9a-f]+)"/.exec(text) || /<!-- pack-id: ([0-9a-f]+) -->/.exec(text);
     if (m) shown = m[1];
   }
@@ -56,13 +56,19 @@ export function cmdAnswer(ctx, args) {
   const runId = selectRunId(ctx, f);
   const state = loadState(ctx, runId);
   const pack = loadPackChecked(ctx, runId);
-  if (!pack.questions.length) return { outcome: 'NO_QUESTIONS', exit: 0, run_id: runId };
+  if (!pack.questions.some((q) => q.status !== 'withdrawn')) return { outcome: 'NO_QUESTIONS', exit: 0, run_id: runId };
   if (hasReply || f.finalize) return answerApply(ctx, runId, state, pack, f, hasReply);
   return answerRender(ctx, runId, state, pack, f);
 }
 
-function answerApply(ctx, runId, state, pack, f, hasReply) {
-  const packId = packGuard(ctx, runId, pack);
+// Withdrawn questions stay in owner-pack.json (and in its id) but are never asked or counted.
+function activePack(pack) {
+  return { ...pack, questions: pack.questions.filter((q) => q.status !== 'withdrawn') };
+}
+
+function answerApply(ctx, runId, state, fullPack, f, hasReply) {
+  const packId = packGuard(ctx, runId, fullPack);
+  const pack = activePack(fullPack);
   const byN = new Map(pack.questions.map((q) => [q.n, q]));
   const existing = readAnswers(ctx, runId).filter((a) => byN.has(a.n));
   const have = new Map(existing.map((a) => [a.n, a]));
@@ -124,8 +130,8 @@ function answerApply(ctx, runId, state, pack, f, hasReply) {
   if (errors.length) throw fail('ANSWER_INVALID', 1, { errors });
   const text = JSON.stringify(doc, null, 2) + '\n';
   const file = answersPath(ctx, runId);
-  const before = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null;
-  if (before !== text) atomicWrite(file, text);
+  const before = fs.existsSync(file) ? readText(file) : null;
+  if (before !== text) atomicWrite(file, text, { cap: STATE_READ_CAP });
   for (const n of added) {
     const a = have.get(n);
     emit(ctx, runId, state, a.source === 'default' ? 'default_applied' : 'answer_recorded', a.source, { n, answer: a.answer, source: a.source });
@@ -145,7 +151,8 @@ function renderTo(ctx, runId, mode, file, content) {
   return file;
 }
 
-function answerRender(ctx, runId, state, pack, f) {
+function answerRender(ctx, runId, state, fullPack, f) {
+  const pack = activePack(fullPack);
   const settings = loadSettings(ctx, []).values;
   const nativeMax = f['native-max'] === undefined ? 4 : Number(f['native-max']);
   if (!Number.isInteger(nativeMax) || nativeMax < 0) throw fail('USAGE', 1, { message: '--native-max must be a non-negative integer' });
@@ -156,7 +163,7 @@ function answerRender(ctx, runId, state, pack, f) {
   if (requested === 'auto') chain = fallback.slice();
   else chain = [requested, ...fallback.filter((m) => m !== requested && m !== 'native')];
   if (!chain.includes('markdown')) chain.push('markdown');
-  const packId = packIdOf(pack.questions);
+  const packId = packIdOf(fullPack.questions);
   const dir = runDir(ctx, runId);
   for (const mode of chain) {
     if (mode === 'native') {

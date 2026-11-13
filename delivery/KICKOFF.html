@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="planit-source" content="KICKOFF.md sha256=1a96f13316a014c2a6e98fe7ca7d4aa3ba349be6f9c026ffef015ddc45a5e558">
-<meta name="planit-embeds" content="KICKOFF.md sha256=1a96f13316a014c2a6e98fe7ca7d4aa3ba349be6f9c026ffef015ddc45a5e558">
+<meta name="planit-source" content="KICKOFF.md sha256=c4f9e4059139c512cc117cf245d6f4d0492a5db6ee1525aa391e91d1febfd05a">
+<meta name="planit-embeds" content="KICKOFF.md sha256=c4f9e4059139c512cc117cf245d6f4d0492a5db6ee1525aa391e91d1febfd05a">
 <meta name="planit-brand" content="default sha256=0206fd2d74525ffb33ff4fc010fe2ce6bb978ebe8a5674fc7ec0ed5d20eccb58">
 <meta name="planit-renderer" content="build-report.mjs/4.0.0 template sha256=ebfa958749844845bc46643049a546fdd9d68de69f36452b7babc089e0a9a410">
 <meta name="planit-kind" content="KICKOFF">
@@ -243,56 +243,15 @@ pre.mermaid{background:var(--chip);border-radius:8px;padding:.8rem 1rem;font-fam
 <tr><td>M3</td><td>core-logic model 3: conductor ceiling</td><td>CONTRACT.md</td></tr></table></div></details>
 <h2>KICKOFF</h2>
 <details class="more" open><summary>KICKOFF.md (full text)</summary><div class="mdout"><script type="text/markdown">
-# KICKOFF: do-it v1 build
+# KICKOFF: superseded
 
-Legend: G-n governance rule · T-EID-NN test case · Wn wave · Rn default · Dn ruling — see GLOSSARY.md
+This is the stale do-it 1.0.0 kickoff. It is no longer a build prompt.
 
-## 0. Pinning (re-derive from disk first; stop and report on any mismatch)
-- Repo: `/Users/macbook/Workspace/Devotts/do-it` @ no git history yet. **Step 1 of the build is `git init`, a first commit of the planning package, and recording that SHA here.**
-- Run state: `/Users/macbook/Workspace/Devotts/do-it/.plan-it/do-it-v1.state.json` (state `freeze`, contract v1.1, gates <abbr class="gl" title="gate G0: anamnesis questionnaire">G0</abbr> to <abbr class="gl" title="gate G4: plan review">G4</abbr> recorded)
-- CONTRACT: `delivery/CONTRACT.md` v1.1, <abbr class="gl" title="cryptographic hash used to pin the CONTRACT">SHA-256</abbr> `e9a485e28a8bd16f1034c09c339f0cfb8855b5613504e7f859dafb7c42f98e5d`
-- First numbered step for the builder: recompute the CONTRACT <abbr>SHA-256</abbr>, recount the test cases (`node gate-check.mjs handoff delivery/` must report 352 distinct IDs), and re-read `STATUS.md`. If anything differs, stop and report; do not rebuild from memory.
+The current kickoff for the do-it 1.1 build is in the 1.1 planning package:
 
-## 1. One line
-do-it is the conductor of the DevOtts harness: one message in, a verified feature out, on Claude Code, Codex, OpenCode and Engine, token-optimized, with everything in `.do-it/` and a marketing-grade README.
+- `docs/implementation/do-it-1.1/delivery/KICKOFF.md`
 
-## 2. What to read, in order
-1. `delivery/CONTRACT.md` (the law; never edit, file amendments to the orchestrator)
-2. `docs/03-data-model-and-contract.md`, `docs/02-vision-and-architecture.md`, `docs/05-components.md`
-3. `delivery/00-program-plan.md`, `delivery/STATUS.md`, `delivery/DECISIONS.md`, `delivery/PLAN-REVIEW.md`
-4. Your squad's PRD and epics under `delivery/prds/` and `delivery/epics/` (352 binding cases across 20 epics)
-5. `delivery/README-SPEC.md` for epic <abbr class="gl" title="epic R1: README and assets (also default R-numbers R1 to R8 in DECISIONS.md share the R prefix; epics R1 to R4 are the ship lane)">R1</abbr>; `docs/research/11-host-cli-probe.md` for every host fact
-6. Deep background if needed: `docs/implementation/do-it-v1/` (design memo, token discipline, research 01 to 09)
-
-## 3. Waves and first slice
-<abbr class="gl" title="wave 0: S1, S3, H0, R2">W0</abbr>: <abbr class="gl" title="epic S1: state, schemas, settings, doctor">S1</abbr>, <abbr class="gl" title="epic S3: record, gate, evidence, conclude">S3</abbr>, <abbr class="gl" title="epic H0: host interface and conformance">H0</abbr>, <abbr class="gl" title="epic R2: plugin shell, marketplace, companions (also default R-numbers R1 to R8 in DECISIONS.md share the R prefix; epics R1 to R4 are the ship lane)">R2</abbr>. <abbr class="gl" title="wave 1: S2, S5, P2, H1, R4 skeleton">W1</abbr>: <abbr class="gl" title="epic S2: router, next, finish-line, stop-gate">S2</abbr>, <abbr class="gl" title="epic S5: handoff, park, resume, ceilings, secrets">S5</abbr>, <abbr class="gl" title="epic P2: tier policy, briefs, meter">P2</abbr>, <abbr class="gl" title="epic H1: claude-code adapter">H1</abbr>, <abbr class="gl" title="epic R4: fixtures and e2e (also default R-numbers R1 to R8 in DECISIONS.md share the R prefix; epics R1 to R4 are the ship lane)">R4</abbr> skeleton. <abbr class="gl" title="wave 2: S4, P1, P4, H2, H3, N2">W2</abbr>: <abbr class="gl" title="epic S4: owner pack, answer, renderers">S4</abbr>, <abbr class="gl" title="epic P1: pipelines and personas">P1</abbr>, <abbr class="gl" title="epic P4: review-loop convergence">P4</abbr>, <abbr class="gl" title="epic H2: codex adapter">H2</abbr>, <abbr class="gl" title="epic H3: opencode adapter">H3</abbr>, <abbr class="gl" title="epic N2: StateStore and backends">N2</abbr>. <abbr class="gl" title="wave 3: P3, N1, N3, R3">W3</abbr>: <abbr class="gl" title="epic P3: cache">P3</abbr>, <abbr class="gl" title="epic N1: engine adapter">N1</abbr>, <abbr class="gl" title="epic N3: Engine-layer handoff and replay">N3</abbr>, <abbr class="gl" title="epic R3: companion-change catalog (also default R-numbers R1 to R8 in DECISIONS.md share the R prefix; epics R1 to R4 are the ship lane)">R3</abbr>. <abbr class="gl" title="wave 4: R1, R4 completion, release gates">W4</abbr>: <abbr>R1</abbr> (needs measured fixtures), <abbr>R4</abbr> completion, release gates v0.1 to v0.4.
-First vertical slice: a small feature through intake, plan, ratify via owner pack, one build slice, verification with evidence and conclude on `claude-code`, writing `it-result/1` at each stage and a token meter. That is the v0.1 done-when in `docs/06-roadmap-and-open-questions.md`.
-
-## 4. Repo map and lanes
-Lane paths are in CONTRACT section 5 and amended in section 11 (<abbr class="gl" title="contract amendment 2 folded into v1.1 (CONTRACT.md section 11)">A2</abbr>): <abbr class="gl" title="lane 1: squad spine">L1</abbr> `core/spine`, `core/schemas`, `core/renderers`, `core/drivers`; <abbr class="gl" title="lane 2: squad economy">L2</abbr> `core/pipelines|personas|routing|cache` and `core/renderers/attended-gate`; <abbr class="gl" title="lane 3: squad hosts-a">L3</abbr> `hosts/_interface`, `hosts/claude-code`, `hosts/codex`, `hosts/opencode`; <abbr class="gl" title="lane 4: squad engine">L4</abbr> `hosts/engine`, `core/state-stores`; <abbr class="gl" title="lane 5: squad ship">L5</abbr> `README.md`, `assets`, `plugins`, `.claude-plugin`, `scripts`, `tests`, root SKILL.md, LICENSE, CHANGELOG. One writer per path. Nothing under `core/` names a harness (<abbr class="gl" title="governance rule number in delivery/CONTRACT.md">G-12</abbr>). Nothing in Engine-Core is edited except `docs/implementation/do-it-engine-layer/`. Sibling plugin repos are not edited by this program: <abbr>R3</abbr> produces a change catalog only.
-
-## 5. Locked decisions (do not re-ask)
-<abbr class="gl" title="owner ruling 1 in DECISIONS.md">D1</abbr> to <abbr class="gl" title="owner ruling 21 in DECISIONS.md">D21</abbr> in `delivery/DECISIONS.md`. The ones that bite: Node single-file spine (<abbr>D1</abbr>); block, not warn, on ceiling, untiered spawn, fat-context wake and unaccounted close (<abbr class="gl" title="owner ruling 3 in DECISIONS.md">D3</abbr>); hosts are four (<abbr class="gl" title="owner ruling 6 in DECISIONS.md">D6</abbr>); owner pack `auto` (<abbr class="gl" title="owner ruling 7 in DECISIONS.md">D7</abbr>); review rounds 3 (<abbr class="gl" title="owner ruling 9 in DECISIONS.md">D9</abbr>); stop-gate patience 3 (<abbr class="gl" title="owner ruling 10 in DECISIONS.md">D10</abbr>); no warm cloud box (<abbr class="gl" title="owner ruling 15 in DECISIONS.md">D15</abbr>); Hermes and OpenClaw are out (<abbr>D6</abbr>, <abbr class="gl" title="governance rule number in delivery/CONTRACT.md">G-14</abbr>). Defaults <abbr>R1</abbr> to <abbr class="gl" title="default R8: tier-to-model map per host">R8</abbr> stand. Open and not blocking: <abbr class="gl" title="open question 1: reference video">O1</abbr> reference video, <abbr class="gl" title="open question 2: Engine adjustments to apply">O2</abbr> Engine adjustments to apply, <abbr class="gl" title="open question 3: marketing channels">O3</abbr> marketing channels.
-
-## 6. Gotchas
-- The plan-it write hook denies bare `claude-` words in deliverables; wrap them in backticks (`claude-code`), and never write literal model IDs: use tiers <abbr class="gl" title="tier 1, powerful">T1</abbr>/<abbr class="gl" title="tier 2, balanced">T2</abbr>/<abbr class="gl" title="tier 3, cheap">T3</abbr>.
-- Plugin `dependencies` validates, but install-time resolution is unverified: <abbr class="gl" title="test case ID, epic then two digits (T-S1-01)">T-R2-11</abbr> records the truth and the README wording depends on it.
-- Codex and OpenCode have no confirmed stop-hook equivalent: the stop-gate is a conductor checklist there (<abbr class="gl" title="default R5: Codex and OpenCode stop-gate is a conductor checklist">R5</abbr>). Their real exit codes are undocumented.
-- Token usage shapes of the three CLIs are inferred from binaries, not docs; meter cases may end IMPLEMENTED-NOT-VERIFIED.
-- `deploy-it` and `reconcile-it` repos do not exist yet; keep them `planned` in `companions.json`.
-- A plaintext Notion token sits in the owner's `~/.config/opencode/opencode.jsonc` (outside this repo): never read or print that file; the owner is rotating it.
-- Tests for each lane live in the lane (CONTRACT section 11, <abbr>A2</abbr>); `tests/**` is <abbr>L5</abbr> end-to-end only.
-
-## 7. How to run it (RUN-POLICY in CONTRACT)
-Orchestrator is a fresh <abbr>T2</abbr> session (never the top model as a default). Squads are <abbr>T2</abbr> in their own worktree after the first commit (worktrees only, reap on merge). Escalate a slice to <abbr>T1</abbr> once if a lower tier fails its contract; log it. Write results to disk and finish with a content-bearing message; verify files on disk before advancing STATUS (idle is not delivered). On a usage limit: persist state to `.plan-it/` and `delivery/STATUS.md`, schedule a wake-up about every 30 minutes, and resume from the state files without waiting for the owner. Commit messages end with the attribution lines from the session; PR bodies end with the generated-with line.
-
-## 8. Handoff state
-Planning is complete and ratified: 20 epics, 352 cases, 101 marked `[REAL]`; all plan-it gates pass; STATUS shows every epic NOT-STARTED. Nothing is built.
-
-## 9. Launch prompt (paste into the new session)
-```
-/build-it Build the do-it v1 plugin from the delivery package at /Users/macbook/Workspace/Devotts/do-it. First read delivery/KICKOFF.md and follow section 0 (git init, commit, record the SHA, re-derive the CONTRACT SHA-256 and the 352-case tally, stop on mismatch). The law is delivery/CONTRACT.md v1.1. Definition of Done: 100 percent of every epic's Test Contract in delivery/epics/ (S1-S5, P1-P4, H0-H3, N1-N3, R1-R4), each case VERIFIED with run output, or IMPLEMENTED-NOT-VERIFIED with the reason for the [REAL] cases whose live target is unreachable; gate-check handoff and adversary stay clean; the README (epic R1) follows delivery/README-SPEC.md and claims only what a fixture measured. Orchestrate with waves W0 to W4 from delivery/00-program-plan.md using T2 squads in worktrees, escalate hard pieces to T1 once, keep delivery/STATUS.md current, write the per-criterion report at the end, and do not stop until every STATUS row is VERIFIED, IMPLEMENTED-NOT-VERIFIED with a reason, or BLOCKED with a reason. Run unattended: on a usage limit persist state and schedule your own wake-ups every 30 minutes. Do not edit Engine-Core outside docs/implementation/do-it-engine-layer/ and do not edit sibling plugin repos.
-```
+Start from that file, not from this one. Its pinning block and launch prompt are the ones to use.
 
 </script></div></details>
 <p class="footer">html-blocks=0</p>

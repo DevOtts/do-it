@@ -1,35 +1,55 @@
 #!/usr/bin/env node
-// Stop hook (G-9). Exit 2 with a reason on stderr refuses the stop; exit 0 allows it.
-// After `patience` refusals without progress it calls spine `park` and allows the stop.
-// The gate is scoped to this session and cwd: it only ever refuses the run they own.
-// The refusal counter is a host-side file (the spine alone writes state.json, G-1).
+// Stop hook (G-9): a thin mapper over spine `gate stop`. Exit 2 with the reason and board on stderr
+// refuses the stop; exit 0 allows it.
+//   STOP_REFUSED          -> exit 2
+//   PARKED, STOP_ALLOWED  -> exit 0
+// The spine alone decides when patience is reached: it counts refusals per run, resets that count when the
+// run's rows changed (progress), and parks each run on its own (CONTRACT 3.1). This hook keeps no counter
+// and never calls `park` (CP-03 R3-S1-H5: a host-side counter ignored progress and parked the wrong run).
+// A `stop-refusals.json` left by an older hook is never read or written again; it is harmless.
+// The gate is scoped to this session: the hook passes its session id and cwd, and the spine looks in every
+// home the session's runs were started in, not only the cwd's (R3-S1-H7).
 // An unreachable or unintelligible spine fails open: a broken gate must not trap the session.
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { callSpine, readStdinJson } from './_spine.mjs';
+// The spine is spawned from the plugin root, never from the host's cwd: that folder may be gone (a removed
+// worktree) or not enterable, and the spine must still gate the session's runs through its registry
+// (CP-03 R5-S1-M11). The host's cwd reaches the spine only as --cwd.
+import { PLUGIN_ROOT, callSpine, readStdinJson } from './_spine.mjs';
 
 const input = readStdinJson();
-const cwd = input.cwd || process.cwd();
-const dir = join(process.env.DO_IT_HOME || cwd, '.do-it', 'host-claude-code');
-const file = join(dir, 'stop-refusals.json');
-const key = input.session_id || 'session';
+// a blank or whitespace session id is no session (CP-03 S1-L2)
+const sessionId = typeof input.session_id === 'string' && input.session_id.trim() ? input.session_id.trim() : null;
+let cwd = typeof input.cwd === 'string' && input.cwd ? input.cwd : null;
+if (!cwd) { try { cwd = process.cwd(); } catch { cwd = null; } }
+// with neither a session nor a cwd there is nothing to scope the gate to (the spine would read the plugin's own folder)
+if (!sessionId && !cwd) process.exit(0);
 
-const load = () => { try { return JSON.parse(readFileSync(file, 'utf8')); } catch { return {}; } };
-const save = (n) => { mkdirSync(dir, { recursive: true }); writeFileSync(file, JSON.stringify({ ...load(), [key]: n })); };
-
-const { json } = callSpine(['gate', 'stop', '--session', key, '--cwd', cwd, '--json'], cwd);
+const { json, overflow } = callSpine(['gate', 'stop', ...(sessionId ? ['--session', sessionId] : []), ...(cwd ? ['--cwd', cwd] : []), '--json'], PLUGIN_ROOT);
 const outcome = json && json.outcome;
-const patience = Number(json?.patience ?? process.env.DO_IT_STOP_PATIENCE ?? 3);
+// CP-03 R9-L-b: a runs folder that exists but cannot be listed is reported; only the runs the session
+// registry names there were gated
+const unlistable = json && Array.isArray(json.runs_unlistable) ? json.runs_unlistable : [];
+if (unlistable.length) {
+  process.stderr.write('do-it stop gate: runs_unlistable: ' + unlistable.map((u) => String(u.home || 'the runs folder') + ' (' + String(u.error) + '; gated from the registry: ' + ((u.registry_runs || []).join(', ') || 'none') + ')').join('; ') + '\n');
+}
 
 if (outcome === 'STOP_REFUSED') {
-  const count = json.progress === true ? 0 : (Number(load()[key]) || 0);
-  if (count >= patience) {
-    callSpine(['park', ...(json.run_id ? ['--run', json.run_id] : []), '--reason', 'stop-gate patience reached without progress', '--json'], cwd);
-    process.exit(0);
-  }
-  save(count + 1);
-  process.stderr.write(`${json.reason || 'Finish-line rows are still open.'}\n${json.board ? json.board + '\n' : ''}Keep working; stop is refused (${count + 1} of ${patience}).\n`);
+  const count = Number.isFinite(Number(json.stop_refusals)) ? Number(json.stop_refusals) : null;
+  const patience = Number.isFinite(Number(json.patience)) ? Number(json.patience) : null;
+  const tally = count !== null && patience !== null ? ` (${count} of ${patience} without progress)` : '';
+  process.stderr.write(`${json.reason || 'Finish-line rows are still open.'}\n${json.board ? json.board + '\n' : ''}Keep working; stop is refused${tally}.\n`);
   process.exit(2);
 }
-if (outcome === 'STOP_ALLOWED') save(0);
+// CP-03 R6-S1-L2: only an answer that lists open rows is longer than the spine's 64 MiB buffer: a refusal, or a
+// park (the next stop then finds the run PARKED, which does not gate)
+if (overflow) {
+  process.stderr.write('do-it stop gate: the spine\'s answer was too large to read, which only a refusal with a very large board can be. Keep working; stop is refused.\n');
+  process.exit(2);
+}
+// CP-03 R5-S1-M10: a spine that gave no answer (timeout, crash) still fails open, but says so
+if (!outcome) process.stderr.write('do-it stop gate: the spine gave no answer, so this stop is allowed unchecked.\n');
+// CP-03 R7-S1-L5: a stop allowed because a run's refusal could not be written says so
+const lost = json && Array.isArray(json.unwritable) ? json.unwritable.filter((u) => u && !u.refused) : [];
+if (outcome === 'STOP_ALLOWED' && lost.length) {
+  process.stderr.write('do-it stop gate: this stop is allowed because the refusal could not be written for: ' + lost.map((u) => String(u.run_id) + ' (' + String(u.error) + ')').join('; ') + '\n');
+}
 process.exit(0);

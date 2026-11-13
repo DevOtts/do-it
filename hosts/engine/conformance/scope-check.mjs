@@ -1,17 +1,18 @@
 #!/usr/bin/env node
-// Scope check on Engine-Core (CONTRACT s5, D21): this program may touch only docs/implementation/do-it-engine-layer/.
+// Scope check on the pilot consumer repo (CONTRACT s5, D21): this program may touch only docs/implementation/do-it-engine-layer/.
 // Changed = git status paths (modified and untracked) plus paths committed since the baseline HEAD. Each path
-// outside the lane must be attributed to another program in engine-core-baseline.json, else the result is
+// outside the lane must be attributed to another program in pilot-baseline.json, else the result is
 // NEEDS_HUMAN (exit 2, never a guess). With --strict the baseline is ignored: any outside path is OUTSIDE_LANE (exit 1).
 // Usage: node scope-check.mjs [--repo DIR] [--baseline FILE] [--strict]
 import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { pilotRepo, PILOT_UNSET } from './pilot.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 export const LANE = 'docs/implementation/do-it-engine-layer/';
-export const DEFAULT_REPO = '/Users/macbook/Workspace/Engine/Engine-Core';
+export const DEFAULT_REPO = pilotRepo();
 
 const git = (repo, ...a) => execFileSync('git', ['-C', repo, ...a], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
 
@@ -42,8 +43,9 @@ function main() {
   const argv = process.argv.slice(2);
   const arg = (k, d) => { const i = argv.indexOf(k); return i < 0 ? d : argv[i + 1]; };
   const repo = arg('--repo', DEFAULT_REPO);
+  if (!repo) { console.log(PILOT_UNSET); process.exit(3); }
   const strict = argv.includes('--strict');
-  const baseline = JSON.parse(readFileSync(arg('--baseline', join(HERE, 'engine-core-baseline.json')), 'utf8'));
+  const baseline = JSON.parse(readFileSync(arg('--baseline', join(HERE, 'pilot-baseline.json')), 'utf8'));
   const r = checkScope({ repo, baseline, strict });
   console.log(`outside_changes: ${r.unexplained.length}`);
   console.log(`attributed_to_other_programs: ${r.attributed.length}`);

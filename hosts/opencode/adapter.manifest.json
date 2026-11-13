@@ -1,6 +1,9 @@
 {
   "host": "opencode",
-  "version": "1.0.5",
+  "version": "1.1.0",
+  "display": "OpenCode",
+  "level": "supported",
+  "note": "sequential passes, Markdown owner pack, park instead of wake",
   "calls": {
     "spawn": {
       "input": {

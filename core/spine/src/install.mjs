@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { fail } from './errors.mjs';
-import { atomicWrite, atomicWriteJson } from './fs-atomic.mjs';
+import { BULK_READ_CAP, atomicWrite, atomicWriteJson, readRegularFile, readText } from './fs-atomic.mjs';
 import { sha256File } from './hash.mjs';
 import { DO_IT_VERSION } from './version.mjs';
 
@@ -13,13 +13,15 @@ export function installSource() {
   return path.join(path.dirname(self), '..', 'do-it.mjs');
 }
 
-export function cmdInstall(ctx) {
+export function cmdInstall(ctx, args = { flags: {} }) {
   const source = installSource();
   if (!fs.existsSync(source)) throw fail('INSTALL_NO_BUILD', 1, { message: 'run node core/spine/build.mjs first', source });
   const binDir = ctx.env.DO_IT_BIN_DIR ? path.resolve(ctx.cwd, ctx.env.DO_IT_BIN_DIR) : path.join(ctx.userHome, '.do-it', 'bin');
   const dest = path.join(binDir, 'do-it');
+  // --dry-run never touches disk: it reports the plan only (CP-04 part A, D1).
+  if (args && args.flags && args.flags['dry-run']) return { outcome: 'INSTALL_PLANNED', exit: 0, dry_run: true, bin_dir: binDir, path: dest, version: DO_IT_VERSION, source };
   fs.mkdirSync(binDir, { recursive: true });
-  atomicWrite(dest, fs.readFileSync(source));
+  atomicWrite(dest, readRegularFile(source, BULK_READ_CAP));
   fs.chmodSync(dest, 0o755);
   let printed = '';
   try {
@@ -37,7 +39,7 @@ function loadCompanions(ctx) {
     path.join(ctx.root, 'core', 'companions.json'),
   ];
   for (const file of candidates) {
-    if (fs.existsSync(file)) return JSON.parse(fs.readFileSync(file, 'utf8'));
+    if (fs.existsSync(file)) return JSON.parse(readText(file));
   }
   throw fail('INSTALL_NO_COMPANIONS', 1, { message: 'core/companions.json not found', tried: candidates });
 }
@@ -51,13 +53,17 @@ export function cmdInstallCompanions(ctx, args) {
   const required = loadCompanions(ctx).companions.filter((c) => c.required);
   const stateFile = path.join(ctx.home, 'companions-installed.json');
   let done = {};
-  try { done = JSON.parse(fs.readFileSync(stateFile, 'utf8')); } catch { done = {}; }
+  try { done = JSON.parse(readText(stateFile)); } catch { done = {}; }
   const have = new Set(done[host] || []);
   const cmdOf = (c) => ['skills', 'add', c.repo, '-a', host];
   const todo = required.filter((c) => !have.has(c.name));
   const finished = required.filter((c) => have.has(c.name)).map((c) => c.name);
   if (dry) {
-    return { outcome: 'INSTALL_DRY_RUN', exit: 0, host, lines: todo.map((c) => 'npx ' + cmdOf(c).join(' ')) };
+    // Optional companions are listed (never installed by this command) so the owner can opt in by hand.
+    const optional = loadCompanions(ctx).companions.filter((c) => !c.required && c.status === 'published');
+    const lines = todo.map((c) => 'npx ' + cmdOf(c).join(' '));
+    for (const c of optional) lines.push('optional: npx ' + cmdOf(c).join(' ') + '  # ' + c.name + ' ' + c.version);
+    return { outcome: 'INSTALL_DRY_RUN', exit: 0, host, lines };
   }
   for (const c of todo) {
     const r = cp.spawnSync('npx', cmdOf(c), { encoding: 'utf8', env: ctx.env, stdio: ['ignore', 'pipe', 'pipe'] });

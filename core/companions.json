@@ -3,7 +3,7 @@
   "marketplace": "devotts",
   "self": {
     "name": "do-it",
-    "version": "1.0.5"
+    "version": "1.1.0"
   },
   "companions": [
     {
@@ -17,7 +17,7 @@
     {
       "name": "plan-it",
       "repo": "DevOtts/plan-it",
-      "version": "5.2.0",
+      "version": "5.3.0",
       "required": true,
       "status": "published",
       "skill_dir": "plugins/plan-it"
@@ -25,7 +25,7 @@
     {
       "name": "build-it",
       "repo": "DevOtts/build-it",
-      "version": "4.1.3",
+      "version": "4.2.0",
       "required": true,
       "status": "published",
       "skill_dir": "plugins/build-it"
@@ -33,7 +33,7 @@
     {
       "name": "review-it",
       "repo": "DevOtts/review-it",
-      "version": "2.1.1",
+      "version": "2.2.0",
       "required": true,
       "status": "published",
       "skill_dir": "plugins/review-it"
@@ -41,7 +41,7 @@
     {
       "name": "conclude-it",
       "repo": "DevOtts/conclude-it",
-      "version": "2.1.1",
+      "version": "2.2.0",
       "required": true,
       "status": "published",
       "skill_dir": "plugins/conclude-it"
@@ -65,10 +65,26 @@
     {
       "name": "reconcile-it",
       "repo": "DevOtts/reconcile-it",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "required": false,
       "status": "published",
       "skill_dir": "plugins/reconcile-it"
+    },
+    {
+      "name": "init-it",
+      "repo": "DevOtts/init-it",
+      "version": "0.1.0",
+      "required": false,
+      "status": "published",
+      "skill_dir": "plugins/init-it"
+    },
+    {
+      "name": "doc-it",
+      "repo": "DevOtts/doc-it",
+      "version": "0.1.0",
+      "required": false,
+      "status": "published",
+      "skill_dir": "plugins/doc-it"
     }
   ]
 }

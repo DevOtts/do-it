@@ -1,0 +1,249 @@
+<title>Plano do-it 1.1</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,600&display=swap">
+<style>
+/* Layout: one reading column; decisions first as an operable table, then the plan, then the evidence. */
+:root{
+  --bg:#f6f7f5; --surface:#ffffff; --fg:#1b2420; --muted:#5b6862; --line:#dde3df;
+  --accent:#0f6b5c; --accent-soft:#e3f1ee;
+  --warn:#9a5b00; --warn-soft:#fbf0dc; --bad:#a8322a; --bad-soft:#fbe6e3; --ok:#2d6a2f; --ok-soft:#e5f2e3;
+  --display:"Fraunces",Georgia,serif; --sans:"IBM Plex Sans",system-ui,-apple-system,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121715; --surface:#1a211e; --fg:#e4ebe7; --muted:#9aa8a1; --line:#2c3632;
+  --accent:#5cc4ae; --accent-soft:#183a33; --warn:#e0a84a; --warn-soft:#3a2d16; --bad:#ef8a80; --bad-soft:#3d1f1c; --ok:#8fcf8f; --ok-soft:#1d3320; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121715; --surface:#1a211e; --fg:#e4ebe7; --muted:#9aa8a1; --line:#2c3632;
+  --accent:#5cc4ae; --accent-soft:#183a33; --warn:#e0a84a; --warn-soft:#3a2d16; --bad:#ef8a80; --bad-soft:#3d1f1c; --ok:#8fcf8f; --ok-soft:#1d3320; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:15px/1.6 var(--sans);margin:0}
+.wrap{max-width:980px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:40px 72px}
+h1{font:600 clamp(28px,4.4vw,40px)/1.15 var(--display);margin:0 0 8px;text-wrap:balance}
+h2{font:600 22px/1.25 var(--display);margin:48px 0 12px;text-wrap:balance}
+h3{font:600 16px/1.3 var(--sans);margin:24px 0 8px}
+p{margin:0 0 12px;max-width:68ch}
+.lede{color:var(--muted);font-size:16px;max-width:70ch}
+.eyebrow{font:500 12px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
+code,.mono{font-family:var(--mono);font-size:.88em}
+code{background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 0}
+.chip{font:500 12px/1 var(--mono);padding:6px 9px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--muted)}
+.chip b{color:var(--fg);font-weight:600}
+.status{display:inline-block;font:600 11px/1 var(--mono);letter-spacing:.04em;padding:4px 7px;border-radius:4px;white-space:nowrap}
+.s-ok{background:var(--ok-soft);color:var(--ok)} .s-warn{background:var(--warn-soft);color:var(--warn)} .s-bad{background:var(--bad-soft);color:var(--bad)} .s-acc{background:var(--accent-soft);color:var(--accent)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px 20px}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.stat{display:flex;flex-direction:column;gap:2px}
+.stat .n{font:600 26px/1.1 var(--display);font-variant-numeric:tabular-nums}
+.stat .l{color:var(--muted);font-size:13px}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:680px;font-size:14px}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+th{font:600 12px/1.3 var(--mono);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+tr:last-child td{border-bottom:0}
+td.id{font-family:var(--mono);font-weight:600;white-space:nowrap;color:var(--accent)}
+td .rec{font-weight:600}
+ul.tight{margin:0;padding-left:20px} ul.tight li{margin:4px 0;max-width:72ch}
+.callout{border-left:3px solid var(--warn);background:var(--warn-soft);padding:14px 16px;border-radius:0 8px 8px 0;margin:16px 0}
+.callout.acc{border-color:var(--accent);background:var(--accent-soft)}
+.waves{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+.wave{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.wave h3{margin:0;font:600 14px/1.2 var(--mono);color:var(--accent)}
+.wave .ep{display:flex;justify-content:space-between;gap:8px;font-size:13.5px;border-top:1px dashed var(--line);padding-top:6px}
+.wave .ep span:last-child{color:var(--muted);font-family:var(--mono);font-size:12px;white-space:nowrap}
+.answer{display:flex;flex-direction:column;gap:8px}
+.answer pre{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow-x:auto;font:13px/1.55 var(--mono)}
+button{font:600 13px var(--sans);background:var(--accent);color:var(--surface);border:0;border-radius:6px;padding:8px 14px;cursor:pointer;align-self:flex-start}
+button:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+.foot{color:var(--muted);font-size:13px;margin-top:48px;border-top:1px solid var(--line);padding-top:16px}
+@media (prefers-reduced-motion:no-preference){button{transition:filter .15s} button:hover{filter:brightness(1.1)}}
+</style>
+
+<div class="wrap">
+  <div class="eyebrow">plan-it · do-it-1.1 · gate G4 (revisão do plano)</div>
+  <h1>Plano do-it 1.1</h1>
+  <p class="lede">O planejamento rodou sem você. O plano está pronto em rascunho e para no gate G4, esperando sua revisão. Cada decisão já tem a minha recomendação aplicada como padrão, e você pode contradizer qualquer uma. Nada de código, commit, tag ou push foi feito.</p>
+  <div class="meta">
+    <span class="chip">branch <b>plan/do-it-1.1</b> (local, sem commit)</span>
+    <span class="chip">base <b>origin/main d38cedb</b> (1.0.5)</span>
+    <span class="chip">contrato <b>v1.0-draft</b></span>
+    <span class="chip"><b>11</b> épicos · <b>55</b> tarefas · <b>55</b> casos de teste</span>
+    <span class="chip">G4 <b>aprovado</b> (D1–D10) · emenda <b>2</b> aguarda D12–D14</span>
+    <span class="chip"><b>4</b> checkpoints de revisão</span>
+  </div>
+
+  <h2>Emenda 2: o que falta você confirmar</h2>
+  <p>Você aprovou D1–D10 e criou a D11. Para encaixar a D11, apliquei três padrões novos. Confirme ou contradiga os três, e eu fecho o contrato como v1.0 e gero o KICKOFF.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>ID</th><th>Decisão</th><th>Recomendação aplicada</th><th>Por quê</th></tr></thead>
+    <tbody>
+      <tr><td class="id">D11</td><td>Criar <code>DevOtts/doc-it</code> público, lançar a 0.1.0 e fazer os outros plugins consumirem o doc-it</td><td class="rec">Sua decisão (06/11). Épicos novos K1 (doc-it 0.1.0, onda W0, 8 casos) e K2 (consumidores, onda W2, 4 casos)</td><td>As regras de documentação ganham um dono só (R4)</td></tr>
+      <tr><td class="id">D12</td><td>O que a 0.1.0 checa por script</td><td class="rec">Arquivo morto (DS-3), idade do board (metade da DS-2), validade do <code>current</code> (DS-4, só relatório) e checkout atrasado (DS-6), mais a lista de níveis de fonte e o modelo de CLOSEOUT. DS-1, DS-5 e DS-7 saem só como regra escrita, marcadas "ainda sem checagem"</td><td>São as regras que já têm uma checagem definida e um consumidor neste plano</td></tr>
+      <tr><td class="id">D13</td><td>As 5 perguntas do doc-it (papéis e níveis, um arquivo morto com closeout, um formato de board, rebaixar de uma vez os docs vencidos, validade de 60 dias)</td><td class="rec">Ficam com as minhas recomendações na 0.1.0, como valores padrão que cada projeto pode mudar</td><td>A 0.1.0 precisa de regras fixas para ter checagens</td></tr>
+      <tr><td class="id">D14</td><td>O que um plugin faz quando o doc-it não está instalado</td><td class="rec">Imprime <code>[skip] doc-it not installed: &lt;checagem&gt;</code>, nunca dá PASS para essa checagem e não falha</td><td>A lição do init-it: um pulo silencioso parece aprovação. Falhar travaria todo projeto que ainda não instalou o doc-it</td></tr>
+    </tbody>
+  </table></div>
+  <p><b>Peças que mudaram de lugar.</b> Elas já estavam no plano, mas implementavam regras de documentação, então agora são do doc-it e os plugins só chamam:</p>
+  <ul class="tight">
+    <li>A auditoria do arquivo morto (A1-01, que seria <code>status-write audit</code> no build-it) virou <code>doc-it check archive</code>.</li>
+    <li>O conclude-it passa a chamar o doc-it no Step 0 e no S4, e a usar o modelo de CLOSEOUT dele.</li>
+    <li>O plan-it chama <code>doc-it check checkout</code> (V1) e lê os níveis de fonte de <code>doc-it tiers</code> (L1). O review-it também lê os níveis de lá (K2).</li>
+    <li>O build-it continua com <code>status-write close</code>, porque é ele quem escreve o board.</li>
+  </ul>
+  <p>Nova regra G-10: nenhum plugin guarda cópia das regras do doc-it. Os gates do plan-it passaram de novo: handoff, adversarial, glossário, readiness, quadro (55 tarefas) e estado.</p>
+
+  <h2>Emenda 1 (06/11, aprovada por você e aplicada)</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>ID</th><th>O que mudou</th></tr></thead>
+    <tbody>
+      <tr><td class="id">R3</td><td>O núcleo do do-it é agnóstico. Integrações (claude-code, codex, opencode, engine) ficam só em <code>hosts/&lt;nome&gt;/</code>. Achado novo F10: o Engine é o único host que vazou para o núcleo (o armazenamento <code>core/state-stores/engine.mjs</code> e seus drivers, a chave <code>state.engine</code>), e a regra G-12 já existente ("o núcleo não cita host") não tem <code>engine</code> na lista. O épico E1 agora move esse código para <code>hosts/engine/</code>, gera as tabelas de host a partir dos manifests e prova o isolamento apagando <code>hosts/engine/</code> e vendo o núcleo passar. Nova regra G-9.</td></tr>
+      <tr><td class="id">R4</td><td>O doc-it é plugin e repo próprio, <code>DevOtts/doc-it</code>, como o init-it. Ele é dono das regras de documentação, e conclude-it, plan-it e review-it o consomem (e avisam quando ele falta). Pasta local criada em <code>~/Workspace/Devotts/doc-it</code>, com git init, sem commit e sem remoto.</td></tr>
+      <tr><td class="id">R5</td><td>O padrão do P3 virou o padrão global do doc-it: <code>doc-it/docs/STANDARD.md</code> v0, com papéis neutros (live, code, generated, durable, program, archive, rules, pointer) e as regras DS-1 a DS-8. As lições L1–L8 foram para <code>doc-it/docs/LEARNINGS.md</code>. O P3 do Engine agora é o adotante, com o mapa de papéis do Engine e a evidência com nomes.</td></tr>
+      <tr><td class="id">D2 D5 D10</td><td>D2: o host Engine fica, isolado, como "Experimental: lado servidor recusado". D5 saiu do do-it e virou a fase P2b do P3. D10 virou um comando genérico, <code>do-it pack withdraw --by stop-gate</code> (S1-08). Rodar os dois no the pilot consumer repo é trabalho do Engine.</td></tr>
+    </tbody>
+  </table></div>
+  <p>As duas afirmações novas (C37, C38) eu conferi direto no código, mas elas não passaram pelo auditor e pelo ombudsman. Os gates do plan-it passaram de novo: handoff, adversarial, glossário, readiness, quadro (44 tarefas) e estado.</p>
+
+  <h2>Como os dados deste plano foram verificados</h2>
+  <p>Pela sua regra de confiança, todo fato do plano é uma linha numa lista de afirmações (C1–C36), com o tipo de fonte e a fonte exata. Antes de chegar a você, a lista passou por um auditor Fable, que leu o código do zero, e depois por um ombudsman Opus, que conferiu o auditor e a mim. Só entrou aqui o texto que o ombudsman marcou como seguro.</p>
+  <div class="grid">
+    <div class="panel stat"><span class="n">19 / 24</span><span class="l">afirmações confirmadas pelo auditor na 1ª passada; 1 falsa, 4 parciais</span></div>
+    <div class="panel stat"><span class="n">7</span><span class="l">coisas que eu tinha deixado passar e o auditor achou (a maior: o conserto do stop-gate do 1.0.5 quase nunca funciona)</span></div>
+    <div class="panel stat"><span class="n">13</span><span class="l">defeitos de texto que o ombudsman achou nos meus documentos, todos corrigidos</span></div>
+    <div class="panel stat"><span class="n">328 mil</span><span class="l">tokens da cadeia de auditoria (132.544 do auditor + 195.909 do ombudsman)</span></div>
+  </div>
+
+  <h2>O que você precisa decidir</h2>
+  <p>A minha recomendação já está aplicada. Se você não responder, ela vale.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>ID</th><th>Decisão</th><th>Recomendação</th><th>Por quê</th><th>Volta atrás?</th></tr></thead>
+    <tbody>
+      <tr><td class="id">D1</td><td>Criar o repo <code>DevOtts/init-it</code> e lançar a 0.1.0. Público ou privado?</td><td class="rec">Público, como os outros plugins (só reconcile-it e deploy-it são privados)</td><td>build-it e review-it já tentam registrar sessões pelo init-it e pulam em silêncio quando ele falta, ou seja, sempre.</td><td>A visibilidade sim; um push público não</td></tr>
+      <tr><td class="id">D2</td><td>Host Engine: continua como host isolado em <code>hosts/engine/</code>, e o README mostra "Experimental: lado servidor recusado (PR #727)", lido do manifest dele? Sem redesenho na 1.1</td><td class="rec">Sim (emendada em 06/11, R3)</td><td>O repo é público e diz "Supported" para uma parte de servidor que você fechou em 29/10 (PR #727).</td><td>Sim</td></tr>
+      <tr><td class="id">D3</td><td>prompt-it: criar a tag v1.0.0 no commit onde o plugin.json virou 1.0.0, ou voltar o pin para a 0.2.1 lançada?</td><td class="rec">Criar a tag v1.0.0</td><td>O main já diz 1.0.0 e do-it 1.0.1–1.0.5 fixaram essa versão; o que falta é a tag.</td><td>Uma tag publicada fica visível</td></tr>
+      <tr><td class="id">D4</td><td>Marketplace: fixar cada plugin com <code>ref: v&lt;versão&gt;</code> em vez da branch padrão?</td><td class="rec">Sim, depois que cada tag existir (hoje faltam prompt-it v1.0.0 e do-it v1.0.5)</td><td>Hoje uma instalação pega a cabeça de cada repo, não a versão testada. O formato aceita <code>ref</code> e <code>sha</code> (confirmado na documentação).</td><td>Sim</td></tr>
+      <tr><td class="id">D5</td><td><i>Saiu do do-it (R3).</i> Consertar os boards arquivados de um repo consumidor é trabalho desse repo: fase P2b do P3, usando o A1-05</td><td class="rec">—</td><td>O do-it entrega a ferramenta; aplicá-la nos dados de um projeto é do projeto.</td><td>—</td></tr>
+      <tr><td class="id">D6</td><td>Quais artefatos passam pela cadeia completa (auditor + ombudsman)?</td><td class="rec">Só os que embasam decisão (decisão sua ou congelamento de plano). O resto passa pela lista de afirmações + <code>gate-check claims</code></td><td>A cadeia custou cerca de 328 mil tokens aqui e pegou erros reais. Não vale para páginas de rotina.</td><td>Sim</td></tr>
+      <tr><td class="id">D7</td><td>Lançar tudo junto com resumable-test-gates, ou separar em dois lançamentos?</td><td class="rec">Dois: 1.1.0 = este pacote, 1.2.0 = resumable-test-gates</td><td>Este pacote é quase todo correção e higiene e acaba com a armadilha do stop-gate já. O outro tem 7 peças e perguntas próprias.</td><td>Sim</td></tr>
+      <tr><td class="id">D8</td><td>Pasta nova <code>docs/implementation/do-it-1.1/</code>, deixando a <code>do-it-next/</code> como o quadro da 1.0.1?</td><td class="rec">Sim. A <code>do-it-next/</code> fecha pelo close guardado</td><td>Um lugar por fato: o plano de uma versão nova não divide quadro com o da 1.0.1.</td><td>Sim</td></tr>
+      <tr><td class="id">D9</td><td>Hosts que não informam session id: manter o fallback por pasta?</td><td class="rec">Sim, só para runs que também não têm session id</td><td>A própria pesquisa do do-it marca o session id do codex e do opencode como desconhecido.</td><td>Sim</td></tr>
+      <tr><td class="id">D10</td><td>O do-it ganha <code>do-it pack withdraw --by stop-gate</code> (S1-08): marca como <code>withdrawn</code> as perguntas sem resposta escritas pelo stop-gate, sem apagar; respondidas e perguntas de estágio não mudam. Rodar no the pilot consumer repo é tarefa do P3</td><td class="rec">Sim (emendada em 06/11, R3)</td><td>As 62 perguntas foram escritas pelo stop-gate, não por um estágio. Deixá-las enterra qualquer pergunta real.</td><td>Sim</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Do resumable-test-gates (também no G4, será a 1.2.0)</h3>
+  <p>A sessão <code>study-bateria-testes-tempo</code> planejou essa parte, chegou ao G4 e depois fechou, passando o pacote para esta sessão. A run <code>r-20261106-130657-7ff2</code> está em <code>NEEDS_HUMAN</code>. Depois da limpeza de agnosticismo (emenda A15) são 5 PRDs, 11 épicos, 81 tarefas e 174 casos de teste (36 reais) em 4 ondas, com base no do-it <code>origin/main d38cedb</code>. O contrato está em v1.1-draft, com as emendas A1–A15 (sha256 <code>c7a61cfb…</code>, refixado no KICKOFF). Os gates do plan-it passaram de novo. O plano dela fica em <code>docs/implementation/resumable-test-gates/delivery/PLAN-REVIEW.html</code>, com 23 padrões (R1–R23) para revisar. A recomendação de cada pergunta também é o padrão:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>ID</th><th>Pergunta</th><th>Recomendação</th></tr></thead>
+    <tbody>
+      <tr><td class="id">G4-1</td><td>Ratificar o plano do resumable-test-gates?</td><td class="rec">Aprovar</td></tr>
+      <tr><td class="id">OQ-1</td><td>Um T2 composto (com resultados reaproveitados) vale como gate de merge e deploy, com T3 limpo toda noite como rede de segurança?</td><td class="rec">Sim. Altera a regra R14 da Engine: specs que leem a árvore sempre rodam, e specs de real-mongo nunca são reaproveitados</td></tr>
+      <tr><td class="id">OQ-2</td><td>Ordem dos runners na v1</td><td class="rec">jest → pytest → vitest (W2, W3, W4)</td></tr>
+      <tr><td class="id">OQ-3</td><td>Onde guardar os resultados</td><td class="rec">Por máquina, atrás de uma interface de store</td></tr>
+      <tr><td class="id">OQ-4</td><td>O leg de diff-coverage do api-core roda a suíte inteira e não dá para compor</td><td class="rec">Mantê-lo como execução nova na v1; medir em E1 e rever</td></tr>
+      <tr><td class="id">A14</td><td>Decisão que a outra sessão tomou enquanto você estava fora: <code>gate run</code> sai com 1 (GATE_FAIL) quando o runner não consegue iniciar, e o 127 do processo filho aparece na linha do veredito, sem ser repassado</td><td class="rec">Manter</td></tr>
+    </tbody>
+  </table></div>
+  <p><b>Emenda A15 aplicada (R3).</b> O PRD-6, os épicos E1/E2 (31 casos), o squad SQ-E, o conteúdo da A10 e as regras 17 e 18 saíram do pacote. Agora eles moram no the pilot consumer repo, em <code>docs/implementation/resumable-test-gates-adoption/</code>, mergeado no PR #247. O texto ficou neutro em 26 arquivos, com cerca de 270 trocas. A evidência continua em <code>research/</code>, e os caminhos dos repos piloto dos casos reais estão em <code>research/PILOT-PATHS.md</code>. Os settings encaixam na 1.1: o RTG adiciona só a chave raiz <code>gates</code>, e a 1.1 mexe só em <code>state</code>. As perguntas OQ-1, OQ-4 e A14 continuam valendo, porque o Engine as consome.</p>
+  <p>Fatos novos que corrigem o diagnóstico original dela: o api-core tem 1.624 arquivos de spec (não ~1.340); o arquivo tem 14 execuções completas, com mediana de 686 s (não 20 a 630 s); o <code>gate-slot.sh</code> existe em 3 de 12 repos, e o épico E2 dela corrige a R25, que hoje deixa um push seguir sem slot.</p>
+
+  <div class="answer">
+    <h3>Como responder</h3>
+    <p>Cole isto no chat e mude só o que discordar:</p>
+    <pre id="answer-text">Emenda 2 do-it-1.1: confirmo D12, D13 e D14.
+Contradições: (nenhuma)
+G4 resumable-test-gates: aprovo o plano com a A15 (G4-1), OQ-1 sim, OQ-2 jest → pytest → vitest, OQ-3 por máquina, OQ-4 leg novo na v1, A14 manter.</pre>
+    <p>A resposta do resumable-test-gates eu registro com <code>do-it answer</code> na run dele. A outra sessão fechou e passou isso para cá.</p>
+    <button type="button" id="copy-answer">Copiar resposta</button>
+  </div>
+
+  <h2>O que você precisa saber</h2>
+  <ul class="tight">
+    <li><b>O owner pack do the pilot consumer repo não tem nenhuma pergunta de estágio.</b> As 62 perguntas foram escritas pelo stop-gate (2 já respondidas), e 1.997 dos 2.034 parks caíram em runs que já estavam parados. O épico S1 resolve; a D10 entrega a ferramenta para limpar.</li>
+    <li><b>O conserto do stop-gate no 1.0.5 quase nunca funciona a partir do Claude Code.</b> O do-it ignora o <code>CLAUDE_CODE_SESSION_ID</code>, que o Claude Code define em todo comando Bash. Por isso a run fica "dona" da pasta, a menos que o modelo exporte o id à mão. O conserto é uma linha de fallback mais a regra de status.</li>
+    <li><b>O README público diz que a Engine é "Supported"</b>, mas a Engine fechou o PR dos hooks em 29/10. A D2 corrige o texto.</li>
+    <li><b>O harness-status-tracking foi entregue</b> (41 de 42 casos verificados em artefatos reais). Só o quadro está atrasado, e o épico B1 corrige sem código.</li>
+    <li><b>O próprio do-it 1.0.5 não tem tag</b> (a última é a v1.0.4).</li>
+    <li><b>Seu checkout local do do-it está 24 commits atrás do origin/main.</b> Planejei sobre o <code>origin/main</code>, numa worktree separada, sem mexer no seu checkout.</li>
+  </ul>
+
+  <h2>O que você precisa confirmar</h2>
+  <ul class="tight">
+    <li>A outra sessão planejou o resumable-test-gates, que está no G4. Combinamos: este pacote sai como 1.1.0 e o dela como 1.2.0, por cima. As duas partes reconstroem o arquivo gerado do spine depois de cada merge, nunca à mão (regra A12 dela). Ela é a única que escreve em <code>.do-it/</code> e na pasta dela, e eu não toco em nenhuma das duas.</li>
+    <li>Este pacote não cria nenhuma chave de settings; a chave <code>gates</code> é do resumable-test-gates (regra G-8).</li>
+    <li>O pacote fica numa branch local, <code>plan/do-it-1.1</code>, sem commit. Commitar e abrir o PR dos docs depende de você.</li>
+  </ul>
+
+  <h2>O plano</h2>
+  <div class="waves">
+    <div class="wave"><h3>W0 · correções e higiene</h3>
+      <div class="ep"><span>S1 stop-gate só prende a sessão dona</span><span>do-it · 11 casos</span></div>
+      <div class="ep"><span>A1 um caminho guardado para 0-done</span><span>conclude-it, build-it · 5 · depois do K1</span></div>
+      <div class="ep"><span>B1 quadro do status-tracking diz a verdade</span><span>do-it · 2</span></div>
+      <div class="ep"><span>I1 init-it instalável</span><span>init-it · 2 · D1</span></div>
+      <div class="ep"><span>K1 doc-it 0.1.0: padrão e primeiras checagens</span><span>doc-it · 8 · D11–D13</span></div>
+      <div class="ep"><span>E1 hosts isolados em <code>hosts/</code> (R3)</span><span>do-it · 5 · D2</span></div>
+      <div class="ep"><span>H1 tags, pins, script duplicado, caminhos do plan-it</span><span>4 repos · 4 · D3 D4</span></div>
+    </div>
+    <div class="wave"><h3>W1 · mecanismos de confiança</h3>
+      <div class="ep"><span>L1 lista de afirmações com tipo de fonte</span><span>plan-it · 5</span></div>
+      <div class="ep"><span>V1 preflight: checkout atrás e camadas entregues</span><span>plan-it · 3</span></div>
+    </div>
+    <div class="wave"><h3>W2 · auditoria</h3>
+      <div class="ep"><span>Q1 modo <code>--audit</code> no review-it (auditor + ombudsman)</span><span>review-it · 6</span></div>
+      <div class="ep"><span>K2 a família consome o doc-it</span><span>4 repos · 4 · D14</span></div>
+    </div>
+    <div class="wave"><h3>W3 · lançamento</h3>
+      <div class="ep"><span>Plugins irmãos com tag primeiro, depois do-it 1.1.0 fixa todos</span><span>D7</span></div>
+      <div class="ep"><span>resumable-test-gates como 1.2.0</span><span>outra sessão</span></div>
+    </div>
+  </div>
+  <p style="margin-top:12px">Checkpoints de revisão (calculados pelo plan-it, modelo de merge incremental): <span class="mono">CP-01</span> depois de W0 · <span class="mono">CP-02</span> depois de W1 · <span class="mono">CP-03</span> adversarial sobre tudo · <span class="mono">CP-04</span> antes do lançamento. Cada um precisa de um veredito PASS em arquivo antes de liberar o que segura.</p>
+
+  <h2>Os achados</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>ID</th><th>Achado</th><th>Estado</th><th>Épico</th></tr></thead>
+    <tbody>
+      <tr><td class="id">F1</td><td>O stop-gate prende sessões que não são donas da run e enche o owner pack de ruído (o do-it ignora <code>CLAUDE_CODE_SESSION_ID</code>; não lê o status; usa um quadro único por repo)</td><td><span class="status s-bad">bug ativo</span></td><td>S1</td></tr>
+      <tr><td class="id">F2</td><td>Arquivar para <code>0-done/</code> com <code>git mv</code> pula a trava do status: 3 de 3 pacotes do repo piloto com <code>closed:false</code></td><td><span class="status s-bad">bug ativo</span></td><td>A1</td></tr>
+      <tr><td class="id">F3</td><td>harness-status-tracking entregue, mas o quadro diz 0 verified</td><td><span class="status s-warn">quadro atrasado</span></td><td>B1</td></tr>
+      <tr><td class="id">F4</td><td>init-it pronto, mas só existe neste Mac (sem git, sem pin, sem marketplace)</td><td><span class="status s-warn">não publicado</span></td><td>I1</td></tr>
+      <tr><td class="id">F5</td><td>README público diz Engine "Supported", mas a Engine recusou os hooks</td><td><span class="status s-bad">afirmação falsa</span></td><td>E1</td></tr>
+      <tr><td class="id">F6</td><td>Nenhum mecanismo de confiança existe ainda (lista de afirmações, tipos de fonte, checagem de camadas entregues, auditoria)</td><td><span class="status s-acc">novo</span></td><td>L1 V1 Q1</td></tr>
+      <tr><td class="id">F7</td><td>Higiene: prompt-it sem tag v1.0.0, do-it 1.0.5 sem tag, marketplace sem <code>ref</code>, script duplicado no reconcile-it, instrução de <code>start</code> errada no SKILL do do-it</td><td><span class="status s-warn">dívida</span></td><td>H1 S1</td></tr>
+      <tr><td class="id">F8</td><td>resumable-test-gates e S1 reconstroem o mesmo arquivo gerado do spine; reconstruir depois de cada merge, nunca mesclar à mão</td><td><span class="status s-acc">acoplamento</span></td><td>W3</td></tr>
+      <tr><td class="id">F10</td><td>Um host vazou para o núcleo: o armazenamento e a chave de settings do Engine moram em <code>core/</code>, e a lista da regra G-12 não tem <code>engine</code></td><td><span class="status s-bad">viola R3</span></td><td>E1</td></tr>
+      <tr><td class="id">F9</td><td>O SKILL do plan-it aponta dois scripts por um caminho que não existe no plugin instalado</td><td><span class="status s-warn">bug</span></td><td>H1</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>Onde está cada coisa</h2>
+  <ul class="tight">
+    <li>Pacote: <code>/Users/macbook/Workspace/Devotts/do-it/.worktrees/plan-read-origin-main/docs/implementation/do-it-1.1/</code></li>
+    <li>Achados <code>docs/01</code> · arquitetura <code>docs/02</code> · contrato <code>delivery/CONTRACT.md</code> · épicos <code>delivery/epics/</code> · decisões <code>plan/DECISIONS.md</code> · quadro <code>status.json</code></li>
+    <li>Auditoria: <code>audit/claims.md</code> (38 linhas), <code>audit/audit-fable.md</code>, <code>audit/audit-opus.md</code></li>
+    <li>Estado do plan-it: <code>.plan-it/do-it-1.1.state.json</code> (estado <code>planReview</code>, emenda A1 registrada)</li>
+    <li>doc-it: <code>/Users/macbook/Workspace/Devotts/doc-it/</code> (README, <code>docs/STANDARD.md</code>, <code>docs/LEARNINGS.md</code>, <code>docs/OWNER-QUESTIONS.md</code>)</li>
+    <li>Adotante piloto: the pilot consumer repo <code>docs/implementation/P3/</code></li>
+    <li>Gates do plan-it que passaram: handoff, adversarial, glossário, preflight M (9 sondas), readiness, quadro de status</li>
+  </ul>
+
+  <p class="foot">Depois da sua resposta no G4: congelar o contrato como v1.0, gerar o KICKOFF com a frase pronta de lançamento, e rodar <code>/build-it</code> numa sessão nova. Os gêmeos HTML locais de cada doc (gerados pelo renderizador do plan-it, não publicados) estão ao lado de cada <code>.md</code> do pacote.</p>
+</div>
+
+<script>
+document.getElementById('copy-answer').addEventListener('click', function () {
+  var text = document.getElementById('answer-text').textContent;
+  var btn = this;
+  function done(msg){ btn.textContent = msg; setTimeout(function(){ btn.textContent = 'Copiar resposta'; }, 1800); }
+  try {
+    navigator.clipboard.writeText(text).then(function(){ done('Copiado'); }, function(){ selectIt(); });
+  } catch (e) { selectIt(); }
+  function selectIt(){
+    var r = document.createRange(); r.selectNodeContents(document.getElementById('answer-text'));
+    var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); done('Selecionado: copie com ⌘C');
+  }
+});
+</script>

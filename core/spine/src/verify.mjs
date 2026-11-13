@@ -1,12 +1,12 @@
 import { fail } from './errors.mjs';
 import { appendEvent } from './events.mjs';
 import { resolveEvidence } from './evidence.mjs';
-import { finishLineUpsert, readFinishLine, writeFinishLine } from './finish-line.mjs';
+import { adoptsUnattributed, finishLineUpsert, hasRow, readFinishLine, writeFinishLine } from './finish-line.mjs';
 import { readLedger, writeLedger } from './ledger.mjs';
 import { loadState, selectRunId } from './state.mjs';
 // Re-read the world: recompute every VERIFIED row's evidence hash (never mtime).
 // A changed or missing file downgrades the row and reopens its finish-line row.
-export function verifyEvidence(ctx, runId) {
+export function verifyEvidence(ctx, runId, state) {
   const ledger = readLedger(ctx, runId);
   const changed = [];
   const now = ctx.now();
@@ -23,8 +23,9 @@ export function verifyEvidence(ctx, runId) {
   if (changed.length) {
     writeLedger(ctx, ledger);
     const fl = readFinishLine(ctx);
+    const adopt = adoptsUnattributed(state || loadState(ctx, runId));
     for (const c of changed) {
-      if (fl.rows.some((r) => r.id === c.row)) finishLineUpsert(fl, c.row, { state: 'OPEN', evidence: null, reason: 'evidence_changed' });
+      if (hasRow(fl, c.row, runId, adopt)) finishLineUpsert(fl, c.row, { state: 'OPEN', evidence: null, reason: 'evidence_changed' }, runId, adopt);
       appendEvent(ctx, runId, { event: 'evidence_changed', verdict: 'IMPLEMENTED-NOT-VERIFIED', detail: { row: c.row, reason: c.reason } });
     }
     writeFinishLine(ctx, fl);
@@ -34,8 +35,8 @@ export function verifyEvidence(ctx, runId) {
 
 export function gateVerify(ctx, args) {
   const runId = selectRunId(ctx, args.flags);
-  loadState(ctx, runId);
-  const changed = verifyEvidence(ctx, runId);
+  const state = loadState(ctx, runId);
+  const changed = verifyEvidence(ctx, runId, state);
   if (changed.length) throw fail('EVIDENCE_CHANGED', 1, { run_id: runId, rows: changed.map((c) => c.row), changed });
   const ledger = readLedger(ctx, runId);
   return { outcome: 'VERIFY_OK', exit: 0, run_id: runId, checked: ledger.rows.filter((r) => r.verdict === 'VERIFIED').length };

@@ -67,6 +67,14 @@ const out = [
   '',
 ].join('\n');
 
-fs.writeFileSync(outFile, out);
-fs.chmodSync(outFile, 0o755);
+// Test files rebuild the bundle while other test files run it: an unchanged bundle is not rewritten, and a
+// changed one is written to a temp file and renamed, so a reader never sees a half-written bundle.
+let current = null;
+try { current = fs.readFileSync(outFile, 'utf8'); } catch { /* first build */ }
+if (current !== out) {
+  const tmp = outFile + '.' + process.pid + '.tmp';
+  fs.writeFileSync(tmp, out);
+  fs.chmodSync(tmp, 0o755);
+  fs.renameSync(tmp, outFile);
+} else fs.chmodSync(outFile, 0o755);
 process.stdout.write('built ' + path.relative(process.cwd(), outFile) + ' (' + files.length + ' modules, ' + out.length + ' bytes)\n');

@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// Thin CLI over the stores. Persistent backends only (local-fs, git-branch).
+// Thin CLI over the stores. Persistent backends only (local-fs, git-branch); host backends load through the manifest.
 // node core/state-stores/cli.mjs <get|put|append|list|put-blob|get-blob|recover|resume> --backend local-fs --root DIR ...
 // Exit: 0 ok, 1 failed (JSON error on stderr), 2 escalated (needs human), 3 blocked.
-import { openStore, recover, resume, selectBlobDriver, loadEngineConfig, StoreError, EXIT } from './index.mjs';
+import { openStore, recover, resume, StoreError, EXIT } from './index.mjs';
 
 const argv = process.argv.slice(2);
 const cmd = argv[0];
@@ -19,14 +19,7 @@ const fail = (e) => {
 
 try {
   const backend = flags.backend ?? 'local-fs';
-  if (cmd === 'driver') {
-    // resolve settings.state.engine.blobs the way the engine backend would; prints the driver id
-    const settings = { state: { engine: flags.blobs === undefined ? {} : { blobs: flags.blobs } } };
-    const d = selectBlobDriver(settings, { transport: {}, mirrorDir: flags['mirror-dir'] });
-    process.stdout.write(JSON.stringify({ driver: d.id }) + '\n');
-  } else if (cmd === 'config') {
-    process.stdout.write(JSON.stringify({ ok: true, keys: Object.keys(loadEngineConfig(JSON.parse(flags.data))) }) + '\n');
-  } else if (cmd === 'resume') {
+  if (cmd === 'resume') {
     const r = await resume({ repo: flags.repo, runId: flags.run, resultPath: flags.result, workdir: flags.workdir });
     process.stdout.write(JSON.stringify(r) + '\n');
     process.exitCode = r.exit;

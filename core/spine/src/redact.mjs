@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { REGISTRY_READ_CAP, readText } from './fs-atomic.mjs';
 
 // G-7: values the process knows are secrets never reach a file or an output.
 // The set lives for the process; every spine write and the final stdout pass through redactText.
@@ -7,8 +8,19 @@ export const REDACT_MIN_LENGTH = 6;
 export const REDACT_VALUES = new Map();
 export const REDACT_HITS = new Set();
 
+// CP-03 R4-L4: words of the spine's own protocol are never secrets. A planted secret file whose value is a
+// run status or a gate outcome would otherwise rewrite state.json ("status":"[REDACTED:x]", which then
+// fails its checks) or a gate answer, and switch the stop gate off. Run statuses are the state schema's
+// enum (a drift test keeps this list equal to it); the outcomes are the ones a host maps.
+export const PROTOCOL_WORDS = new Set([
+  'INTAKE', 'PLANNING', 'AWAIT_RATIFY', 'BUILDING', 'VERIFYING', 'REVIEWING', 'FIXING', 'DEPLOYING', 'PROVING', 'CONCLUDING', 'DONE',
+  'NEEDS_HUMAN', 'PARKED', 'BLOCKED', 'FAILED', 'PARTIAL_FAILURE', 'ROLLED_BACK', 'ESCALATED',
+  'STOP_REFUSED', 'STOP_ALLOWED',
+]);
+
 export function redactAdd(name, value) {
   if (typeof value !== 'string' || value.length < REDACT_MIN_LENGTH) return;
+  if (PROTOCOL_WORDS.has(value.trim())) return;
   const forms = [value];
   const escaped = JSON.stringify(value).slice(1, -1);
   if (escaped !== value) forms.push(escaped);
@@ -33,15 +45,41 @@ export function redactText(text) {
   return out;
 }
 
+// Redacts every string of a JSON value (keys too), leaving the structure as it is.
+export function redactValue(v) {
+  if (typeof v === 'string') return redactText(v);
+  if (Array.isArray(v)) return v.map(redactValue);
+  if (v && typeof v === 'object') {
+    const out = {};
+    for (const [k, x] of Object.entries(v)) out[redactText(k)] = redactValue(x);
+    return out;
+  }
+  return v;
+}
+
+// CP-03 R5-S1-L3: the spine's own JSON files (state.json, finish-line.json, events, packs, the registry) are
+// redacted value by value; keys are the spine's vocabulary and are never rewritten, so a planted secret equal
+// to "session_id" or "evidence" cannot break the file's shape.
+export function redactJsonValues(v) {
+  if (typeof v === 'string') return redactText(v);
+  if (Array.isArray(v)) return v.map(redactJsonValues);
+  if (v && typeof v === 'object') {
+    const out = {};
+    for (const [k, x] of Object.entries(v)) out[k] = redactJsonValues(x);
+    return out;
+  }
+  return v;
+}
+
 // Names the project declares: READINESS credentials and .env.example NAME= lines.
 export function redactDeclaredNames(ctx) {
   const names = new Set();
   try {
-    const r = JSON.parse(fs.readFileSync(path.join(ctx.home, 'plan', 'READINESS.json'), 'utf8'));
+    const r = JSON.parse(readText(path.join(ctx.home, 'plan', 'READINESS.json')));
     for (const n of Array.isArray(r.credentials) ? r.credentials : []) if (typeof n === 'string' && n) names.add(n);
   } catch { /* no readiness yet */ }
   try {
-    for (const line of fs.readFileSync(path.join(ctx.home, '.env.example'), 'utf8').split(/\r?\n/)) {
+    for (const line of readText(path.join(ctx.home, '.env.example'), REGISTRY_READ_CAP).split(/\r?\n/)) {
       const m = /^([A-Za-z_][A-Za-z0-9_]*)=/.exec(line);
       if (m) names.add(m[1]);
     }
@@ -58,7 +96,7 @@ export function redactInit(ctx) {
     for (const n of fs.readdirSync(dir)) {
       const f = path.join(dir, n);
       const st = fs.statSync(f);
-      if (st.isFile() && st.size <= 65536) redactAdd(n, fs.readFileSync(f, 'utf8').replace(/\r?\n$/, ''));
+      if (st.isFile() && st.size <= 65536) redactAdd(n, readText(f, 65536).replace(/\r?\n$/, ''));
     }
   } catch { /* no .secrets */ }
   for (const n of redactDeclaredNames(ctx)) redactAdd(n, ctx.env[n]);

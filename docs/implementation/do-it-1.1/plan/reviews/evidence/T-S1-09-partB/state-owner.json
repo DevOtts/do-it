@@ -1,0 +1,15 @@
+{
+  "run_id": "r-20261113-182128-2084",
+  "status": "INTAKE",
+  "owner": {
+    "session_id": "135bc59d-4f05-4fe9-b14c-5989fd7872c5",
+    "cwd": "/private/tmp/claude-501/cp04b/s109/repo",
+    "history": [
+      {
+        "session_id": "dca344df-641b-4ad7-84f9-1d01c24859ea",
+        "until": "2026-11-13T18:24:19.756Z",
+        "reason": "take_over"
+      }
+    ]
+  }
+}

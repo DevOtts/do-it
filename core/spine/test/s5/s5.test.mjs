@@ -125,7 +125,8 @@ test('T-S5-03 G-5 next is blocked until a handoff exists [REAL]', () => {
 test('T-S5-04 handoff.md content and path validation [REAL]', () => {
   const repo = mkRepo();
   const id = building(repo, real);
-  writeJson(flFile(repo), { rows: [flRow('a'), flRow('b'), flRow('c')] });
+  // the run's own rows carry its id (CP-03 R3-S1-M6)
+  writeJson(flFile(repo), { rows: [flRow('a'), flRow('b'), flRow('c')].map((r) => ({ ...r, run_id: id })) });
   real(repo, ['gate', 'stop']);
   real(repo, ['gate', 'stop']);
   real(repo, ['gate', 'advance', '--to', 'VERIFYING']);

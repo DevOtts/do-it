@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="planit-source" content="epics-1-do-it-1.1.md sha256=4ce1d28a03728e39e90e5788915824a71aaeaa4ddae1ff9fb592389eff15e7e9">
+<meta name="planit-embeds" content="epics-1-do-it-1.1.md sha256=4ce1d28a03728e39e90e5788915824a71aaeaa4ddae1ff9fb592389eff15e7e9">
+<meta name="planit-brand" content="default sha256=0206fd2d74525ffb33ff4fc010fe2ce6bb978ebe8a5674fc7ec0ed5d20eccb58">
+<meta name="planit-renderer" content="build-report.mjs/4.0.0 template sha256=ebfa958749844845bc46643049a546fdd9d68de69f36452b7babc089e0a9a410">
+<meta name="planit-kind" content="RESEARCH-REPORT">
+<title>Epics — do-it 1.1</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&amp;family=Inter:wght@400;500&amp;family=JetBrains+Mono:wght@400&amp;display=swap">
+<style>
+:root{--bg:#FFFFFF;--card:#F6F8FA;--line:#E6EDF3;--ink:#0D1117;--muted:#484F58;--accent:#0D1117;--accentBg:#00E5A0;--ok:#2EA043;--warn:#D29922;--bad:#F85149;--info:#58A6FF;--chip:#F6F8FA;--hold:#FF6B4A;--font-display:Space Grotesk,sans-serif;--font-body:Inter,sans-serif;--font-mono:JetBrains Mono;}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0D1117;--card:#161B22;--line:#21262D;--ink:#C9D1D9;--muted:#8B949E;--accent:#00E5A0;--accentBg:#00E5A0;--ok:#2EA043;--warn:#D29922;--bad:#F85149;--info:#58A6FF;--chip:#21262D;--hold:#FF6B4A;}}
+:root[data-theme="dark"]{--bg:#0D1117;--card:#161B22;--line:#21262D;--ink:#C9D1D9;--muted:#8B949E;--accent:#00E5A0;--accentBg:#00E5A0;--ok:#2EA043;--warn:#D29922;--bad:#F85149;--info:#58A6FF;--chip:#21262D;--hold:#FF6B4A;}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.55 var(--font-body);padding:2.5rem 1rem}
+main{max-width:900px;margin:0 auto;position:relative}
+h1{font-family:var(--font-display);font-size:1.5rem;margin:0 0 .25rem;text-wrap:balance;padding-right:6rem}
+.eyebrow{color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-size:.78rem;margin:0 0 .3rem}
+.sub{color:var(--muted);margin:0 0 2rem}
+h2{font-family:var(--font-display);font-size:1.05rem;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);
+   margin:2.2rem 0 .8rem;border-bottom:1px solid var(--line);padding-bottom:.4rem}
+#theme-toggle{position:absolute;top:0;right:0;background:var(--card);border:1px solid var(--line);
+  color:var(--muted);border-radius:99px;padding:.3rem .8rem;font:inherit;font-size:.8rem;
+  cursor:pointer;display:inline-flex;align-items:center;gap:.4rem}
+#theme-toggle:hover{color:var(--ink)} #theme-toggle:focus-visible{outline:2px solid var(--accentBg);outline-offset:2px}
+.brand-badge{color:var(--muted);font-size:.75rem;margin:0 0 .6rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;
+      padding:1rem 1.1rem;margin-bottom:.75rem}
+.card h3{margin:0 0 .35rem;font-size:1rem;display:flex;gap:.5rem;align-items:baseline;flex-wrap:wrap}
+.id{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;background:color-mix(in srgb,var(--accentBg) 20%,transparent);border-radius:4px;padding:.05rem .4rem}
+.badge{font-size:.72rem;font-weight:700;letter-spacing:.03em;border-radius:99px;
+       padding:.1rem .55rem;text-transform:uppercase}
+.b-ok{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.b-open{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}
+.b-hold{background:color-mix(in srgb,var(--hold) 20%,transparent);color:var(--ink)}
+.b-act{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--ink)}
+.rename{margin-left:auto;font-size:.75rem;color:var(--muted)}
+.rename code{font-size:.95em}
+.card p{margin:.25rem 0}
+.card ul{margin:.3rem 0 .3rem;padding-left:1.25rem} .card li{margin:.18rem 0}
+code{background:var(--chip);border-radius:4px;padding:.05rem .35rem;font-size:.85em;word-break:break-all;font-family:var(--font-mono)}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);
+      border-radius:10px;overflow:hidden;font-size:.9rem}
+th,td{text-align:left;padding:.5rem .8rem;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600} tr:last-child td{border-bottom:none}
+tr.footer td{font-weight:700}
+.overflow{overflow-x:auto}
+.test{margin-top:.6rem;border-top:1px dashed var(--line);padding-top:.55rem;font-size:.88rem}
+.test b{color:var(--ink);text-transform:uppercase;font-size:.75rem;letter-spacing:.04em}
+.test ul{margin:.3rem 0 0;padding-left:1.25rem}
+.warn{color:var(--warn)} .crit{color:var(--bad);font-weight:600}
+details.more{margin-top:.7rem;border-top:1px dashed var(--line);padding-top:.55rem}
+details.more>summary{cursor:pointer;color:var(--ink);font-weight:600;font-size:.88rem;
+  list-style:none;display:inline-flex;align-items:center;gap:.4rem}
+details.more>summary::before{content:"▸";transition:transform .15s}
+details.more[open]>summary::before{transform:rotate(90deg)}
+.srcnote{font-size:.78rem;color:var(--muted);margin:.6rem 0 .3rem}
+.mdout{background:color-mix(in srgb,var(--chip) 55%,transparent);border:1px solid var(--line);
+       border-radius:8px;padding:.9rem 1rem;font-size:.87rem;overflow-x:auto}
+.mdout h1,.mdout h2,.mdout h3{all:revert;font-size:1.02em;margin:.8em 0 .3em;border:none;
+  text-transform:none;letter-spacing:0;color:var(--ink)}
+.mdout h1{font-size:1.12em}
+.mdout pre{background:var(--chip);padding:.6rem .7rem;border-radius:6px;overflow-x:auto}
+.mdout blockquote{border-left:3px solid var(--line);margin:.5em 0;padding:.1em .8em;color:var(--muted)}
+.mdout ul,.mdout ol{padding-left:1.3em} .mdout li{margin:.15em 0}
+.mdout hr{border:none;border-top:1px solid var(--line);margin:.8em 0}
+.mdout a{color:var(--ink);text-decoration:underline}
+.mdout table{font-size:.85em;margin:.5em 0}
+.mdout td,.mdout th{padding:.35rem .6rem}
+details.glossary{background:var(--card);border:1px solid var(--line);border-radius:10px;
+  padding:.7rem 1rem;margin-bottom:1.2rem;font-size:.88rem}
+details.glossary>summary{cursor:pointer;font-weight:700;color:var(--ink)}
+abbr.gl{text-decoration:underline dotted;cursor:help}
+.gl-x{color:var(--muted);font-size:.82em}
+.decision-card .q{margin:.3rem 0}
+.decision-card .options{margin:.3rem 0;padding-left:1.25rem}
+.decision-card .recommendation{margin:.4rem 0}
+.decision-card .unblocks{margin:.3rem 0;font-size:.85rem;color:var(--muted)}
+.decision-card .ruling{margin:.4rem 0;font-weight:600}
+.mock-win{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:.75rem}
+.mock-bar{background:var(--chip);padding:.4rem .7rem;display:flex;align-items:center;gap:.6rem;font-size:.8rem}
+.mock-dots{color:var(--muted)} .mock-label{color:var(--muted);flex:1}
+.mock-chip{border-radius:99px;padding:.1rem .5rem;font-size:.72rem;font-weight:600}
+.mock-bad{background:color-mix(in srgb,var(--bad) 18%,transparent);color:var(--bad)}
+.mock-ok{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.mock-body{padding:1rem;background:var(--bg)}
+.measure{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.9rem 1.1rem;margin-bottom:.75rem}
+.measure .mvalue{font-family:var(--font-display);font-weight:700;font-size:1.4rem}
+.measure .munit{color:var(--muted);margin-left:.3rem}
+.measure .msrc{color:var(--muted);font-size:.8rem;margin:.3rem 0 0}
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:.75rem}
+.state-col{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.8rem}
+.state-col h4{margin:0 0 .3rem;text-transform:uppercase;font-size:.75rem;letter-spacing:.04em}
+.triage-card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.9rem 1.1rem;margin-bottom:.75rem}
+.triage-card table{border:none}
+.verdict-box{margin-top:.5rem;padding:.5rem .8rem;background:var(--chip);border-radius:8px}
+.lockbox{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accentBg);border-radius:10px;padding:.9rem 1.1rem;margin-bottom:.75rem}
+.lb-head{color:var(--muted);font-size:.85rem;margin:0 0 .4rem}
+.tally-row{display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:.75rem}
+.tally-tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.6rem 1rem;text-align:center}
+.tally-tile .tval{display:block;font-family:var(--font-display);font-weight:700;font-size:1.4rem}
+.tally-tile .tlabel{color:var(--muted);font-size:.78rem}
+pre.copy{background:var(--chip);border-radius:8px;padding:.7rem .9rem;font-family:var(--font-mono);font-size:.85rem;overflow-x:auto}
+.copy-btn{background:var(--card);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:.25rem .7rem;font-size:.78rem;cursor:pointer;margin:-.5rem 0 .75rem}
+pre.mermaid{background:var(--chip);border-radius:8px;padding:.8rem 1rem;font-family:var(--font-mono);font-size:.82rem;overflow-x:auto;white-space:pre-wrap}
+.footer{color:var(--muted);font-size:.75rem;margin-top:2.5rem;border-top:1px solid var(--line);padding-top:.8rem}
+@media (prefers-reduced-motion: reduce){ details.more>summary::before{transition:none} }
+</style>
+</head>
+<body><main>
+<button id="theme-toggle" type="button" aria-label="Toggle light/dark theme">◐ <span id="theme-label">auto</span></button>
+<p class="brand-badge">brand: Her0 default</p>
+<p class="eyebrow">RESEARCH-REPORT</p>
+<h1>Epics — do-it 1.1</h1>
+<p class="sub">Local HTML twin of the markdown source (plan-it run do-it-1.1, 2026-11-06); not published.</p>
+<details class="glossary"><summary>Glossary</summary><div class="overflow"><table><tr><th>ID</th><th>Means</th><th>Where defined</th></tr><tr><td>S1</td><td>Epic</td><td>Epic: stop gate binds only the owning session</td></tr>
+<tr><td>A1</td><td>Epic</td><td>Epic: one guarded path to `0-done/`</td></tr>
+<tr><td>B1</td><td>Epic</td><td>Epic: harness-status-tracking board tells the truth</td></tr>
+<tr><td>I1</td><td>Epic</td><td>Epic: init-it is installable</td></tr>
+<tr><td>K1</td><td>Epic</td><td>Epic: doc-it 0.1.0, the standard and its first checks</td></tr>
+<tr><td>K2</td><td>Epic</td><td>Epic: the family consumes doc-it</td></tr>
+<tr><td>T-K1-NN</td><td>Test case of epic K1</td><td>case NN in epic K1's Test Contract</td></tr>
+<tr><td>K1-NN</td><td>Task of epic K1</td><td>checklist task NN of epic K1</td></tr>
+<tr><td>T-K2-NN</td><td>Test case of epic K2</td><td>case NN in epic K2's Test Contract</td></tr>
+<tr><td>K2-NN</td><td>Task of epic K2</td><td>checklist task NN of epic K2</td></tr>
+<tr><td>DS-n</td><td>doc-it standard rule</td><td>rule n in `DevOtts/doc-it` `docs/STANDARD.md` §3</td></tr>
+<tr><td>G-10</td><td>Governance rule 10 (CONTRACT §4)</td><td>Governance rule 10 (CONTRACT §4)</td></tr>
+<tr><td>E1</td><td>Epic</td><td>Epic: host integrations stay isolated under `hosts/`</td></tr>
+<tr><td>H1</td><td>Epic</td><td>Epic: release hygiene (tags, pins, duplicate script)</td></tr>
+<tr><td>L1</td><td>Epic</td><td>Epic: claim ledger and source tiers</td></tr>
+<tr><td>V1</td><td>Epic</td><td>Epic: grounding preflight (behind-remote, shipped layers)</td></tr>
+<tr><td>Q1</td><td>Epic</td><td>Epic: review-it audit mode (auditor + ombudsman)</td></tr>
+<tr><td>RTG</td><td>resumable-test-gates, the sibling package planned by another session</td><td>resumable-test-gates, the sibling package planned by another session</td></tr>
+<tr><td>T-&lt;EID&gt;-NN</td><td>Test case NN of epic EID</td><td>Test case NN of epic EID</td></tr>
+<tr><td>&lt;EID&gt;-NN</td><td>Checklist task NN of epic EID</td><td>Checklist task NN of epic EID</td></tr>
+<tr><td>W0</td><td>Wave 0</td><td>Wave 0</td></tr>
+<tr><td>W1</td><td>Wave 1</td><td>Wave 1</td></tr>
+<tr><td>W2</td><td>Wave 2</td><td>Wave 2</td></tr>
+<tr><td>W3</td><td>Wave 3</td><td>Wave 3</td></tr>
+<tr><td>G-1</td><td>Governance rule 1 (CONTRACT §4)</td><td>Governance rule 1 (CONTRACT §4)</td></tr>
+<tr><td>G-2</td><td>Governance rule 2 (CONTRACT §4)</td><td>Governance rule 2 (CONTRACT §4)</td></tr>
+<tr><td>G-3</td><td>Governance rule 3 (CONTRACT §4)</td><td>Governance rule 3 (CONTRACT §4)</td></tr>
+<tr><td>G-4</td><td>Governance rule 4 (CONTRACT §4)</td><td>Governance rule 4 (CONTRACT §4)</td></tr>
+<tr><td>G-5</td><td>Governance rule 5 (CONTRACT §4)</td><td>Governance rule 5 (CONTRACT §4)</td></tr>
+<tr><td>G-6</td><td>Governance rule 6 (CONTRACT §4)</td><td>Governance rule 6 (CONTRACT §4)</td></tr>
+<tr><td>G-7</td><td>Governance rule 7 (CONTRACT §4)</td><td>Governance rule 7 (CONTRACT §4)</td></tr>
+<tr><td>G-8</td><td>Governance rule 8 (CONTRACT §4)</td><td>Governance rule 8 (CONTRACT §4)</td></tr>
+<tr><td>G-9</td><td>Governance rule 9 (CONTRACT §4)</td><td>Governance rule 9 (CONTRACT §4)</td></tr>
+<tr><td>G-12</td><td>do-it's existing rule &quot;core names no harness&quot;</td><td>tested by T-S1-13 in `core/spine/test/s1/s1.test.mjs`</td></tr>
+<tr><td>D1</td><td>Decision 1 (`plan/DECISIONS.md`)</td><td>Decision 1 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>D2</td><td>Decision 2 (`plan/DECISIONS.md`)</td><td>Decision 2 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>D3</td><td>Decision 3 (`plan/DECISIONS.md`)</td><td>Decision 3 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>D4</td><td>Decision 4 (`plan/DECISIONS.md`)</td><td>Decision 4 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>D5</td><td>Decision 5 (`plan/DECISIONS.md`)</td><td>Decision 5 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>D6</td><td>Decision 6 (`plan/DECISIONS.md`)</td><td>Decision 6 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>D7</td><td>Decision 7 (`plan/DECISIONS.md`)</td><td>Decision 7 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>D8</td><td>Decision 8 (`plan/DECISIONS.md`)</td><td>Decision 8 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>D10</td><td>Decision 10</td><td>Decision 10 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>D11</td><td>Decision 11 (`plan/DECISIONS.md`)</td><td>Decision 11 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>D12</td><td>Decision 12 (`plan/DECISIONS.md`)</td><td>Decision 12 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>D13</td><td>Decision 13 (`plan/DECISIONS.md`)</td><td>Decision 13 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>D14</td><td>Decision 14 (`plan/DECISIONS.md`)</td><td>Decision 14 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>D15</td><td>Decision 15, offered after G4 and deferred: session receipts so conclude-it cleans its own branches and worktrees</td><td>Decision 15 (deferred to the next version)</td></tr>
+<tr><td>D9</td><td>Decision 9 (`plan/DECISIONS.md`)</td><td>Decision 9 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>R1–R5</td><td>Owner rulings already given</td><td>Owner rulings already given (DECISIONS, Ruled)</td></tr>
+<tr><td>C1 … C24</td><td>Claim-ledger rows in `audit/claims.md`</td><td>Claim-ledger rows in `audit/claims.md`</td></tr>
+<tr><td>F1 … F8</td><td>Findings in `docs/01`</td><td>Findings in `docs/01`</td></tr>
+<tr><td>P1 … P6</td><td>Principles in `docs/02`</td><td>Principles in `docs/02`</td></tr>
+<tr><td>L2, L5, L8</td><td>doc-it lessons</td><td>Lessons in `DevOtts/doc-it` `docs/LEARNINGS.md`</td></tr>
+<tr><td>CP-NN</td><td>Review checkpoint NN (READINESS.json)</td><td>Review checkpoint NN (READINESS.json)</td></tr>
+<tr><td>CLOSEOUT</td><td>`CLOSEOUT.md`, the per-piece disposition of a package with no `status.json`</td><td>`CLOSEOUT.md`, the per-piece disposition of a package with no `status.json`</td></tr>
+<tr><td>BCL</td><td>P1, the Engine program whose run board appeared in other sessions' stop gate</td><td>P1, the Engine program whose run board appeared in other sessions' stop gate</td></tr>
+<tr><td>[REAL]</td><td>A case that needs a live target; never VERIFIED on a mock</td><td>A case that needs a live target; never VERIFIED on a mock</td></tr>
+<tr><td>G4</td><td>plan-it's plan-review gate, where the owner reviews every default</td><td>plan-it's plan-review gate, where the owner reviews every default</td></tr>
+<tr><td>T-S1-NN</td><td>Test case of epic S1</td><td>case NN in epic S1's Test Contract</td></tr>
+<tr><td>S1-NN</td><td>Task of epic S1</td><td>checklist task NN of epic S1</td></tr>
+<tr><td>T-A1-NN</td><td>Test case of epic A1</td><td>case NN in epic A1's Test Contract</td></tr>
+<tr><td>A1-NN</td><td>Task of epic A1</td><td>checklist task NN of epic A1</td></tr>
+<tr><td>T-B1-NN</td><td>Test case of epic B1</td><td>case NN in epic B1's Test Contract</td></tr>
+<tr><td>B1-NN</td><td>Task of epic B1</td><td>checklist task NN of epic B1</td></tr>
+<tr><td>T-I1-NN</td><td>Test case of epic I1</td><td>case NN in epic I1's Test Contract</td></tr>
+<tr><td>I1-NN</td><td>Task of epic I1</td><td>checklist task NN of epic I1</td></tr>
+<tr><td>T-E1-NN</td><td>Test case of epic E1</td><td>case NN in epic E1's Test Contract</td></tr>
+<tr><td>E1-NN</td><td>Task of epic E1</td><td>checklist task NN of epic E1</td></tr>
+<tr><td>T-H1-NN</td><td>Test case of epic H1</td><td>case NN in epic H1's Test Contract</td></tr>
+<tr><td>H1-NN</td><td>Task of epic H1</td><td>checklist task NN of epic H1</td></tr>
+<tr><td>T-L1-NN</td><td>Test case of epic L1</td><td>case NN in epic L1's Test Contract</td></tr>
+<tr><td>L1-NN</td><td>Task of epic L1</td><td>checklist task NN of epic L1</td></tr>
+<tr><td>T-V1-NN</td><td>Test case of epic V1</td><td>case NN in epic V1's Test Contract</td></tr>
+<tr><td>V1-NN</td><td>Task of epic V1</td><td>checklist task NN of epic V1</td></tr>
+<tr><td>T-Q1-NN</td><td>Test case of epic Q1</td><td>case NN in epic Q1's Test Contract</td></tr>
+<tr><td>Q1-NN</td><td>Task of epic Q1</td><td>checklist task NN of epic Q1</td></tr>
+<tr><td>C&lt;n&gt;</td><td>Claim-ledger row</td><td>row n of `audit/claims.md` (C1–C36)</td></tr>
+<tr><td>F&lt;n&gt;</td><td>Finding</td><td>finding n in `docs/01` (F1–F9)</td></tr>
+<tr><td>P&lt;n&gt;</td><td>Principle</td><td>principle n in `docs/02` (P1–P6)</td></tr>
+<tr><td>M&lt;n&gt;</td><td>Missed item</td><td>item n of the auditor's &quot;Missed&quot; section in `audit/audit-fable.md`</td></tr>
+<tr><td>L&lt;n&gt;</td><td>doc-it lesson</td><td>lesson n in `DevOtts/doc-it` `docs/LEARNINGS.md`</td></tr>
+<tr><td>S4</td><td>conclude-it ship step S4</td><td>the ship-pipeline step that archives a plan folder</td></tr>
+<tr><td>T-S1</td><td>Test cases of epic S1</td><td>shorthand for T-S1-NN</td></tr>
+<tr><td>T-B-NN</td><td>harness-status-tracking Card B case</td><td>case NN in `CARD-B-status-tracking.md` §10</td></tr>
+<tr><td>T-A-NN</td><td>harness-status-tracking Card A case</td><td>case NN in `CARD-A-init-it.md` §9</td></tr>
+<tr><td>OQ-&lt;n&gt;</td><td>resumable-test-gates owner question</td><td>question n in that package's DECISIONS</td></tr>
+<tr><td>R&lt;n&gt;</td><td>resumable-test-gates default</td><td>default n in that package's DECISIONS</td></tr>
+<tr><td>E&lt;n&gt;</td><td>a consumer program epic (Engine)</td><td>epic n of Engine's a consumer program program, as named in its archive commit</td></tr>
+<tr><td>T1 · T2 · T3</td><td>Gate tiers (resumable-test-gates)</td><td>T1 branch push, T2 train complete, T3 nightly/pre-release; not model tiers</td></tr>
+<tr><td>ST-NN</td><td>harness-status-tracking task</td><td>task NN on that program's board (ST-01…ST-08)</td></tr></table></div></details>
+<h2>Epics — do-it 1.1</h2>
+<details class="more" open><summary>epics/epics-1-do-it-1.1.md</summary><div class="mdout"><script type="text/markdown">
+# Epics: do-it 1.1
+
+Legend: G-n governance rule · T-<EID>-NN test case · Wn wave · Dn ruling — see GLOSSARY.md
+
+Every epic ends in its binding Test Contract (BINDING: 100% pass or /iterate). Size M: one package, a handful of cases per epic.
+
+---
+
+## <abbr class="gl" title="Epic">S1</abbr> — Stop gate binds only the owning session (<abbr class="gl" title="Wave 0">W0</abbr>)
+
+Wave: <abbr>W0</abbr> · Repo: DevOtts/do-it · Branch `epic/S1-stop-gate-ownership` · Deps: none · Tier: sonnet
+Scope: `core/spine/src/state.mjs` (`selectScopedRunId`), `core/spine/src/stopgate.mjs`, `core/spine/src/finish-line.mjs`, `core/spine/src/start` path, hook `hosts/claude-code/hooks/stop-gate.mjs`; rebuild `core/spine/do-it.mjs`.
+
+- [ ] <abbr class="gl" title="Task of epic S1">S1-00</abbr> `start` falls back to `CLAUDE_CODE_SESSION_ID` (after `--session` and `DO_IT_SESSION_ID`); `resume` after `/clear` re-binds the run to the new id with a history entry
+- [ ] <abbr class="gl" title="Task of epic S1">S1-06</abbr> `SKILL.md` `start` line uses `--request` (<abbr class="gl" title="Claim-ledger row">C30</abbr>)
+- [ ] <abbr class="gl" title="Task of epic S1">S1-07</abbr> Patience parks only a run the hook's session owns
+- [ ] <abbr class="gl" title="Task of epic S1">S1-01</abbr> Match on `owner.session_id` only; cwd fallback only when the host gives no session and the run has none
+- [ ] <abbr class="gl" title="Task of epic S1">S1-02</abbr> Legacy runs (no owner) are never gated from a hook
+- [ ] <abbr class="gl" title="Task of epic S1">S1-03</abbr> Allow by exclusion: PARKED, NEEDS_HUMAN, BLOCKED, AWAIT_RATIFY and terminal statuses never gate; every other run status does
+- [ ] <abbr class="gl" title="Task of epic S1">S1-04</abbr> Finish-line rows carry `run_id`; a hook stop counts only the gated run's rows
+- [ ] <abbr class="gl" title="Task of epic S1">S1-05</abbr> `start` never records a null session id when the host supplies one
+- [ ] <abbr class="gl" title="Task of epic S1">S1-08</abbr> `do-it pack withdraw --by stop-gate [--run <id>]`: marks unanswered questions whose source is the stop gate as `withdrawn` (kept, with date and reason); answered questions and stage questions are untouched (<abbr class="gl" title="Decision 10">D10</abbr>)
+
+### Test Contract — <abbr>S1</abbr>   (BINDING: 100% pass or /iterate)
+Types: [unit][use-cases]  ·  Count: 11  ·  Surfaces: spine CLI, Claude Code hook
+Done = every case below is PASS. No [REAL] case VERIFIED on a mock.
+
+| ID | Task | Scenario | Expected | Kind | Verify | Check |
+|---|---|---|---|---|---|---|
+| <abbr class="gl" title="Test case of epic S1">T-S1-01</abbr> | <abbr>S1-01</abbr> | Session B stops in a repo whose only run is active and owned by session A | STOP_ALLOWED, `owned: false` | happy | auto | `node --test core/spine/test/s2/stopgate-owner.test.mjs` |
+| <abbr class="gl" title="Test case of epic S1">T-S1-02</abbr> | <abbr>S1-01</abbr> | Run has `session_id: null`, cwd = repo; Claude hook stops with session B | STOP_ALLOWED | edge | auto | `node --test core/spine/test/s2/stopgate-owner.test.mjs` |
+| <abbr class="gl" title="Test case of epic S1">T-S1-03</abbr> | <abbr>S1-02</abbr> | Run with no `owner` object; hook stop | STOP_ALLOWED, reason "legacy run has no owner"; `gate stop --run <id>` still refuses | edge | auto | `node --test core/spine/test/s2/stopgate-owner.test.mjs` |
+| <abbr class="gl" title="Test case of epic S1">T-S1-04</abbr> | <abbr>S1-03</abbr> | Owner session stops while its run is PARKED, NEEDS_HUMAN, AWAIT_RATIFY, then VERIFYING with open rows | STOP_ALLOWED for the first three; STOP_REFUSED for VERIFYING (a run under review still gates) | edge | auto | `node --test core/spine/test/s2/stopgate-owner.test.mjs` |
+| <abbr class="gl" title="Test case of epic S1">T-S1-05</abbr> | <abbr>S1-04</abbr> | Two runs in one repo, each with open rows; owner of run 1 stops | board and count show only run 1's rows; patience parks run 1 only, run 2's state is byte-identical | stress | auto | `node --test core/spine/test/s2/stopgate-owner.test.mjs` |
+| <abbr class="gl" title="Test case of epic S1">T-S1-06</abbr> | <abbr>S1-01</abbr> | [REAL] Copy of the pilot consumer repo's `.do-it/` (path in the KICKOFF; 4 PARKED runs: 2 null-session, 1 owned, 1 no owner) on a temp dir; a fresh session stops, then the owning session stops | both STOP_ALLOWED (all PARKED), zero refusals, zero new pack questions | live | auto | `node --test core/spine/test/s2/stopgate-replay.test.mjs` |
+| <abbr class="gl" title="Test case of epic S1">T-S1-11</abbr> | <abbr>S1-08</abbr> | Pack with 3 stop-gate questions (1 answered) and 1 stage question; run `pack withdraw --by stop-gate` twice | 2 marked `withdrawn` with date and reason; answered and stage questions byte-identical; second run changes nothing | edge | auto | `node --test core/spine/test/s2/pack-withdraw.test.mjs` |
+| <abbr class="gl" title="Test case of epic S1">T-S1-09</abbr> | <abbr>S1-00</abbr> | [REAL] Fresh Claude Code session runs `do-it start --request "x"` with the plugin installed, no flags or exports | `state.json` `owner.session_id` equals `$CLAUDE_CODE_SESSION_ID`, not null; after `/clear` and `resume`, the run is re-bound to the new id | live | auto | `node --test core/spine/test/s2/session-id.test.mjs` |
+| <abbr class="gl" title="Test case of epic S1">T-S1-10</abbr> | <abbr>S1-07</abbr> | A non-owner session in the same folder hits the hook 5 times | no park event, no pack question, the owner's run state byte-identical | edge | auto | `node --test core/spine/test/s2/stopgate-owner.test.mjs` |
+| <abbr class="gl" title="Test case of epic S1">T-S1-08</abbr> | <abbr>S1-03</abbr> | Owner's run `state.json` is corrupt; hook stop | STATE_ERROR, then ALLOWED (fail open); an event is logged and `do-it status` reports the unreadable run | edge | auto | `node --test core/spine/test/s2/stopgate-owner.test.mjs` |
+| <abbr class="gl" title="Test case of epic S1">T-S1-07</abbr> | <abbr>S1-05</abbr> | `start` from a host that gives session X; then grep settings schema diff | `owner.session_id == X`; no new settings key in `core/schemas` (<abbr class="gl" title="Governance rule 8 (CONTRACT §4)">G-8</abbr>) | happy | auto | `node --test core/spine/test/s2/stopgate-owner.test.mjs` |
+
+---
+
+## <abbr class="gl" title="Epic">A1</abbr> — One guarded path to 0-done (<abbr>W0</abbr>)
+
+Wave: <abbr>W0</abbr> · Repos: DevOtts/conclude-it (<abbr class="gl" title="conclude-it ship step S4">S4</abbr>, Step 0), DevOtts/build-it (close in place) · Deps: <abbr class="gl" title="Epic">K1</abbr> (doc-it `check archive`, CLOSEOUT template) · Tier: opus
+
+- [ ] <abbr class="gl" title="Task of epic A1">A1-02</abbr> conclude-it <abbr>S4</abbr>: guarded close when `status.json` exists; CLOSEOUT then move when it does not; never a bare `git mv`
+- [ ] <abbr class="gl" title="Task of epic A1">A1-03</abbr> conclude-it Step 0 runs `doc-it check archive` and reports, never fixes; without doc-it it prints `[skip] doc-it not installed`
+- [ ] <abbr class="gl" title="Task of epic A1">A1-04</abbr> conclude-it <abbr>S4</abbr> writes CLOSEOUT.md from doc-it's template (<abbr class="gl" title="Task of epic K1">K1-04</abbr>), never its own copy
+- [ ] <abbr class="gl" title="Task of epic A1">A1-05</abbr> `ledger-card.mjs close` accepts a package already in `0-done/` and closes it in place (`status-write close` without `--move`)
+
+### Test Contract — <abbr>A1</abbr>   (BINDING: 100% pass or /iterate)
+Types: [unit][use-cases][stress]  ·  Count: 5  ·  Surfaces: CLI + skill
+Done = every case below is PASS. No [REAL] case VERIFIED on a mock.
+
+| ID | Task | Scenario | Expected | Kind | Verify | Check |
+|---|---|---|---|---|---|---|
+| <abbr class="gl" title="Test case of epic A1">T-A1-03</abbr> | <abbr>A1-02</abbr> | <abbr>S4</abbr> on a package with unverified tasks and no owner note | REJECTED, folder not moved, message names the unverified tasks | edge | auto | `node --test tests/ship-pipeline/s4.test.mjs` |
+| <abbr class="gl" title="Test case of epic A1">T-A1-04</abbr> | <abbr>A1-02</abbr> | <abbr>S4</abbr> on a package without `status.json` | first DENIED (no CLOSEOUT); <abbr>S4</abbr> writes CLOSEOUT.md with one row per piece, then moves; a CLOSEOUT row `carried` without a backlog path is refused | edge | auto | `node --test tests/ship-pipeline/s4.test.mjs` |
+| <abbr class="gl" title="Test case of epic A1">T-A1-06</abbr> | <abbr>A1-02</abbr> | Partial failure: kill `status-write close --move` after the board is frozen and before the folder move | PARTIAL_FAILED; re-running close completes the move; board stays `closed: true` with one close history entry; no half-moved tree; recover by re-run | stress | auto | `node --test tests/status/close-partial-failure.test.mjs` |
+| <abbr class="gl" title="Test case of epic A1">T-A1-07</abbr> | <abbr>A1-05</abbr> | `ledger-card close --owner-note` on a synthetic archived package (`0-done/x`, board 0 of 4, `closed: false`) | `closed: true` in place, note in history, folder not moved; without a note it is refused | happy | auto | `node --test tests/ledger-card-archived.test.mjs` |
+| <abbr class="gl" title="Test case of epic A1">T-A1-05</abbr> | <abbr>A1-03</abbr> | Step 0 on a repo with findings, then on a home without doc-it installed | report lists them; zero files changed (git status clean); without doc-it it prints `[skip] doc-it not installed` and exit 0 | happy | auto | `node --test tests/ship-pipeline/step0-audit.test.mjs` |
+
+---
+
+## <abbr class="gl" title="Epic">B1</abbr> — harness-status-tracking board tells the truth (<abbr>W0</abbr>)
+
+Wave: <abbr>W0</abbr> · Repo: DevOtts/do-it · Deps: none · Tier: haiku
+
+- [ ] <abbr class="gl" title="Task of epic B1">B1-01</abbr> An independent review-it run (not the REAL-VERIFY session) syncs the board's 8 tasks from `REAL-VERIFY.md`
+- [ ] <abbr class="gl" title="Task of epic B1">B1-02</abbr> Re-check <abbr class="gl" title="harness-status-tracking Card B case">T-B-20</abbr>'s stale half; it stays parked until a commit lands more than 24 h after the board
+- [ ] <abbr class="gl" title="Task of epic B1">B1-03</abbr> Close the program through the guarded close once every case is terminal
+
+### Test Contract — <abbr>B1</abbr>   (BINDING: 100% pass or /iterate)
+Types: [use-cases]  ·  Count: 2  ·  Surfaces: status-write
+Done = every case below is PASS. No [REAL] case VERIFIED on a mock.
+
+| ID | Task | Scenario | Expected | Kind | Verify | Check |
+|---|---|---|---|---|---|---|
+| <abbr class="gl" title="Test case of epic B1">T-B1-01</abbr> | <abbr>B1-01</abbr> | `status-write validate` + `view` on the harness-status-tracking board after sync | the 8 tasks whose cases REAL-VERIFY verified are `verified`, with REAL-VERIFY.md as evidence and `by: review-it` from a different session id than REAL-VERIFY's | happy | auto | `node ../build-it/plugins/build-it/scripts/status/status-write.mjs validate --file docs/implementation/harness-status-tracking/status.json` |
+| <abbr class="gl" title="Test case of epic B1">T-B1-02</abbr> | <abbr>B1-02</abbr> | Stale check on the board today (newest folder commit about 3.8 h after `updated_at`) | not flagged; <abbr>T-B-20</abbr> stays parked with that reason; a fixture with a commit 25 h newer is flagged `stale` | edge | auto | `node ../build-it/plugins/build-it/scripts/status/status-write.mjs recheck --file docs/implementation/harness-status-tracking/status.json` |
+
+---
+
+## <abbr class="gl" title="Epic">I1</abbr> — init-it is installable (<abbr>W0</abbr>, after <abbr class="gl" title="Decision 1 (`plan/DECISIONS.md`)">D1</abbr>)
+
+Wave: <abbr>W0</abbr> · Repos: DevOtts/init-it (new), DevOtts/do-it · Deps: owner <abbr>D1</abbr> · Tier: haiku
+
+- [ ] <abbr class="gl" title="Task of epic I1">I1-01</abbr> Create `DevOtts/init-it` (visibility per <abbr>D1</abbr>), push the local tree, tag `v0.1.0`, GitHub release
+- [ ] <abbr class="gl" title="Task of epic I1">I1-02</abbr> `core/companions.json` entry (`required: false`) and marketplace entry
+- [ ] <abbr class="gl" title="Task of epic I1">I1-03</abbr> plan-it hand-off prints "init-it not installed" when the plugin is missing
+
+### Test Contract — <abbr>I1</abbr>   (BINDING: 100% pass or /iterate)
+Types: [use-cases]  ·  Count: 2  ·  Surfaces: install
+Done = every case below is PASS. No [REAL] case VERIFIED on a mock.
+
+| ID | Task | Scenario | Expected | Kind | Verify | Check |
+|---|---|---|---|---|---|---|
+| <abbr class="gl" title="Test case of epic I1">T-I1-01</abbr> | <abbr>I1-01</abbr> | [REAL] init-it's own suite at the tagged commit | `node --test test/` passes, <abbr class="gl" title="harness-status-tracking Card A case">T-A-01</abbr>..<abbr class="gl" title="harness-status-tracking Card A case">T-A-20</abbr> | live | auto | `git -C ../init-it checkout v0.1.0 && node --test ../init-it/test/` |
+| <abbr class="gl" title="Test case of epic I1">T-I1-02</abbr> | <abbr>I1-02</abbr> | `do-it doctor --install` on a clean temp home | init-it installed at 0.1.0; `check-pins --marketplace` passes | happy | auto | `node scripts/check-pins.mjs --marketplace` |
+
+---
+
+## <abbr>K1</abbr> — doc-it 0.1.0: the standard and its first checks (<abbr>W0</abbr>, <abbr class="gl" title="Decision 11 (`plan/DECISIONS.md`)">D11</abbr>)
+
+Wave: <abbr>W0</abbr> · Repo: DevOtts/doc-it (new, public) · Branch `epic/K1-doc-it-0.1.0` · Deps: <abbr>D11</abbr>, <abbr class="gl" title="Decision 12 (`plan/DECISIONS.md`)">D12</abbr>, <abbr class="gl" title="Decision 13 (`plan/DECISIONS.md`)">D13</abbr> · Tier: sonnet
+Scope: the local tree at `~/Workspace/Devotts/doc-it` (standard v0, learnings, owner questions) becomes the plugin. Project-neutral (<abbr class="gl" title="resumable-test-gates default">R3</abbr>): no project name in code, docs or tests.
+
+- [ ] <abbr class="gl" title="Task of epic K1">K1-01</abbr> Plugin skeleton: `.claude-plugin/plugin.json`, `plugins/doc-it/skills/doc-it/SKILL.md` (DevOtts author fields and footer), `scripts/doc-it.mjs` (zero-dependency Node CLI)
+- [ ] <abbr class="gl" title="Task of epic K1">K1-02</abbr> Standard v0.1: OWNER-QUESTIONS 1–5 applied with their recommendations (<abbr>D13</abbr>); each rule <abbr class="gl" title="doc-it standard rule">DS-1</abbr>..<abbr class="gl" title="doc-it standard rule">DS-8</abbr> marked `checked` or `not yet checked` in 0.1.0
+- [ ] <abbr class="gl" title="Task of epic K1">K1-03</abbr> `doc-it check archive`: read-only scan of the archive role; JSON (`done_unclosed`, `done_without_closeout`, `stale_active`) and exit codes 0 clean, 1 findings, 2 config error (<abbr class="gl" title="doc-it standard rule">DS-3</abbr>)
+- [ ] <abbr>K1-04</abbr> CLOSEOUT template and its lint: one row per piece, `shipped` with evidence, `dropped`, or `carried` with a backlog link (<abbr>DS-3</abbr>)
+- [ ] <abbr class="gl" title="Task of epic K1">K1-05</abbr> `.doc-it/config.json`: role → paths map and `expiry_days` (default 60); `doc-it init` writes it from a short interview; a path with no role is reported as unowned
+- [ ] <abbr class="gl" title="Task of epic K1">K1-06</abbr> `doc-it check checkout <repo...>`: compares HEAD and working tree with `origin/<default>`; exit 1 when behind, naming local and remote sha (<abbr class="gl" title="doc-it standard rule">DS-6</abbr>)
+- [ ] <abbr class="gl" title="Task of epic K1">K1-07</abbr> `doc-it check expiry` (report only, never rewrites; <abbr class="gl" title="doc-it standard rule">DS-4</abbr>) and `doc-it tiers --json` (the tier enum of STANDARD §2)
+- [ ] <abbr class="gl" title="Task of epic K1">K1-08</abbr> Create `DevOtts/doc-it` public, push, tag `v0.1.0`, GitHub release; `core/companions.json` entry (`required: false`) and marketplace entry pinned with `ref: v0.1.0` (<abbr class="gl" title="Decision 4 (`plan/DECISIONS.md`)">D4</abbr>)
+
+### Test Contract — <abbr>K1</abbr>   (BINDING: 100% pass or /iterate)
+Types: [unit][use-cases]  ·  Count: 8  ·  Surfaces: doc-it CLI, install
+Done = every case below is PASS. No [REAL] case VERIFIED on a mock.
+
+| ID | Task | Scenario | Expected | Kind | Verify | Check |
+|---|---|---|---|---|---|---|
+| <abbr class="gl" title="Test case of epic K1">T-K1-01</abbr> | <abbr>K1-03</abbr> | Fixture docs home (roles from `.doc-it/config.json`): one `0-done/x` with `closed:false`, one `0-done/y` with no board and no CLOSEOUT, one clean | exit 1; JSON lists x in `done_unclosed`, y in `done_without_closeout`; clean one absent | happy | auto | `node --test test/check-archive.test.mjs` |
+| <abbr class="gl" title="Test case of epic K1">T-K1-02</abbr> | <abbr>K1-03</abbr> | [REAL] `doc-it check archive` on a read-only copy of the pilot consumer repo's plan home (path in the KICKOFF) | lists exactly the 3 programs measured on 2026-11-06 in `done_unclosed`; writes nothing | live | auto | `node --test test/check-archive-consumer.test.mjs` |
+| <abbr class="gl" title="Test case of epic K1">T-K1-03</abbr> | <abbr>K1-04</abbr> | CLOSEOUT with a `carried` row and no backlog link, then one complete | first fails naming the row; second passes | edge | auto | `node --test test/closeout.test.mjs` |
+| <abbr class="gl" title="Test case of epic K1">T-K1-04</abbr> | <abbr>K1-05</abbr> | Repo with no `.doc-it/config.json`; then a config whose role map leaves `notes/` unmapped | `check archive` exit 2 "run doc-it init"; second run reports `notes/` as unowned | edge | auto | `node --test test/config.test.mjs` |
+| <abbr class="gl" title="Test case of epic K1">T-K1-05</abbr> | <abbr>K1-06</abbr> | Fixture repo whose local main is 3 behind its remote, then up to date | exit 1 naming both shas; then exit 0 | edge | auto | `node --test test/check-checkout.test.mjs` |
+| <abbr class="gl" title="Test case of epic K1">T-K1-06</abbr> | <abbr>K1-07</abbr> | Durable doc with `verified:` 61 days old and one 10 days old, `expiry_days` 60 | report lists only the first; zero files changed | happy | auto | `node --test test/check-expiry.test.mjs` |
+| <abbr class="gl" title="Test case of epic K1">T-K1-07</abbr> | <abbr>K1-01</abbr> | Name scan of the repo (and <abbr>K1-02</abbr> rule marks) for any project name, and the SKILL footer check | zero project names (<abbr>R3</abbr>); SKILL has `author: DevOtts` and the footer | happy | auto | `node --test test/neutral.test.mjs` |
+| <abbr class="gl" title="Test case of epic K1">T-K1-08</abbr> | <abbr>K1-08</abbr> | [REAL] Install from the marketplace on a clean temp home | doc-it 0.1.0 installed from tag `v0.1.0`; `doc-it tiers --json` prints the six tiers | live | auto | `node scripts/check-pins.mjs --marketplace` |
+
+---
+
+## <abbr class="gl" title="Epic">K2</abbr> — The family consumes doc-it (<abbr class="gl" title="Wave 2">W2</abbr>, <abbr>D11</abbr>)
+
+Wave: <abbr>W2</abbr> · Repos: DevOtts/conclude-it, DevOtts/plan-it, DevOtts/review-it, DevOtts/do-it · Deps: <abbr>K1</abbr>, <abbr class="gl" title="Epic">V1</abbr>, <abbr class="gl" title="Epic">Q1</abbr> (<abbr class="gl" title="Task of epic K2">K2-02</abbr> edits <abbr>Q1</abbr>'s audit mode after it lands) · Tier: sonnet
+
+- [ ] <abbr class="gl" title="Task of epic K2">K2-01</abbr> conclude-it Step 2 (debrief) runs `doc-it check expiry` on the pages it touched and puts the result in the verdict; the supersession sweep asks doc-it for each fact kind's home
+- [ ] <abbr>K2-02</abbr> review-it audit mode (<abbr>Q1</abbr>) tags each claim with the tier from `doc-it tiers --json`
+- [ ] <abbr class="gl" title="Task of epic K2">K2-03</abbr> One shared rule in every consumer: when doc-it is missing, print `[skip] doc-it not installed: <what was not checked>` and never PASS that check (<abbr class="gl" title="Decision 14 (`plan/DECISIONS.md`)">D14</abbr>)
+- [ ] <abbr class="gl" title="Task of epic K2">K2-04</abbr> do-it README family table and SKILL list doc-it; `doctor --install` offers it
+
+### Test Contract — <abbr>K2</abbr>   (BINDING: 100% pass or /iterate)
+Types: [use-cases]  ·  Count: 4  ·  Surfaces: skills, install
+Done = every case below is PASS. No [REAL] case VERIFIED on a mock.
+
+| ID | Task | Scenario | Expected | Kind | Verify | Check |
+|---|---|---|---|---|---|---|
+| <abbr class="gl" title="Test case of epic K2">T-K2-01</abbr> | <abbr>K2-01</abbr> | conclude-it close on a session that touched a page with expired `verified:` | verdict lists the page as expired; nothing rewritten | happy | judgement | conclude-it eval `evals/doc-it-expiry.yaml` |
+| <abbr class="gl" title="Test case of epic K2">T-K2-02</abbr> | <abbr>K2-02</abbr> | review-it `--audit` on a 3-row ledger | each row carries a tier from doc-it's enum; an unknown tier is refused | happy | auto | `node --test tests/audit/tiers.test.mjs` |
+| <abbr class="gl" title="Test case of epic K2">T-K2-03</abbr> | <abbr>K2-03</abbr> | conclude-it, plan-it preflight and review-it `--audit` on a temp home without doc-it | each prints the `[skip] doc-it not installed` line; none reports that check as PASS | edge | auto | `node --test tests/doc-it-missing/*.test.mjs` |
+| <abbr class="gl" title="Test case of epic K2">T-K2-04</abbr> | <abbr>K2-04</abbr> | README check and `doctor --install --dry-run` | doc-it in the family table; doctor lists it as optional | happy | auto | `node --test tests/readme/*.test.mjs` |
+
+---
+
+## <abbr class="gl" title="Epic">E1</abbr> — Host integrations stay isolated under hosts/ (<abbr>W0</abbr>, <abbr>R3</abbr>)
+
+Wave: <abbr>W0</abbr> · Repo: DevOtts/do-it · Branch `epic/E1-host-isolation` · Deps: <abbr>R3</abbr>, <abbr class="gl" title="Decision 2 (`plan/DECISIONS.md`)">D2</abbr> · Tier: sonnet
+Scope: `core/state-stores/**`, `core/schemas/settings.schema.json`, `core/spine/src/settings.mjs`, `hosts/engine/**`, `scripts/check-readme.mjs`, `scripts/generate-skill.mjs`, `tests/e2e/r4.test.mjs`, `core/spine/test/s1/s1.test.mjs`; rebuild `core/spine/do-it.mjs`.
+
+- [ ] <abbr class="gl" title="Task of epic E1">E1-01</abbr> Move `core/state-stores/engine.mjs`, `core/state-stores/engine-drivers/*` and their tests to `hosts/engine/state-store/`; `core/state-stores/index.mjs` keeps `local-fs` and `git-branch` and loads any other backend from the `state_store` entry of `hosts/<name>/adapter.manifest.json`; the engine cases in `core/state-stores/cli.mjs` and `conformance/run.mjs` move with it
+- [ ] <abbr class="gl" title="Task of epic E1">E1-02</abbr> Settings: the core schema keeps `state.backend` and accepts one object keyed by the backend name, validated by that host's own schema (`hosts/engine/state-store/settings.schema.json`); `settings.mjs` drops the `engine` default. Existing `state.engine.blobs` files stay valid (no new key, <abbr>G-8</abbr>)
+- [ ] <abbr class="gl" title="Task of epic E1">E1-03</abbr> <abbr class="gl" title="do-it's existing rule &quot;core names no harness&quot;">G-12</abbr> word list gains `engine`; the scan covers `core/` and `scripts/`, skips `hosts/` and `plugins/do-it/`
+- [ ] <abbr class="gl" title="Task of epic E1">E1-04</abbr> Host tables in README, SKILL and `generate-skill.mjs` are generated from `hosts/*/adapter.manifest.json` (`level`, `server_side`); `check-readme.mjs` reads the manifests instead of a fixed host list
+- [ ] <abbr class="gl" title="Task of epic E1">E1-05</abbr> The Engine live case in `tests/e2e/r4.test.mjs` moves to `hosts/engine/tests/`
+- [ ] <abbr class="gl" title="Task of epic E1">E1-06</abbr> `hosts/engine/adapter.manifest.json` gains `"level": "experimental", "server_side": "declined"`; README, hero alt text and `hosts/engine/README.md` show "Experimental: server side declined (PR #727, 2026-10-29)" (<abbr>D2</abbr>)
+- [ ] <abbr class="gl" title="Task of epic E1">E1-07</abbr> CHANGELOG 1.1.0 records the move and <abbr>D2</abbr>
+
+### Test Contract — <abbr>E1</abbr>   (BINDING: 100% pass or /iterate)
+Types: [unit][use-cases]  ·  Count: 5  ·  Surfaces: core scan, state-store factory, settings, README check
+Done = every case below is PASS. No [REAL] case VERIFIED on a mock.
+
+| ID | Task | Scenario | Expected | Kind | Verify | Check |
+|---|---|---|---|---|---|---|
+| <abbr class="gl" title="Test case of epic E1">T-E1-01</abbr> | <abbr>E1-03</abbr> | <abbr>G-12</abbr> scan with `engine` in the word list, over `core/` and `scripts/` | zero hits; a planted `engine` word in a temp copy of `core/spine/src` fails the scan naming the file (<abbr>R3</abbr>) | happy | auto | `node --test core/spine/test/s1/s1.test.mjs` |
+| <abbr class="gl" title="Test case of epic E1">T-E1-02</abbr> | <abbr>E1-01</abbr> | Temp copy of the repo with `hosts/engine/` deleted | every core suite still passes; `openStore({backend:'engine'})` fails with DRIVER_UNKNOWN naming the missing host, not a crash | edge | auto | `node --test tests/hosts/isolation.test.mjs` |
+| <abbr class="gl" title="Test case of epic E1">T-E1-03</abbr> | <abbr>E1-01</abbr> | State-store conformance suite run against the engine store from its new path | same pass count as at `d38cedb`; `openStore({backend:'engine'})` loads it through the manifest | happy | auto | `node --test hosts/engine/state-store/tests/` |
+| <abbr class="gl" title="Test case of epic E1">T-E1-04</abbr> | <abbr>E1-02</abbr> | A settings file with `state.backend: engine, state.engine.blobs: r2`, then one with `state.engine.blobs: bogus` | first validates with no schema diff in `core/schemas` keys (<abbr>G-8</abbr>); second fails with the host schema's error | edge | auto | `node --test core/spine/test/s2/settings-host.test.mjs` |
+| <abbr class="gl" title="Test case of epic E1">T-E1-05</abbr> | <abbr>E1-06</abbr> | README check with the host table generated by <abbr>E1-04</abbr> | Engine row reads Experimental; check fails if any host whose manifest says `server_side: declined` is listed as Supported (<abbr class="gl" title="Governance rule 4 (CONTRACT §4)">G-4</abbr>), or if a host folder has no row | happy | auto | `node --test tests/readme/*.test.mjs` |
+
+---
+
+## <abbr class="gl" title="Epic">H1</abbr> — Release hygiene (<abbr>W0</abbr>)
+
+Wave: <abbr>W0</abbr> · Repos: DevOtts/do-it, DevOtts/prompt-it, DevOtts/reconcile-it · Deps: owner <abbr class="gl" title="Decision 3 (`plan/DECISIONS.md`)">D3</abbr>, <abbr>D4</abbr> · Tier: haiku
+
+- [ ] <abbr class="gl" title="Task of epic H1">H1-01</abbr> prompt-it: tag per <abbr>D3</abbr> (v1.0.0 at the plugin.json 1.0.0 commit, or pin 0.2.1); do-it: tag v1.0.5 at `d38cedb` (<abbr class="gl" title="Claim-ledger row">C32</abbr>)
+- [ ] <abbr class="gl" title="Task of epic H1">H1-02</abbr> `check-pins` fails when a pinned version (do-it's own included) has no matching tag on the remote
+- [ ] <abbr class="gl" title="Task of epic H1">H1-03</abbr> reconcile-it 1.0.1: remove `scripts/reconcile-it.mjs` (duplicate)
+- [ ] <abbr class="gl" title="Task of epic H1">H1-04</abbr> Marketplace `ref: v<version>` pins per <abbr>D4</abbr>, only after each tag exists (<abbr class="gl" title="Claim-ledger row">C33</abbr>)
+- [ ] <abbr class="gl" title="Task of epic H1">H1-05</abbr> Replace the stale 1.0.0 KICKOFF with a pointer to this package
+- [ ] <abbr class="gl" title="Task of epic H1">H1-06</abbr> plan-it SKILL: script paths resolve in the installed layout (`plugins/plan-it/scripts/`), with a test that runs each documented command from a cache-shaped copy; and `handoff` stops reading plan-it's own generated `ENV-FACTS.md` (PRESENT/ABSENT) as a STATUS board when it sits in the delivery folder
+
+### Test Contract — <abbr>H1</abbr>   (BINDING: 100% pass or /iterate)
+Types: [unit][use-cases]  ·  Count: 4  ·  Surfaces: check-pins, plan-it SKILL
+Done = every case below is PASS. No [REAL] case VERIFIED on a mock.
+
+| ID | Task | Scenario | Expected | Kind | Verify | Check |
+|---|---|---|---|---|---|---|
+| <abbr class="gl" title="Test case of epic H1">T-H1-01</abbr> | <abbr>H1-03</abbr> | reconcile-it suite after removal | passes; `git ls-files scripts/reconcile-it.mjs` empty | happy | auto | `node --test ../reconcile-it/tests/` |
+| <abbr class="gl" title="Test case of epic H1">T-H1-02</abbr> | <abbr>H1-02</abbr> | Fixture pin to a version with no remote tag | `check-pins` exit 1 naming the sibling and version (<abbr class="gl" title="Governance rule 3 (CONTRACT §4)">G-3</abbr>) | edge | auto | `node --test tests/catalog/*.test.mjs` |
+| <abbr class="gl" title="Test case of epic H1">T-H1-04</abbr> | <abbr>H1-06</abbr> | Every `node ${CLAUDE_PLUGIN_ROOT}/…` command in plan-it SKILL.md, run against a copy laid out like the marketplace cache | each path exists; `--help` exits 0 | edge | auto | `node --test tests/plugin/skill-paths.test.mjs` |
+| <abbr class="gl" title="Test case of epic H1">T-H1-03</abbr> | <abbr>H1-04</abbr> | Marketplace entry with `ref` installs on Claude Code | installed sibling version equals the pin | live | attended | — |
+
+---
+
+## <abbr class="gl" title="Epic">L1</abbr> — Claim ledger and source tiers (<abbr class="gl" title="Wave 1">W1</abbr>)
+
+Wave: <abbr>W1</abbr> · Repo: DevOtts/plan-it · Deps: <abbr>K1</abbr> · Tier: sonnet
+
+- [ ] <abbr class="gl" title="Task of epic L1">L1-01</abbr> Ledger format in `references/formats.md`; the tier enum is read from `doc-it tiers --json` (<abbr>K1-07</abbr>), never copied; SKILL Phase 5 requires the ledger for decision-grade packages
+- [ ] <abbr class="gl" title="Task of epic L1">L1-02</abbr> `gate-check claims <claims.md>`: tier enum, source present, sha/path rule for code/git, fact rule, count rule
+- [ ] <abbr class="gl" title="Task of epic L1">L1-03</abbr> "Evidence against the hypothesis" rule and its lint
+- [ ] <abbr class="gl" title="Task of epic L1">L1-04</abbr> `gate-check handoff` runs `claims` for decision-grade packages
+
+### Test Contract — <abbr>L1</abbr>   (BINDING: 100% pass or /iterate)
+Types: [unit]  ·  Count: 5  ·  Surfaces: gate-check
+Done = every case below is PASS. No [REAL] case VERIFIED on a mock.
+
+| ID | Task | Scenario | Expected | Kind | Verify | Check |
+|---|---|---|---|---|---|---|
+| <abbr class="gl" title="Test case of epic L1">T-L1-01</abbr> | <abbr>L1-02</abbr> | This package's `audit/claims.md` (24 rows) | exit 0 | happy | auto | `node scripts/gate-check.mjs claims tests/fixtures/claims/do-it-1.1.md` |
+| <abbr class="gl" title="Test case of epic L1">T-L1-02</abbr> | <abbr>L1-02</abbr> | Row with tier `code` and no sha anywhere | exit 1 naming the row and "sha/path rule" | edge | auto | `node --test tests/claims/*.test.mjs` |
+| <abbr class="gl" title="Test case of epic L1">T-L1-03</abbr> | <abbr>L1-02</abbr> | Row "5 credential ways" with tier `code`, no list | exit 1 "count rule" (the P2-plan defect) | edge | auto | `node --test tests/claims/*.test.mjs` |
+| <abbr class="gl" title="Test case of epic L1">T-L1-04</abbr> | <abbr>L1-02</abbr> | Row tier `program-doc` stated as plain fact | exit 1 "fact rule"; the same row prefixed "the study says" passes | edge | auto | `node --test tests/claims/*.test.mjs` |
+| <abbr class="gl" title="Test case of epic L1">T-L1-05</abbr> | <abbr>L1-03</abbr> | Findings doc with "your suspicion is confirmed" and no evidence-against heading | exit 1 "evidence against" | edge | auto | `node --test tests/claims/*.test.mjs` |
+
+---
+
+## <abbr>V1</abbr> — Grounding preflight reads what is current (<abbr>W1</abbr>)
+
+Wave: <abbr>W1</abbr> · Repo: DevOtts/plan-it · Deps: <abbr>K1</abbr> · Tier: sonnet
+
+- [ ] <abbr class="gl" title="Task of epic V1">V1-01</abbr> Preflight probe `behind-remote` calls `doc-it check checkout` (<abbr>K1-06</abbr>) and records the remote sha; without doc-it the probe reports WARN `doc-it not installed`, never PASS
+- [ ] <abbr class="gl" title="Task of epic V1">V1-02</abbr> Preflight probe `shipped-layers` and the `research/SHIPPED-LAYERS.md` template
+- [ ] <abbr class="gl" title="Task of epic V1">V1-03</abbr> `gate-check handoff` requires SHIPPED-LAYERS for size M/L; KICKOFF pinning uses the remote sha
+
+### Test Contract — <abbr>V1</abbr>   (BINDING: 100% pass or /iterate)
+Types: [unit][use-cases]  ·  Count: 3  ·  Surfaces: gate-check preflight
+Done = every case below is PASS. No [REAL] case VERIFIED on a mock.
+
+| ID | Task | Scenario | Expected | Kind | Verify | Check |
+|---|---|---|---|---|---|---|
+| <abbr class="gl" title="Test case of epic V1">T-V1-01</abbr> | <abbr>V1-01</abbr> | Fixture repo whose local main is 3 behind its remote | probe WARN naming the repo, local and remote sha; ENV-FACTS records the remote sha (<abbr class="gl" title="Governance rule 7 (CONTRACT §4)">G-7</abbr>) | edge | auto | `node --test tests/preflight/behind-remote.test.mjs` |
+| <abbr class="gl" title="Test case of epic V1">T-V1-02</abbr> | <abbr>V1-03</abbr> | Size M package without `research/SHIPPED-LAYERS.md` | `handoff` exit 1 naming the file | edge | auto | `node --test tests/preflight/shipped-layers.test.mjs` |
+| <abbr class="gl" title="Test case of epic V1">T-V1-03</abbr> | <abbr>V1-02</abbr> | 02 doc proposes a new registry with no "extends" citation | `handoff` exit 1 naming the section | edge | auto | `node --test tests/preflight/shipped-layers.test.mjs` |
+
+---
+
+## <abbr>Q1</abbr> — review-it audit mode (<abbr>W2</abbr>)
+
+Wave: <abbr>W2</abbr> · Repo: DevOtts/review-it · Deps: <abbr>L1</abbr> (ledger format) · Tier: opus
+
+- [ ] <abbr class="gl" title="Task of epic Q1">Q1-01</abbr> `--audit <claims.md>`: auditor dispatch (a different model from the author), primary sources only, verdict file per CONTRACT §2.5
+- [ ] <abbr class="gl" title="Task of epic Q1">Q1-02</abbr> Ombudsman dispatch and rulings; SAFE and DO-NOT-PUBLISH lists; tokens per role
+- [ ] <abbr class="gl" title="Task of epic Q1">Q1-03</abbr> Audit-chain states per CONTRACT §3.2, including retry, escalation and abort
+- [ ] <abbr class="gl" title="Task of epic Q1">Q1-04</abbr> `--stakes routine` runs only `gate-check claims`
+
+### Test Contract — <abbr>Q1</abbr>   (BINDING: 100% pass or /iterate)
+Types: [use-cases][stress]  ·  Count: 6  ·  Surfaces: skill-eval
+Done = every case below is PASS. No [REAL] case VERIFIED on a mock.
+
+| ID | Task | Scenario | Expected | Kind | Verify | Check |
+|---|---|---|---|---|---|---|
+| <abbr class="gl" title="Test case of epic Q1">T-Q1-01</abbr> | <abbr>Q1-01</abbr> | [REAL] Audit this package's ledger | verdict file covers <abbr class="gl" title="Claim-ledger row">C1</abbr>–<abbr class="gl" title="Claim-ledger row">C24</abbr>, each with a repo@sha or command evidence | live | judgement | — |
+| <abbr class="gl" title="Test case of epic Q1">T-Q1-02</abbr> | <abbr>Q1-03</abbr> | Auditor returns a file missing 3 rows | AUDIT_RETRY_FAILED, one re-dispatch with those rows; a second miss → ESCALATED_TO_OWNER, nothing published | stress | auto | `node --test tests/audit/chain.test.mjs` |
+| <abbr class="gl" title="Test case of epic Q1">T-Q1-03</abbr> | <abbr>Q1-01</abbr> | Author model = auditor model requested | refused before dispatch (<abbr class="gl" title="Governance rule 6 (CONTRACT §4)">G-6</abbr>) | edge | auto | `node --test tests/audit/chain.test.mjs` |
+| <abbr class="gl" title="Test case of epic Q1">T-Q1-04</abbr> | <abbr>Q1-02</abbr> | Adversarial verify: planted false TRUE (a claim citing a deleted file) | ombudsman overturns it → PARTIAL_TRUST; the auditor re-checks that class; claim lands in DO-NOT-PUBLISH | stress | judgement | — |
+| <abbr class="gl" title="Test case of epic Q1">T-Q1-06</abbr> | <abbr>Q1-03</abbr> | Owner aborts during ADJUDICATING | ABORTED; rollback keeps the artifact at its last published version; no SAFE.md written | edge | auto | `node --test tests/audit/chain.test.mjs` |
+| <abbr class="gl" title="Test case of epic Q1">T-Q1-05</abbr> | <abbr>Q1-04</abbr> | `--stakes routine` | no subagent dispatched; only `gate-check claims` runs | happy | auto | `node --test tests/audit/chain.test.mjs` |
+
+</script></div></details>
+<p class="footer">html-blocks=0</p>
+<script>
+// Theme toggle: auto → light → dark → auto. Persists per-viewer (try/catch — storage may be blocked).
+(function(){
+  const btn=document.getElementById("theme-toggle"), lab=document.getElementById("theme-label");
+  const order=["auto","light","dark"]; let cur="auto";
+  try{ cur=localStorage.getItem("report-theme")||"auto" }catch(e){}
+  function apply(v){
+    cur=v; lab.textContent=v;
+    if(v==="auto"){ document.documentElement.removeAttribute("data-theme"); }
+    else{ document.documentElement.setAttribute("data-theme",v); }
+    try{ localStorage.setItem("report-theme",v) }catch(e){}
+  }
+  apply(cur);
+  btn.addEventListener("click",()=>apply(order[(order.indexOf(cur)+1)%order.length]));
+})();
+// Copy-to-clipboard: client-side navigator.clipboard, try/catch — API may be unavailable.
+document.querySelectorAll(".copy-btn").forEach(function(btn){
+  btn.addEventListener("click", function(){
+    var pre = btn.previousElementSibling;
+    var text = pre ? pre.textContent : "";
+    try{
+      navigator.clipboard.writeText(text);
+    }catch(e){
+      var note = document.createElement("p");
+      note.className = "warn"; note.textContent = "select the text above";
+      btn.parentNode.insertBefore(note, btn.nextSibling);
+    }
+  });
+});
+</script>
+<script>
+/* MDPARSER-START */
+
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function isSafeUrl(u){
+  var url=String(u).trim();
+  if(url.indexOf('"')!==-1||url.indexOf("'")!==-1) return false;
+  if(/^(https?:|mailto:|#)/i.test(url)) return true;
+  return !/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(url);
+}
+function inline(s){
+  return s
+    .replace(/`([^`]+)`/g,function(m,c){return "<code>"+c+"</code>"})
+    .replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>")
+    .replace(/\*([^*]+)\*/g,"<em>$1</em>")
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g,function(m,label,url){
+      return isSafeUrl(url) ? '<a href="'+esc(url)+'">'+label+'</a>' : label;
+    });
+}
+function md(src){
+  var abbrs=[];
+  var protectedSrc=src.replace(/<abbr\b[^>]*>[\s\S]*?<\/abbr>/gi,function(m){abbrs.push(m);return "\u0001ABBR"+(abbrs.length-1)+"\u0001"});
+  var lines=esc(protectedSrc).split("\n"), out=[], inCode=false, inList=false, inOList=false, inQuote=false, i=0;
+  function closeAll(){
+    if(inList){out.push("</ul>");inList=false}
+    if(inOList){out.push("</ol>");inOList=false}
+    if(inQuote){out.push("</blockquote>");inQuote=false}
+  }
+  while(i<lines.length){
+    var raw=lines[i];
+    if(raw.indexOf("```")===0){closeAll();out.push(inCode?"</pre>":"<pre>");inCode=!inCode;i++;continue}
+    if(inCode){out.push(raw);i++;continue}
+    if(/^\s*\|.*\|\s*$/.test(raw) && i+1<lines.length && /^\s*\|[\s\-:|]+\|\s*$/.test(lines[i+1])){
+      closeAll();
+      var cells=function(r){return r.trim().replace(/^\||\|$/g,"").split("|").map(function(c){return inline(c.trim())})};
+      out.push('<div class="overflow"><table><tr>'+cells(raw).map(function(c){return "<th>"+c+"</th>"}).join("")+"</tr>");
+      i+=2;
+      while(i<lines.length && /^\s*\|.*\|\s*$/.test(lines[i])){
+        out.push("<tr>"+cells(lines[i]).map(function(c){return "<td>"+c+"</td>"}).join("")+"</tr>"); i++;
+      }
+      out.push("</table></div>"); continue;
+    }
+    var l=raw, m;
+    if(/^\s*$/.test(l)){closeAll();i++;continue}
+    if(/^---+\s*$/.test(l)){closeAll();out.push("<hr>");i++;continue}
+    if(m=l.match(/^(#{1,4})\s+(.*)/)){closeAll();var h=m[1].length;out.push("<h"+h+">"+inline(m[2])+"</h"+h+">");i++;continue}
+    if(m=l.match(/^\s*&gt;\s?(.*)/)){if(!inQuote){closeAll();out.push("<blockquote>");inQuote=true}out.push("<p>"+inline(m[1])+"</p>");i++;continue}
+    if(m=l.match(/^\s*[-*]\s+(.*)/)){
+      if(inQuote){out.push("</blockquote>");inQuote=false}
+      if(inOList){out.push("</ol>");inOList=false}
+      if(!inList){out.push("<ul>");inList=true}
+      out.push("<li>"+inline(m[1])+"</li>");i++;continue;
+    }
+    if(m=l.match(/^\s*(\d+)\.\s+(.*)/)){
+      if(inQuote){out.push("</blockquote>");inQuote=false}
+      if(inList){out.push("</ul>");inList=false}
+      if(!inOList){out.push("<ol>");inOList=true}
+      out.push("<li>"+inline(m[2])+"</li>");i++;continue;
+    }
+    closeAll();out.push("<p>"+inline(l)+"</p>");i++;
+  }
+  closeAll(); if(inCode)out.push("</pre>");
+  var result=out.join("\n");
+  result=result.replace(/\u0001ABBR(\d+)\u0001/g,function(m,idx){return abbrs[Number(idx)]});
+  return result;
+}
+
+/* MDPARSER-END */
+document.querySelectorAll('script[type="text/markdown"]').forEach(function(s){
+  var d=document.createElement("div"); d.innerHTML=md(s.textContent.trim());
+  s.parentNode.replaceChild(d,s);
+});
+</script>
+
+</main></body>
+</html>

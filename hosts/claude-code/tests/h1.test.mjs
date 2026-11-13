@@ -111,15 +111,19 @@ function hookRun(script, payload, { cwd, fixtureData, log }) {
 }
 const spineCalls = (log) => calls(log);
 
+// T-H1-05 (amended, CP-03 R3-S1-H5): the spine counts refusals per run, resets on progress and parks;
+// the hook only maps the spine's answer to an exit code. It keeps no counter and never calls `park`.
 test('T-H1-05 stop-gate refuses three times then parks', () => {
   const cwd = scratch('h1-stop-'); const log = join(cwd, 'spine.log');
-  const fixtureData = { 'gate stop': { outcome: 'STOP_REFUSED', reason: 'row R2 is OPEN', progress: false, _exit: 1 }, park: { outcome: 'PARKED' } };
+  const refused = (n) => ({ outcome: 'STOP_REFUSED', reason: 'row R2 is OPEN', stop_refusals: n, patience: 3, _exit: 1 });
+  const fixtureData = { 'gate stop': [refused(1), refused(2), refused(3), { outcome: 'PARKED', run_id: 'r1', status: 'PARKED', _exit: 2 }] };
   const out = [1, 2, 3, 4].map(() => hookRun('stop-gate.mjs', { session_id: 's1', cwd, hook_event_name: 'Stop' }, { cwd, fixtureData, log }));
   assert.deepEqual(out.map((r) => r.status), [2, 2, 2, 0]);
   for (const r of out.slice(0, 3)) assert.ok(r.stderr.trim().length > 0);
-  assert.equal(spineCalls(log).filter((c) => c.name === 'park').length, 1);
-  const counter = JSON.parse(readFileSync(join(cwd, '.do-it/host-claude-code/stop-refusals.json'), 'utf8'));
-  assert.equal(counter.s1, 3);
+  assert.match(out[2].stderr, /3 of 3/, 'the refusal count shown is the spine\'s');
+  assert.equal(spineCalls(log).filter((c) => c.name === 'park').length, 0, 'the spine parks, not the hook');
+  assert.equal(spineCalls(log).filter((c) => c.name === 'gate stop').length, 4);
+  assert.ok(!existsSync(join(cwd, '.do-it/host-claude-code/stop-refusals.json')), 'no host-side counter');
 });
 
 test('T-H1-06 stop-gate allows a finished run', () => {
@@ -127,22 +131,27 @@ test('T-H1-06 stop-gate allows a finished run', () => {
   const r = hookRun('stop-gate.mjs', { session_id: 's1', cwd }, { cwd, log, fixtureData: { 'gate stop': { outcome: 'STOP_ALLOWED' } } });
   assert.equal(r.status, 0);
   assert.equal(r.stderr, '');
-  const counterFile = join(cwd, '.do-it/host-claude-code/stop-refusals.json');
-  const n = existsSync(counterFile) ? JSON.parse(readFileSync(counterFile, 'utf8')).s1 ?? 0 : 0;
-  assert.equal(n, 0);
+  assert.ok(!existsSync(join(cwd, '.do-it/host-claude-code/stop-refusals.json')), 'zero refusals recorded');
   assert.equal(spineCalls(log).filter((c) => c.name === 'park').length, 0);
 });
 
-test('T-H1-06b stop-gate scopes the spine call to its session and cwd, and parks only the run it refused', () => {
+test('T-H1-06b stop-gate scopes the spine call to its session and cwd and never parks by itself', () => {
   const cwd = scratch('h1-stop-'); const log = join(cwd, 'spine.log');
-  const fixtureData = { 'gate stop': { outcome: 'STOP_REFUSED', run_id: 'r-own', reason: 'open', progress: false, _exit: 1 }, park: { outcome: 'PARKED' } };
-  for (let i = 0; i < 4; i++) hookRun('stop-gate.mjs', { session_id: 's-own', cwd, hook_event_name: 'Stop' }, { cwd, fixtureData, log });
+  const fixtureData = { 'gate stop': { outcome: 'STOP_REFUSED', run_id: 'r-own', reason: 'open', stop_refusals: 1, patience: 3, _exit: 1 } };
+  const st = [];
+  for (let i = 0; i < 6; i++) st.push(hookRun('stop-gate.mjs', { session_id: 's-own', cwd, hook_event_name: 'Stop' }, { cwd, fixtureData, log }).status);
+  assert.deepEqual(st, [2, 2, 2, 2, 2, 2], 'refused while the spine refuses, however many times');
   const c = spineCalls(log);
   const stop = c.find((x) => x.name === 'gate stop').args.args;
   assert.deepEqual(stop.slice(stop.indexOf('--session'), stop.indexOf('--session') + 2), ['--session', 's-own']);
   assert.deepEqual(stop.slice(stop.indexOf('--cwd'), stop.indexOf('--cwd') + 2), ['--cwd', cwd]);
-  const park = c.find((x) => x.name === 'park').args.args;
-  assert.deepEqual(park.slice(park.indexOf('--run'), park.indexOf('--run') + 2), ['--run', 'r-own']);
+  assert.equal(c.filter((x) => x.name === 'park').length, 0);
+  // an old counter file at patience changes nothing
+  mkdirSync(join(cwd, '.do-it/host-claude-code'), { recursive: true });
+  writeFileSync(join(cwd, '.do-it/host-claude-code/stop-refusals.json'), JSON.stringify({ 's-own': 99 }));
+  assert.equal(hookRun('stop-gate.mjs', { session_id: 's-own', cwd }, { cwd, fixtureData, log }).status, 2);
+  // an unreachable or unintelligible spine fails open
+  assert.equal(hookRun('stop-gate.mjs', { session_id: 's-own', cwd }, { cwd, fixtureData: { 'gate stop': { outcome: 'INTERNAL_ERROR', _exit: 1 } }, log }).status, 0);
 });
 
 test('T-H1-07 ceiling blocks a spawn but not the handoff write', () => {

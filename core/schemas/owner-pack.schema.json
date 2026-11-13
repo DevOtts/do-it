@@ -19,7 +19,11 @@
           "options": { "type": "array", "items": { "type": "string" } },
           "recommendation": { "type": ["string", "null"] },
           "default": { "type": ["string", "null"] },
-          "reversible": { "type": "boolean" }
+          "reversible": { "type": "boolean" },
+          "source": { "type": "string", "minLength": 1 },
+          "status": { "enum": ["withdrawn"] },
+          "withdrawn_at": { "type": "string" },
+          "withdrawn_reason": { "type": "string" }
         },
         "additionalProperties": false
       }

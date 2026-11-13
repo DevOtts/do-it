@@ -2,6 +2,8 @@
 
 The `engine` host adapter lets an Engine org run a do-it squad. Engine holds the state, asks the questions through the org's channels, and runs each role as a job. The adapter compiles a `squad.yaml` into an Engine squad definition and reads it back to prove nothing was lost.
 
+**Experimental: server side declined (PR #727, 2026-10-29).** The adapter is kept, isolated under `hosts/engine/`; the Engine server half it was written against was closed, so no live path is expected.
+
 Status: only 1 of 5 live cases is verified against a real Engine (the checkpoint card). Offline cases pass: 32 of 32 tests. See [Status](#status).
 
 ## What it does
@@ -15,7 +17,7 @@ Status: only 1 of 5 live cases is verified against a real Engine (the checkpoint
 
 ## State
 
-The adapter's state backend id is `engine`. It is one of three `StateStore` backends (`local-fs`, `git-branch`, `engine`) in `core/state-stores/`. The Engine backend's row driver is not built yet: Engine has no generic keyed row store, so `engine` has no live path today.
+The adapter's state backend id is `engine`. It is a `StateStore` backend that lives in this host, `hosts/engine/state-store/`, and core loads it through the `state_store` entry of `adapter.manifest.json`; `core/state-stores/` itself keeps only `local-fs` and `git-branch`. Its settings (`state.engine.blobs`) are validated by `hosts/engine/state-store/settings.schema.json`. The Engine backend's row driver is not built yet: Engine has no generic keyed row store, so `engine` has no live path today.
 
 ## Config
 
@@ -25,7 +27,7 @@ Secrets are read from the environment only. Nothing is stored in the repo.
 |---|---|
 | `DO_IT_ENGINE_URL` | Base URL of a reachable Engine. Unset means live cases stay IMPLEMENTED-NOT-VERIFIED. |
 | `DO_IT_ENGINE_TOKEN` | Service key sent with each request. |
-| `DO_IT_ENGINE_CORE` | Optional path to a local Engine-Core checkout, used by the probe. |
+| `DO_IT_PILOT_REPO` | Optional path to a local the pilot consumer repo checkout, used by the probe. |
 
 Tier names are `T1`, `T2` and `T3`. Their model bindings are chosen at init; `tiers.json` still has `asked_at_init` set to false.
 
@@ -39,7 +41,7 @@ The suite runs offline against fixtures and stubs. The `[REAL]` cases (T-N1-16/1
 
 ## Status
 
-Verified live on 2026-10-14 against a local `brain-api-core` running Engine PR #727 (not merged, not deployed; needs `HOST_ADAPTER_API_ENABLED=true` and `CT_TASKS_ENABLED=true`). Evidence: `.taskstate/results/engine-adapter-live.md`.
+Verified live on 2026-10-14 against a local a consumer service running Engine PR #727 (not merged, not deployed; needs `HOST_ADAPTER_API_ENABLED=true` and `CT_TASKS_ENABLED=true`). Evidence: `.taskstate/results/engine-adapter-live.md`.
 
 | Case | Verdict | Finding |
 |---|---|---|

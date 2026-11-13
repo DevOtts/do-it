@@ -1,5 +1,5 @@
 {
-  "names": ["claude", "codex", "opencode", "hermes", "openclaw"],
+  "names": ["claude", "codex", "opencode", "hermes", "openclaw", "engine"],
   "allow_in_core": ["anthropic", "openai", "deepseek"],
   "exclude_dirs": ["node_modules", ".git", "test", "tests", "__tests__"],
   "scan_extensions": [".mjs", ".js", ".cjs", ".ts", ".json", ".yaml", ".yml", ".sh", ".md"],

@@ -25,7 +25,7 @@ Run: `do-it-v1` · mode autonomous-draft · 2026-10-14 · size **L** · shape **
 L1 spine and schemas · L2 pipelines, personas, routing, token economy, cache · L3 host interface + claude-code + codex + opencode · L4 engine host + state stores + Engine-layer handoff · L5 README/marketing, packaging, companion-plugin changes, tests/fixtures.
 
 ## Fences (G0, derived from the session; contradict at G4)
-No edits in Engine-Core except `docs/implementation/do-it-engine-layer/`; no edits, commits or pushes in sibling plugin repos during planning; no publishing beyond the private artifact; no credentials read; live probes limited to `--help`/`--version` and read-only web research.
+No edits in the pilot consumer repo except `docs/implementation/do-it-engine-layer/`; no edits, commits or pushes in sibling plugin repos during planning; no publishing beyond the private artifact; no credentials read; live probes limited to `--help`/`--version` and read-only web research.
 
 ## G1 ruling (Fernando, 2026-10-14)
 Size L confirmed. **Hermes and OpenClaw are out of scope for v1** (their research stays in `docs/research/10-hermes-openclaw.md` for a later release); **Engine stays**. Hosts in v1: Claude Code, Codex, OpenCode, Engine.

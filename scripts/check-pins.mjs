@@ -4,10 +4,15 @@
 //   --self            do-it version equal across plugin.json, marketplace entry, companions.json
 //   --marketplace     sibling version labels in this repo's marketplace.json equal companions.json (exit 1 on drift)
 //   --lint            companions.json pins are exact semver (planned entries have null)
+//   --tags            every published pin (and do-it's own self version) has a tag v<version> on its remote
+//                     (uses `git ls-remote --tags`; exit 1 naming the repo and version when a tag is missing)
 //   --root <dir>      repo root (default: this repo)
+// Remote override for --tags (tests / offline mirrors): DO_IT_PIN_REMOTE_ROOT=<dir> resolves
+// owner/repo to <dir>/<owner>/<repo>.git instead of https://github.com/<owner>/<repo>.git.
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
 
 const args = process.argv.slice(2);
 const flag = (n) => args.includes(n);
@@ -76,6 +81,43 @@ if (sib) {
         out.push(`${f}:${vl + 1} ${p.name} found ${p.version} expected ${pins.get(p.name)}`);
         drift++;
       }
+    }
+  }
+}
+
+if (flag('--tags')) {
+  // A pin is only installable if the sibling repo actually publishes that version as a tag v<version>.
+  const remoteFor = (repo) => {
+    const override = process.env.DO_IT_PIN_REMOTE_ROOT;
+    return override ? join(resolve(override), `${repo}.git`) : `https://github.com/${repo}.git`;
+  };
+  const pinned = [
+    { name: ledger.self?.name ?? 'do-it', repo: 'DevOtts/do-it', version: ledger.self?.version },
+    ...ledger.companions.filter((c) => c.status === 'published').map((c) => ({ name: c.name, repo: c.repo, version: c.version })),
+  ];
+  const tagCache = new Map();
+  for (const pin of pinned) {
+    if (!pin.version) continue;
+    if (!tagCache.has(pin.repo)) {
+      const r = spawnSync('git', ['ls-remote', '--tags', remoteFor(pin.repo)], {
+        encoding: 'utf8', env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
+      });
+      if (r.status !== 0) {
+        out.push(`tags: ${pin.name} ${pin.version}: cannot read tags of ${pin.repo} (git ls-remote exit ${r.status}: ${(r.stderr || '').trim().split('\n').pop()})`);
+        drift++;
+        tagCache.set(pin.repo, null);
+        continue;
+      }
+      const names = new Set(
+        r.stdout.split('\n').map((l) => l.split('\t')[1]).filter(Boolean).map((ref) => ref.replace(/\^\{\}$/, '').replace(/^refs\/tags\//, '')),
+      );
+      tagCache.set(pin.repo, names);
+    }
+    const tags = tagCache.get(pin.repo);
+    if (tags === null) continue;
+    if (!tags.has(`v${pin.version}`)) {
+      out.push(`tags: ${pin.name} pinned ${pin.version} has no tag v${pin.version} on ${pin.repo}`);
+      drift++;
     }
   }
 }

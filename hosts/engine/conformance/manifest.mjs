@@ -1,11 +1,12 @@
 #!/usr/bin/env node
-// Integrity manifest of the four saved Engine-Core files (D19). 
+// Integrity manifest of the four saved the pilot consumer repo files (D19). 
 // Usage: node manifest.mjs write [--dir D] | verify [--dir D] [--manifest FILE]   verify exit 0 match, 1 mismatch
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { DEFAULT_DIR } from './spec-lint.mjs';
+import { PILOT_UNSET } from './pilot.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 export const MANIFEST = join(HERE, 'manifest.json');
@@ -32,6 +33,7 @@ function main() {
   const argv = process.argv.slice(2);
   const arg = (k, d) => { const i = argv.indexOf(k); return i < 0 ? d : argv[i + 1]; };
   const dir = arg('--dir', DEFAULT_DIR), file = arg('--manifest', MANIFEST);
+  if (!dir) { console.log(PILOT_UNSET); process.exit(3); }
   if (argv[0] === 'write') { console.log(JSON.stringify(writeManifest(dir, file), null, 2)); return; }
   const bad = verifyManifest(dir, file);
   for (const m of bad) console.log(`MISMATCH ${m.file} expected ${m.expected} actual ${m.actual}`);

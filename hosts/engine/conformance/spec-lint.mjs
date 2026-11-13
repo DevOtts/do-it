@@ -1,11 +1,12 @@
 #!/usr/bin/env node
-// Counts spec points and adjustments in the saved Engine-Core files and checks the two hygiene items (D19).
+// Counts spec points and adjustments in the saved the pilot consumer repo files and checks the two hygiene items (D19).
 // Usage: node spec-lint.mjs [--dir DIR]   exit 0 clean, 1 findings
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { pilotLayerDir, PILOT_UNSET } from './pilot.mjs';
 
-export const DEFAULT_DIR = '/Users/macbook/Workspace/Engine/Engine-Core/docs/implementation/do-it-engine-layer';
+export const DEFAULT_DIR = pilotLayerDir();
 const SPEC = '02-ENGINE-LAYER-SPEC.md', ADJ = '01-ADJUSTMENTS-TO-ENGINE-DEV-SQUAD.md';
 
 function section(text, header) {
@@ -51,6 +52,7 @@ export function lintDir(dir = DEFAULT_DIR) {
 function main() {
   const argv = process.argv.slice(2);
   const di = argv.indexOf('--dir');
+  if (di < 0 && !DEFAULT_DIR) { console.log(PILOT_UNSET); process.exit(3); }
   const r = lintDir(di >= 0 ? argv[di + 1] : DEFAULT_DIR);
   console.log(`spec_points: ${r.spec_points}`);
   console.log(`adjustments: ${r.adjustments}`);

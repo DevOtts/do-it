@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="planit-source" content="SCOPE-BRIEF.md sha256=e6da4faede0ca0049fb738284b2dd9d187a405991ba27084136f8c0d98bf4a4e">
+<meta name="planit-embeds" content="SCOPE-BRIEF.md sha256=e6da4faede0ca0049fb738284b2dd9d187a405991ba27084136f8c0d98bf4a4e">
+<meta name="planit-brand" content="default sha256=0206fd2d74525ffb33ff4fc010fe2ce6bb978ebe8a5674fc7ec0ed5d20eccb58">
+<meta name="planit-renderer" content="build-report.mjs/4.0.0 template sha256=ebfa958749844845bc46643049a546fdd9d68de69f36452b7babc089e0a9a410">
+<meta name="planit-kind" content="SCOPE-BRIEF">
+<title>SCOPE-BRIEF — do-it 1.1</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&amp;family=Inter:wght@400;500&amp;family=JetBrains+Mono:wght@400&amp;display=swap">
+<style>
+:root{--bg:#FFFFFF;--card:#F6F8FA;--line:#E6EDF3;--ink:#0D1117;--muted:#484F58;--accent:#0D1117;--accentBg:#00E5A0;--ok:#2EA043;--warn:#D29922;--bad:#F85149;--info:#58A6FF;--chip:#F6F8FA;--hold:#FF6B4A;--font-display:Space Grotesk,sans-serif;--font-body:Inter,sans-serif;--font-mono:JetBrains Mono;}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0D1117;--card:#161B22;--line:#21262D;--ink:#C9D1D9;--muted:#8B949E;--accent:#00E5A0;--accentBg:#00E5A0;--ok:#2EA043;--warn:#D29922;--bad:#F85149;--info:#58A6FF;--chip:#21262D;--hold:#FF6B4A;}}
+:root[data-theme="dark"]{--bg:#0D1117;--card:#161B22;--line:#21262D;--ink:#C9D1D9;--muted:#8B949E;--accent:#00E5A0;--accentBg:#00E5A0;--ok:#2EA043;--warn:#D29922;--bad:#F85149;--info:#58A6FF;--chip:#21262D;--hold:#FF6B4A;}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.55 var(--font-body);padding:2.5rem 1rem}
+main{max-width:900px;margin:0 auto;position:relative}
+h1{font-family:var(--font-display);font-size:1.5rem;margin:0 0 .25rem;text-wrap:balance;padding-right:6rem}
+.eyebrow{color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-size:.78rem;margin:0 0 .3rem}
+.sub{color:var(--muted);margin:0 0 2rem}
+h2{font-family:var(--font-display);font-size:1.05rem;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);
+   margin:2.2rem 0 .8rem;border-bottom:1px solid var(--line);padding-bottom:.4rem}
+#theme-toggle{position:absolute;top:0;right:0;background:var(--card);border:1px solid var(--line);
+  color:var(--muted);border-radius:99px;padding:.3rem .8rem;font:inherit;font-size:.8rem;
+  cursor:pointer;display:inline-flex;align-items:center;gap:.4rem}
+#theme-toggle:hover{color:var(--ink)} #theme-toggle:focus-visible{outline:2px solid var(--accentBg);outline-offset:2px}
+.brand-badge{color:var(--muted);font-size:.75rem;margin:0 0 .6rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;
+      padding:1rem 1.1rem;margin-bottom:.75rem}
+.card h3{margin:0 0 .35rem;font-size:1rem;display:flex;gap:.5rem;align-items:baseline;flex-wrap:wrap}
+.id{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;background:color-mix(in srgb,var(--accentBg) 20%,transparent);border-radius:4px;padding:.05rem .4rem}
+.badge{font-size:.72rem;font-weight:700;letter-spacing:.03em;border-radius:99px;
+       padding:.1rem .55rem;text-transform:uppercase}
+.b-ok{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.b-open{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}
+.b-hold{background:color-mix(in srgb,var(--hold) 20%,transparent);color:var(--ink)}
+.b-act{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--ink)}
+.rename{margin-left:auto;font-size:.75rem;color:var(--muted)}
+.rename code{font-size:.95em}
+.card p{margin:.25rem 0}
+.card ul{margin:.3rem 0 .3rem;padding-left:1.25rem} .card li{margin:.18rem 0}
+code{background:var(--chip);border-radius:4px;padding:.05rem .35rem;font-size:.85em;word-break:break-all;font-family:var(--font-mono)}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);
+      border-radius:10px;overflow:hidden;font-size:.9rem}
+th,td{text-align:left;padding:.5rem .8rem;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600} tr:last-child td{border-bottom:none}
+tr.footer td{font-weight:700}
+.overflow{overflow-x:auto}
+.test{margin-top:.6rem;border-top:1px dashed var(--line);padding-top:.55rem;font-size:.88rem}
+.test b{color:var(--ink);text-transform:uppercase;font-size:.75rem;letter-spacing:.04em}
+.test ul{margin:.3rem 0 0;padding-left:1.25rem}
+.warn{color:var(--warn)} .crit{color:var(--bad);font-weight:600}
+details.more{margin-top:.7rem;border-top:1px dashed var(--line);padding-top:.55rem}
+details.more>summary{cursor:pointer;color:var(--ink);font-weight:600;font-size:.88rem;
+  list-style:none;display:inline-flex;align-items:center;gap:.4rem}
+details.more>summary::before{content:"▸";transition:transform .15s}
+details.more[open]>summary::before{transform:rotate(90deg)}
+.srcnote{font-size:.78rem;color:var(--muted);margin:.6rem 0 .3rem}
+.mdout{background:color-mix(in srgb,var(--chip) 55%,transparent);border:1px solid var(--line);
+       border-radius:8px;padding:.9rem 1rem;font-size:.87rem;overflow-x:auto}
+.mdout h1,.mdout h2,.mdout h3{all:revert;font-size:1.02em;margin:.8em 0 .3em;border:none;
+  text-transform:none;letter-spacing:0;color:var(--ink)}
+.mdout h1{font-size:1.12em}
+.mdout pre{background:var(--chip);padding:.6rem .7rem;border-radius:6px;overflow-x:auto}
+.mdout blockquote{border-left:3px solid var(--line);margin:.5em 0;padding:.1em .8em;color:var(--muted)}
+.mdout ul,.mdout ol{padding-left:1.3em} .mdout li{margin:.15em 0}
+.mdout hr{border:none;border-top:1px solid var(--line);margin:.8em 0}
+.mdout a{color:var(--ink);text-decoration:underline}
+.mdout table{font-size:.85em;margin:.5em 0}
+.mdout td,.mdout th{padding:.35rem .6rem}
+details.glossary{background:var(--card);border:1px solid var(--line);border-radius:10px;
+  padding:.7rem 1rem;margin-bottom:1.2rem;font-size:.88rem}
+details.glossary>summary{cursor:pointer;font-weight:700;color:var(--ink)}
+abbr.gl{text-decoration:underline dotted;cursor:help}
+.gl-x{color:var(--muted);font-size:.82em}
+.decision-card .q{margin:.3rem 0}
+.decision-card .options{margin:.3rem 0;padding-left:1.25rem}
+.decision-card .recommendation{margin:.4rem 0}
+.decision-card .unblocks{margin:.3rem 0;font-size:.85rem;color:var(--muted)}
+.decision-card .ruling{margin:.4rem 0;font-weight:600}
+.mock-win{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:.75rem}
+.mock-bar{background:var(--chip);padding:.4rem .7rem;display:flex;align-items:center;gap:.6rem;font-size:.8rem}
+.mock-dots{color:var(--muted)} .mock-label{color:var(--muted);flex:1}
+.mock-chip{border-radius:99px;padding:.1rem .5rem;font-size:.72rem;font-weight:600}
+.mock-bad{background:color-mix(in srgb,var(--bad) 18%,transparent);color:var(--bad)}
+.mock-ok{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.mock-body{padding:1rem;background:var(--bg)}
+.measure{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.9rem 1.1rem;margin-bottom:.75rem}
+.measure .mvalue{font-family:var(--font-display);font-weight:700;font-size:1.4rem}
+.measure .munit{color:var(--muted);margin-left:.3rem}
+.measure .msrc{color:var(--muted);font-size:.8rem;margin:.3rem 0 0}
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:.75rem}
+.state-col{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.8rem}
+.state-col h4{margin:0 0 .3rem;text-transform:uppercase;font-size:.75rem;letter-spacing:.04em}
+.triage-card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.9rem 1.1rem;margin-bottom:.75rem}
+.triage-card table{border:none}
+.verdict-box{margin-top:.5rem;padding:.5rem .8rem;background:var(--chip);border-radius:8px}
+.lockbox{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accentBg);border-radius:10px;padding:.9rem 1.1rem;margin-bottom:.75rem}
+.lb-head{color:var(--muted);font-size:.85rem;margin:0 0 .4rem}
+.tally-row{display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:.75rem}
+.tally-tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.6rem 1rem;text-align:center}
+.tally-tile .tval{display:block;font-family:var(--font-display);font-weight:700;font-size:1.4rem}
+.tally-tile .tlabel{color:var(--muted);font-size:.78rem}
+pre.copy{background:var(--chip);border-radius:8px;padding:.7rem .9rem;font-family:var(--font-mono);font-size:.85rem;overflow-x:auto}
+.copy-btn{background:var(--card);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:.25rem .7rem;font-size:.78rem;cursor:pointer;margin:-.5rem 0 .75rem}
+pre.mermaid{background:var(--chip);border-radius:8px;padding:.8rem 1rem;font-family:var(--font-mono);font-size:.82rem;overflow-x:auto;white-space:pre-wrap}
+.footer{color:var(--muted);font-size:.75rem;margin-top:2.5rem;border-top:1px solid var(--line);padding-top:.8rem}
+@media (prefers-reduced-motion: reduce){ details.more>summary::before{transition:none} }
+</style>
+</head>
+<body><main>
+<button id="theme-toggle" type="button" aria-label="Toggle light/dark theme">◐ <span id="theme-label">auto</span></button>
+<p class="brand-badge">brand: Her0 default</p>
+<p class="eyebrow">SCOPE-BRIEF</p>
+<h1>SCOPE-BRIEF — do-it 1.1</h1>
+<p class="sub">Local HTML twin of the markdown source (plan-it run do-it-1.1, 2026-11-06); not published.</p>
+<details class="glossary"><summary>Glossary</summary><div class="overflow"><table><tr><th>ID</th><th>Means</th><th>Where defined</th></tr><tr><td>S1</td><td>Epic</td><td>Epic: stop gate binds only the owning session</td></tr>
+<tr><td>A1</td><td>Epic</td><td>Epic: one guarded path to `0-done/`</td></tr>
+<tr><td>B1</td><td>Epic</td><td>Epic: harness-status-tracking board tells the truth</td></tr>
+<tr><td>I1</td><td>Epic</td><td>Epic: init-it is installable</td></tr>
+<tr><td>K1</td><td>Epic</td><td>Epic: doc-it 0.1.0, the standard and its first checks</td></tr>
+<tr><td>K2</td><td>Epic</td><td>Epic: the family consumes doc-it</td></tr>
+<tr><td>T-K1-NN</td><td>Test case of epic K1</td><td>case NN in epic K1's Test Contract</td></tr>
+<tr><td>K1-NN</td><td>Task of epic K1</td><td>checklist task NN of epic K1</td></tr>
+<tr><td>T-K2-NN</td><td>Test case of epic K2</td><td>case NN in epic K2's Test Contract</td></tr>
+<tr><td>K2-NN</td><td>Task of epic K2</td><td>checklist task NN of epic K2</td></tr>
+<tr><td>DS-n</td><td>doc-it standard rule</td><td>rule n in `DevOtts/doc-it` `docs/STANDARD.md` §3</td></tr>
+<tr><td>G-10</td><td>Governance rule 10 (CONTRACT §4)</td><td>Governance rule 10 (CONTRACT §4)</td></tr>
+<tr><td>E1</td><td>Epic</td><td>Epic: host integrations stay isolated under `hosts/`</td></tr>
+<tr><td>H1</td><td>Epic</td><td>Epic: release hygiene (tags, pins, duplicate script)</td></tr>
+<tr><td>L1</td><td>Epic</td><td>Epic: claim ledger and source tiers</td></tr>
+<tr><td>V1</td><td>Epic</td><td>Epic: grounding preflight (behind-remote, shipped layers)</td></tr>
+<tr><td>Q1</td><td>Epic</td><td>Epic: review-it audit mode (auditor + ombudsman)</td></tr>
+<tr><td>RTG</td><td>resumable-test-gates, the sibling package planned by another session</td><td>resumable-test-gates, the sibling package planned by another session</td></tr>
+<tr><td>T-&lt;EID&gt;-NN</td><td>Test case NN of epic EID</td><td>Test case NN of epic EID</td></tr>
+<tr><td>&lt;EID&gt;-NN</td><td>Checklist task NN of epic EID</td><td>Checklist task NN of epic EID</td></tr>
+<tr><td>W0</td><td>Wave 0</td><td>Wave 0</td></tr>
+<tr><td>W1</td><td>Wave 1</td><td>Wave 1</td></tr>
+<tr><td>W2</td><td>Wave 2</td><td>Wave 2</td></tr>
+<tr><td>W3</td><td>Wave 3</td><td>Wave 3</td></tr>
+<tr><td>G-1</td><td>Governance rule 1 (CONTRACT §4)</td><td>Governance rule 1 (CONTRACT §4)</td></tr>
+<tr><td>G-2</td><td>Governance rule 2 (CONTRACT §4)</td><td>Governance rule 2 (CONTRACT §4)</td></tr>
+<tr><td>G-3</td><td>Governance rule 3 (CONTRACT §4)</td><td>Governance rule 3 (CONTRACT §4)</td></tr>
+<tr><td>G-4</td><td>Governance rule 4 (CONTRACT §4)</td><td>Governance rule 4 (CONTRACT §4)</td></tr>
+<tr><td>G-5</td><td>Governance rule 5 (CONTRACT §4)</td><td>Governance rule 5 (CONTRACT §4)</td></tr>
+<tr><td>G-6</td><td>Governance rule 6 (CONTRACT §4)</td><td>Governance rule 6 (CONTRACT §4)</td></tr>
+<tr><td>G-7</td><td>Governance rule 7 (CONTRACT §4)</td><td>Governance rule 7 (CONTRACT §4)</td></tr>
+<tr><td>G-8</td><td>Governance rule 8 (CONTRACT §4)</td><td>Governance rule 8 (CONTRACT §4)</td></tr>
+<tr><td>G-9</td><td>Governance rule 9 (CONTRACT §4)</td><td>Governance rule 9 (CONTRACT §4)</td></tr>
+<tr><td>G-12</td><td>do-it's existing rule &quot;core names no harness&quot;</td><td>tested by T-S1-13 in `core/spine/test/s1/s1.test.mjs`</td></tr>
+<tr><td>D1</td><td>Decision 1 (`plan/DECISIONS.md`)</td><td>Decision 1 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>D2</td><td>Decision 2 (`plan/DECISIONS.md`)</td><td>Decision 2 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>D3</td><td>Decision 3 (`plan/DECISIONS.md`)</td><td>Decision 3 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>D4</td><td>Decision 4 (`plan/DECISIONS.md`)</td><td>Decision 4 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>D5</td><td>Decision 5 (`plan/DECISIONS.md`)</td><td>Decision 5 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>D6</td><td>Decision 6 (`plan/DECISIONS.md`)</td><td>Decision 6 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>D7</td><td>Decision 7 (`plan/DECISIONS.md`)</td><td>Decision 7 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>D8</td><td>Decision 8 (`plan/DECISIONS.md`)</td><td>Decision 8 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>D10</td><td>Decision 10</td><td>Decision 10 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>D11</td><td>Decision 11 (`plan/DECISIONS.md`)</td><td>Decision 11 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>D12</td><td>Decision 12 (`plan/DECISIONS.md`)</td><td>Decision 12 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>D13</td><td>Decision 13 (`plan/DECISIONS.md`)</td><td>Decision 13 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>D14</td><td>Decision 14 (`plan/DECISIONS.md`)</td><td>Decision 14 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>D15</td><td>Decision 15, offered after G4 and deferred: session receipts so conclude-it cleans its own branches and worktrees</td><td>Decision 15 (deferred to the next version)</td></tr>
+<tr><td>D9</td><td>Decision 9 (`plan/DECISIONS.md`)</td><td>Decision 9 (`plan/DECISIONS.md`)</td></tr>
+<tr><td>R1–R5</td><td>Owner rulings already given</td><td>Owner rulings already given (DECISIONS, Ruled)</td></tr>
+<tr><td>C1 … C24</td><td>Claim-ledger rows in `audit/claims.md`</td><td>Claim-ledger rows in `audit/claims.md`</td></tr>
+<tr><td>F1 … F8</td><td>Findings in `docs/01`</td><td>Findings in `docs/01`</td></tr>
+<tr><td>P1 … P6</td><td>Principles in `docs/02`</td><td>Principles in `docs/02`</td></tr>
+<tr><td>L2, L5, L8</td><td>doc-it lessons</td><td>Lessons in `DevOtts/doc-it` `docs/LEARNINGS.md`</td></tr>
+<tr><td>CP-NN</td><td>Review checkpoint NN (READINESS.json)</td><td>Review checkpoint NN (READINESS.json)</td></tr>
+<tr><td>CLOSEOUT</td><td>`CLOSEOUT.md`, the per-piece disposition of a package with no `status.json`</td><td>`CLOSEOUT.md`, the per-piece disposition of a package with no `status.json`</td></tr>
+<tr><td>BCL</td><td>P1, the Engine program whose run board appeared in other sessions' stop gate</td><td>P1, the Engine program whose run board appeared in other sessions' stop gate</td></tr>
+<tr><td>[REAL]</td><td>A case that needs a live target; never VERIFIED on a mock</td><td>A case that needs a live target; never VERIFIED on a mock</td></tr>
+<tr><td>G4</td><td>plan-it's plan-review gate, where the owner reviews every default</td><td>plan-it's plan-review gate, where the owner reviews every default</td></tr>
+<tr><td>T-S1-NN</td><td>Test case of epic S1</td><td>case NN in epic S1's Test Contract</td></tr>
+<tr><td>S1-NN</td><td>Task of epic S1</td><td>checklist task NN of epic S1</td></tr>
+<tr><td>T-A1-NN</td><td>Test case of epic A1</td><td>case NN in epic A1's Test Contract</td></tr>
+<tr><td>A1-NN</td><td>Task of epic A1</td><td>checklist task NN of epic A1</td></tr>
+<tr><td>T-B1-NN</td><td>Test case of epic B1</td><td>case NN in epic B1's Test Contract</td></tr>
+<tr><td>B1-NN</td><td>Task of epic B1</td><td>checklist task NN of epic B1</td></tr>
+<tr><td>T-I1-NN</td><td>Test case of epic I1</td><td>case NN in epic I1's Test Contract</td></tr>
+<tr><td>I1-NN</td><td>Task of epic I1</td><td>checklist task NN of epic I1</td></tr>
+<tr><td>T-E1-NN</td><td>Test case of epic E1</td><td>case NN in epic E1's Test Contract</td></tr>
+<tr><td>E1-NN</td><td>Task of epic E1</td><td>checklist task NN of epic E1</td></tr>
+<tr><td>T-H1-NN</td><td>Test case of epic H1</td><td>case NN in epic H1's Test Contract</td></tr>
+<tr><td>H1-NN</td><td>Task of epic H1</td><td>checklist task NN of epic H1</td></tr>
+<tr><td>T-L1-NN</td><td>Test case of epic L1</td><td>case NN in epic L1's Test Contract</td></tr>
+<tr><td>L1-NN</td><td>Task of epic L1</td><td>checklist task NN of epic L1</td></tr>
+<tr><td>T-V1-NN</td><td>Test case of epic V1</td><td>case NN in epic V1's Test Contract</td></tr>
+<tr><td>V1-NN</td><td>Task of epic V1</td><td>checklist task NN of epic V1</td></tr>
+<tr><td>T-Q1-NN</td><td>Test case of epic Q1</td><td>case NN in epic Q1's Test Contract</td></tr>
+<tr><td>Q1-NN</td><td>Task of epic Q1</td><td>checklist task NN of epic Q1</td></tr>
+<tr><td>C&lt;n&gt;</td><td>Claim-ledger row</td><td>row n of `audit/claims.md` (C1–C36)</td></tr>
+<tr><td>F&lt;n&gt;</td><td>Finding</td><td>finding n in `docs/01` (F1–F9)</td></tr>
+<tr><td>P&lt;n&gt;</td><td>Principle</td><td>principle n in `docs/02` (P1–P6)</td></tr>
+<tr><td>M&lt;n&gt;</td><td>Missed item</td><td>item n of the auditor's &quot;Missed&quot; section in `audit/audit-fable.md`</td></tr>
+<tr><td>L&lt;n&gt;</td><td>doc-it lesson</td><td>lesson n in `DevOtts/doc-it` `docs/LEARNINGS.md`</td></tr>
+<tr><td>S4</td><td>conclude-it ship step S4</td><td>the ship-pipeline step that archives a plan folder</td></tr>
+<tr><td>T-S1</td><td>Test cases of epic S1</td><td>shorthand for T-S1-NN</td></tr>
+<tr><td>T-B-NN</td><td>harness-status-tracking Card B case</td><td>case NN in `CARD-B-status-tracking.md` §10</td></tr>
+<tr><td>T-A-NN</td><td>harness-status-tracking Card A case</td><td>case NN in `CARD-A-init-it.md` §9</td></tr>
+<tr><td>OQ-&lt;n&gt;</td><td>resumable-test-gates owner question</td><td>question n in that package's DECISIONS</td></tr>
+<tr><td>R&lt;n&gt;</td><td>resumable-test-gates default</td><td>default n in that package's DECISIONS</td></tr>
+<tr><td>E&lt;n&gt;</td><td>a consumer program epic (Engine)</td><td>epic n of Engine's a consumer program program, as named in its archive commit</td></tr>
+<tr><td>T1 · T2 · T3</td><td>Gate tiers (resumable-test-gates)</td><td>T1 branch push, T2 train complete, T3 nightly/pre-release; not model tiers</td></tr>
+<tr><td>ST-NN</td><td>harness-status-tracking task</td><td>task NN on that program's board (ST-01…ST-08)</td></tr></table></div></details>
+<h2>SCOPE-BRIEF — do-it 1.1</h2>
+<details class="more" open><summary>SCOPE-BRIEF.md</summary><div class="mdout"><script type="text/markdown">
+# do-it 1.1: scope brief
+
+Run: plan-it `do-it-1.1` (autonomous-draft, owner away). Session `trust-research-study`, 2026-11-06.
+Code read at `origin/main`: do-it `d38cedb` (1.0.5), plan-it `bfbfaa1` (5.2.0), build-it `bea0e4a` (4.1.3), review-it `eed4dec` (2.1.1), conclude-it `3baa221` (2.1.1). init-it is local only (`/Users/macbook/Workspace/Devotts/init-it`, not a git repo).
+
+## Inputs
+
+| Input | Where | State found |
+|---|---|---|
+| Trust proposal | `inputs/TRUST-PROPOSAL.md` | Owner agreed the direction 2026-11-06; nothing built |
+| 1.0.0 KICKOFF residuals | `inputs/KICKOFF-1.0.0-residuals.md` | Written for 1.0.0; several items already resolved by 1.0.1–1.0.5 or owner rulings (see `docs/01`) |
+| harness-status-tracking | `../harness-status-tracking/` | Card B shipped in 1.0.1; Card A (init-it) built, unreleased |
+| resumable-test-gates | `../resumable-test-gates/` | **Planned by another session** (`study-bateria-testes-tempo`); merged at <abbr class="gl" title="plan-it's plan-review gate, where the owner reviews every default">G4</abbr>, not planned here |
+
+## Size, shape, topology `[default — contradict if wrong]`
+
+- **Size M.** Five repos touched (do-it, conclude-it, plan-it, review-it, init-it), no new subsystem except the claim ledger.
+- **Shape 3**: a feature on an existing large codebase. Findings → locked architecture → epics with Test Contracts, all in one package.
+- **Topology solo.** One planner holds the whole plan. The independent auditor and the ombudsman are subagents, used for verification only.
+
+## Definition of Done for this planning run
+
+1. `docs/01-current-state-and-findings.md`: every claim in a claim ledger with a source tier, audited by a different model and checked by an ombudsman (dogfooding TRUST 3.1/3.5).
+2. `docs/02-architecture.md`: how each finding is fixed, extending the shipped layers (no parallel roads).
+3. `delivery/CONTRACT.md`: final v1.0 (ratified at <abbr>G4</abbr>), including the claim-ledger schema and the coupling map with resumable-test-gates.
+4. `delivery/epics.md`: every epic ends in a binding Test Contract. Size M: about 20 cases across the package, plus any [REAL] cases.
+5. `plan/DECISIONS.md` and `plan/READINESS.json`, with every default marked `[default — contradict if wrong]`.
+6. `status.json`/`STATUS.md` via `status-from-plan`, review checkpoints via `review-checkpoints.mjs`.
+7. Gate-check `handoff`, `adversary` and `readiness` pass.
+8. An owner artifact: the plan plus the decisions to know, take and confirm, with recommendations, merged with resumable-test-gates when its <abbr>G4</abbr> output exists.
+
+## Out of scope
+
+- doc-it design: its own repo `DevOtts/doc-it` (<abbr class="gl" title="resumable-test-gates default">R4</abbr>), standard v0 drafted there (<abbr class="gl" title="resumable-test-gates default">R5</abbr>), plugin designed after the pilot.
+- Any code, push, tag or release.
+- Changes to any consumer repo (applying <abbr class="gl" title="Task of epic A1">A1-05</abbr> or `pack withdraw` there is that repo's work).
+
+</script></div></details>
+<p class="footer">html-blocks=0</p>
+<script>
+// Theme toggle: auto → light → dark → auto. Persists per-viewer (try/catch — storage may be blocked).
+(function(){
+  const btn=document.getElementById("theme-toggle"), lab=document.getElementById("theme-label");
+  const order=["auto","light","dark"]; let cur="auto";
+  try{ cur=localStorage.getItem("report-theme")||"auto" }catch(e){}
+  function apply(v){
+    cur=v; lab.textContent=v;
+    if(v==="auto"){ document.documentElement.removeAttribute("data-theme"); }
+    else{ document.documentElement.setAttribute("data-theme",v); }
+    try{ localStorage.setItem("report-theme",v) }catch(e){}
+  }
+  apply(cur);
+  btn.addEventListener("click",()=>apply(order[(order.indexOf(cur)+1)%order.length]));
+})();
+// Copy-to-clipboard: client-side navigator.clipboard, try/catch — API may be unavailable.
+document.querySelectorAll(".copy-btn").forEach(function(btn){
+  btn.addEventListener("click", function(){
+    var pre = btn.previousElementSibling;
+    var text = pre ? pre.textContent : "";
+    try{
+      navigator.clipboard.writeText(text);
+    }catch(e){
+      var note = document.createElement("p");
+      note.className = "warn"; note.textContent = "select the text above";
+      btn.parentNode.insertBefore(note, btn.nextSibling);
+    }
+  });
+});
+</script>
+<script>
+/* MDPARSER-START */
+
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function isSafeUrl(u){
+  var url=String(u).trim();
+  if(url.indexOf('"')!==-1||url.indexOf("'")!==-1) return false;
+  if(/^(https?:|mailto:|#)/i.test(url)) return true;
+  return !/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(url);
+}
+function inline(s){
+  return s
+    .replace(/`([^`]+)`/g,function(m,c){return "<code>"+c+"</code>"})
+    .replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>")
+    .replace(/\*([^*]+)\*/g,"<em>$1</em>")
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g,function(m,label,url){
+      return isSafeUrl(url) ? '<a href="'+esc(url)+'">'+label+'</a>' : label;
+    });
+}
+function md(src){
+  var abbrs=[];
+  var protectedSrc=src.replace(/<abbr\b[^>]*>[\s\S]*?<\/abbr>/gi,function(m){abbrs.push(m);return "\u0001ABBR"+(abbrs.length-1)+"\u0001"});
+  var lines=esc(protectedSrc).split("\n"), out=[], inCode=false, inList=false, inOList=false, inQuote=false, i=0;
+  function closeAll(){
+    if(inList){out.push("</ul>");inList=false}
+    if(inOList){out.push("</ol>");inOList=false}
+    if(inQuote){out.push("</blockquote>");inQuote=false}
+  }
+  while(i<lines.length){
+    var raw=lines[i];
+    if(raw.indexOf("```")===0){closeAll();out.push(inCode?"</pre>":"<pre>");inCode=!inCode;i++;continue}
+    if(inCode){out.push(raw);i++;continue}
+    if(/^\s*\|.*\|\s*$/.test(raw) && i+1<lines.length && /^\s*\|[\s\-:|]+\|\s*$/.test(lines[i+1])){
+      closeAll();
+      var cells=function(r){return r.trim().replace(/^\||\|$/g,"").split("|").map(function(c){return inline(c.trim())})};
+      out.push('<div class="overflow"><table><tr>'+cells(raw).map(function(c){return "<th>"+c+"</th>"}).join("")+"</tr>");
+      i+=2;
+      while(i<lines.length && /^\s*\|.*\|\s*$/.test(lines[i])){
+        out.push("<tr>"+cells(lines[i]).map(function(c){return "<td>"+c+"</td>"}).join("")+"</tr>"); i++;
+      }
+      out.push("</table></div>"); continue;
+    }
+    var l=raw, m;
+    if(/^\s*$/.test(l)){closeAll();i++;continue}
+    if(/^---+\s*$/.test(l)){closeAll();out.push("<hr>");i++;continue}
+    if(m=l.match(/^(#{1,4})\s+(.*)/)){closeAll();var h=m[1].length;out.push("<h"+h+">"+inline(m[2])+"</h"+h+">");i++;continue}
+    if(m=l.match(/^\s*&gt;\s?(.*)/)){if(!inQuote){closeAll();out.push("<blockquote>");inQuote=true}out.push("<p>"+inline(m[1])+"</p>");i++;continue}
+    if(m=l.match(/^\s*[-*]\s+(.*)/)){
+      if(inQuote){out.push("</blockquote>");inQuote=false}
+      if(inOList){out.push("</ol>");inOList=false}
+      if(!inList){out.push("<ul>");inList=true}
+      out.push("<li>"+inline(m[1])+"</li>");i++;continue;
+    }
+    if(m=l.match(/^\s*(\d+)\.\s+(.*)/)){
+      if(inQuote){out.push("</blockquote>");inQuote=false}
+      if(inList){out.push("</ul>");inList=false}
+      if(!inOList){out.push("<ol>");inOList=true}
+      out.push("<li>"+inline(m[2])+"</li>");i++;continue;
+    }
+    closeAll();out.push("<p>"+inline(l)+"</p>");i++;
+  }
+  closeAll(); if(inCode)out.push("</pre>");
+  var result=out.join("\n");
+  result=result.replace(/\u0001ABBR(\d+)\u0001/g,function(m,idx){return abbrs[Number(idx)]});
+  return result;
+}
+
+/* MDPARSER-END */
+document.querySelectorAll('script[type="text/markdown"]').forEach(function(s){
+  var d=document.createElement("div"); d.innerHTML=md(s.textContent.trim());
+  s.parentNode.replaceChild(d,s);
+});
+</script>
+
+</main></body>
+</html>

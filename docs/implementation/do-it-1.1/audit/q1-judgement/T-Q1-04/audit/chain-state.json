@@ -1,0 +1,293 @@
+{
+  "schema": "review-it/audit-chain/1",
+  "ledger": "/private/tmp/claude-501/-Users-macbook-Workspace-Devotts-do-it/44a2d822-c92d-4e09-a9bf-e6ad258affa8/scratchpad/q104/claims.md",
+  "ledger_sha256": "c9a768a6d39fa86b98d52459b0430cf5cfb6428e1ded6d17bf58ec665474d2c2",
+  "stakes": "decision",
+  "author_model": "claude-sonnet-5-5",
+  "auditor_model": "claude-haiku-5-5",
+  "ombudsman_model": "opus",
+  "tier_check": "doc-it",
+  "rows": [
+    {
+      "id": "P1",
+      "claim": "review-it's plugin manifest says version 2.1.1",
+      "tier": "code",
+      "source": "review-it@eed4dec:plugins/review-it/.claude-plugin/plugin.json:4",
+      "tier_ids": [
+        "code"
+      ]
+    },
+    {
+      "id": "P2",
+      "claim": "status-sync reads the writer path from `STATUS_WRITE` before its default",
+      "tier": "code",
+      "source": "review-it@eed4dec:plugins/review-it/scripts/status-sync.mjs:104-106",
+      "tier_ids": [
+        "code"
+      ]
+    },
+    {
+      "id": "P3",
+      "claim": "The no-plan fixture ships a derived test, `qa/fixtures/no-plan/qa/derived.test.mjs`, that imports `parseRow` from `src/csv.mjs`",
+      "tier": "code",
+      "source": "review-it@eed4dec:qa/fixtures/no-plan/qa/derived.test.mjs:6",
+      "tier_ids": [
+        "code"
+      ]
+    },
+    {
+      "id": "P4",
+      "claim": "The repository is MIT licensed",
+      "tier": "durable-doc",
+      "source": "review-it@eed4dec:LICENSE:1",
+      "tier_ids": [
+        "durable"
+      ]
+    }
+  ],
+  "state": "PUBLISHABLE",
+  "audit": {
+    "round": "initial",
+    "attempt": 1,
+    "requested": [
+      "P1",
+      "P2"
+    ],
+    "verdicts": {
+      "P1": {
+        "verdict": "TRUE",
+        "evidence": "`git -C /Users/macbook/Workspace/Devotts/review-it show eed4dec:plugins/review-it/.claude-plugin/plugin.json` (read with `cat -n`, lines 1-8). Line 4: `\"version\": \"2.1.1\",`",
+        "round": "recheck"
+      },
+      "P2": {
+        "verdict": "TRUE",
+        "evidence": "`git -C /Users/macbook/Workspace/Devotts/review-it show eed4dec:plugins/review-it/scripts/status-sync.mjs` (read with `cat -n`, lines 104-106). `const cands = [explicit, process.env.STATUS_WRITE,` then `join(homedir(), 'Workspace/Devotts/build-it/plugins/build-it/scripts/status/status-write.mjs')].filter(Boolean);`. `STATUS_WRITE` is read before the hard-coded default path. Note: the explicit argument is tried ahead of both, so the claim holds only as \"before its default\".",
+        "round": "recheck"
+      },
+      "P3": {
+        "verdict": "TRUE",
+        "evidence": "review-it@ca86985:qa/fixtures/no-plan/qa/derived.test.mjs:6 → `import { parseRow, toRecord } from \"../src/csv.mjs\"`",
+        "round": "initial"
+      },
+      "P4": {
+        "verdict": "TRUE",
+        "evidence": "`git show eed4dec:LICENSE` first line \"MIT License\"",
+        "round": "initial"
+      }
+    },
+    "files": [
+      {
+        "file": "/private/tmp/claude-501/-Users-macbook-Workspace-Devotts-do-it/44a2d822-c92d-4e09-a9bf-e6ad258affa8/scratchpad/q104/audit-planted.md",
+        "at": "2026-11-07T01:09:13.908Z",
+        "present": true
+      },
+      {
+        "file": "/private/tmp/claude-501/-Users-macbook-Workspace-Devotts-do-it/44a2d822-c92d-4e09-a9bf-e6ad258affa8/scratchpad/q104/audit/.work/auditor-2.md",
+        "at": "2026-11-07T01:10:24.200Z",
+        "present": true
+      }
+    ]
+  },
+  "recheck": {
+    "classes": [
+      "code"
+    ],
+    "rows": [
+      "P1",
+      "P2"
+    ]
+  },
+  "rulings": {
+    "P1": {
+      "ruling": "UPHELD",
+      "final": "TRUE",
+      "reason": "Ran `git -C /Users/macbook/Workspace/Devotts/review-it show eed4dec:plugins/review-it/.claude-plugin/plugin.json | cat -n`. Line 4: `\"version\": \"2.1.1\",`. The claim is right and so is the auditor's TRUE.",
+      "round": 2
+    },
+    "P2": {
+      "ruling": "UPHELD",
+      "final": "TRUE",
+      "reason": "Ran `git -C /Users/macbook/Workspace/Devotts/review-it show eed4dec:plugins/review-it/scripts/status-sync.mjs | cat -n`, lines 104-107: `function findWriter(explicit) { const cands = [explicit, process.env.STATUS_WRITE, join(homedir(), 'Workspace/Devotts/build-it/plugins/build-it/scripts/status/status-write.mjs')].filter(Boolean); return cands.find((p) => existsSync(p)); }`. `STATUS_WRITE` comes before the default path, so TRUE holds. The auditor's caveat also holds: the `explicit` argument is tried first, and a candidate is used only if `existsSync` finds it.",
+      "round": 2
+    },
+    "P3": {
+      "ruling": "FALSE",
+      "final": "FALSE",
+      "reason": "The auditor's evidence is from `ca86985`, not the claimed `eed4dec`. `git cat-file -e eed4dec:qa/fixtures/no-plan/qa/derived.test.mjs` → `fatal: path 'qa/fixtures/no-plan/qa/derived.test.mjs' does not exist in 'eed4dec'`. `git ls-tree -r --name-only eed4dec | grep no-plan` → only `qa/fixtures/no-plan/src/csv.mjs`. `git log --diff-filter=D -1 eed4dec -- <path>` → `b8b4a3c test: keep ladder fixtures pristine — archive sim-persisted derived contracts out of fixture dirs`. The file existed at the ancestor `ca86985` (line 6 `import { parseRow, toRecord } from \"../src/csv.mjs\"`), but it is not shipped at release 2.1.1.",
+      "round": 1
+    },
+    "P4": {
+      "ruling": "UPHELD",
+      "final": "TRUE",
+      "reason": "`git show eed4dec:LICENSE | head -1` → `MIT License`. TRUE stands.",
+      "round": 1
+    }
+  },
+  "ombudsman": {
+    "round": 2,
+    "files": [
+      {
+        "file": "/private/tmp/claude-501/-Users-macbook-Workspace-Devotts-do-it/44a2d822-c92d-4e09-a9bf-e6ad258affa8/scratchpad/q104/audit/.work/ombudsman-1.md",
+        "at": "2026-11-07T01:10:00.057Z"
+      },
+      {
+        "file": "/private/tmp/claude-501/-Users-macbook-Workspace-Devotts-do-it/44a2d822-c92d-4e09-a9bf-e6ad258affa8/scratchpad/q104/audit/.work/ombudsman-2.md",
+        "at": "2026-11-07T01:10:54.489Z"
+      }
+    ],
+    "requested": [
+      "P1",
+      "P2"
+    ]
+  },
+  "tokens": {
+    "auditor": [
+      900,
+      55038
+    ],
+    "ombudsman": [
+      25000,
+      54852
+    ]
+  },
+  "dispatches": [
+    {
+      "role": "auditor",
+      "purpose": "audit every row from primary sources",
+      "model": "claude-haiku-5-5",
+      "ledger": "/private/tmp/claude-501/-Users-macbook-Workspace-Devotts-do-it/44a2d822-c92d-4e09-a9bf-e6ad258affa8/scratchpad/q104/claims.md",
+      "rows": [
+        "P1",
+        "P2",
+        "P3",
+        "P4"
+      ],
+      "write_to": "/private/tmp/claude-501/-Users-macbook-Workspace-Devotts-do-it/44a2d822-c92d-4e09-a9bf-e6ad258affa8/scratchpad/q104/audit/.work/auditor-1.md",
+      "inputs": [],
+      "at": "2026-11-07T01:09:13.881Z"
+    },
+    {
+      "role": "ombudsman",
+      "purpose": "rule on every auditor verdict",
+      "model": "opus",
+      "ledger": "/private/tmp/claude-501/-Users-macbook-Workspace-Devotts-do-it/44a2d822-c92d-4e09-a9bf-e6ad258affa8/scratchpad/q104/claims.md",
+      "rows": [
+        "P1",
+        "P2",
+        "P3",
+        "P4"
+      ],
+      "write_to": "/private/tmp/claude-501/-Users-macbook-Workspace-Devotts-do-it/44a2d822-c92d-4e09-a9bf-e6ad258affa8/scratchpad/q104/audit/.work/ombudsman-1.md",
+      "inputs": [
+        "/private/tmp/claude-501/-Users-macbook-Workspace-Devotts-do-it/44a2d822-c92d-4e09-a9bf-e6ad258affa8/scratchpad/q104/audit/.work/audit-merged.md"
+      ],
+      "at": "2026-11-07T01:09:13.909Z"
+    },
+    {
+      "role": "auditor",
+      "purpose": "re-check class code: a TRUE verdict in it was overturned (P3)",
+      "model": "claude-haiku-5-5",
+      "ledger": "/private/tmp/claude-501/-Users-macbook-Workspace-Devotts-do-it/44a2d822-c92d-4e09-a9bf-e6ad258affa8/scratchpad/q104/claims.md",
+      "rows": [
+        "P1",
+        "P2"
+      ],
+      "write_to": "/private/tmp/claude-501/-Users-macbook-Workspace-Devotts-do-it/44a2d822-c92d-4e09-a9bf-e6ad258affa8/scratchpad/q104/audit/.work/auditor-2.md",
+      "inputs": [],
+      "at": "2026-11-07T01:10:00.058Z"
+    },
+    {
+      "role": "ombudsman",
+      "purpose": "rule on the re-checked class(es) code",
+      "model": "opus",
+      "ledger": "/private/tmp/claude-501/-Users-macbook-Workspace-Devotts-do-it/44a2d822-c92d-4e09-a9bf-e6ad258affa8/scratchpad/q104/claims.md",
+      "rows": [
+        "P1",
+        "P2"
+      ],
+      "write_to": "/private/tmp/claude-501/-Users-macbook-Workspace-Devotts-do-it/44a2d822-c92d-4e09-a9bf-e6ad258affa8/scratchpad/q104/audit/.work/ombudsman-2.md",
+      "inputs": [
+        "/private/tmp/claude-501/-Users-macbook-Workspace-Devotts-do-it/44a2d822-c92d-4e09-a9bf-e6ad258affa8/scratchpad/q104/audit/.work/audit-merged.md"
+      ],
+      "at": "2026-11-07T01:10:24.202Z"
+    }
+  ],
+  "pending": null,
+  "published": {
+    "at": "2026-11-07T01:10:54.494Z",
+    "files": [
+      "audit-claude-haiku-5-5.md",
+      "ombudsman.md",
+      "SAFE.md"
+    ],
+    "safe": [
+      "P1",
+      "P2",
+      "P4"
+    ],
+    "do_not_publish": [
+      "P3"
+    ]
+  },
+  "history": [
+    {
+      "from": null,
+      "to": "LEDGER_READY",
+      "event": "ledger read",
+      "at": "2026-11-07T01:09:13.880Z",
+      "rows": 4
+    },
+    {
+      "from": "LEDGER_READY",
+      "to": "AUDITING",
+      "event": "dispatch auditor",
+      "at": "2026-11-07T01:09:13.881Z"
+    },
+    {
+      "from": "AUDITING",
+      "to": "AUDITED",
+      "event": "all rows covered",
+      "at": "2026-11-07T01:09:13.909Z"
+    },
+    {
+      "from": "AUDITED",
+      "to": "ADJUDICATING",
+      "event": "dispatch ombudsman",
+      "at": "2026-11-07T01:09:13.909Z"
+    },
+    {
+      "from": "ADJUDICATING",
+      "to": "PARTIAL_TRUST",
+      "event": "a TRUE verdict overturned",
+      "at": "2026-11-07T01:10:00.058Z",
+      "overturned": [
+        "P3"
+      ],
+      "classes": [
+        "code"
+      ]
+    },
+    {
+      "from": "PARTIAL_TRUST",
+      "to": "ADJUDICATING",
+      "event": "auditor re-checked that class",
+      "at": "2026-11-07T01:10:24.202Z",
+      "rows": [
+        "P1",
+        "P2"
+      ]
+    },
+    {
+      "from": "ADJUDICATING",
+      "to": "ADJUDICATED",
+      "event": "rulings written",
+      "at": "2026-11-07T01:10:54.490Z"
+    },
+    {
+      "from": "ADJUDICATED",
+      "to": "PUBLISHABLE",
+      "event": "SAFE list written",
+      "at": "2026-11-07T01:10:54.495Z"
+    }
+  ]
+}

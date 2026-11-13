@@ -40,7 +40,9 @@ export function escalateStalled(ctx, decision) {
   const qfile = path.join(ctx.workdir, 'results', 'review-cap-question.json');
   writeJson(qfile, { questions: [decision.owner_question] });
   const rec = record(ctx, { stage: 'review-it', status: 'needs_human', pending_human: { questions_path: 'results/review-cap-question.json' } });
-  const esc = spine(ctx, ['gate', 'advance', '--to', 'ESCALATED']);
+  // ESCALATED is entered only by an owning command (CP-03 R3-S1-H6): the run waits on the owner's review-cap
+  // question (NEEDS_HUMAN), and with no owner reply it is handed over with a reason.
+  const esc = spine(ctx, ['gate', 'escalate', '--reason', 'review loop stalled at the cap and the owner gave no reply']);
   return { rec, esc };
 }
 

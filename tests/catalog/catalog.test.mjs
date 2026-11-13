@@ -122,7 +122,8 @@ test('T-R3-05 [REAL] tier vocabulary current state is true', (t) => {
     const cell = parseFields(sections.get(r))['Current state'];
     const cites = parseCitations(cell).filter((c) => c.path === `${r}/SKILL.md` && /^(T1|T2|T3|opus|sonnet|haiku|tier|tiers|tiering)$/i.test(c.text));
     for (const c of cites) assert.ok(citeCheck(c), `${r}: ${c.path}:${c.line} does not contain «${c.text}»`);
-    const text = readFileSync(join(SIBLINGS, r, 'SKILL.md'), 'utf8').split('\n');
+    // read the same pre-merge replay the citations are checked against, not the live checkout (whose branch varies)
+    const text = readFileSync(join(PRE, r, 'SKILL.md'), 'utf8').split('\n');
     const found = new Map();
     text.forEach((l, i) => { for (const m of l.matchAll(TIER_WORD)) if (!found.has(m[0].toLowerCase())) found.set(m[0].toLowerCase(), i + 1); });
     if (!found.size) { assert.match(cell, /none found/); assert.equal(cites.length, 0); continue; }

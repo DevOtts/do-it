@@ -22,7 +22,7 @@ Legend: G-n governance rule · T-<EID>-NN test case · Wn wave · Rn default · 
 | D15 | Warm cloud box | [DECIDED] none in v1; do-it only requires cold-start resume | N2 | Fernando · 2026-10-14 |
 | D16 | Secrets providers | [DECIDED] file, env, AWS Secrets Manager, 1Password behind one interface | S5 | Fernando · 2026-10-14 |
 | D17 | Observability | [DECIDED] Langfuse/LangSmith in v2; trace fields frozen in v1 | S1, v2 README | Fernando · 2026-10-14 |
-| D18 | Engine knowledge | [DECIDED] lives in Engine-Core `docs/implementation/do-it-engine-layer/`; Engine is only one host adapter in do-it | N1-N3 | Fernando · 2026-10-14 |
+| D18 | Engine knowledge | [DECIDED] lives in the pilot consumer repo `docs/implementation/do-it-engine-layer/`; Engine is only one host adapter in do-it | N1-N3 | Fernando · 2026-10-14 |
 | D19 | Engine ask channels and state | [DECIDED] asks answerable on Control Tower, chat/p2p and WhatsApp; state store may be DB rows, interactions or R2 (Engine chooses) | N1, N2 | Fernando · 2026-10-14 |
 | D20 | README | [DECIDED] marketing-grade README in the plan-it/build-it pattern, for promotion | R1 | Fernando · 2026-10-14 |
 | D21 | Plan size | [DECIDED] size L at G1 | all | Fernando · 2026-10-14 |

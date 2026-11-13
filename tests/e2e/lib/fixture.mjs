@@ -37,8 +37,10 @@ export function startRun(ctx, preset, request) {
   return ctx.runId;
 }
 
+// The rows are this run's (seeded after startRun), so they carry its run_id: a 1.1 run never adopts an
+// unattributed row (CP-03 R2-S1-H3).
 export function seedFinishLine(ctx, rows) {
-  const full = rows.map((r) => ({ id: r.id, kind: r.kind || 'dod', state: 'OPEN', evidence: null, owner_question: null, reason: null, archived_to: null, text: r.text }));
+  const full = rows.map((r) => ({ id: r.id, kind: r.kind || 'dod', state: 'OPEN', evidence: null, owner_question: null, reason: null, archived_to: null, text: r.text, ...(ctx.runId ? { run_id: ctx.runId } : {}) }));
   fs.mkdirSync(path.join(ctx.workdir, '.do-it'), { recursive: true });
   fs.writeFileSync(path.join(ctx.workdir, '.do-it', 'finish-line.json'), JSON.stringify({ rows: full }, null, 2) + '\n');
 }

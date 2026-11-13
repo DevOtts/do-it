@@ -22,7 +22,7 @@ Goals, each tied to a test:
 5. Cache hit rate is measured, and the obvious busting mistakes are detectable by a byte diff (P3).
 6. A review loop ends through exactly one of four exits, and an attended failure cannot vanish without a regression test or a written reason (P4, G-10).
 
-Non-goals: no model harness, no response cache, no prompt compression, no memory service, no gateway (all listed in P3 as NOT built); no edits to Engine-Core; nothing for Hermes or OpenClaw (G-14); no spine code (L1 owns the state writer, `next`, `record`, `meter` command wiring).
+Non-goals: no model harness, no response cache, no prompt compression, no memory service, no gateway (all listed in P3 as NOT built); no edits to the pilot consumer repo; nothing for Hermes or OpenClaw (G-14); no spine code (L1 owns the state writer, `next`, `record`, `meter` command wiring).
 
 ## 3. Users and jobs
 | User | Job | What they must know to do it | Honest states the lane must show |

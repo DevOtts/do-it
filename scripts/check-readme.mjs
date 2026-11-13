@@ -1,13 +1,16 @@
 #!/usr/bin/env node
-// README checker (epic R1). Modes: --order --claims --length --header --links --badges --tone --all
+// README checker (epic R1, E1). Modes: --order --claims --length --header --links --badges --tone --install --hosts --footer --all
 // usage: node scripts/check-readme.mjs [--file README.md] [--root DIR] [--mode ...]
 // Exit 0 when every requested check passes; 1 with one line per violation on stdout.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readHosts, levelLabel, renderReadmeTable, TABLE_BEGIN, TABLE_END } from './hosts-table.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
+const DEFAULT_ROOT = path.join(HERE, '..');
 export const SECTIONS = ['The bottleneck it kills', 'Installation', 'How it works', 'The spine', 'Token economy', 'Five things you can say', 'What the morning report looks like', "What's inside", 'do-it x the family', 'Status', 'Security considerations', 'Platform compatibility', 'License'];
+const LEVEL_KEYS = ['native', 'supported', 'experimental'];
 export const FOOTER = '_Built by [DevOtts](https://github.com/DevOtts)._';
 const LENGTH_CAP = 450;
 
@@ -125,9 +128,10 @@ export function checkHeader(text, { releaseExists }) {
   return errs;
 }
 
-export function checkBadges(text, { releaseExists }) {
+export function checkBadges(text, { releaseExists, root }) {
   const errs = [];
-  const labels = ['Quick Start', 'License MIT', 'Native Claude Code', 'portable SKILL.md', 'author DevOtts'];
+  const native = readHosts(root || DEFAULT_ROOT).find((h) => h.level === 'native');
+  const labels = ['Quick Start', 'License MIT', ...(native ? ['Native ' + native.display] : []), 'portable SKILL.md', 'author DevOtts'];
   const imgs = [...text.slice(0, text.indexOf('\n</div>')).matchAll(/<img src="(https:\/\/img\.shields\.io\/[^"]+)" alt="([^"]*)"/g)];
   for (const [, url] of imgs) if (!url.includes('style=for-the-badge')) errs.push('badge without style=for-the-badge: ' + url);
   for (const l of labels) if (!imgs.some((m) => m[2] === l)) errs.push('missing badge label: ' + l);
@@ -148,9 +152,11 @@ export function checkLinks(text, root) {
   return errs;
 }
 
-export function checkTone(text) {
+export function checkTone(text, root) {
   const errs = [];
-  const prose = outsideCode(text);
+  let prose = outsideCode(text);
+  // A host's own status sentence carries a dated fact (G-4); it is read from the manifest, so it is not a placeholder.
+  for (const h of readHosts(root || DEFAULT_ROOT)) if (h.statusLabel) prose = prose.split(h.statusLabel).join('');
   for (const re of [/coming soon/i, /next month/i, /\b20[2-9]\d-\d\d\b/, /\b(TODO|TBD|FIXME|WIP)\b/, /lorem ipsum/i]) if (re.test(prose)) errs.push('tone: matches ' + re);
   // picture and source are real markup (the reduced-motion poster for the README GIFs), not placeholders.
   for (const m of prose.replace(/<\/?(div|h[1-6]|strong|em|a|img|br|p|details|summary|sub|sup|picture|source)\b[^>]*>/g, '').matchAll(/<[A-Za-z][^>\n]*>/g)) errs.push('tone: angle-bracket placeholder ' + m[0]);
@@ -163,23 +169,62 @@ export function checkTone(text) {
 export function checkInstall(text, { root, installFile, depFile }) {
   const errs = [];
   const body = sectionBody(text, 'Installation');
+  const hosts = readHosts(root || DEFAULT_ROOT);
+  const titleOf = (h) => h.display + (h.level === 'native' ? ' (native)' : '');
   const hs = [...body.matchAll(/^### (.*)$/gm)].map((m) => m[1]);
-  const want = ['Claude Code (native)', 'Codex', 'OpenCode', 'Engine', 'Others'];
-  if (JSON.stringify(hs) !== JSON.stringify(want)) errs.push('Installation H3s are ' + JSON.stringify(hs));
+  const want = [...hosts.map(titleOf), 'Others'];
+  if (JSON.stringify(hs) !== JSON.stringify(want)) errs.push('Installation H3s are ' + JSON.stringify(hs) + ', the manifests give ' + JSON.stringify(want));
   if (!/^> \[!TIP\]/m.test(body)) errs.push('Installation has no TIP block');
-  const engine = body.split('### Engine')[1] || '';
-  if (!engine.split('### Others')[0].includes('hosts/engine/README.md')) errs.push('Engine H3 does not link hosts/engine/README.md');
-  if (!/sequentially/.test(body.split('### Others')[1] || '')) errs.push('Installation does not end with the sequential degrade note');
   const cmds = JSON.parse(fs.readFileSync(installFile, 'utf8')).hosts;
-  const claude = body.split('### Claude Code (native)')[1].split('### Codex')[0];
-  for (const c of cmds['claude-code'].commands) if (!claude.includes(c)) errs.push('missing Claude Code command: ' + c);
-  for (const c of cmds.universal.commands) if (!body.includes(c)) errs.push('missing universal command: ' + c);
-  for (const h of ['codex', 'opencode']) for (const c of cmds[h].commands) if (!body.includes(c)) errs.push('missing ' + h + ' command: ' + c);
+  const sectionOf = (title) => (body.split('### ' + title + '\n')[1] || '').split(/^### /m)[0];
+  for (const h of hosts) {
+    const sec = sectionOf(titleOf(h));
+    if (cmds[h.id]) {
+      for (const c of cmds[h.id].commands) if (!sec.includes(c)) errs.push('missing ' + h.display + ' command: ' + c);
+    } else if (h.readme && !sec.includes(h.readme)) {
+      errs.push(h.display + ' H3 does not link ' + h.readme);
+    }
+  }
+  for (const c of (cmds.universal || { commands: [] }).commands) if (!body.includes(c)) errs.push('missing universal command: ' + c);
+  if (!/sequentially/.test(body.split('### Others')[1] || '')) errs.push('Installation does not end with the sequential degrade note');
   let resolved = false;
   try { resolved = JSON.parse(fs.readFileSync(depFile, 'utf8')).outcome === 'resolved'; } catch { resolved = false; }
   const says = /installs the family/.test(text);
   if (says && !resolved) errs.push('README says "installs the family" but the dependency evidence is not resolved');
   if (!resolved && !text.includes('do-it doctor --install')) errs.push('unresolved dependencies and no do-it doctor --install instruction');
+  return errs;
+}
+
+// E1-04 / G-4: the host table is generated from hosts/*/adapter.manifest.json. Every host folder has a row, no row
+// states a level above what its manifest says, and a host whose server side is declined is never Supported.
+export function checkHosts(text, { root }) {
+  const errs = [];
+  const hosts = readHosts(root);
+  const body = sectionBody(text, 'Platform compatibility');
+  const rows = body.split('\n').filter((l) => /^\|/.test(l)).map((l) => l.split('|').slice(1, -1).map((c) => c.trim())).filter((c) => c.length >= 2 && !/^-+$/.test(c[0]) && c[0] !== 'Platform');
+  for (const h of hosts) {
+    if (!h.manifest) { errs.push('host folder hosts/' + h.id + ' has no readable adapter.manifest.json'); continue; }
+    if (!LEVEL_KEYS.includes(h.level)) errs.push('hosts/' + h.id + ' manifest has no level (native, supported or experimental)');
+    if (h.serverSide === 'declined' && h.level !== 'experimental') errs.push('hosts/' + h.id + ' manifest says server_side: declined but level ' + h.level + ' (G-4)');
+    const row = rows.find((c) => c[0] === h.display || c[0].toLowerCase() === h.id);
+    if (!row) { errs.push('host folder hosts/' + h.id + ' has no row in Platform compatibility'); continue; }
+    if (h.serverSide === 'declined' && /^(Supported|Native)\b/.test(row[1])) errs.push(h.display + ' is listed as ' + row[1].split(/[:\s]/)[0] + ' but its manifest says server_side: declined (G-4)');
+    else if (!row[1].startsWith(levelLabel(h))) errs.push(h.display + ' is listed as "' + row[1] + '" but its manifest says level ' + h.level);
+    if (h.statusLabel && !row[1].includes(h.statusLabel)) errs.push(h.display + ' row does not show "' + h.statusLabel + '"');
+    if (h.statusLabel) {
+      const header = text.slice(0, text.indexOf('\n</div>'));
+      const alt = (/<img src="assets\/do-it-hero\.svg"[^>]*alt="([^"]*)"/.exec(header) || [])[1] || '';
+      if (!alt.includes(h.statusLabel)) errs.push('hero alt text does not show "' + h.statusLabel + '" for ' + h.display);
+      if (h.readme) {
+        const own = fs.readFileSync(path.join(root, h.readme), 'utf8');
+        if (!own.includes(h.statusLabel)) errs.push(h.readme + ' does not show "' + h.statusLabel + '"');
+      }
+    }
+  }
+  for (const r of rows) if (!hosts.some((h) => r[0] === h.display || r[0].toLowerCase() === h.id)) errs.push('Platform compatibility row "' + r[0] + '" has no host folder');
+  const a = text.indexOf(TABLE_BEGIN), b = text.indexOf(TABLE_END);
+  if (a === -1 || b === -1) errs.push('Platform compatibility has no generated hosts block');
+  else if (text.slice(a + TABLE_BEGIN.length, b).trim() !== renderReadmeTable(hosts)) errs.push('the hosts block is stale: run node scripts/hosts-table.mjs --write');
   return errs;
 }
 
@@ -209,7 +254,8 @@ function main(argv) {
   if (all || flag('header')) errs = errs.concat(checkHeader(text, ctx));
   if (all || flag('badges')) errs = errs.concat(checkBadges(text, ctx));
   if (all || flag('links')) errs = errs.concat(checkLinks(text, root));
-  if (all || flag('tone')) errs = errs.concat(checkTone(text));
+  if (all || flag('tone')) errs = errs.concat(checkTone(text, root));
+  if (all || flag('hosts')) errs = errs.concat(checkHosts(text, ctx));
   if (all || flag('install')) errs = errs.concat(checkInstall(text, ctx));
   if (all || flag('footer')) errs = errs.concat(checkFooter(text, root));
   for (const e of errs) console.log(e);

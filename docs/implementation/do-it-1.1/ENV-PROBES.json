@@ -1,0 +1,86 @@
+{
+  "run": "do-it-1.1 (shape M)",
+  "note": "Probes are argv arrays; absolute paths; read-only. Facts are probed, never guessed.",
+  "probes": [
+    {
+      "id": "config-reachability",
+      "fact": "do-it origin/main is 1.0.5 (d38cedb)",
+      "check": [
+        "sh",
+        "-c",
+        "git -C /Users/macbook/Workspace/Devotts/do-it rev-parse --short origin/main && git -C /Users/macbook/Workspace/Devotts/do-it show origin/main:core/companions.json | grep -m1 '\"version\"'"
+      ]
+    },
+    {
+      "id": "live-registry",
+      "fact": "Engine PR #727 is closed, not merged",
+      "check": [
+        "sh",
+        "-c",
+        "cd <pilot-repo>/a consumer service && gh pr view 727 --json state -q .state"
+      ]
+    },
+    {
+      "id": "deployed-vs-installed",
+      "fact": "init-it exists locally but is not a git repo (unreleased)",
+      "check": [
+        "sh",
+        "-c",
+        "test -f /Users/macbook/Workspace/Devotts/init-it/plugins/init-it/scripts/init-it.mjs && ! git -C /Users/macbook/Workspace/Devotts/init-it rev-parse 2>/dev/null && echo 'init-it local, not a repo'"
+      ]
+    },
+    {
+      "id": "credential-validity",
+      "fact": "GitHub CLI is authenticated (needed later for init-it repo and tags)",
+      "check": [
+        "gh",
+        "auth",
+        "status"
+      ]
+    },
+    {
+      "id": "dependency-actual-usage",
+      "fact": "build-it status-write is on origin/main (the writer status-from-plan and conclude-it call)",
+      "check": [
+        "sh",
+        "-c",
+        "git -C /Users/macbook/Workspace/Devotts/build-it cat-file -e origin/main:plugins/build-it/scripts/status/status-write.mjs && echo present"
+      ]
+    },
+    {
+      "id": "code-vs-external-split",
+      "fact": "conclude-it ship pipeline S4 still says git mv (the code change is ours; the Engine repair is the owner's, D5)",
+      "check": [
+        "sh",
+        "-c",
+        "git -C /Users/macbook/Workspace/Devotts/conclude-it show origin/main:plugins/conclude-it/skills/conclude-it/references/ship-pipeline.md | grep -c 'git mv'"
+      ]
+    },
+    {
+      "id": "tool-availability",
+      "fact": "node is present for the spine and gate-check",
+      "check": [
+        "node",
+        "--version"
+      ]
+    },
+    {
+      "id": "caller-consumer-surface",
+      "fact": "build-it and review-it reference init-it on origin/main",
+      "check": [
+        "sh",
+        "-c",
+        "git -C /Users/macbook/Workspace/Devotts/build-it grep -q init-it origin/main -- plugins && git -C /Users/macbook/Workspace/Devotts/review-it grep -q init-it origin/main -- plugins && echo build-it-and-review-it"
+      ]
+    },
+    {
+      "id": "secret-scan-on-import",
+      "fact": "no secret-shaped strings in this package",
+      "check": [
+        "sh",
+        "-c",
+        "! grep -rIlq --exclude=ENV-PROBES.json --exclude=ENV-FACTS.md -e 'AKIA[0-9A-Z]\\{16\\}' -e 'BEGIN RSA PRIVATE' -e 'BEGIN OPENSSH PRIVATE' -e 'ghp_[A-Za-z0-9]\\{20,\\}' /Users/macbook/Workspace/Devotts/do-it/.worktrees/plan-read-origin-main/docs/implementation/do-it-1.1 && echo no-secret-patterns"
+      ]
+    }
+  ]
+}

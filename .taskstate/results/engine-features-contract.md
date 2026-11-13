@@ -1,8 +1,8 @@
 # do-it Engine hooks: API contract
 
-Status: implemented, NOT merged, NOT deployed (2026-10-14). PR: https://github.com/Engine-HQ/brain-api-core/pull/727 (+ docs https://github.com/Engine-HQ/brain-docs/pull/220). Local live probe 25/25 PASS. Channel mapping for the do-it adapter: controlTower->control_tower, chatP2p->chat_p2p, whatsapp->whatsapp. Origin: the do-it live probe of 2026-10-14
+Status: implemented, NOT merged, NOT deployed (2026-10-14). PR: <pilot-org PR url> (+ docs <pilot-org PR url>). Local live probe 25/25 PASS. Channel mapping for the do-it adapter: controlTower->control_tower, chatP2p->chat_p2p, whatsapp->whatsapp. Origin: the do-it live probe of 2026-10-14
 (`DevOtts/do-it` `.taskstate/results/live-w4.md`), which found four gaps behind do-it cases T-N1-17, T-N1-18,
-T-N3-14 and T-N2-04. Spec: Engine-Core `docs/implementation/do-it-engine-layer/02-ENGINE-LAYER-SPEC.md`
+T-N3-14 and T-N2-04. Spec: the pilot consumer repo `docs/implementation/do-it-engine-layer/02-ENGINE-LAYER-SPEC.md`
 (points 2, 6 and 9, section F).
 
 Auth on every route: the existing service key header `x-service-api-key` (no JWT, no app token).

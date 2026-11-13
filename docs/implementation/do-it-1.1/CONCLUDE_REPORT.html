@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>do-it 1.1.0 — conclude report</title>
+<style>
+  :root{
+    --bg:#f6f4ef; --card:#ffffff; --ink:#1f2430; --muted:#6b7280; --line:#e5e1d8;
+    --accent:#0e7490; --act:#b45309; --gate:#b91c1c; --ok:#15803d; --chip:#eef2f7; --hold:#7c3aed;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){ --bg:#14161c; --card:#1d2129; --ink:#e8e6e1; --muted:#9aa1ad; --line:#2b303b;
+           --accent:#38bdf8; --act:#fbbf24; --gate:#f87171; --ok:#4ade80; --chip:#262b35; --hold:#a78bfa; }
+  }
+  :root[data-theme="dark"]{ --bg:#14161c; --card:#1d2129; --ink:#e8e6e1; --muted:#9aa1ad; --line:#2b303b;
+           --accent:#38bdf8; --act:#fbbf24; --gate:#f87171; --ok:#4ade80; --chip:#262b35; --hold:#a78bfa; }
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.55 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;padding:2.5rem 1rem}
+  main{max-width:900px;margin:0 auto;position:relative}
+  h1{font-size:1.5rem;margin:0 0 .25rem;text-wrap:balance;padding-right:6rem} .sub{color:var(--muted);margin:0 0 2rem}
+  h2{font-size:1.05rem;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);
+     margin:2.2rem 0 .8rem;border-bottom:1px solid var(--line);padding-bottom:.4rem}
+  #theme-toggle{position:absolute;top:0;right:0;background:var(--card);border:1px solid var(--line);
+    color:var(--muted);border-radius:99px;padding:.3rem .8rem;font:inherit;font-size:.8rem;
+    cursor:pointer;display:inline-flex;align-items:center;gap:.4rem}
+  #theme-toggle:hover{color:var(--ink)} #theme-toggle:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;
+        padding:1rem 1.1rem;margin-bottom:.75rem}
+  .card h3{margin:0 0 .35rem;font-size:1rem;display:flex;gap:.5rem;align-items:baseline;flex-wrap:wrap}
+  .id{font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums}
+  .badge{font-size:.72rem;font-weight:700;letter-spacing:.03em;border-radius:99px;
+         padding:.1rem .55rem;text-transform:uppercase}
+  .b-ok{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+  .b-open{background:color-mix(in srgb,var(--gate) 14%,transparent);color:var(--gate)}
+  .b-hold{background:color-mix(in srgb,var(--hold) 14%,transparent);color:var(--hold)}
+  .b-act{background:color-mix(in srgb,var(--act) 15%,transparent);color:var(--act)}
+  .rename{margin-left:auto;font-size:.75rem;color:var(--muted)}
+  .rename code{font-size:.95em}
+  .card p{margin:.25rem 0}
+  .card ul{margin:.3rem 0 .3rem;padding-left:1.25rem} .card li{margin:.18rem 0}
+  code{background:var(--chip);border-radius:4px;padding:.05rem .35rem;font-size:.85em;word-break:break-all}
+  table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);
+        border-radius:10px;overflow:hidden;font-size:.9rem}
+  th,td{text-align:left;padding:.5rem .8rem;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-weight:600} tr:last-child td{border-bottom:none}
+  .overflow{overflow-x:auto}
+  .test{margin-top:.6rem;border-top:1px dashed var(--line);padding-top:.55rem;font-size:.88rem}
+  .test b{color:var(--accent);text-transform:uppercase;font-size:.75rem;letter-spacing:.04em}
+  .test ul{margin:.3rem 0 0;padding-left:1.25rem}
+  .warn{color:var(--act)} .crit{color:var(--gate);font-weight:600}
+  details.more{margin-top:.7rem;border-top:1px dashed var(--line);padding-top:.55rem}
+  details.more>summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:.88rem;
+    list-style:none;display:inline-flex;align-items:center;gap:.4rem}
+  details.more>summary::before{content:"▸";transition:transform .15s}
+  details.more[open]>summary::before{transform:rotate(90deg)}
+  .srcnote{font-size:.78rem;color:var(--muted);margin:.6rem 0 .3rem}
+  .mdout{background:color-mix(in srgb,var(--chip) 55%,transparent);border:1px solid var(--line);
+         border-radius:8px;padding:.9rem 1rem;font-size:.87rem;overflow-x:auto}
+  .mdout h1,.mdout h2,.mdout h3{all:revert;font-size:1.02em;margin:.8em 0 .3em;border:none;
+    text-transform:none;letter-spacing:0;color:var(--ink)}
+  .mdout h1{font-size:1.12em}
+  .mdout pre{background:var(--chip);padding:.6rem .7rem;border-radius:6px;overflow-x:auto}
+  .mdout blockquote{border-left:3px solid var(--accent);margin:.5em 0;padding:.1em .8em;color:var(--muted)}
+  .mdout ul{padding-left:1.3em} .mdout li{margin:.15em 0}
+  .mdout hr{border:none;border-top:1px solid var(--line);margin:.8em 0}
+  .mdout a{color:var(--accent)}
+  .mdout table{font-size:.85em;margin:.5em 0}
+  .mdout td,.mdout th{padding:.35rem .6rem}
+  @media (prefers-reduced-motion: reduce){ details.more>summary::before{transition:none} }
+</style>
+</head>
+<body><main>
+<button id="theme-toggle" type="button" aria-label="Toggle light/dark theme">◐ <span id="theme-label">auto</span></button>
+<h1>do-it 1.1.0 — conclude report</h1>
+<p class="sub">concluded 2026-11-13 · session <code>do-it-1.1.0-exec</code> → <code>done-do-it-1.1.0-exec</code> · do-it <code>v1.1.0</code> @ <code>88e4152</code></p>
+<h2>Gates</h2>
+<div class="overflow"><table>
+<tr><th>Gate</th><th>Result</th><th>Evidence</th></tr>
+<tr><td>Local tests (release branch)</td><td><b>GREEN</b> (env notes)</td><td>spine 186/186, catalog 27, readme 32, plugin 17, hosts 57/58 under load (failed case passes alone), engine live 3 = probe false-reachable (29/0/7 with docker hidden)</td></tr>
+<tr><td>Pins on the tag</td><td><b>GREEN</b></td><td><code>check-pins --tags/--marketplace/--self/--lint</code>: no drift ×4 on v1.1.0</td></tr>
+<tr><td>Prod = published tags (CP-04 part B)</td><td><b>GREEN</b></td><td>Marketplace installs on clean homes match every pin; live /clear take-over recovered unattended (TAKEN_OVER)</td></tr>
+<tr><td>Review checkpoints</td><td><b>GREEN</b></td><td>CP-01, CP-02, CP-03, CP-04 → readVerdict pass</td></tr>
+<tr><td>main after close</td><td><b>GREEN</b></td><td>tests/catalog 27/27 @aa66b9c (was 26/27 between PR #20 and #22)</td></tr>
+</table></div>
+<h2>What shipped</h2>
+<div class="card"><h3>
+<span class="id">do-it</span>
+ do-it 1.1.0
+ <span class="badge b-ok">released</span>
+</h3>
+<p>Stop-gate ownership (session-bound runs, explicit <code>resume --run &lt;id&gt; --take-over</code>, per-session registry), host isolation, release hygiene (marketplace <code>ref</code> pins), board truth, optional companions init-it and doc-it. PR #19, tag v1.1.0.</p>
+<div class="test"><b>How to test</b><ul><li><code>claude plugin marketplace add DevOtts/do-it</code> then <code>claude plugin install do-it@devotts</code>: it should report 5 dependencies, and <code>claude plugin list</code> should show do-it 1.1.0, plan-it 5.3.0, build-it 4.2.0, review-it 2.2.0, conclude-it 2.2.0, prompt-it 1.0.0.</li><li>In any repo, start a do-it run, type <code>/clear</code>, and ask it to resume: the tool refuses with OWNED_BY_OTHER_SESSION and names <code>--take-over</code>.</li></ul></div>
+</div>
+<div class="card"><h3>
+<span class="id">siblings</span>
+ Sibling releases
+ <span class="badge b-ok">released</span>
+</h3>
+<p>doc-it v0.1.0 (new public repo), build-it v4.2.0, conclude-it v2.2.0, plan-it v5.3.0, review-it v2.2.0, reconcile-it v1.0.1; earlier in the run prompt-it v1.0.0 and init-it v0.1.0.</p>
+<div class="test"><b>How to test</b><ul><li><code>gh release list -R DevOtts/doc-it</code> (and each sibling) shows the version as Latest.</li></ul></div>
+</div>
+<h2>Open / follow-ups</h2>
+<div class="card"><h3>
+<span class="id">F1</span>
+ doctor --install --host fails from the marketplace copy
+ <span class="badge b-hold">1.1.1</span>
+</h3>
+<p>The plugin does not ship <code>companions.json</code>, so <code>INSTALL_NO_COMPANIONS</code> outside a source checkout. MEDIUM.</p>
+</div>
+<div class="card"><h3>
+<span class="id">F2</span>
+ reconcile-it repo is private but pinned as published
+ <span class="badge b-act">owner</span>
+</h3>
+<p>Make it public, or mark it unpublished in 1.1.1. LOW.</p>
+</div>
+<div class="card"><h3>
+<span class="id">OWN</span>
+ Owner decisions
+ <span class="badge b-act">owner</span>
+</h3>
+<p>Amendments A3–A8 and A13–A16; the pilot repo's legacy-board archive option (A recommended). The board shows 55 done, 0 verified: no per-task review-it verdict exists and none was invented.</p>
+</div>
+<div class="card"><h3>
+<span class="id">PRB</span>
+ Engine live probe false-reachable
+ <span class="badge b-open">LOW</span>
+</h3>
+<p>Any container named like the host and any HTTP status count as reachable; fails closed, never a false pass.</p>
+</div>
+<h2>Full run report</h2>
+<div class="card"><h3>
+<span class="id">R</span>
+ REPORT-1.1.0.md
+ <span class="badge b-ok">on main</span>
+</h3>
+<p>Per-criterion DoD table with ledger evidence, no-silent-caps, delegation.</p>
+<details class="more"><summary>Full report</summary>
+<p class="srcnote">Rendered from <code>.build-it-reports/REPORT-1.1.0.md</code>:</p>
+<div class="mdout"><script type="text/markdown">
+# do-it 1.1.0 — build-it run report
+
+Run 2026-11-06 to 2026-11-13 (paused 2026-11-09 to 2026-11-13 for an owner reboot). Goal: ship CONTRACT v1.0 (package `docs/implementation/do-it-1.1/`, KICKOFF §6). Coordinator: Opus 5.5. Run state: `.taskstate/1.1/` in the plan worktree (grounding, decisions X1–X27, evidence ledger, run-memory).
+
+## 1. Outcome
+
+do-it 1.1.0 is released. Tag `v1.1.0` is at 88e4152, the merge of PR #19. The six sibling releases were tagged first, and do-it 1.1.0 pins each of them. All four review checkpoints read PASS through build-it's `readVerdict`.
+
+CP-04 part B, a fresh reviewer's check on the published tags, passed every case. It installed doc-it, init-it and do-it (with its five dependencies) from the marketplace on clean homes, and every installed version matched its pin. It also re-ran the live /clear take-over: a real Claude Code session, given only "resume the run and follow the tool output", ran `resume --run <id> --take-over` on its own after the refusal (X27).
+
+## 2. Definition of Done, per criterion
+
+| # | Criterion | Status | Evidence (ledger `.taskstate/1.1/evidence.md`) |
+|---|---|---|---|
+| 1 | All 55 Test Contract cases pass on origin/main of each repo | VERIFIED | CP-04 part A, run by an independent reviewer on fresh worktrees of every origin/main: "55 cases. 52 PASS, 0 FAIL, 3 PART-B". Part B on the released tags: T-K1-08, the network half of T-I1-02, and T-H1-03 all PASS (CP-04 part B table). So 55 of 55 cases pass. T-H1-03 is marked attended; the reviewer ran it unattended, without you present. |
+| 2 | Siblings tagged | VERIFIED | `gh release create` 2026-11-13, each sha re-checked against origin/main first: doc-it v0.1.0→9f339ef, build-it v4.2.0→8e46f5f, conclude-it v2.2.0→5eac030, plan-it v5.3.0→15b3e0e, review-it v2.2.0→6cf6199, reconcile-it v1.0.1→e1766f6. Already tagged earlier in the run: prompt-it v1.0.0, parallel-lifecycle v1.0.0, init-it v0.1.0 (made public), do-it v1.0.5. |
+| 3 | do-it 1.1.0 pins them | VERIFIED | On the v1.1.0 checkout: `check-pins --tags`, `--marketplace`, `--self` and `--lint` each print `no drift` and exit 0. Marketplace entries carry `ref: "v<version>"` (D4). T-R2-11 install: `Successfully installed plugin: do-it@devotts (+ 5 dependencies: prompt-it, plan-it, build-it, review-it, conclude-it)`, outcome `resolved`. |
+| 4 | CP-01..CP-04 PASS | VERIFIED | `readVerdict` (build-it v4.2.0 `checkpoints.mjs`) on `docs/implementation/do-it-1.1/plan/reviews/` at v1.1.0: CP-01, CP-02, CP-03, CP-04 → `{"state":"pass"}`. CP-04 part B: PASS on the released tags. Header `part: A + B`, one `verdict: PASS` line; `readVerdict` → pass (re-checked by the coordinator). |
+
+## 3. How the run went
+
+- **W0 and W1** built all 11 epics across do-it, doc-it (new public repo), plan-it, build-it, conclude-it, review-it, init-it and reconcile-it. CP-01 passed on round 2; CP-02 passed on round 5.
+- **CP-03 (adversarial)** took 11 rounds for S1 (stop-gate ownership), 7 for A1 (archive) and 6 for Q1 (audit chain). Findings per round shrank from 11 to 6, 7, 6, then one MEDIUM each round, and the last round found only one LOW. Each finding got a regression test that replays the attack. Late findings were mostly 1.0.x behaviour that 1.1's stricter gate made reachable, not regressions.
+- **CP-04 part A** found four defects that would have blocked the tag, all fixed before tagging. The most serious was D1, below.
+- **Release**: sibling tags first, then the do-it release PR #19, then tag v1.1.0. The run paused for an owner reboot and resumed from `RESUME.md` with no lost work.
+
+## 4. Things the owner should know
+
+1. **Your `~/.do-it/bin/do-it` was written by the CP-04 reviewer.** Before the D1 fix, `doctor --install --dry-run` really installed. The reviewer's run created `~/.do-it/bin/do-it` on 2026-11-09 at 05:02 with the unreleased build. The folder did not exist before that. Fixed in 1.1.0: `--dry-run` writes nothing (test `CP-04 D1`). The file is now the released v1.1.0 bundle (byte-identical, sha256 67c2bd55…). Delete `~/.do-it/bin` if you don't want it; nothing puts it on your PATH.
+2. **Settings change you asked for.** `~/.claude/settings.json` now allows Write/Edit/MultiEdit everywhere and adds `~/Workspace/Devotts`, the pilot consumer's workspace folder and `/private/tmp/claude-501` as additional directories. The backup is in the original session's scratchpad (`settings.json.bak`).
+3. **Pilot repo, one-time decision (its own work, D5).** The stricter archive rule denies boardless CLOSEOUT archives there, because three older boards were archived as `closed:false`. Recommended fix (A): close each one in place with an owner note via `archive-package --owner-note`. Option B: one owner note on the next CLOSEOUT archive. The pilot's only CLOSEOUT also fails `doc-it check closeout` because its table uses different headers. That problem was already there.
+4. **Proposed CONTRACT amendments A3–A16.** You approved A9–A12 (X27). A3–A8 and A13–A16 still need your yes or no; they are listed in `.taskstate/1.1/results/fix-cp03-s1.md`.
+5. **T-H1-03** is an attended case: the reviewer ran it unattended on a clean home. `claude plugin install do-it@devotts` installed do-it 1.1.0 plus prompt-it 1.0.0, plan-it 5.3.0, build-it 4.2.0, review-it 2.2.0 and conclude-it 2.2.0, each equal to its pin and tag commit. Watch one install yourself if you want the attended version.
+
+6. **CP-04 part B findings (no case fails):**
+   - **F1 (MEDIUM, fix in 1.1.1):** `doctor --install --host <h>` run from the marketplace-installed plugin fails with `INSTALL_NO_COMPANIONS`, because `plugins/do-it` does not ship `companions.json`. The fallback install for hosts without plugin support therefore works only from a do-it source checkout. Fix: ship the file in the plugin and add a test that runs from a plugin-cache copy.
+   - **F2 (LOW, your call):** `companions.json` calls reconcile-it "published", but `DevOtts/reconcile-it` is private. Either make it public (as was done for init-it and doc-it), or mark it unpublished in 1.1.1.
+   - **F3 (wording):** the T-S1-09 row says "re-bound", but an explicit take-over returns `TAKEN_OVER`. Fold this into the contract-drift amendments.
+
+## 5. No silent caps
+
+- **Environment-only failures on the final suite.** Every one was proven environmental and is not a product failure:
+  - hosts/engine T-N1-16..18: Docker was running a Mongo container named `engine-…`, and an unrelated server answered 404 on :3001. The live probe took that for a live Engine. With Docker off PATH the suite returns to 29 pass / 0 fail / 7 skip, the same as every earlier run. Finding (LOW, pre-existing): the probe should require an Engine-specific answer. It fails closed and never gives a false pass.
+  - tests/hosts R7-S1-M14, 80,000-slice case: hit the 120 s test timeout under load average 26 from other sessions' jest runs. Run alone, it passes.
+  - Earlier in the run: opencode T-H3-04 (`opencode models` hung; green on the final run) and T-R1-14 (GitHub 504 outage; green after).
+- **Skips.** The suite runner exits 0 when tests skip. Release runs set every env var (pilot, status writer, doc-it), and remaining skips are listed: e2e r4 1 skip, hosts/engine 7 skips (live Engine cases with no Engine).
+- **Judgement cases.** T-Q1-01, T-Q1-04 and T-K2-01 were judged on their artefacts and not re-dispatched to models in CP-04.
+- **CP-03 A1 round 7.** Probes P6–P9 were finalized by the coordinator as replays of the regression tests, not fresh hand probes, after the reviewer stalled for the fifth time. Provenance is stated in the CP-03 file.
+- **Known LOW findings carried** (listed in CP-03): A1-L2 (owner note unauthenticated), the fake-board accounting gap, R11-S1-L-h, formats.md §11 idioms, the init-it ADV-01c hardcoded path, and the T-L1-01 contract saying 24 rows where the ledger has 38.
+
+## 6. Delegation and cost
+
+- Workers used Sonnet for spec'd epics, Opus for crown-jewel and adversarial work, and Haiku for live TUI sessions in T-S1-09.
+- Escalations: the CP-03 fix waves ran on Opus because they were release-blocking and adversarial.
+- Reviewers stalled several times, five times for A1. The fix was to split review into per-area reviewers with time budgets and incremental files.
+
+## 7. Recommended next actions
+
+1. do-it 1.2.0 (RTG) can start from main in session `rtg-1.2.0-exec`; its KICKOFF requires branching after 1.1.0, which is now true.
+2. Decide amendments A3–A8 and A13–A16, and the pilot archive option (A or B).
+3. Small 1.1.1 candidates: the Engine probe fix; carried LOWs.
+
+</script></div>
+</details>
+</div>
+<script>
+// Theme toggle: auto → light → dark → auto. Persists per-viewer (try/catch — storage may be blocked).
+(function(){
+  const btn=document.getElementById("theme-toggle"), lab=document.getElementById("theme-label");
+  const order=["auto","light","dark"]; let cur="auto";
+  try{ cur=localStorage.getItem("report-theme")||"auto" }catch(e){}
+  function apply(v){
+    cur=v; lab.textContent=v;
+    if(v==="auto"){ document.documentElement.removeAttribute("data-theme"); }
+    else{ document.documentElement.setAttribute("data-theme",v); }
+    try{ localStorage.setItem("report-theme",v) }catch(e){}
+  }
+  apply(cur);
+  btn.addEventListener("click",()=>apply(order[(order.indexOf(cur)+1)%order.length]));
+})();
+// Mini markdown renderer (headers, bold/italic, code, lists, quotes, links, hr, GFM tables).
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function inline(s){
+  return s
+    .replace(/`([^`]+)`/g,(m,c)=>"<code>"+c+"</code>")
+    .replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>")
+    .replace(/\*([^*]+)\*/g,"<em>$1</em>")
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2">$1</a>');
+}
+function md(src){
+  const lines=esc(src).split("\n"); let out=[],inCode=false,inList=false,inQuote=false,i=0;
+  const closeAll=()=>{if(inList){out.push("</ul>");inList=false}if(inQuote){out.push("</blockquote>");inQuote=false}};
+  while(i<lines.length){
+    const raw=lines[i];
+    if(raw.startsWith("```")){closeAll();out.push(inCode?"</pre>":"<pre>");inCode=!inCode;i++;continue}
+    if(inCode){out.push(raw);i++;continue}
+    if(/^\s*\|.*\|\s*$/.test(raw) && i+1<lines.length && /^\s*\|[\s\-:|]+\|\s*$/.test(lines[i+1])){
+      closeAll();
+      const cells=r=>r.trim().replace(/^\||\|$/g,"").split("|").map(c=>inline(c.trim()));
+      out.push('<div class="overflow"><table><tr>'+cells(raw).map(c=>"<th>"+c+"</th>").join("")+"</tr>");
+      i+=2;
+      while(i<lines.length && /^\s*\|.*\|\s*$/.test(lines[i])){
+        out.push("<tr>"+cells(lines[i]).map(c=>"<td>"+c+"</td>").join("")+"</tr>"); i++;
+      }
+      out.push("</table></div>"); continue;
+    }
+    const l=raw;
+    if(/^\s*$/.test(l)){closeAll();i++;continue}
+    if(/^---+\s*$/.test(l)){closeAll();out.push("<hr>");i++;continue}
+    let m;
+    if(m=l.match(/^(#{1,4})\s+(.*)/)){closeAll();const h=m[1].length;out.push(`<h${h}>`+inline(m[2])+`</h${h}>`);i++;continue}
+    if(m=l.match(/^\s*&gt;\s?(.*)/)){if(!inQuote){closeAll();out.push("<blockquote>");inQuote=true}out.push("<p>"+inline(m[1])+"</p>");i++;continue}
+    if(m=l.match(/^\s*[-*]\s+(.*)/)){if(inQuote){out.push("</blockquote>");inQuote=false}if(!inList){out.push("<ul>");inList=true}out.push("<li>"+inline(m[1])+"</li>");i++;continue}
+    if(m=l.match(/^\s*(\d+)\.\s+(.*)/)){if(inQuote){out.push("</blockquote>");inQuote=false}if(!inList){out.push("<ul>");inList=true}out.push("<li><b>"+m[1]+".</b> "+inline(m[2])+"</li>");i++;continue}
+    closeAll();out.push("<p>"+inline(l)+"</p>");i++;
+  }
+  closeAll(); if(inCode)out.push("</pre>");
+  return out.join("\n");
+}
+document.querySelectorAll('script[type="text/markdown"]').forEach(s=>{
+  const d=document.createElement("div"); d.innerHTML=md(s.textContent.trim());
+  s.parentNode.replaceChild(d,s);
+});
+</script>
+</main></body>
+</html>

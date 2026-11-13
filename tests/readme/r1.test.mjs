@@ -19,6 +19,13 @@ const tmpRoot = (readme) => {
   const d = fs.mkdtempSync(path.join(os.tmpdir(), 'r1-'));
   for (const f of ['tests/claims.json', 'tests/install-commands.json', 'LICENSE']) { fs.mkdirSync(path.dirname(path.join(d, f)), { recursive: true }); fs.copyFileSync(path.join(ROOT, f), path.join(d, f)); }
   fs.writeFileSync(path.join(d, 'README.md'), readme);
+  for (const h of fs.readdirSync(path.join(ROOT, 'hosts'), { withFileTypes: true })) {
+    if (!h.isDirectory() || h.name.startsWith('_')) continue;
+    for (const f of ['adapter.manifest.json', 'README.md']) {
+      const src = path.join(ROOT, 'hosts', h.name, f);
+      if (fs.existsSync(src)) { fs.mkdirSync(path.join(d, 'hosts', h.name), { recursive: true }); fs.copyFileSync(src, path.join(d, 'hosts', h.name, f)); }
+    }
+  }
   return d;
 };
 const tags = sh('git tag').stdout.trim();

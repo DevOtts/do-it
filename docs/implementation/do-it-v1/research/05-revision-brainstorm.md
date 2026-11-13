@@ -1,9 +1,9 @@
 # 05 - do-it-revision-brainstorm digest + acceptance checklist
 
 ## 1. Where I looked / what I found
-- Ledger card FOUND: /Users/macbook/Workspace/Engine/Engine-Core/.agents/history/claudinho/2026-09-08--do-it-revision-brainstorm.md (INDEX.md line 125). session_id 8ad9f20a-c032-44a4-a094-5d55e61b0e05, 2026-09-08, 19:07-19:31 UTC, alias claudinho, status unknown, card backfilled 2026-09-19.
-- RAW TRANSCRIPT NOT FOUND: no 8ad9f20a*.jsonl in ~/.claude, ~/.claude-8fai, -8ftools, -anm, -loudr (find maxdepth 3, plus maxdepth 6 over ~). Searched jsonl that mention the title (6 Engine-Core files) - those are other sessions merely naming it (drain-backlog-190926 etc.). Digest therefore relies on the card only. Vault mirror: ~/Workspace/Vault/OttVault/history_sessions/claudinho/ has the same card.
-- Other "do-it" mentions (last 30d, Engine-Core): docs/implementation/0-done/drain-backlog-190926/DECISIONS.md:89 (lists this session among backfilled cards), EVAL/session-ledger.md, ledger-missing-cards.md, owner-gates.md, .taskstate/progress-v3.md (only "do-it-all", unrelated).
+- Ledger card FOUND: <pilot-repo>/.agents/history/claudinho/2026-09-08--do-it-revision-brainstorm.md (INDEX.md line 125). session_id 8ad9f20a-c032-44a4-a094-5d55e61b0e05, 2026-09-08, 19:07-19:31 UTC, alias claudinho, status unknown, card backfilled 2026-09-19.
+- RAW TRANSCRIPT NOT FOUND: no 8ad9f20a*.jsonl in ~/.claude, ~/.claude-8fai, -8ftools, -anm, -loudr (find maxdepth 3, plus maxdepth 6 over ~). Searched jsonl that mention the title (6 the pilot consumer repo files) - those are other sessions merely naming it (drain-backlog-190926 etc.). Digest therefore relies on the card only. Vault mirror: ~/Workspace/Vault/OttVault/history_sessions/claudinho/ has the same card.
+- Other "do-it" mentions (last 30d, the pilot consumer repo): docs/implementation/0-done/drain-backlog-190926/DECISIONS.md:89 (lists this session among backfilled cards), EVAL/session-ledger.md, ledger-missing-cards.md, owner-gates.md, .taskstate/progress-v3.md (only "do-it-all", unrelated).
 - Only real do-it doc: /Users/macbook/Workspace/Devotts/do-it/docs/implementation/do-it-v1/01-TOKEN-DISCIPLINE.md (DRAFT v0.1, 2026-09-27) + videoplayback.mp4. No HTML files exist in the do-it repo.
 
 ## 2. What the session decided (per card; nothing built, no files touched)
