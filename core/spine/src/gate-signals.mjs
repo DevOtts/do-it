@@ -295,7 +295,7 @@ export function gateSignalsDecide(sig, q) {
   return { admit: true, reason: null, wait_for: null };
 }
 
-// ---- process start time and liveness (CONTRACT §2.5, PRD-4 D3) ----
+// == process start time and liveness (CONTRACT §2.5, PRD-4 D3) ==
 
 // Start times for many pids in one `ps` call (darwin) or /proc reads (linux). Map pid -> 'darwin:{text}' |
 // 'linux:{ticks}'. A pid missing from the map had no readable start time (dead, hidden, or ps failed).

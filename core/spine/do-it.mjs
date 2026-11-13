@@ -2106,7 +2106,11 @@ function gateFpManifestWrite(runDir, manifest) {
 
 const gateQueuePollMs = 2000;
 const gateQueueReprintMs = 60000;
-const gateQueueDefaults = { budget_pct: 60, timeout_s: 14400, swap_used_max_mb: null };
+// Effective defaults come from the settings layer's one helper constant (A8); read at call time because the bundle
+// may order this module before settings.mjs.
+function gateQueueDefaults() {
+  return { ...GATES_QUEUE_DEFAULTS, swap_used_max_mb: null };
+}
 const gateQueueEntryCap = 64 * 1024;
 const gateQueueNameRe = /^(\d{10})-(\d+)\.json$/;
 
@@ -2123,7 +2127,7 @@ function gateQueueErrWriter(ctx) {
   return (line) => process.stderr.write(line + '\n');
 }
 
-// ---- settings (Q1-07, PRD-4 D14): global layer only, never the workspace file ----
+// == settings (Q1-07, PRD-4 D14): global layer only, never the workspace file ==
 
 function gateQueueSettings(ctx) {
   const file = settingsPaths(ctx).global;
@@ -2132,7 +2136,7 @@ function gateQueueSettings(ctx) {
     throw fail('QUEUE_SETTINGS_INVALID', 1, { file, message: 'global settings unreadable: ' + (e.code || 'error') });
   }
   const q = doc && doc.gates && doc.gates.queue;
-  const out = { ...gateQueueDefaults };
+  const out = gateQueueDefaults();
   if (q == null) return out;
   if (typeof q !== 'object' || Array.isArray(q)) throw fail('QUEUE_SETTINGS_INVALID', 1, { file, key: 'gates.queue', message: 'gates.queue must be an object' });
   const bad = (key, rule, v) => fail('QUEUE_SETTINGS_INVALID', 1, { file, key: 'gates.queue.' + key, message: 'gates.queue.' + key + ' must be ' + rule + ' (got ' + JSON.stringify(v) + ')' });
@@ -2155,7 +2159,7 @@ function gateQueueBudgetMb(budgetPct, totalMb) {
   return Math.floor((budgetPct / 100) * totalMb);
 }
 
-// ---- entries ----
+// == entries ==
 
 function gateQueueReadEntry(file, name) {
   let v;
@@ -2228,7 +2232,7 @@ function gateQueueWho(e) {
   return (e.label || '?') + ' (' + path.basename(e.cwd || '?') + ', pid ' + e.pid + ')';
 }
 
-// ---- lock (PRD-4 D2) ----
+// == lock (PRD-4 D2) ==
 
 function gateQueueLockOwnerState(root, err) {
   const lockDir = path.join(root, '.lock');
@@ -2307,7 +2311,7 @@ async function gateQueueWithLock(root, run, fn) {
   try { return { value: fn() }; } finally { gateQueueUnlock(root, me); }
 }
 
-// ---- seq (monotonic; recomputed from the highest seq on disk when unreadable) ----
+// == seq (monotonic; recomputed from the highest seq on disk when unreadable) ==
 
 function gateQueueDiskMaxSeq(root) {
   let max = 0;
@@ -2342,7 +2346,7 @@ function gateQueueNextSeq(root) {
   return next;
 }
 
-// ---- waiting runtime: abortable sleep and signal handling ----
+// == waiting runtime: abortable sleep and signal handling ==
 
 const gateQueueSignalNo = { SIGHUP: 1, SIGINT: 2, SIGTERM: 15 };
 
@@ -2381,7 +2385,7 @@ function gateQueueRuntime(ctx) {
   return run;
 }
 
-// ---- admission (Q1-05, Q1-06; PRD-4 D11–D13) ----
+// == admission (Q1-05, Q1-06; PRD-4 D11–D13) ==
 
 function gateQueueDefaultLabel(ctx, argv) {
   const repo = ctx.git && ctx.git.top ? ctx.git.top : ctx.cwd;
@@ -2719,14 +2723,12 @@ const GATE_FOLD_DEFAULTS = Object.freeze({
 });
 
 // == process start time (CONTRACT §11 A8, build decision Y4) ==
-// COORDINATOR WIRING POINT: the queue lane exports gateProcStart(pid) from gate-signals.mjs. After both lanes merge,
-// replace the body of gateStoreProcStartDefault with `return gateProcStart(pid);` (and add the relative import).
-// Until then every caller may inject opts.procStart. A null start time counts as "dead or differs" (G-1 direction):
+// The default start-time probe is the queue lane's gateProcStart(pid) (gate-signals.mjs); callers may still inject
+// opts.procStart. A null start time counts as "dead or differs" (G-1 direction):
 // a run whose owner cannot be proven alive is never treated as live, and a lock whose owner cannot be proven alive
 // is reclaimable (the compaction nonce check then aborts the loser before it can replace the base).
 function gateStoreProcStartDefault(pid) {
-  void pid;
-  return null;
+  return gateProcStart(pid);
 }
 
 function gateStorePidAlive(pid, pidStart, procStart) {
@@ -3814,7 +3816,7 @@ function gateSignalsDecide(sig, q) {
   return { admit: true, reason: null, wait_for: null };
 }
 
-// ---- process start time and liveness (CONTRACT §2.5, PRD-4 D3) ----
+// == process start time and liveness (CONTRACT §2.5, PRD-4 D3) ==
 
 // Start times for many pids in one `ps` call (darwin) or /proc reads (linux). Map pid -> 'darwin:{text}' |
 // 'linux:{ticks}'. A pid missing from the map had no readable start time (dead, hidden, or ps failed).

@@ -3,6 +3,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fail } from './errors.mjs';
+import { gateProcStart } from './gate-signals.mjs';
 import { BULK_READ_CAP, appendRecord, atomicWrite, atomicWriteJson, readRegularFile, writeFileOnce } from './fs-atomic.mjs';
 import { canonicalJson, sha256Bytes } from './hash.mjs';
 import { loadSchemaFile, validateSchema } from './schema.mjs';
@@ -28,14 +29,12 @@ export const GATE_FOLD_DEFAULTS = Object.freeze({
 });
 
 // == process start time (CONTRACT §11 A8, build decision Y4) ==
-// COORDINATOR WIRING POINT: the queue lane exports gateProcStart(pid) from gate-signals.mjs. After both lanes merge,
-// replace the body of gateStoreProcStartDefault with `return gateProcStart(pid);` (and add the relative import).
-// Until then every caller may inject opts.procStart. A null start time counts as "dead or differs" (G-1 direction):
+// The default start-time probe is the queue lane's gateProcStart(pid) (gate-signals.mjs); callers may still inject
+// opts.procStart. A null start time counts as "dead or differs" (G-1 direction):
 // a run whose owner cannot be proven alive is never treated as live, and a lock whose owner cannot be proven alive
 // is reclaimable (the compaction nonce check then aborts the loser before it can replace the base).
 export function gateStoreProcStartDefault(pid) {
-  void pid;
-  return null;
+  return gateProcStart(pid);
 }
 
 export function gateStorePidAlive(pid, pidStart, procStart) {

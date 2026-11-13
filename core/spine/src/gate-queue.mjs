@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fail } from './errors.mjs';
 import { atomicWriteJson, readJsonRegular } from './fs-atomic.mjs';
-import { settingsPaths } from './settings.mjs';
+import { GATES_QUEUE_DEFAULTS, settingsPaths } from './settings.mjs';
 import {
   gateProcParent, gateProcStart, gateProcStartMany, gateProcState,
   gateSignalsBudgetOnly, gateSignalsDecide, gateSignalsRead, gateSignalsReadSettled,
@@ -24,7 +24,11 @@ import {
 
 export const gateQueuePollMs = 2000;
 export const gateQueueReprintMs = 60000;
-export const gateQueueDefaults = { budget_pct: 60, timeout_s: 14400, swap_used_max_mb: null };
+// Effective defaults come from the settings layer's one helper constant (A8); read at call time because the bundle
+// may order this module before settings.mjs.
+export function gateQueueDefaults() {
+  return { ...GATES_QUEUE_DEFAULTS, swap_used_max_mb: null };
+}
 const gateQueueEntryCap = 64 * 1024;
 const gateQueueNameRe = /^(\d{10})-(\d+)\.json$/;
 
@@ -41,7 +45,7 @@ function gateQueueErrWriter(ctx) {
   return (line) => process.stderr.write(line + '\n');
 }
 
-// ---- settings (Q1-07, PRD-4 D14): global layer only, never the workspace file ----
+// == settings (Q1-07, PRD-4 D14): global layer only, never the workspace file ==
 
 export function gateQueueSettings(ctx) {
   const file = settingsPaths(ctx).global;
@@ -50,7 +54,7 @@ export function gateQueueSettings(ctx) {
     throw fail('QUEUE_SETTINGS_INVALID', 1, { file, message: 'global settings unreadable: ' + (e.code || 'error') });
   }
   const q = doc && doc.gates && doc.gates.queue;
-  const out = { ...gateQueueDefaults };
+  const out = gateQueueDefaults();
   if (q == null) return out;
   if (typeof q !== 'object' || Array.isArray(q)) throw fail('QUEUE_SETTINGS_INVALID', 1, { file, key: 'gates.queue', message: 'gates.queue must be an object' });
   const bad = (key, rule, v) => fail('QUEUE_SETTINGS_INVALID', 1, { file, key: 'gates.queue.' + key, message: 'gates.queue.' + key + ' must be ' + rule + ' (got ' + JSON.stringify(v) + ')' });
@@ -73,7 +77,7 @@ export function gateQueueBudgetMb(budgetPct, totalMb) {
   return Math.floor((budgetPct / 100) * totalMb);
 }
 
-// ---- entries ----
+// == entries ==
 
 function gateQueueReadEntry(file, name) {
   let v;
@@ -146,7 +150,7 @@ function gateQueueWho(e) {
   return (e.label || '?') + ' (' + path.basename(e.cwd || '?') + ', pid ' + e.pid + ')';
 }
 
-// ---- lock (PRD-4 D2) ----
+// == lock (PRD-4 D2) ==
 
 function gateQueueLockOwnerState(root, err) {
   const lockDir = path.join(root, '.lock');
@@ -225,7 +229,7 @@ async function gateQueueWithLock(root, run, fn) {
   try { return { value: fn() }; } finally { gateQueueUnlock(root, me); }
 }
 
-// ---- seq (monotonic; recomputed from the highest seq on disk when unreadable) ----
+// == seq (monotonic; recomputed from the highest seq on disk when unreadable) ==
 
 function gateQueueDiskMaxSeq(root) {
   let max = 0;
@@ -260,7 +264,7 @@ function gateQueueNextSeq(root) {
   return next;
 }
 
-// ---- waiting runtime: abortable sleep and signal handling ----
+// == waiting runtime: abortable sleep and signal handling ==
 
 const gateQueueSignalNo = { SIGHUP: 1, SIGINT: 2, SIGTERM: 15 };
 
@@ -299,7 +303,7 @@ function gateQueueRuntime(ctx) {
   return run;
 }
 
-// ---- admission (Q1-05, Q1-06; PRD-4 D11–D13) ----
+// == admission (Q1-05, Q1-06; PRD-4 D11–D13) ==
 
 function gateQueueDefaultLabel(ctx, argv) {
   const repo = ctx.git && ctx.git.top ? ctx.git.top : ctx.cwd;
