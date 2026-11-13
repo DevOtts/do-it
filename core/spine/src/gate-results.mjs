@@ -27,7 +27,7 @@ export const GATE_FOLD_DEFAULTS = Object.freeze({
   skewMs: 60000,
 });
 
-// ---- process start time (CONTRACT §11 A8, build decision Y4) ----
+// == process start time (CONTRACT §11 A8, build decision Y4) ==
 // COORDINATOR WIRING POINT: the queue lane exports gateProcStart(pid) from gate-signals.mjs. After both lanes merge,
 // replace the body of gateStoreProcStartDefault with `return gateProcStart(pid);` (and add the relative import).
 // Until then every caller may inject opts.procStart. A null start time counts as "dead or differs" (G-1 direction):
@@ -51,7 +51,7 @@ export function gateStorePidAlive(pid, pidStart, procStart) {
   return String(nowStart) === String(pidStart);
 }
 
-// ---- store handle (D1, D14) ----
+// == store handle (D1, D14) ==
 // {backend: 'local', dir} or null when the cwd is not inside a git repository (store unavailable: every file runs).
 export function gateStoreOpen(opts) {
   const o = opts || {};
@@ -70,7 +70,7 @@ export function gateStoreOpen(opts) {
   return { backend: 'local', dir: path.join(real, 'do-it', 'gate-results') };
 }
 
-// ---- rows: CRC and validation (D3, D5) ----
+// == rows: CRC and validation (D3, D5) ==
 export function gateRowCrc(rowWithoutCrc) {
   return sha256Bytes(canonicalJson(rowWithoutCrc)).slice(0, 16);
 }
@@ -146,7 +146,7 @@ export function gateStoreAppend(store, row) {
   return { line, crc: JSON.parse(line).crc };
 }
 
-// ---- scan (D2, D6) ----
+// == scan (D2, D6) ==
 // Parses one stored line. Returns the row or null when the line is corrupt (parse, CRC, schema or structural invariant).
 export function gateRowParse(raw) {
   let obj;
@@ -290,7 +290,7 @@ export function gateStoreScan(store, filter) {
   return { items, corrupt, unattributed, source: all.source };
 }
 
-// ---- liveness of runs (D13 inputs; CONTRACT §11 A4) ----
+// == liveness of runs (D13 inputs; CONTRACT §11 A4) ==
 // Impure: the set of run ids whose run_start owner is alive (pid answers AND start time equals pid_start) and that
 // have no run_end. The fold itself never touches the OS.
 export function gateStoreLiveRuns(items, opts) {
@@ -311,7 +311,7 @@ export function gateStoreLiveRuns(items, opts) {
   return live;
 }
 
-// ---- fold: pure (D13; CONTRACT §8 M1, §11 A3, A5). No fs, no child_process, no clock below this line. ----
+// == fold: pure (D13; CONTRACT §8 M1, §11 A3, A5). No fs, no child_process, no clock below this line. ==
 export const GATE_COMPONENT_ORDER = ['gate', 'runner', 'core', 'installed', 'env', 'platform', 'class', 'tree', 'deps'];
 
 function gateFoldMs(at) {
@@ -540,9 +540,9 @@ export function gateFold(rows, keyNow, now, opts) {
   out.reason = st === 'PASS' ? 'ok' : 'skipped';
   return out;
 }
-// ---- end fold: pure ----
+// == end fold: pure ==
 
-// ---- salt (D7) ----
+// == salt (D7) ==
 export function gateStoreSalt(store, opts) {
   if (!store || !store.dir) throw fail('GATE_STORE_UNAVAILABLE', 1, {});
   const log = (opts && opts.log) || ((m) => process.stderr.write(m + '\n'));
@@ -567,7 +567,7 @@ export function gateStoreSalt(store, opts) {
   return Buffer.from(bytes);
 }
 
-// ---- failure side files (D8) ----
+// == failure side files (D8) ==
 export function gateStoreRedact(text, redactValues) {
   let out = String(text);
   const forms = [];
@@ -594,7 +594,7 @@ export function gateStoreFailureWrite(store, text, redactValues) {
   return 'failures/' + sha + '.txt';
 }
 
-// ---- blob memo file (D9) ----
+// == blob memo file (D9) ==
 export function gateStoreMemoLine(entry) {
   const r = { b: entry.b, s: entry.s, w: entry.w || {} };
   return canonicalJson({ ...r, crc: gateRowCrc(r) });
@@ -633,7 +633,7 @@ export function gateStoreMemoAppend(store, entries) {
   return n;
 }
 
-// ---- live-owner lock (D10) ----
+// == live-owner lock (D10) ==
 function gateStoreLockOwner(lockDir) {
   try {
     const obj = JSON.parse(readRegularFile(path.join(lockDir, 'owner.json'), 65536).toString('utf8'));
@@ -687,7 +687,7 @@ export function gateStoreUnlock(store, lock) {
   return true;
 }
 
-// ---- compaction (D11, D12; CONTRACT §8 M5) ----
+// == compaction (D11, D12; CONTRACT §8 M5) ==
 // Fold-preserving reduction over scan-ordered lines: drops only (1) start/finish duplicates on
 // (type, run_id, file, leg) after the first, (2) start rows whose (run_id, file, leg) has a finish, and (3) run rows
 // (run_start, run_end) of runs that own no kept row and wrote no clean row. Corrupt lines are kept verbatim. Every

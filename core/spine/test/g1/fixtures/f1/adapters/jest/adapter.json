@@ -1,0 +1,1 @@
+{ "runner": "jest", "note": "fixture descriptor for the store-lane gate digest test (T-F1-04); the real one ships with the adapters lane (CONTRACT §11 A2)" }

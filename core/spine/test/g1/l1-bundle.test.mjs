@@ -27,6 +27,9 @@ test('T-L1-10 G-15: bundle builds, store-lane modules import only node: and ./, 
     assert.ok(names.length > 5);
     const bad = names.filter((x) => !/^gate/i.test(x));
     assert.deepEqual(bad, [], n + ' top-level names not starting with gate');
+    // the gate digest hashes bundle sections between '// ---- name ----' markers: a marker-shaped comment inside a
+    // gate module would truncate its own section and leave part of the gate code unkeyed (H8)
+    assert.doesNotMatch(text, /^\/\/ ---- /m, n + ' contains a bundle-marker-shaped comment');
   }
   const bundle = fs.readFileSync(path.join(SPINE_DIR, 'do-it.mjs'), 'utf8');
   assert.ok(bundle.includes('// ---- gate-results.mjs ----'));

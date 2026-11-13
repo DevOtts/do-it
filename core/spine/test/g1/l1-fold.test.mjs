@@ -83,7 +83,7 @@ test('T-L1-05 every M1 edge (18) plus 6 docs/03 rows fold to the listed state, r
   assert.equal(h1.reason, 'pass-invariant');
   // L1-04 acceptance: the fold section performs no fs, child_process, process or clock call
   const src = fs.readFileSync(path.join(SRC_DIR, 'gate-results.mjs'), 'utf8');
-  const region = src.slice(src.indexOf('// ---- fold: pure'), src.indexOf('// ---- end fold: pure ----'));
+  const region = src.slice(src.indexOf('// == fold: pure'), src.indexOf('// == end fold: pure =='));
   assert.ok(region.length > 2000);
   assert.doesNotMatch(region, /\bfs\.|\bcp\.|\bprocess\.|Date\.now|new Date\(\)/);
   console.log('T-L1-05 ' + ok + ' of 24 entries match; fold section has 0 fs/child_process/clock calls');
