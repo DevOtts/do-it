@@ -5,7 +5,7 @@
 // Each spec file is a JSON behaviour record: {result: pass|fail|skip|kill, seq: [...], drop, then: 'kill', retried,
 // writes_flag, reads_flag, edit_self, append_fail_for, unhandled, force_exit, wide, deps}. One-shot switches by env:
 // GATE_FIXTURE_KILL_IN / _KILL_AFTER (SIGKILL self while / after a file), _EXIT, _REPORT=none, _KEYS=garbage,
-// _KEYS_ERROR, _TAMPER_RUNLIST, _COPY_RUNDIR.
+// _KEYS_ERROR, _TAMPER_RUNLIST, _TAMPER_DECISION, _COPY_RUNDIR.
 import cp from 'node:child_process';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
@@ -89,6 +89,12 @@ if (d.status === 0) {
 }
 const keyOf = new Map();
 for (const x of (decision && decision.files) || []) keyOf.set(x.file, x);
+if (env.GATE_FIXTURE_TAMPER_DECISION && decided) {
+  // adversarial: drop a file from the spine's decision.json and from the run list (it must still count, unsatisfied)
+  decision.files = decision.files.filter((x) => x.file !== env.GATE_FIXTURE_TAMPER_DECISION);
+  fs.writeFileSync(path.join(runDir, 'decision.json'), JSON.stringify(decision));
+  list = list.filter((f) => f !== env.GATE_FIXTURE_TAMPER_DECISION);
+}
 if (env.GATE_FIXTURE_TAMPER_RUNLIST && decided) {
   list = list.filter((f) => f !== env.GATE_FIXTURE_TAMPER_RUNLIST);
   fs.writeFileSync(path.join(runDir, 'run-list.json'), JSON.stringify({ files: list }));

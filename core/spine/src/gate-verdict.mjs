@@ -293,9 +293,9 @@ export function gateVerdictCompose(input) {
   const leg = i.leg || 'unit';
   const decMap = new Map();
   for (const d of (i.decision && i.decision.files) || []) decMap.set(d.file, d);
-  let listed;
-  if (i.decision) listed = Array.from(decMap.keys());
-  else listed = Array.from(new Set([...(i.keysFiles || []), ...(i.freshStarts || []), ...i.fresh.keys()]));
+  // the listed files: the decision's, plus every file keys.json or this run's own rows name (a decision.json that lost
+  // a file can never shrink the total; such a file is unsatisfied unless it has a fresh result)
+  const listed = Array.from(new Set([...decMap.keys(), ...(i.keysFiles || []), ...(i.freshStarts || []), ...i.fresh.keys()]));
   listed.sort(gateVerdictCmpStr);
   const bucket = gateVerdictBucket(i.items || []);
   const runs = gateVerdictRuns(i.items || []);

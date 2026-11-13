@@ -84,13 +84,23 @@ export function appendRecord(file, buf) {
   if (st && !st.isFile()) throw codedError('ENOTREG', 'not a regular file (' + fileKind(st) + '): ' + file);
   const c = fs.constants;
   const flags = c.O_RDWR | c.O_APPEND | c.O_CREAT | (c.O_NONBLOCK || 0) | (c.O_NOFOLLOW || 0);
-  const fd = fs.openSync(file, flags, 0o666);
+  let fd;
+  let readable = true;
+  try {
+    fd = fs.openSync(file, flags, 0o666);
+  } catch (e) {
+    // RTG V2 (T-V2-03): a write-only file (mode 0200) still takes appends; its tail cannot be read, so the torn-tail
+    // repair is skipped (a torn fragment then voids at most the next line's parse, which the scan reports as corrupt).
+    if (!e || e.code !== 'EACCES') throw e;
+    fd = fs.openSync(file, c.O_WRONLY | c.O_APPEND | (c.O_NONBLOCK || 0) | (c.O_NOFOLLOW || 0));
+    readable = false;
+  }
   try {
     const fst = fs.fstatSync(fd);
     if (!fst.isFile()) throw codedError('ENOTREG', 'not a regular file: ' + file);
     let out = buf;
     let prefixed = false;
-    if (fst.size > 0) {
+    if (readable && fst.size > 0) {
       const last = Buffer.alloc(1);
       const got = fs.readSync(fd, last, 0, 1, fst.size - 1);
       if (got === 1 && last[0] !== 0x0a) { out = Buffer.concat([Buffer.from('\n'), buf]); prefixed = true; }

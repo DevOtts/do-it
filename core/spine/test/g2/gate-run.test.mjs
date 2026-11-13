@@ -295,6 +295,11 @@ test('T-V1-12 adversarial verify: tampered row, installed drift, tampered run li
   const c1 = run(c, [], { env: { GATE_FIXTURE_TAMPER_RUNLIST: fileName(8) } });
   assert.equal(c1.out.outcome, 'GATE_FAIL');
   assert.match(c1.out.line, /^\[FAIL push: 1 of 30 files FAIL \(src\/file-08\.spec\.js no result\) · /);
+  // (c2) beyond the contract: decision.json loses a file the runner then skips; the total never shrinks
+  const c2 = stubRepo(t);
+  const c2r = run(c2, [], { env: { GATE_FIXTURE_TAMPER_DECISION: fileName(9) } });
+  assert.equal(c2r.out.outcome, 'GATE_FAIL', c2r.out.line);
+  assert.match(c2r.out.line, /^\[FAIL push: 1 of 30 files FAIL \(src\/file-09\.spec\.js no result\) · /);
   // (d) a concurrent FAIL on file-15's current key lands between selection and compose
   const d = stubRepo(t);
   run(d, []);
