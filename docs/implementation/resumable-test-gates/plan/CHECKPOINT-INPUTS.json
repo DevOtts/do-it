@@ -1,0 +1,15 @@
+{
+  "tasks": 81,
+  "epics": 11,
+  "waves": 4,
+  "merge_model": "incremental",
+  "flags": {
+    "cross_cutting": "the do-it spine (store, verdict, queue, stages) and every gated push of a consumer depends on it",
+    "owner_gated": "G4 answers OQ-1..OQ-4; nightly schedule install is an owner action",
+    "new_surface": "new CLI family do-it gate run/queue/decide/train/nightly/push/schedule and a host-level queue",
+    "data": "a per-repo results store whose rows decide what is skipped; a wrong row ships a false green",
+    "money": null,
+    "security": "salted HMAC of env values and a machine salt; failure side files must redact secrets",
+    "prod_facing": "a consumer's merge and deploy gates depend on composed verdicts (in the pilot, CI does not run)"
+  }
+}

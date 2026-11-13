@@ -1,0 +1,4 @@
+{ "schema": "planit-report/1", "kind": "KICKOFF", "title": "resumable-test-gates: KICKOFF",
+  "source": { "path": "KICKOFF.md" }, "output": "KICKOFF.html", "glossary": { "path": "GLOSSARY.md" },
+  "allow_tokens": ["do-it", "gate-results", "claude-code"],
+  "sections": [ { "id": "body", "heading": "KICKOFF", "blocks": [ { "type": "embed", "path": "KICKOFF.md", "label": "KICKOFF.md (full text)" } ] } ] }

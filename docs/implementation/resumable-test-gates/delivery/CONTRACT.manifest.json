@@ -1,0 +1,4 @@
+{ "schema": "planit-report/1", "kind": "CONTRACT", "title": "resumable-test-gates: CONTRACT",
+  "source": { "path": "CONTRACT.md" }, "output": "CONTRACT.html", "glossary": { "path": "GLOSSARY.md" },
+  "allow_tokens": ["do-it", "gate-results", "claude-code"],
+  "sections": [ { "id": "body", "heading": "CONTRACT", "blocks": [ { "type": "embed", "path": "CONTRACT.md", "label": "CONTRACT.md (full text)" } ] } ] }

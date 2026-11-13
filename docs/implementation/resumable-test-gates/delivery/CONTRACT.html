@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="planit-source" content="CONTRACT.md sha256=584304c1a42b03d42d3d5811685ea9a8c53b28cabccb00d88b50e564d5fd4639">
+<meta name="planit-embeds" content="CONTRACT.md sha256=584304c1a42b03d42d3d5811685ea9a8c53b28cabccb00d88b50e564d5fd4639">
+<meta name="planit-brand" content="default sha256=0206fd2d74525ffb33ff4fc010fe2ce6bb978ebe8a5674fc7ec0ed5d20eccb58">
+<meta name="planit-renderer" content="build-report.mjs/4.0.0 template sha256=ebfa958749844845bc46643049a546fdd9d68de69f36452b7babc089e0a9a410">
+<meta name="planit-kind" content="CONTRACT">
+<title>resumable-test-gates: CONTRACT</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&amp;family=Inter:wght@400;500&amp;family=JetBrains+Mono:wght@400&amp;display=swap">
+<style>
+:root{--bg:#FFFFFF;--card:#F6F8FA;--line:#E6EDF3;--ink:#0D1117;--muted:#484F58;--accent:#0D1117;--accentBg:#00E5A0;--ok:#2EA043;--warn:#D29922;--bad:#F85149;--info:#58A6FF;--chip:#F6F8FA;--hold:#FF6B4A;--font-display:Space Grotesk,sans-serif;--font-body:Inter,sans-serif;--font-mono:JetBrains Mono;}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0D1117;--card:#161B22;--line:#21262D;--ink:#C9D1D9;--muted:#8B949E;--accent:#00E5A0;--accentBg:#00E5A0;--ok:#2EA043;--warn:#D29922;--bad:#F85149;--info:#58A6FF;--chip:#21262D;--hold:#FF6B4A;}}
+:root[data-theme="dark"]{--bg:#0D1117;--card:#161B22;--line:#21262D;--ink:#C9D1D9;--muted:#8B949E;--accent:#00E5A0;--accentBg:#00E5A0;--ok:#2EA043;--warn:#D29922;--bad:#F85149;--info:#58A6FF;--chip:#21262D;--hold:#FF6B4A;}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.55 var(--font-body);padding:2.5rem 1rem}
+main{max-width:900px;margin:0 auto;position:relative}
+h1{font-family:var(--font-display);font-size:1.5rem;margin:0 0 .25rem;text-wrap:balance;padding-right:6rem}
+.eyebrow{color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-size:.78rem;margin:0 0 .3rem}
+.sub{color:var(--muted);margin:0 0 2rem}
+h2{font-family:var(--font-display);font-size:1.05rem;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);
+   margin:2.2rem 0 .8rem;border-bottom:1px solid var(--line);padding-bottom:.4rem}
+#theme-toggle{position:absolute;top:0;right:0;background:var(--card);border:1px solid var(--line);
+  color:var(--muted);border-radius:99px;padding:.3rem .8rem;font:inherit;font-size:.8rem;
+  cursor:pointer;display:inline-flex;align-items:center;gap:.4rem}
+#theme-toggle:hover{color:var(--ink)} #theme-toggle:focus-visible{outline:2px solid var(--accentBg);outline-offset:2px}
+.brand-badge{color:var(--muted);font-size:.75rem;margin:0 0 .6rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;
+      padding:1rem 1.1rem;margin-bottom:.75rem}
+.card h3{margin:0 0 .35rem;font-size:1rem;display:flex;gap:.5rem;align-items:baseline;flex-wrap:wrap}
+.id{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;background:color-mix(in srgb,var(--accentBg) 20%,transparent);border-radius:4px;padding:.05rem .4rem}
+.badge{font-size:.72rem;font-weight:700;letter-spacing:.03em;border-radius:99px;
+       padding:.1rem .55rem;text-transform:uppercase}
+.b-ok{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.b-open{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}
+.b-hold{background:color-mix(in srgb,var(--hold) 20%,transparent);color:var(--ink)}
+.b-act{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--ink)}
+.rename{margin-left:auto;font-size:.75rem;color:var(--muted)}
+.rename code{font-size:.95em}
+.card p{margin:.25rem 0}
+.card ul{margin:.3rem 0 .3rem;padding-left:1.25rem} .card li{margin:.18rem 0}
+code{background:var(--chip);border-radius:4px;padding:.05rem .35rem;font-size:.85em;word-break:break-all;font-family:var(--font-mono)}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);
+      border-radius:10px;overflow:hidden;font-size:.9rem}
+th,td{text-align:left;padding:.5rem .8rem;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600} tr:last-child td{border-bottom:none}
+tr.footer td{font-weight:700}
+.overflow{overflow-x:auto}
+.test{margin-top:.6rem;border-top:1px dashed var(--line);padding-top:.55rem;font-size:.88rem}
+.test b{color:var(--ink);text-transform:uppercase;font-size:.75rem;letter-spacing:.04em}
+.test ul{margin:.3rem 0 0;padding-left:1.25rem}
+.warn{color:var(--warn)} .crit{color:var(--bad);font-weight:600}
+details.more{margin-top:.7rem;border-top:1px dashed var(--line);padding-top:.55rem}
+details.more>summary{cursor:pointer;color:var(--ink);font-weight:600;font-size:.88rem;
+  list-style:none;display:inline-flex;align-items:center;gap:.4rem}
+details.more>summary::before{content:"▸";transition:transform .15s}
+details.more[open]>summary::before{transform:rotate(90deg)}
+.srcnote{font-size:.78rem;color:var(--muted);margin:.6rem 0 .3rem}
+.mdout{background:color-mix(in srgb,var(--chip) 55%,transparent);border:1px solid var(--line);
+       border-radius:8px;padding:.9rem 1rem;font-size:.87rem;overflow-x:auto}
+.mdout h1,.mdout h2,.mdout h3{all:revert;font-size:1.02em;margin:.8em 0 .3em;border:none;
+  text-transform:none;letter-spacing:0;color:var(--ink)}
+.mdout h1{font-size:1.12em}
+.mdout pre{background:var(--chip);padding:.6rem .7rem;border-radius:6px;overflow-x:auto}
+.mdout blockquote{border-left:3px solid var(--line);margin:.5em 0;padding:.1em .8em;color:var(--muted)}
+.mdout ul,.mdout ol{padding-left:1.3em} .mdout li{margin:.15em 0}
+.mdout hr{border:none;border-top:1px solid var(--line);margin:.8em 0}
+.mdout a{color:var(--ink);text-decoration:underline}
+.mdout table{font-size:.85em;margin:.5em 0}
+.mdout td,.mdout th{padding:.35rem .6rem}
+details.glossary{background:var(--card);border:1px solid var(--line);border-radius:10px;
+  padding:.7rem 1rem;margin-bottom:1.2rem;font-size:.88rem}
+details.glossary>summary{cursor:pointer;font-weight:700;color:var(--ink)}
+abbr.gl{text-decoration:underline dotted;cursor:help}
+.gl-x{color:var(--muted);font-size:.82em}
+.decision-card .q{margin:.3rem 0}
+.decision-card .options{margin:.3rem 0;padding-left:1.25rem}
+.decision-card .recommendation{margin:.4rem 0}
+.decision-card .unblocks{margin:.3rem 0;font-size:.85rem;color:var(--muted)}
+.decision-card .ruling{margin:.4rem 0;font-weight:600}
+.mock-win{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:.75rem}
+.mock-bar{background:var(--chip);padding:.4rem .7rem;display:flex;align-items:center;gap:.6rem;font-size:.8rem}
+.mock-dots{color:var(--muted)} .mock-label{color:var(--muted);flex:1}
+.mock-chip{border-radius:99px;padding:.1rem .5rem;font-size:.72rem;font-weight:600}
+.mock-bad{background:color-mix(in srgb,var(--bad) 18%,transparent);color:var(--bad)}
+.mock-ok{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.mock-body{padding:1rem;background:var(--bg)}
+.measure{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.9rem 1.1rem;margin-bottom:.75rem}
+.measure .mvalue{font-family:var(--font-display);font-weight:700;font-size:1.4rem}
+.measure .munit{color:var(--muted);margin-left:.3rem}
+.measure .msrc{color:var(--muted);font-size:.8rem;margin:.3rem 0 0}
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:.75rem}
+.state-col{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.8rem}
+.state-col h4{margin:0 0 .3rem;text-transform:uppercase;font-size:.75rem;letter-spacing:.04em}
+.triage-card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.9rem 1.1rem;margin-bottom:.75rem}
+.triage-card table{border:none}
+.verdict-box{margin-top:.5rem;padding:.5rem .8rem;background:var(--chip);border-radius:8px}
+.lockbox{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accentBg);border-radius:10px;padding:.9rem 1.1rem;margin-bottom:.75rem}
+.lb-head{color:var(--muted);font-size:.85rem;margin:0 0 .4rem}
+.tally-row{display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:.75rem}
+.tally-tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.6rem 1rem;text-align:center}
+.tally-tile .tval{display:block;font-family:var(--font-display);font-weight:700;font-size:1.4rem}
+.tally-tile .tlabel{color:var(--muted);font-size:.78rem}
+pre.copy{background:var(--chip);border-radius:8px;padding:.7rem .9rem;font-family:var(--font-mono);font-size:.85rem;overflow-x:auto}
+.copy-btn{background:var(--card);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:.25rem .7rem;font-size:.78rem;cursor:pointer;margin:-.5rem 0 .75rem}
+pre.mermaid{background:var(--chip);border-radius:8px;padding:.8rem 1rem;font-family:var(--font-mono);font-size:.82rem;overflow-x:auto;white-space:pre-wrap}
+.footer{color:var(--muted);font-size:.75rem;margin-top:2.5rem;border-top:1px solid var(--line);padding-top:.8rem}
+@media (prefers-reduced-motion: reduce){ details.more>summary::before{transition:none} }
+</style>
+</head>
+<body><main>
+<button id="theme-toggle" type="button" aria-label="Toggle light/dark theme">◐ <span id="theme-label">auto</span></button>
+<p class="brand-badge">brand: Her0 default</p>
+<p class="eyebrow">CONTRACT</p>
+<h1>resumable-test-gates: CONTRACT</h1>
+<p class="sub"></p>
+<details class="glossary"><summary>Glossary</summary><div class="overflow"><table><tr><th>ID</th><th>Means</th><th>Where defined</th></tr><tr><td>G-n</td><td>governance rule n of this package (G-1 to G-16)</td><td>CONTRACT.md §9</td></tr>
+<tr><td>T-*-NN</td><td>binding test case NN of epic EID, e.g. T-L1-04</td><td>epics/*.md Test Contracts</td></tr>
+<tr><td>T-NN</td><td>case NN of the README test sketch (README §8, T-01 to T-15), carried into the epics</td><td>README.md §8</td></tr>
+<tr><td>T0 · T1 · T2 · T3</td><td>gate tiers of ruling D1 (edit, push, train complete, nightly); inside do-it they are printed as scopes (R2) and T1–T3 also mean model tiers in RUN-POLICY</td><td>DECISIONS.md D1, R2</td></tr>
+<tr><td>Wn</td><td>delivery wave n (W1 to W4)</td><td>docs/06 §1, 00-program-plan.md</td></tr>
+<tr><td>Rn</td><td>plan-it default n (R1 to R24), contradictable at G4</td><td>DECISIONS.md</td></tr>
+<tr><td>Dn</td><td>owner ruling n (D1 to D5); inside a PRD, Dn are PRD-local design decisions</td><td>DECISIONS.md, prds/*.md</td></tr>
+<tr><td>OQ-n</td><td>owner question n (OQ-1 to OQ-4)</td><td>DECISIONS.md, PLAN-REVIEW.md</td></tr>
+<tr><td>Pn</td><td>proposal piece n (P1 store, P2 adapters, P3 fingerprint, P4 CLI and verdict, P5 stages, P6 queue, P7 consumer adoption, moved out)</td><td>README.md §7</td></tr>
+<tr><td>L1</td><td>epic: gate results store</td><td>epics/epics-1-store-fingerprint.md</td></tr>
+<tr><td>F1</td><td>epic: fingerprint and invalidation</td><td>epics/epics-1-store-fingerprint.md</td></tr>
+<tr><td>V1 · V2</td><td>epics: gate run and composed verdict; clean runs, flaky and unstable</td><td>epics/epics-2-gate-run-verdict.md</td></tr>
+<tr><td>A1 · A2 · A3</td><td>epics: jest adapter, pytest plugin, vitest reporter (also CONTRACT §11 amendment ids A1 to A11)</td><td>epics/epics-3-runner-adapters.md, CONTRACT.md §11</td></tr>
+<tr><td>A-n · AM-n · AMD-n</td><td>squad-local proposed amendment n (SQ-D, SQ-A2/SQ-B, SQ-A1), adjudicated into CONTRACT §11</td><td>prds/*.md §amendments</td></tr>
+<tr><td>An</td><td>CONTRACT v1.1 amendment n (A1 to A11)</td><td>CONTRACT.md §11</td></tr>
+<tr><td>Q1 · Q2</td><td>epics: queue admission; child cleanup and entry point</td><td>epics/epics-4-gate-queue.md</td></tr>
+<tr><td>S1 · S2</td><td>epics: gates settings block; train and nightly stages</td><td>epics/epics-5-settings-stages.md</td></tr>
+<tr><td>E1 · E2</td><td>moved out. Consumer adoption moved to the pilot consumer's own program (do-it 1.1 R3; location in `research/PILOT-PATHS.md`).</td><td>n/a</td></tr>
+<tr><td>SQ-A1 · SQ-A2 · SQ-B · SQ-C · SQ-D</td><td>planning squads (one per lane)</td><td>00-program-plan.md, SESSIONS.md</td></tr>
+<tr><td>Mn</td><td>core-logic model n (M1 fold, M2 gate run, M3 queue ticket, M4 train gate, M5 compaction)</td><td>CONTRACT.md §8</td></tr>
+<tr><td>Cn</td><td>contradiction n between README and findings (C1 to C14)</td><td>docs/01 §8</td></tr>
+<tr><td>Fn</td><td>finding n of research/03-runners-and-fingerprint.md (F1 to F31)</td><td>research/03 §2</td></tr>
+<tr><td>UTF-8</td><td>text encoding of every manifest and row</td><td>CONTRACT.md §2.2</td></tr>
+<tr><td>Hn</td><td>high-severity fingerprint gap n (H1 to H8)</td><td>docs/01 §6</td></tr>
+<tr><td>CP-NN</td><td>review-it checkpoint NN</td><td>plan/READINESS.json</td></tr>
+<tr><td>G0 · G1 · G2 · G3 · G4</td><td>plan-it human gates (anamnesis, scope, decisions, delivery, plan review)</td><td>plan-it machine</td></tr>
+<tr><td>rtg-key/1 · rtg-manifest/1</td><td>key manifest format; adapter manifest format</td><td>CONTRACT.md §2.2, §11 A1</td></tr>
+<tr><td>do-it-gate-result/1</td><td>row schema of the gate results store</td><td>CONTRACT.md §2.1</td></tr>
+<tr><td>it-result/1</td><td>do-it's per-stage result file</td><td>do-it core/schemas</td></tr>
+<tr><td>SHA-256</td><td>the only hash used in keys and CRCs</td><td>CONTRACT.md §2.2</td></tr>
+<tr><td>HMAC-SHA256</td><td>keyed hash used for env values with the machine salt</td><td>CONTRACT.md §2.2</td></tr>
+<tr><td>r-20261106-130657-7ff2</td><td>the do-it run that commissioned this plan</td><td>.do-it/runs</td></tr>
+<tr><td>[REAL]</td><td>a test case that needs a live target; never VERIFIED on a mock</td><td>CONTRACT.md §7</td></tr></table></div></details>
+<h2>CONTRACT</h2>
+<details class="more" open><summary>CONTRACT.md (full text)</summary><div class="mdout"><script type="text/markdown">
+# CONTRACT: resumable-test-gates
+
+**Version:** v1.1 · 2026-11-06 · run `resumable-test-gates` (do-it run r-20261106-130657-7ff2) · final, ratified by Fernando Ott at <abbr class="gl" title="plan-it human gates (anamnesis, scope, decisions, delivery, plan review)">G4</abbr> on 2026-11-06
+Legend: G-n governance rule · T-<EID>-NN test case · Wn wave · Rn default · Dn ruling — see GLOSSARY.md
+
+**Pinning:** grounded on DevOtts/do-it `origin/main` d38cedbee0e3e63e8c03b1e51f7ac2bbec4bfb71 (do-it 1.0.5). The pilot
+consumer's shas are in `research/` (evidence only). Release: **do-it 1.2.0**, built on top of 1.1.0 (the peer plan
+`docs/implementation/do-it-1.1/`, TRUST + harness-status-tracking); the build branches from `main` after 1.1.0 merges.
+
+This is the law for every squad and for the build. Explanation lives in `docs/02` and `docs/03`. Rulings <abbr class="gl" title="owner ruling n (D1 to D5); inside a PRD, Dn are PRD-local design decisions">D1</abbr> to <abbr class="gl" title="owner ruling n (D1 to D5); inside a PRD, Dn are PRD-local design decisions">D5</abbr> and
+defaults <abbr class="gl" title="plan-it default n (R1 to R24), contradictable at G4">R1</abbr> to <abbr class="gl" title="plan-it default n (R1 to R24), contradictable at G4">R24</abbr> are in `DECISIONS.md`. Cross-cutting findings fold back as dated amendments (v1.0 to v1.1).
+
+## 1. Vocabulary
+
+- **Gate results store** (the README's "ledger"; <abbr>R1</abbr>): the append-only per-repository file set under
+  `{git-common-dir}/do-it/gate-results/`. Never called "ledger" in code, schema or CLI.
+- **Row**: one JSON line of `results.jsonl`. **Fold**: the per-file state computed from rows (model <abbr class="gl" title="core-logic model n (M1 fold, M2 gate run, M3 queue ticket, M4 train gate, M5 compaction)">M1</abbr>).
+- **Key**: `sha256` of the `rtg-key/1` manifest of one test file. **Component**: one manifest line group (gate, runner,
+  core, installed, env, platform, class, tree, dep).
+- **Scope** (<abbr class="gl" title="plan-it default n (R1 to R24), contradictable at G4">R2</abbr>): `edit` (<abbr>D1</abbr> <abbr class="gl" title="gate tiers of ruling D1 (edit, push, train complete, nightly); inside do-it they are printed as scopes (R2) and T1–T3 also mean model tiers in RUN-POLICY">T0</abbr>), `push` (<abbr class="gl" title="gate tiers of ruling D1 (edit, push, train complete, nightly); inside do-it they are printed as scopes (R2) and T1–T3 also mean model tiers in RUN-POLICY">T1</abbr>), `train` (<abbr class="gl" title="gate tiers of ruling D1 (edit, push, train complete, nightly); inside do-it they are printed as scopes (R2) and T1–T3 also mean model tiers in RUN-POLICY">T2</abbr>), `nightly` (<abbr class="gl" title="gate tiers of ruling D1 (edit, push, train complete, nightly); inside do-it they are printed as scopes (R2) and T1–T3 also mean model tiers in RUN-POLICY">T3</abbr>). Inside do-it, <abbr>T1</abbr>/<abbr>T2</abbr>/<abbr>T3</abbr> mean model tiers only.
+- **Composed verdict**: a verdict where at least one file's PASS was reused from an earlier run. **Fresh verdict**: none
+  reused. **Clean run**: a run that reads no rows (`--clean`, always for `nightly`).
+- **NEVER set**: files matching `gates.reuse.always_run` or `gates.reuse.never_reuse`; always run fresh.
+- **Queue**: the per-machine admission primitive `do-it gate queue`. **Holder**: an admitted gate. **Ticket**: a waiter.
+- **Train**: the set of planned slices of one do-it run. **Train complete**: <abbr class="gl" title="plan-it default n (R1 to R24), contradictable at G4">R12</abbr>.
+
+## 2. Schemas
+
+**2.1 Row** `do-it-gate-result/1` (`core/schemas/gate-result.1.schema.json`, embedded by `build.mjs`). Fields:
+`schema` (const), `type` (enum `start|finish|run_start|run_end|clean`), `run_id` (pattern `^g-[0-9]{8}T[0-9]{6}Z-[0-9a-f]{4}<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="planit-source" content="CONTRACT.md sha256=584304c1a42b03d42d3d5811685ea9a8c53b28cabccb00d88b50e564d5fd4639">
+<meta name="planit-embeds" content="CONTRACT.md sha256=584304c1a42b03d42d3d5811685ea9a8c53b28cabccb00d88b50e564d5fd4639">
+<meta name="planit-brand" content="default sha256=0206fd2d74525ffb33ff4fc010fe2ce6bb978ebe8a5674fc7ec0ed5d20eccb58">
+<meta name="planit-renderer" content="build-report.mjs/4.0.0 template sha256=ebfa958749844845bc46643049a546fdd9d68de69f36452b7babc089e0a9a410">
+<meta name="planit-kind" content="CONTRACT">
+<title>resumable-test-gates: CONTRACT</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&amp;family=Inter:wght@400;500&amp;family=JetBrains+Mono:wght@400&amp;display=swap">
+<style>
+:root{--bg:#FFFFFF;--card:#F6F8FA;--line:#E6EDF3;--ink:#0D1117;--muted:#484F58;--accent:#0D1117;--accentBg:#00E5A0;--ok:#2EA043;--warn:#D29922;--bad:#F85149;--info:#58A6FF;--chip:#F6F8FA;--hold:#FF6B4A;--font-display:Space Grotesk,sans-serif;--font-body:Inter,sans-serif;--font-mono:JetBrains Mono;}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0D1117;--card:#161B22;--line:#21262D;--ink:#C9D1D9;--muted:#8B949E;--accent:#00E5A0;--accentBg:#00E5A0;--ok:#2EA043;--warn:#D29922;--bad:#F85149;--info:#58A6FF;--chip:#21262D;--hold:#FF6B4A;}}
+:root[data-theme="dark"]{--bg:#0D1117;--card:#161B22;--line:#21262D;--ink:#C9D1D9;--muted:#8B949E;--accent:#00E5A0;--accentBg:#00E5A0;--ok:#2EA043;--warn:#D29922;--bad:#F85149;--info:#58A6FF;--chip:#21262D;--hold:#FF6B4A;}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.55 var(--font-body);padding:2.5rem 1rem}
+main{max-width:900px;margin:0 auto;position:relative}
+h1{font-family:var(--font-display);font-size:1.5rem;margin:0 0 .25rem;text-wrap:balance;padding-right:6rem}
+.eyebrow{color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-size:.78rem;margin:0 0 .3rem}
+.sub{color:var(--muted);margin:0 0 2rem}
+h2{font-family:var(--font-display);font-size:1.05rem;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);
+   margin:2.2rem 0 .8rem;border-bottom:1px solid var(--line);padding-bottom:.4rem}
+#theme-toggle{position:absolute;top:0;right:0;background:var(--card);border:1px solid var(--line);
+  color:var(--muted);border-radius:99px;padding:.3rem .8rem;font:inherit;font-size:.8rem;
+  cursor:pointer;display:inline-flex;align-items:center;gap:.4rem}
+#theme-toggle:hover{color:var(--ink)} #theme-toggle:focus-visible{outline:2px solid var(--accentBg);outline-offset:2px}
+.brand-badge{color:var(--muted);font-size:.75rem;margin:0 0 .6rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;
+      padding:1rem 1.1rem;margin-bottom:.75rem}
+.card h3{margin:0 0 .35rem;font-size:1rem;display:flex;gap:.5rem;align-items:baseline;flex-wrap:wrap}
+.id{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;background:color-mix(in srgb,var(--accentBg) 20%,transparent);border-radius:4px;padding:.05rem .4rem}
+.badge{font-size:.72rem;font-weight:700;letter-spacing:.03em;border-radius:99px;
+       padding:.1rem .55rem;text-transform:uppercase}
+.b-ok{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.b-open{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}
+.b-hold{background:color-mix(in srgb,var(--hold) 20%,transparent);color:var(--ink)}
+.b-act{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--ink)}
+.rename{margin-left:auto;font-size:.75rem;color:var(--muted)}
+.rename code{font-size:.95em}
+.card p{margin:.25rem 0}
+.card ul{margin:.3rem 0 .3rem;padding-left:1.25rem} .card li{margin:.18rem 0}
+code{background:var(--chip);border-radius:4px;padding:.05rem .35rem;font-size:.85em;word-break:break-all;font-family:var(--font-mono)}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);
+      border-radius:10px;overflow:hidden;font-size:.9rem}
+th,td{text-align:left;padding:.5rem .8rem;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600} tr:last-child td{border-bottom:none}
+tr.footer td{font-weight:700}
+.overflow{overflow-x:auto}
+.test{margin-top:.6rem;border-top:1px dashed var(--line);padding-top:.55rem;font-size:.88rem}
+.test b{color:var(--ink);text-transform:uppercase;font-size:.75rem;letter-spacing:.04em}
+.test ul{margin:.3rem 0 0;padding-left:1.25rem}
+.warn{color:var(--warn)} .crit{color:var(--bad);font-weight:600}
+details.more{margin-top:.7rem;border-top:1px dashed var(--line);padding-top:.55rem}
+details.more>summary{cursor:pointer;color:var(--ink);font-weight:600;font-size:.88rem;
+  list-style:none;display:inline-flex;align-items:center;gap:.4rem}
+details.more>summary::before{content:"▸";transition:transform .15s}
+details.more[open]>summary::before{transform:rotate(90deg)}
+.srcnote{font-size:.78rem;color:var(--muted);margin:.6rem 0 .3rem}
+.mdout{background:color-mix(in srgb,var(--chip) 55%,transparent);border:1px solid var(--line);
+       border-radius:8px;padding:.9rem 1rem;font-size:.87rem;overflow-x:auto}
+.mdout h1,.mdout h2,.mdout h3{all:revert;font-size:1.02em;margin:.8em 0 .3em;border:none;
+  text-transform:none;letter-spacing:0;color:var(--ink)}
+.mdout h1{font-size:1.12em}
+.mdout pre{background:var(--chip);padding:.6rem .7rem;border-radius:6px;overflow-x:auto}
+.mdout blockquote{border-left:3px solid var(--line);margin:.5em 0;padding:.1em .8em;color:var(--muted)}
+.mdout ul,.mdout ol{padding-left:1.3em} .mdout li{margin:.15em 0}
+.mdout hr{border:none;border-top:1px solid var(--line);margin:.8em 0}
+.mdout a{color:var(--ink);text-decoration:underline}
+.mdout table{font-size:.85em;margin:.5em 0}
+.mdout td,.mdout th{padding:.35rem .6rem}
+details.glossary{background:var(--card);border:1px solid var(--line);border-radius:10px;
+  padding:.7rem 1rem;margin-bottom:1.2rem;font-size:.88rem}
+details.glossary>summary{cursor:pointer;font-weight:700;color:var(--ink)}
+abbr.gl{text-decoration:underline dotted;cursor:help}
+.gl-x{color:var(--muted);font-size:.82em}
+.decision-card .q{margin:.3rem 0}
+.decision-card .options{margin:.3rem 0;padding-left:1.25rem}
+.decision-card .recommendation{margin:.4rem 0}
+.decision-card .unblocks{margin:.3rem 0;font-size:.85rem;color:var(--muted)}
+.decision-card .ruling{margin:.4rem 0;font-weight:600}
+.mock-win{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:.75rem}
+.mock-bar{background:var(--chip);padding:.4rem .7rem;display:flex;align-items:center;gap:.6rem;font-size:.8rem}
+.mock-dots{color:var(--muted)} .mock-label{color:var(--muted);flex:1}
+.mock-chip{border-radius:99px;padding:.1rem .5rem;font-size:.72rem;font-weight:600}
+.mock-bad{background:color-mix(in srgb,var(--bad) 18%,transparent);color:var(--bad)}
+.mock-ok{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.mock-body{padding:1rem;background:var(--bg)}
+.measure{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.9rem 1.1rem;margin-bottom:.75rem}
+.measure .mvalue{font-family:var(--font-display);font-weight:700;font-size:1.4rem}
+.measure .munit{color:var(--muted);margin-left:.3rem}
+.measure .msrc{color:var(--muted);font-size:.8rem;margin:.3rem 0 0}
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:.75rem}
+.state-col{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.8rem}
+.state-col h4{margin:0 0 .3rem;text-transform:uppercase;font-size:.75rem;letter-spacing:.04em}
+.triage-card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.9rem 1.1rem;margin-bottom:.75rem}
+.triage-card table{border:none}
+.verdict-box{margin-top:.5rem;padding:.5rem .8rem;background:var(--chip);border-radius:8px}
+.lockbox{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accentBg);border-radius:10px;padding:.9rem 1.1rem;margin-bottom:.75rem}
+.lb-head{color:var(--muted);font-size:.85rem;margin:0 0 .4rem}
+.tally-row{display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:.75rem}
+.tally-tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.6rem 1rem;text-align:center}
+.tally-tile .tval{display:block;font-family:var(--font-display);font-weight:700;font-size:1.4rem}
+.tally-tile .tlabel{color:var(--muted);font-size:.78rem}
+pre.copy{background:var(--chip);border-radius:8px;padding:.7rem .9rem;font-family:var(--font-mono);font-size:.85rem;overflow-x:auto}
+.copy-btn{background:var(--card);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:.25rem .7rem;font-size:.78rem;cursor:pointer;margin:-.5rem 0 .75rem}
+pre.mermaid{background:var(--chip);border-radius:8px;padding:.8rem 1rem;font-family:var(--font-mono);font-size:.82rem;overflow-x:auto;white-space:pre-wrap}
+.footer{color:var(--muted);font-size:.75rem;margin-top:2.5rem;border-top:1px solid var(--line);padding-top:.8rem}
+@media (prefers-reduced-motion: reduce){ details.more>summary::before{transition:none} }
+</style>
+</head>
+<body><main>
+<button id="theme-toggle" type="button" aria-label="Toggle light/dark theme">◐ <span id="theme-label">auto</span></button>
+<p class="brand-badge">brand: Her0 default</p>
+<p class="eyebrow">CONTRACT</p>
+<h1>resumable-test-gates: CONTRACT</h1>
+<p class="sub"></p>
+<details class="glossary"><summary>Glossary</summary><div class="overflow"><table><tr><th>ID</th><th>Means</th><th>Where defined</th></tr><tr><td>G-n</td><td>governance rule n of this package (G-1 to G-16)</td><td>CONTRACT.md §9</td></tr>
+<tr><td>T-*-NN</td><td>binding test case NN of epic EID, e.g. T-L1-04</td><td>epics/*.md Test Contracts</td></tr>
+<tr><td>T-NN</td><td>case NN of the README test sketch (README §8, T-01 to T-15), carried into the epics</td><td>README.md §8</td></tr>
+<tr><td>T0 · T1 · T2 · T3</td><td>gate tiers of ruling D1 (edit, push, train complete, nightly); inside do-it they are printed as scopes (R2) and T1–T3 also mean model tiers in RUN-POLICY</td><td>DECISIONS.md D1, R2</td></tr>
+<tr><td>Wn</td><td>delivery wave n (W1 to W4)</td><td>docs/06 §1, 00-program-plan.md</td></tr>
+<tr><td>Rn</td><td>plan-it default n (R1 to R24), contradictable at G4</td><td>DECISIONS.md</td></tr>
+<tr><td>Dn</td><td>owner ruling n (D1 to D5); inside a PRD, Dn are PRD-local design decisions</td><td>DECISIONS.md, prds/*.md</td></tr>
+<tr><td>OQ-n</td><td>owner question n (OQ-1 to OQ-4)</td><td>DECISIONS.md, PLAN-REVIEW.md</td></tr>
+<tr><td>Pn</td><td>proposal piece n (P1 store, P2 adapters, P3 fingerprint, P4 CLI and verdict, P5 stages, P6 queue, P7 consumer adoption, moved out)</td><td>README.md §7</td></tr>
+<tr><td>L1</td><td>epic: gate results store</td><td>epics/epics-1-store-fingerprint.md</td></tr>
+<tr><td>F1</td><td>epic: fingerprint and invalidation</td><td>epics/epics-1-store-fingerprint.md</td></tr>
+<tr><td>V1 · V2</td><td>epics: gate run and composed verdict; clean runs, flaky and unstable</td><td>epics/epics-2-gate-run-verdict.md</td></tr>
+<tr><td>A1 · A2 · A3</td><td>epics: jest adapter, pytest plugin, vitest reporter (also CONTRACT §11 amendment ids A1 to A11)</td><td>epics/epics-3-runner-adapters.md, CONTRACT.md §11</td></tr>
+<tr><td>A-n · AM-n · AMD-n</td><td>squad-local proposed amendment n (SQ-D, SQ-A2/SQ-B, SQ-A1), adjudicated into CONTRACT §11</td><td>prds/*.md §amendments</td></tr>
+<tr><td>An</td><td>CONTRACT v1.1 amendment n (A1 to A11)</td><td>CONTRACT.md §11</td></tr>
+<tr><td>Q1 · Q2</td><td>epics: queue admission; child cleanup and entry point</td><td>epics/epics-4-gate-queue.md</td></tr>
+<tr><td>S1 · S2</td><td>epics: gates settings block; train and nightly stages</td><td>epics/epics-5-settings-stages.md</td></tr>
+<tr><td>E1 · E2</td><td>moved out. Consumer adoption moved to the pilot consumer's own program (do-it 1.1 R3; location in `research/PILOT-PATHS.md`).</td><td>n/a</td></tr>
+<tr><td>SQ-A1 · SQ-A2 · SQ-B · SQ-C · SQ-D</td><td>planning squads (one per lane)</td><td>00-program-plan.md, SESSIONS.md</td></tr>
+<tr><td>Mn</td><td>core-logic model n (M1 fold, M2 gate run, M3 queue ticket, M4 train gate, M5 compaction)</td><td>CONTRACT.md §8</td></tr>
+<tr><td>Cn</td><td>contradiction n between README and findings (C1 to C14)</td><td>docs/01 §8</td></tr>
+<tr><td>Fn</td><td>finding n of research/03-runners-and-fingerprint.md (F1 to F31)</td><td>research/03 §2</td></tr>
+<tr><td>UTF-8</td><td>text encoding of every manifest and row</td><td>CONTRACT.md §2.2</td></tr>
+<tr><td>Hn</td><td>high-severity fingerprint gap n (H1 to H8)</td><td>docs/01 §6</td></tr>
+<tr><td>CP-NN</td><td>review-it checkpoint NN</td><td>plan/READINESS.json</td></tr>
+<tr><td>G0 · G1 · G2 · G3 · G4</td><td>plan-it human gates (anamnesis, scope, decisions, delivery, plan review)</td><td>plan-it machine</td></tr>
+<tr><td>rtg-key/1 · rtg-manifest/1</td><td>key manifest format; adapter manifest format</td><td>CONTRACT.md §2.2, §11 A1</td></tr>
+<tr><td>do-it-gate-result/1</td><td>row schema of the gate results store</td><td>CONTRACT.md §2.1</td></tr>
+<tr><td>it-result/1</td><td>do-it's per-stage result file</td><td>do-it core/schemas</td></tr>
+<tr><td>SHA-256</td><td>the only hash used in keys and CRCs</td><td>CONTRACT.md §2.2</td></tr>
+<tr><td>HMAC-SHA256</td><td>keyed hash used for env values with the machine salt</td><td>CONTRACT.md §2.2</td></tr>
+<tr><td>r-20261106-130657-7ff2</td><td>the do-it run that commissioned this plan</td><td>.do-it/runs</td></tr>
+<tr><td>[REAL]</td><td>a test case that needs a live target; never VERIFIED on a mock</td><td>CONTRACT.md §7</td></tr></table></div></details>
+),
+`at` (ISO UTC), `file` (repo-relative POSIX, absent on run rows), `leg` (string, default `unit`), `scope` (enum §4),
+`key` (64 hex, finish/start), `components` (object: gate, runner, core, installed, env, platform, deps as 64 hex;
+`class` enum `NARROW|WIDE`; `tree` 64 hex when WIDE), `result` (enum `PASS|FAIL|SKIPPED|DESELECTED`, finish only),
+`retried` (bool), `counts` {passed, failed, skipped, pending} (pending = jest `todo` or pytest xfail) (integers), `exec_error` (bool), `duration_ms` (integer),
+`failure_ref` (string or null, `failures/{sha256}.txt`), `clean` (bool), `tree_dirty` (bool), `tainted` and `reason`
+and `verdict` (run_end only), `crc` (16 hex). `additionalProperties: false`. Serialized size ≤ 4096 bytes.
+`crc` = first 16 hex of sha256 over the spine `canonicalJson` of the row without `crc`; the Python plugin reproduces it
+with `json.dumps(sort_keys=True, separators=(",", ":"), ensure_ascii=False)`.
+
+**2.2 Key manifest** `rtg-key/1`: <abbr class="gl" title="text encoding of every manifest and row">UTF-8</abbr>, LF, tab-separated, header line `rtg-key/1` then lines sorted by <abbr>UTF-8</abbr> byte
+order: `gate`, `runner {name}@{version} {argv-sha}`, `core`, `installed`, `env {NAME} {hmac|-|*}` per declared name and
+env file, `platform`, `class`, `tree` (WIDE only), `dep {path} {sha256|-}` per closure member. File hash = sha256 of raw
+bytes; symlinks hashed through the target with the repo-relative realpath recorded; missing = `-`. HMAC key = 32 bytes in
+`gate-results/.salt`, mode 0600. The `gate` component = sha256 of the adapter, fingerprint and store source files, never
+a hand-bumped integer.
+
+**2.3 CORE set**: runner config files; every module the config references (setupFiles, setupFilesAfterEnv, globalSetup,
+globalTeardown, reporters, transformer, testEnvironment) with its closure; `tsconfig*.json`; every `conftest.py`;
+`**/__mocks__/**`; vitest `forceRerunTriggers`; `gates.reuse.core` globs; the gate code. Any CORE change changes every key.
+
+**2.4 Settings** `gates` block (in `settings.schema.json` and `SETTINGS_DEFAULTS`, every leaf null or empty):
+`on_push`, `on_train_complete`, `nightly` (string or null); `peak_mb` (integer ≥ 1 or null); `reuse.core`,
+`reuse.always_run`, `reuse.never_reuse`, `reuse.env`, `reuse.env_files` (arrays of strings); `queue.budget_pct`
+(1–90, default 60), `queue.timeout_s` (≥ 1, default 14400), `queue.swap_used_max_mb` (integer or null). `queue.*` is read
+from the global layer only.
+
+**2.5 Queue files** under `{HOME}/.do-it/queue/`: `.lock/` (mkdir lock, `owner.json`), `seq` (monotonic counter),
+`tickets/{seq}-{pid}.json` and `holders/{seq}-{pid}.json` with `{seq, pid, pid_start, pgid, cwd, repo, label, peak_mb,
+enqueued_at, admitted_at}`. Liveness = `process.kill(pid, 0)` succeeds AND the process start time equals `pid_start`.
+
+**2.6 Train verdict** `runs/{run_id}/gate-train.json`: `{tree_sha, branch, verdict_line, source_runs[], at}`; finish-line
+row id `gate-train:{run_id}`.
+
+## 3. Interface contract
+
+| Command | Run-bound | Does | Exit |
+|---|---|---|---|
+| `do-it gate run --scope S --runner R [--resume] [--clean] [--leg L] [--json] -- argv` | no | select, skip reusable files, run, write rows, print one verdict line (§4.3) | 0 pass, 1 fail, 3 blocked |
+| `do-it gate results [--why FILE] [--json]` | no | print folds; `--why` names the changed component | 0 |
+| `do-it gate queue [--peak-mb N] [--label T] [--timeout-s N] -- command` | no | admit (<abbr class="gl" title="plan-it default n (R1 to R24), contradictable at G4">R13</abbr>), run the command in its own process group, clean up, release | command's exit, or 3 on WAIT_TIMEOUT |
+| `do-it gate queue --status` | no | print holders and FIFO with reasons | 0 |
+| `do-it gate train [--run ID]` | yes | <abbr>R12</abbr> detection; run `gates.on_train_complete` under the queue in a scratch worktree at the target SHA; write §2.6 | 0, 1, 3 (TRAIN_INCOMPLETE) |
+| `do-it gate nightly` | no | run `gates.nightly` under the queue (implies clean) | 0, 1, 3 |
+| `do-it gate schedule --print` | no | print launchd plist and crontab text for `nightly`; never installs | 0 |
+
+`--resume` and `--clean` are added to `BOOL_FLAGS` (`cli.mjs:29`). `--resume` with `--clean` is a usage error. Existing
+`gate verify|conclude|advance|build|stop|route|ceiling` are unchanged. Adapter files: `core/gates/adapters/jest/`
+(`reporter.cjs`, `filter.cjs`, `closure.cjs`), `core/gates/adapters/pytest/do_it_gate.py`,
+`core/gates/adapters/vitest/reporter.mjs`. Adapters write rows only through the documented row format and read the
+store only to decide skips; the spine computes core, installed, env and platform components and passes them to the
+adapter in a manifest file named by `--manifest` (jest/vitest) or `--do-it-manifest` (pytest).
+
+## 4. Enums and constants
+
+- 4.1 Scopes: `edit, push, train, nightly`. Row types and results: §2.1.
+- 4.2 Fold states: NEVER_RUN, RUNNING, PASS, FAIL, SKIPPED, FLAKY, KILLED, SUSPECT_KILLER, UNSTABLE_UNDER_REUSE,
+  EXPIRED, CORRUPT.
+- 4.3 Verdict tokens: `[COMPOSED {scope}: …]`, `[FRESH {scope}: …]`, `[FAIL {scope}: …]`, `[skip] {stage}: no gate
+  declared`, `[WAIT-TIMEOUT] gate-queue: …`. Composed and fresh lines carry: files passed/total, reused count, number of
+  source runs, oldest reused timestamp, ran-now count, skipped count, flaky-excluded count, `run=` id, and the dirty
+  suffix ` · for WORKING TREE (dirty), not {sha}` when <abbr class="gl" title="plan-it default n (R1 to R24), contradictable at G4">R11</abbr> applies. A bare `[OK]` is never printed by `gate run`.
+- 4.4 Outcomes (`--json`): GATE_PASS_COMPOSED, GATE_PASS_FRESH, GATE_FAIL, GATE_SKIP_NO_GATE, GATE_WAIT_TIMEOUT,
+  GATE_INTERRUPTED, TRAIN_INCOMPLETE.
+- 4.5 Constants: reuse TTL 24 h or since the last clean run, whichever is shorter (<abbr class="gl" title="plan-it default n (R1 to R24), contradictable at G4">R9</abbr>); FLAKY clears after 2 consecutive
+  passes (<abbr class="gl" title="plan-it default n (R1 to R24), contradictable at G4">R18</abbr>); UNSTABLE lasts 7 days (<abbr>R18</abbr>); SUSPECT_KILLER after 2 kills on one key; queue poll 2 s; swap-out window
+  5 s; default budget 60% of RAM; default queue timeout 14400 s; row ≤ 4096 bytes.
+- 4.6 WIDE patterns (Node): `readFileSync|readdirSync|glob|execSync|spawnSync|execFileSync|child_process|git `;
+  (Python): `open(|subprocess|Path(|glob|os.listdir`.
+
+## 5. Repo ownership and branch conventions
+
+| Lane | Squad | Owns (only these paths) | Branch |
+|---|---|---|---|
+| store | <abbr class="gl" title="planning squads (one per lane)">SQ-A1</abbr> | `core/spine/src/gate-results.mjs`, `gate-fingerprint.mjs`, `core/schemas/gate-result.1.schema.json`, `core/spine/test/g1/**` | `epic/L1-store`, `epic/F1-fingerprint` |
+| verdict | <abbr class="gl" title="planning squads (one per lane)">SQ-A2</abbr> | `core/spine/src/gate-run.mjs`, `gate-verdict.mjs`, `core/spine/src/cli.mjs` (gate subcommand table), `core/spine/test/g2/**` | `epic/V1-gate-run`, `epic/V2-clean-flaky` |
+| adapters | SQ-B | `core/gates/adapters/**`, `core/gates/tests/**`, the mirror-manifest row for `core/gates` | `epic/A1-jest`, `epic/A2-pytest`, `epic/A3-vitest` |
+| queue | SQ-C | `core/spine/src/gate-queue.mjs`, `gate-signals.mjs`, `core/spine/test/g3/**` | `epic/Q1-admission`, `epic/Q2-cleanup` |
+| stages | SQ-D | `core/spine/src/settings.mjs`, `init.mjs`, `core/schemas/settings.schema.json`, `core/spine/src/gate-train.mjs`, `gate-schedule.mjs`, `core/pipelines/{feature,drain}.yaml` and their tests, `core/spine/test/g4/**`, do-it `docs/03-data-model-and-contract.md` | `epic/S1-settings`, `epic/S2-stages` |
+
+`cli.mjs` is edited only in the verdict lane: <abbr class="gl" title="epics: gate run and composed verdict; clean runs, flaky and unstable">V1</abbr> adds the subcommand table with all six entries dispatching to
+`gateRunCmd`, `gateResultsCmd` (verdict lane), `gateQueueCmd` (queue lane), `gateTrainCmd`, `gateNightlyCmd`,
+`gateScheduleCmd` (stages lane). After any `core/spine/src` change: `node core/spine/build.mjs` then
+`node scripts/sync-mirror.mjs --write`. do-it work branches from `main` of DevOtts/do-it. Adoption by a consumer repo is
+that repo's own program, built against the frozen 1.2.0 CONTRACT (<abbr class="gl" title="plan-it default n (R1 to R24), contradictable at G4">R3</abbr>).
+
+## 6. Fallbacks (capability missing)
+
+- No store, unreadable store, CRC failure, resolver crash, unresolved repo-local import, unknown component: the file
+  runs (<abbr class="gl" title="governance rule n of this package (G-1 to G-16)">G-1</abbr>).
+- Adapter missing for the runner: `gate run` runs the runner unchanged, writes no rows and prints a `[FRESH …]` line
+  with `reuse unavailable: no adapter`.
+- Memory signals unreadable (unknown OS, sysctl error): budget-only admission with
+  `[gate-queue] memory signals unavailable: budget-only admission`.
+- vitest module-graph walk throws: that file is never reusable in this run.
+- Python missing for the pytest plugin, or plugin import error: pytest runs unchanged; no rows.
+
+## 7. Definition of shipped
+
+An epic ships when 100% of its Test Contract passes with evidence, `gate-check handoff` and `adversary` are clean, the
+bundle builds (`node core/spine/build.mjs`) and the mirror is in sync (`node scripts/sync-mirror.mjs --check` exit 0),
+and no case tagged `[REAL]` passed on a mock. A `[REAL]` case whose target is unreachable is IMPLEMENTED-NOT-VERIFIED.
+
+## 8. Core-logic models
+
+Full tables in `docs/03` §6; frozen here.
+
+**<abbr>M1</abbr> result-row fold.**
+NEVER_RUN --> RUNNING --> PASS
+RUNNING --> FAIL ; RUNNING --> SKIPPED ; RUNNING --> FLAKY (retried pass) ; RUNNING --> KILLED (owner dead, no finish)
+KILLED --> NEVER_RUN (resume) ; KILLED --> SUSPECT_KILLER (second kill on one key)
+PASS --> NEVER_RUN (key changed) ; PASS --> EXPIRED (TTL) ; EXPIRED --> NEVER_RUN
+PASS --> FLAKY (fail on same key) ; FAIL --> FLAKY (pass on same key) ; FAIL --> NEVER_RUN (fix changes key)
+FLAKY --> PASS (two consecutive passes) ; PASS --> UNSTABLE_UNDER_REUSE (clean run disagrees) ; UNSTABLE_UNDER_REUSE --> PASS (7 days and two clean passes)
+CORRUPT --> NEVER_RUN (row ignored)
+
+**<abbr class="gl" title="core-logic model n (M1 fold, M2 gate run, M3 queue ticket, M4 train gate, M5 compaction)">M2</abbr> gate run.**
+QUEUED --> ADMITTED --> SELECTING --> RUNNING --> COMPOSING --> PASSED
+COMPOSING --> FAILED ; SELECTING --> FAILED (fallback cannot start)
+RUNNING --> INTERRUPTED (signal, kill, OOM, tool timeout) ; INTERRUPTED --> RESUMED (next resume) ; RESUMED --> RUNNING
+
+**<abbr class="gl" title="core-logic model n (M1 fold, M2 gate run, M3 queue ticket, M4 train gate, M5 compaction)">M3</abbr> queue ticket.**
+WAITING --> ADMITTED --> RELEASED
+WAITING --> WAIT_TIMEOUT (never started, exit 3, retryable) ; WAIT_TIMEOUT --> WAITING (caller retries)
+WAITING --> REJECTED (peak above budget)
+ADMITTED --> RECLAIMED (holder dead or start time differs) ; RECLAIMED --> RELEASED
+
+**<abbr class="gl" title="core-logic model n (M1 fold, M2 gate run, M3 queue ticket, M4 train gate, M5 compaction)">M4</abbr> train gate.**
+TRAIN_OPEN --> TRAIN_INCOMPLETE ; TRAIN_INCOMPLETE --> TRAIN_OPEN (after merges)
+TRAIN_OPEN --> TRAIN_GATING --> TRAIN_PASSED
+TRAIN_OPEN --> TRAIN_SKIPPED (no gate declared)
+TRAIN_GATING --> TRAIN_FAILED ; TRAIN_FAILED --> TRAIN_GATING (retry after fix, resume) ; TRAIN_FAILED --> ESCALATED (review cap reached)
+
+**<abbr class="gl" title="core-logic model n (M1 fold, M2 gate run, M3 queue ticket, M4 train gate, M5 compaction)">M5</abbr> store compaction.**
+COMPACTING --> COMPACTED
+COMPACTING --> COMPACTION_ABORTED (crash or lock lost) ; COMPACTION_ABORTED --> ROLLED_BACK (old file kept, temp removed) ; ROLLED_BACK --> COMPACTING (retry)
+
+Required failure coverage: FAIL, FAILED, WAIT_TIMEOUT, REJECTED, TRAIN_FAILED, ESCALATED, COMPACTION_ABORTED and
+ROLLED_BACK each asserted as an outcome, and the five cascade classes covered.
+
+## 9. Governance rules
+
+- <abbr>G-1</abbr> Every error path fails toward running more: no row, corrupt row, resolver crash or unknown component means the file runs (test: <abbr class="gl" title="binding test case NN of epic EID, e.g. T-L1-04">T-L1-04</abbr>).
+- <abbr class="gl" title="governance rule n of this package (G-1 to G-16)">G-2</abbr> A finish row is PASS only under the PASS predicate (no exec error, zero failures, no failure message, at least one passed case) (test: <abbr class="gl" title="binding test case NN of epic EID, e.g. T-L1-04">T-A1-02</abbr>).
+- <abbr class="gl" title="governance rule n of this package (G-1 to G-16)">G-3</abbr> A FAIL on a key blocks reuse until two consecutive passes on that key; latest-wins is forbidden (test: <abbr class="gl" title="binding test case NN of epic EID, e.g. T-L1-04">T-V2-02</abbr>).
+- <abbr class="gl" title="governance rule n of this package (G-1 to G-16)">G-4</abbr> `gate run` never prints a bare `[OK]`; every verdict names reused and fresh counts, source runs and the oldest reused timestamp (test: <abbr class="gl" title="binding test case NN of epic EID, e.g. T-L1-04">T-V1-04</abbr>).
+- <abbr class="gl" title="governance rule n of this package (G-1 to G-16)">G-5</abbr> A clean run reads no rows, rewrites the folds and flags UNSTABLE_UNDER_REUSE on disagreement (test: <abbr class="gl" title="binding test case NN of epic EID, e.g. T-L1-04">T-V2-01</abbr>).
+- <abbr class="gl" title="governance rule n of this package (G-1 to G-16)">G-6</abbr> Env values never appear in rows, logs, verdicts or failure side files; only salted HMACs (test: <abbr class="gl" title="binding test case NN of epic EID, e.g. T-L1-04">T-F1-08</abbr>).
+- <abbr class="gl" title="governance rule n of this package (G-1 to G-16)">G-7</abbr> A CORE change changes every key (test: <abbr class="gl" title="binding test case NN of epic EID, e.g. T-L1-04">T-F1-03</abbr>).
+- <abbr class="gl" title="governance rule n of this package (G-1 to G-16)">G-8</abbr> Keys use repo-relative paths; identical bytes and installed state in two worktrees give identical keys (test: <abbr class="gl" title="binding test case NN of epic EID, e.g. T-L1-04">T-F1-05</abbr>).
+- <abbr class="gl" title="governance rule n of this package (G-1 to G-16)">G-9</abbr> A run on a dirty tree never writes a tree or commit stamp and says so in its verdict (test: <abbr class="gl" title="binding test case NN of epic EID, e.g. T-L1-04">T-V1-08</abbr>).
+- <abbr class="gl" title="governance rule n of this package (G-1 to G-16)">G-10</abbr> A gate never runs without admission; a wait past the timeout ends in WAIT_TIMEOUT with exit 3 (test: <abbr class="gl" title="binding test case NN of epic EID, e.g. T-L1-04">T-Q1-03</abbr>).
+- <abbr class="gl" title="governance rule n of this package (G-1 to G-16)">G-11</abbr> The queue ends its gate's process group and descendants by PID on pass, fail or signal, never by name pattern (test: <abbr class="gl" title="binding test case NN of epic EID, e.g. T-L1-04">T-Q2-01</abbr>).
+- <abbr class="gl" title="governance rule n of this package (G-1 to G-16)">G-12</abbr> A holder whose PID is dead or whose start time differs is reclaimed at the next admission check (test: <abbr class="gl" title="binding test case NN of epic EID, e.g. T-L1-04">T-Q1-04</abbr>).
+- <abbr class="gl" title="governance rule n of this package (G-1 to G-16)">G-13</abbr> A project with no `gates` block runs every stage with a visible `[skip]` and exit 0 (test: <abbr class="gl" title="binding test case NN of epic EID, e.g. T-L1-04">T-S1-01</abbr>).
+- <abbr class="gl" title="governance rule n of this package (G-1 to G-16)">G-14</abbr> Train completeness keys on merged ancestry or an owner `train-closed` answer, never on slice DONE (test: <abbr class="gl" title="binding test case NN of epic EID, e.g. T-L1-04">T-S2-02</abbr>).
+- <abbr class="gl" title="governance rule n of this package (G-1 to G-16)">G-15</abbr> Gate modules keep the spine zero-dependency: `node:` and relative imports, unique top-level names, bundle builds (test: <abbr class="gl" title="binding test case NN of epic EID, e.g. T-L1-04">T-L1-10</abbr>).
+- <abbr class="gl" title="governance rule n of this package (G-1 to G-16)">G-16</abbr> NEVER-set files run fresh in every gated run (test: <abbr class="gl" title="binding test case NN of epic EID, e.g. T-L1-04">T-F1-06</abbr>).
+
+## RUN-POLICY
+| Role | Tier | Reason |
+|---|---|---|
+| planner | <abbr>T1</abbr> | crown jewels: fingerprint and invalidation, composed-verdict honesty, queue admission |
+| squads-drafting | <abbr>T2</abbr> | spec'd PRD and epic drafting: adapters, stages |
+| mechanical | <abbr>T3</abbr> | lint, render and count passes |
+| builder | <abbr>T2</abbr> | implementation against the Test Contract; escalate to <abbr>T1</abbr> on struggle |
+| verifier | <abbr>T2</abbr> | never the builder |
+| conductor | <abbr>T2</abbr> | thin dispatcher; never the top model |
+Escalation: one tier up per slice, once, logged; <abbr class="gl" title="epic: gate results store">L1</abbr>, <abbr class="gl" title="epic: fingerprint and invalidation">F1</abbr>, <abbr>V1</abbr>, <abbr class="gl" title="epics: gate run and composed verdict; clean runs, flaky and unstable">V2</abbr>, <abbr class="gl" title="epics: queue admission; child cleanup and entry point">Q1</abbr> and <abbr class="gl" title="epics: queue admission; child cleanup and entry point">Q2</abbr> builders start at <abbr>T1</abbr> (crown jewels). Tier changes only at a spawn or stage boundary.
+Worktrees: reap-on-merge, a squad's worktree and branch are removed once its work is merged and captured on disk. Delivery: every worker writes results to disk and ends with a content-bearing final message; a worker that goes idle without files is re-dispatched (idle is not delivered). Heavy gates: never run a test suite or gate outside `do-it gate queue` once <abbr>Q1</abbr> ships; before that, one heavy gate per machine.
+
+## 11. Amendments folded from squads (v1.1)
+
+Each amendment overrides the section it names; where §1–§9 and this section disagree, this section wins.
+
+- **<abbr class="gl" title="epics: jest adapter, pytest plugin, vitest reporter (also CONTRACT §11 amendment ids A1 to A11)">A1</abbr> selection protocol (§3; <abbr>SQ-A2</abbr> <abbr class="gl" title="squad-local proposed amendment n (SQ-D, SQ-A2/SQ-B, SQ-A1), adjudicated into CONTRACT §11">AM-1</abbr>, SQ-B <abbr>AM-1</abbr>, adjudicated).** The spine alone folds and decides reuse; adapters
+  never read the store to decide skips. One runner invocation: (1) `gate run` writes the run directory
+  `{os.tmpdir()}/do-it-gate-{run_id}/` with `manifest.json` (`rtg-manifest/1`, schema
+  `core/schemas/gate-manifest.1.schema.json`, store lane); jest and vitest find it through the do-it-internal env var
+  `DO_IT_GATE_MANIFEST` (jest rejects unknown argv), pytest through `--do-it-manifest`; (2) inside the runner's own
+  selection hook (jest `--filter`, pytest `pytest_collection_modifyitems`, vitest `select.mjs` pre-run helper) the
+  adapter computes the per-file `class` and `dep` lines and writes `keys.json`; (3) the adapter calls the internal
+  subcommand `do-it gate decide --run-dir D` synchronously; it writes `run-list.json`; any decide error, timeout or
+  missing file means the adapter runs every file (<abbr>G-1</abbr>); (4) the adapter runs only `run-list.json` files, writes rows and,
+  at exit, `runner-report.json`; (5) the spine composes. The spine independently recomputes the gate, core, installed,
+  env and platform components (and the tree for WIDE) before any reuse. For Python, `installed` and `platform` are
+  computed by the spine by spawning the project's interpreter with `-I` (SQ-B <abbr class="gl" title="squad-local proposed amendment n (SQ-D, SQ-A2/SQ-B, SQ-A1), adjudicated into CONTRACT §11">AM-5</abbr> rejected).
+- **<abbr class="gl" title="epics: jest adapter, pytest plugin, vitest reporter (also CONTRACT §11 amendment ids A1 to A11)">A2</abbr> descriptors and mirror (§3, §5).** Each adapter ships `core/gates/adapters/{runner}/adapter.json` (adapters lane),
+  read by `gate run`. The mirror row's source is `core/gates/adapters` (fixtures under `core/gates/tests` are not shipped).
+- **<abbr class="gl" title="epics: jest adapter, pytest plugin, vitest reporter (also CONTRACT §11 amendment ids A1 to A11)">A3</abbr> fold placement (§5).** `gateFold(rows, keyNow, now, opts)` lives in `gate-results.mjs` (store lane, <abbr>L1</abbr>) as a pure
+  function over every <abbr>M1</abbr> transition; `gate-verdict.mjs` (<abbr>V1</abbr>, <abbr>V2</abbr>) imports it. <abbr>V1</abbr>/<abbr>V2</abbr> cases exercise it through `gate run`.
+- **<abbr class="gl" title="CONTRACT v1.1 amendment n (A1 to A11)">A4</abbr> rows (§2.1).** `run_start` carries `pid` and `pid_start`; at most one `start` and one `finish` per
+  (file, leg, run), and the fold de-duplicates on (type, run_id, file, leg); an interrupted run is not tainted —
+  `tainted:true` only for unhandled errors, force-exited workers or open-handle kills; rows of an interrupted run
+  (`run_end` verdict GATE_INTERRUPTED, or no `run_end` and a dead owner) are reusable only under `--resume`, never from a
+  run whose owner is alive; a `clean` row marks a completed clean run and its start is the TTL horizon.
+- **<abbr class="gl" title="CONTRACT v1.1 amendment n (A1 to A11)">A5</abbr> fold rules (§8 <abbr>M1</abbr>).** A clean PASS counts as one pass toward the two-consecutive rule (it does not jump FLAKY or
+  FAIL straight to PASS); FLAKY is file-sticky for 7 days across a key change; a CORRUPT row voids every earlier PASS of
+  the file it can be attributed to, or of every file when it cannot be attributed, and compaction keeps corrupt lines; the
+  env token `*` (present but unhashable) makes the file not reusable.
+- **<abbr class="gl" title="CONTRACT v1.1 amendment n (A1 to A11)">A6</abbr> store layout (§2).** Adds compaction `base`/segment files, `closures/{sha256}.json` closure sidecars (for `--why`
+  and vitest pre-run decisions), `components/` digests and `tmp/`; the blob memo is bypassed for assume-unchanged and
+  skip-worktree files and disabled when `.gitattributes`, `core.autocrlf` or any `filter.*` config exists.
+- **<abbr class="gl" title="CONTRACT v1.1 amendment n (A1 to A11)">A7</abbr> CLI (§3; SQ-C <abbr>A5</abbr>, SQ-D <abbr class="gl" title="squad-local proposed amendment n (SQ-D, SQ-A2/SQ-B, SQ-A1), adjudicated into CONTRACT §11">A-2</abbr>/<abbr class="gl" title="squad-local proposed amendment n (SQ-D, SQ-A2/SQ-B, SQ-A1), adjudicated into CONTRACT §11">A-4</abbr>).** `cli.mjs` gains a `--` separator (everything after it is passed through
+  verbatim) and `status` joins `BOOL_FLAGS`. The verdict-lane subcommand table has eight run-free or run-bound entries:
+  `run`, `results`, `decide` (internal), `queue`, `push`, `train`, `nightly`, `schedule`. `do-it gate push` runs
+  `gates.on_push` under the queue or prints `[skip] on_push: no gate declared` (stages lane). `do-it gate train
+  --check-tree SHA` exits 0 only when the recorded TRAIN_PASSED tree equals SHA. Train outcomes add TRAIN_PASSED,
+  TRAIN_FAILED, TRAIN_SKIPPED, TRAIN_BLOCKED, TRAIN_TREE_MISMATCH; queue outcomes add GATE_QUEUE_REJECTED (exit 1,
+  `[REJECTED]` line) and QUEUE_SETTINGS_INVALID (exit 1); a command that cannot start exits 127 from `gate queue` only (see <abbr class="gl" title="CONTRACT v1.1 amendment n (A1 to A11)">A14</abbr>).
+- **<abbr class="gl" title="CONTRACT v1.1 amendment n (A1 to A11)">A8</abbr> queue (§2.5, §4.5; SQ-C <abbr>A1</abbr>–<abbr>A4</abbr>, <abbr>A6</abbr>, <abbr>A7</abbr>).** A gate with no declared peak is exclusive (reserves the whole budget,
+  runs alone; this replaces heavy-gate's conductor HOLD file, which the queue does not honour — default <abbr>R24</abbr>). Swap-out
+  "about zero" = at most 1 MB/s over the 5 s window; SIGTERM-to-SIGKILL grace 10 s; an unchanged status line is reprinted
+  at most once a minute. Tickets add `reason` and `checked_at`; seq is zero-padded to 10 digits; damaged entries move to
+  `corrupt/`. The queue sets the do-it-internal env var `DO_IT_GATE_HOLDER` on its child; `gate run` and a nested
+  `gate queue` that see a live holder above them run as `admission: inherited`; otherwise `gate run` admits itself
+  in-process through the queue lane's exports `gateQueueAdmit` and `gateQueueHeldBySelf`. The process start-time helper
+  `gateProcStart(pid)` lives in `gate-signals.mjs` (queue lane) and the store lane imports it. Until <abbr class="gl" title="epics: gates settings block; train and nightly stages">S1</abbr> merges, <abbr>Q1</abbr> reads
+  `gates.queue` from the global settings file directly; <abbr>S1</abbr> keeps that behaviour (stored defaults null; effective values
+  60 and 14400 come from one helper).
+- **<abbr class="gl" title="CONTRACT v1.1 amendment n (A1 to A11)">A9</abbr> nightly is enforced clean (§3; SQ-D <abbr class="gl" title="squad-local proposed amendment n (SQ-D, SQ-A2/SQ-B, SQ-A1), adjudicated into CONTRACT §11">A-5</abbr>, adjudicated).** `gate nightly` sets `DO_IT_GATE_SCOPE=nightly` on its
+  child; a `gate run` that inherits it runs clean whatever its flags (<abbr>G-5</abbr>) and warns when the project command lacks
+  `--clean`.
+- **<abbr class="gl" title="CONTRACT v1.1 amendment n (A1 to A11)">A10</abbr> (moved out, 2026-11-06, <abbr>R3</abbr>).** The consumer-adoption amendment moved with PRD-6 and its epics to the pilot
+  consumer's own program; do-it names no consumer. The rules it set for hooks (fail closed when do-it is absent, re-enter
+  under `do-it gate queue`, no new env var) are the consumer's to keep.
+- **<abbr class="gl" title="CONTRACT v1.1 amendment n (A1 to A11)">A11</abbr> do-it test switches (<abbr class="gl" title="plan-it default n (R1 to R24), contradictable at G4">R19</abbr>).** do-it-internal test-only env names: `DO_IT_GATE_SIGNALS`, `DO_IT_GATE_ADAPTERS`,
+  `DO_IT_REAL_JEST`, `DO_IT_REAL_PYTHON`, `DO_IT_REAL_VITEST`; a `[REAL]` case whose runner is absent reports
+  IMPLEMENTED-NOT-VERIFIED.
+
+- **<abbr class="gl" title="CONTRACT v1.1 amendment n (A1 to A11)">A12</abbr> coordination with do-it 1.1 (conductor, 2026-11-06).** 1.1 edits `core/spine/src/stopgate.mjs`, `state.mjs`,
+  `cli.mjs` and `finish-line.mjs` (finish-line rows gain `run_id`) and adds no settings key; `gates` is this package's.
+  1.1 epic <abbr class="gl" title="moved out. Consumer adoption moved to the pilot consumer's own program (do-it 1.1 R3; location in `research/PILOT-PATHS.md`).">E1</abbr> also edits `core/schemas/settings.schema.json` and `core/spine/src/settings.mjs`: `state` keeps `backend` plus
+  one options object keyed by the backend name, validated by the host, and the `engine` default leaves the core. This
+  package adds only the root key `gates` (with `gates.queue.*`, global layer only) and nothing under `state`, so the two
+  fit; <abbr>S1</abbr> rebases those two files on 1.1 (checked 2026-11-06).
+  The built bundle `core/spine/do-it.mjs` and its plugin mirror are never merged by hand: after every merge, rebuild with
+  `node core/spine/build.mjs` and `node scripts/sync-mirror.mjs --write`, and commit the regenerated files. <abbr class="gl" title="epics: gates settings block; train and nightly stages">S2</abbr> uses 1.1's
+  finish-line `run_id` when present instead of encoding the run in the row id. Readiness checkpoint `gates` and run-state
+  `state.gates.build` (existing, `readiness.mjs:89,119,197`) are lifecycle gates, unrelated to the settings `gates` block.
+- **<abbr class="gl" title="CONTRACT v1.1 amendment n (A1 to A11)">A13</abbr> train outcomes (SQ-D).** `gate train --check-tree` refusals are TRAIN_NOT_PASSED (no TRAIN_PASSED record) and
+  TRAIN_RECORD_MISMATCH (record tree differs from the deploying tree), both exit 3; with TRAIN_TREE_MISMATCH reserved for
+  a scratch-worktree tree that does not equal the target SHA.
+
+- **<abbr class="gl" title="CONTRACT v1.1 amendment n (A1 to A11)">A15</abbr> host-agnostic core (owner ruling, do-it 1.1 DECISIONS <abbr>R3</abbr>, 2026-11-06).** do-it names no consumer project. PRD-6, its epics <abbr>E1</abbr>/<abbr class="gl" title="moved out. Consumer adoption moved to the pilot consumer's own program (do-it 1.1 R3; location in `research/PILOT-PATHS.md`).">E2</abbr>,
+  squad SQ-E, <abbr>A10</abbr>'s content and governance rules 17 and 18 left this package for the pilot consumer's program. The gate mechanism stays
+  generic: `gate run`, `gate queue`, the `gates` block, the <abbr>T2</abbr> stage and the <abbr>T3</abbr> nightly. Anything that must know a specific
+  harness at runtime lives under `hosts/<name>/` (do-it 1.1 <abbr>G-9</abbr>). Rules 17 and 18 are retired, not renumbered (WAIVED: moved to the pilot program).
+
+- **<abbr>A14</abbr> runner start failure (conductor ruling, 2026-11-06).** §3 wins over <abbr>A7</abbr> for `gate run`: when the runner cannot
+  start, `gate run` exits 1 with GATE_FAIL and the verdict line names the reason, for example `runner did not start:
+  exit 127`. Exit 127 stays the child's code, reported inside the verdict and never passed through by `gate run`.
+
+## 12. Changelog
+- v1.1 2026-11-06 (owner <abbr>G4</abbr>): plan approved in full with <abbr>A15</abbr>; <abbr class="gl" title="owner question n (OQ-1 to OQ-4)">OQ-1</abbr> to <abbr class="gl" title="owner question n (OQ-1 to OQ-4)">OQ-4</abbr> take their recommendations; <abbr>A14</abbr> kept; contract final.
+- v1.1-draft 2026-11-06 (owner ruling, do-it 1.1 <abbr>R3</abbr>): <abbr>A15</abbr> host-agnostic core; PRD-6, <abbr>E1</abbr>/<abbr>E2</abbr>, SQ-E, <abbr>A10</abbr> content, rules 17 and 18 moved to the pilot consumer's program.
+- v1.1-draft 2026-11-06 (final draft): <abbr>A14</abbr> runner start failure (conductor ruling).
+- v1.1-draft 2026-11-06 (later): <abbr>A12</abbr> coordination with do-it 1.1, <abbr>A13</abbr> train outcomes; pinned to origin/main d38cedb; release 1.2.0.
+- v1.1-draft 2026-11-06: squad amendments <abbr>A1</abbr> to <abbr>A11</abbr> folded; default <abbr>R24</abbr> added (Fernando Ott ratifies at <abbr>G4</abbr>).
+- v1.0-draft 2026-11-06: frozen from docs/01 to docs/06 for squads; rulings <abbr>D1</abbr> to <abbr>D5</abbr> applied; defaults <abbr>R1</abbr> to <abbr class="gl" title="plan-it default n (R1 to R24), contradictable at G4">R23</abbr> recorded for <abbr>G4</abbr> (Fernando Ott ratifies).
+
+</script></div></details>
+<p class="footer">html-blocks=0</p>
+<script>
+// Theme toggle: auto → light → dark → auto. Persists per-viewer (try/catch — storage may be blocked).
+(function(){
+  const btn=document.getElementById("theme-toggle"), lab=document.getElementById("theme-label");
+  const order=["auto","light","dark"]; let cur="auto";
+  try{ cur=localStorage.getItem("report-theme")||"auto" }catch(e){}
+  function apply(v){
+    cur=v; lab.textContent=v;
+    if(v==="auto"){ document.documentElement.removeAttribute("data-theme"); }
+    else{ document.documentElement.setAttribute("data-theme",v); }
+    try{ localStorage.setItem("report-theme",v) }catch(e){}
+  }
+  apply(cur);
+  btn.addEventListener("click",()=>apply(order[(order.indexOf(cur)+1)%order.length]));
+})();
+// Copy-to-clipboard: client-side navigator.clipboard, try/catch — API may be unavailable.
+document.querySelectorAll(".copy-btn").forEach(function(btn){
+  btn.addEventListener("click", function(){
+    var pre = btn.previousElementSibling;
+    var text = pre ? pre.textContent : "";
+    try{
+      navigator.clipboard.writeText(text);
+    }catch(e){
+      var note = document.createElement("p");
+      note.className = "warn"; note.textContent = "select the text above";
+      btn.parentNode.insertBefore(note, btn.nextSibling);
+    }
+  });
+});
+</script>
+<script>
+/* MDPARSER-START */
+
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function isSafeUrl(u){
+  var url=String(u).trim();
+  if(url.indexOf('"')!==-1||url.indexOf("'")!==-1) return false;
+  if(/^(https?:|mailto:|#)/i.test(url)) return true;
+  return !/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(url);
+}
+function inline(s){
+  return s
+    .replace(/`([^`]+)`/g,function(m,c){return "<code>"+c+"</code>"})
+    .replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>")
+    .replace(/\*([^*]+)\*/g,"<em>$1</em>")
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g,function(m,label,url){
+      return isSafeUrl(url) ? '<a href="'+esc(url)+'">'+label+'</a>' : label;
+    });
+}
+function md(src){
+  var abbrs=[];
+  var protectedSrc=src.replace(/<abbr\b[^>]*>[\s\S]*?<\/abbr>/gi,function(m){abbrs.push(m);return "\u0001ABBR"+(abbrs.length-1)+"\u0001"});
+  var lines=esc(protectedSrc).split("\n"), out=[], inCode=false, inList=false, inOList=false, inQuote=false, i=0;
+  function closeAll(){
+    if(inList){out.push("</ul>");inList=false}
+    if(inOList){out.push("</ol>");inOList=false}
+    if(inQuote){out.push("</blockquote>");inQuote=false}
+  }
+  while(i<lines.length){
+    var raw=lines[i];
+    if(raw.indexOf("```")===0){closeAll();out.push(inCode?"</pre>":"<pre>");inCode=!inCode;i++;continue}
+    if(inCode){out.push(raw);i++;continue}
+    if(/^\s*\|.*\|\s*$/.test(raw) && i+1<lines.length && /^\s*\|[\s\-:|]+\|\s*$/.test(lines[i+1])){
+      closeAll();
+      var cells=function(r){return r.trim().replace(/^\||\|$/g,"").split("|").map(function(c){return inline(c.trim())})};
+      out.push('<div class="overflow"><table><tr>'+cells(raw).map(function(c){return "<th>"+c+"</th>"}).join("")+"</tr>");
+      i+=2;
+      while(i<lines.length && /^\s*\|.*\|\s*$/.test(lines[i])){
+        out.push("<tr>"+cells(lines[i]).map(function(c){return "<td>"+c+"</td>"}).join("")+"</tr>"); i++;
+      }
+      out.push("</table></div>"); continue;
+    }
+    var l=raw, m;
+    if(/^\s*$/.test(l)){closeAll();i++;continue}
+    if(/^---+\s*$/.test(l)){closeAll();out.push("<hr>");i++;continue}
+    if(m=l.match(/^(#{1,4})\s+(.*)/)){closeAll();var h=m[1].length;out.push("<h"+h+">"+inline(m[2])+"</h"+h+">");i++;continue}
+    if(m=l.match(/^\s*&gt;\s?(.*)/)){if(!inQuote){closeAll();out.push("<blockquote>");inQuote=true}out.push("<p>"+inline(m[1])+"</p>");i++;continue}
+    if(m=l.match(/^\s*[-*]\s+(.*)/)){
+      if(inQuote){out.push("</blockquote>");inQuote=false}
+      if(inOList){out.push("</ol>");inOList=false}
+      if(!inList){out.push("<ul>");inList=true}
+      out.push("<li>"+inline(m[1])+"</li>");i++;continue;
+    }
+    if(m=l.match(/^\s*(\d+)\.\s+(.*)/)){
+      if(inQuote){out.push("</blockquote>");inQuote=false}
+      if(inList){out.push("</ul>");inList=false}
+      if(!inOList){out.push("<ol>");inOList=true}
+      out.push("<li>"+inline(m[2])+"</li>");i++;continue;
+    }
+    closeAll();out.push("<p>"+inline(l)+"</p>");i++;
+  }
+  closeAll(); if(inCode)out.push("</pre>");
+  var result=out.join("\n");
+  result=result.replace(/\u0001ABBR(\d+)\u0001/g,function(m,idx){return abbrs[Number(idx)]});
+  return result;
+}
+
+/* MDPARSER-END */
+document.querySelectorAll('script[type="text/markdown"]').forEach(function(s){
+  var d=document.createElement("div"); d.innerHTML=md(s.textContent.trim());
+  s.parentNode.replaceChild(d,s);
+});
+</script>
+
+</main></body>
+</html>
