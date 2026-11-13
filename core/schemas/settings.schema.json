@@ -81,6 +81,36 @@
       "type": "object",
       "additionalProperties": false,
       "properties": { "provider": { "type": "string", "minLength": 1 } }
+    },
+    "gates": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "on_push": { "type": ["string", "null"], "minLength": 1 },
+        "on_train_complete": { "type": ["string", "null"], "minLength": 1 },
+        "nightly": { "type": ["string", "null"], "minLength": 1 },
+        "peak_mb": { "type": ["integer", "null"], "minimum": 1 },
+        "reuse": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "core": { "type": "array", "items": { "type": "string" } },
+            "always_run": { "type": "array", "items": { "type": "string" } },
+            "never_reuse": { "type": "array", "items": { "type": "string" } },
+            "env": { "type": "array", "items": { "type": "string" } },
+            "env_files": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "queue": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "budget_pct": { "type": ["integer", "null"], "minimum": 1, "maximum": 90 },
+            "timeout_s": { "type": ["integer", "null"], "minimum": 1 },
+            "swap_used_max_mb": { "type": ["integer", "null"], "minimum": 0 }
+          }
+        }
+      }
     }
   }
 }
