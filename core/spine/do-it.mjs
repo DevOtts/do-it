@@ -2101,7 +2101,8 @@ function gateFpManifestWrite(runDir, manifest) {
 }
 
 // ---- gate-queue.mjs ----
-// Per-machine gate admission (CONTRACT §2.5, §3, §4.3–§4.5, §8 M3; PRD-4 D1–D15). Q1: admission half.
+// Per-machine gate admission and run (CONTRACT §2.5, §3, §4.3–§4.5, §8 M3; PRD-4 D1–D20). Q1: admission half;
+// Q2: own process group, descendant tracking and cleanup by PID, signal forwarding, nested admission, --status.
 // Files under {HOME}/.do-it/queue/: .lock/ (owner.json), seq, tickets/, holders/, corrupt/.
 // Every top-level name starts with gateQueue (bundle unique-name rule, G-15).
 //
@@ -2222,6 +2223,7 @@ function gateQueueScan(root, err, mine) {
         try {
           fs.unlinkSync(e.file);
           err('[gate-queue] reclaimed seq=' + e.seq + ' pid ' + e.pid + ' (' + state + ')');
+          if (kind === 'holders' && Number.isInteger(e.pgid) && e.pgid > 1) gateQueueReportOrphans(e.pgid, err);
         } catch (x) { if (x.code !== 'ENOENT') throw x; }
         continue;
       }
@@ -2595,7 +2597,8 @@ async function gateQueueAdmit(ctx, opts) {
   const run = gateQueueRuntime(ctx);
   run.trap();
   let res;
-  try { res = await gateQueueAdmitCore(ctx, opts || {}, run); } finally { run.untrap(); }
+  const o = opts || {};
+  try { res = await gateQueueAdmitCore(ctx, { ...o, peakMb: gateQueueResolvePeak(ctx, o.peakMb) }, run); } finally { run.untrap(); }
   if (res.outcome === 'GATE_QUEUE_ADMITTED') {
     let done = false;
     res.release = (exitCode, cleaned) => {
@@ -2628,82 +2631,403 @@ function gateQueueHeldBySelf(ctx) {
   return null;
 }
 
-// Q1 basic run (Q2 replaces it with process-group cleanup): spawn, wait, release, exit passthrough.
-// Signals while running are forwarded to the child; the queue then exits 128 + N (PRD-4 D18).
-async function gateQueueRunChild(ctx, admitted, argv, run) {
-  const err = run.err;
+
+// == Q2: the run half (PRD-4 D16–D20). The command runs in its own process group; everything it starts is
+// tracked by (pid, start time) from process-table snapshots and ended by PID on pass, fail or signal (G-11).
+// No name, argv or pattern match anywhere: membership is ppid links from the root plus the root's pgid.
+
+const gateQueueGraceMs = 10000;
+const gateQueuePsRe = /^\s*(\d+)\s+(\d+)\s+(\d+)\s+(\S+)\s+(.*\S)\s*$/;
+
+function gateQueuePsCall() {
+  // pid, ppid, pgid, state (zombies are already dead), start time (lstart last: it holds spaces)
+  if (process.platform === 'linux') return [fs.existsSync('/bin/ps') ? '/bin/ps' : 'ps', ['-eo', 'pid=,ppid=,pgid=,stat=,lstart=']];
+  return ['/bin/ps', ['-axo', 'pid=,ppid=,pgid=,stat=,lstart=']];
+}
+
+function gateQueuePsOpts() {
+  return { encoding: 'utf8', maxBuffer: 1 << 26, timeout: 10000, env: { ...process.env, LC_ALL: 'C' } };
+}
+
+// Map pid -> {pid, ppid, pgid, zombie, start}.
+function gateQueuePsParse(text) {
+  const out = new Map();
+  for (const line of String(text || '').split('\n')) {
+    const m = gateQueuePsRe.exec(line);
+    if (!m) continue;
+    const pid = Number(m[1]);
+    out.set(pid, { pid, ppid: Number(m[2]), pgid: Number(m[3]), zombie: m[4].startsWith('Z'), start: m[5] });
+  }
+  return out;
+}
+
+// One snapshot, or null when `ps` could not run (the group kill still works without it).
+function gateQueuePsSnapshot() {
+  const [bin, args] = gateQueuePsCall();
   return new Promise((resolve) => {
-    let child;
-    let settled = false;
-    let interrupted = null;
-    const finish = (exit, extra) => {
-      if (settled) return;
-      settled = true;
-      run.onSignal = null;
-      resolve({ exit, ...extra });
-    };
-    try {
-      child = cp.spawn(argv[0], argv.slice(1), {
-        cwd: ctx.cwd, stdio: 'inherit',
-        env: { ...ctx.env, DO_IT_GATE_HOLDER: admitted.seq + '-' + process.pid },
-      });
-    } catch (e) {
-      err('[gate-queue] command failed to start: ' + (e.code || 'error'));
-      finish(127, { start_error: e.code || 'error' });
-      return;
-    }
-    run.onSignal = (sig) => {
-      interrupted = interrupted || sig;
-      try { child.kill(sig); } catch { /* gone */ }
-    };
-    child.on('error', (e) => {
-      if (child.pid == null || e.code === 'ENOENT' || e.code === 'EACCES') {
-        err('[gate-queue] command failed to start: ' + (e.code || 'error'));
-        finish(127, { start_error: e.code || 'error' });
-      }
-    });
-    child.on('exit', (code, signal) => {
-      let exit = code;
-      if (exit == null) exit = 128 + (os.constants.signals[signal] || 0);
-      if (interrupted) finish(128 + gateQueueSignalNo[interrupted], { command_exit: exit, signal: interrupted });
-      else finish(exit, { command_exit: exit });
+    cp.execFile(bin, args, gateQueuePsOpts(), (e, stdout) => {
+      const snap = gateQueuePsParse(stdout);
+      resolve(snap.size ? snap : null);
     });
   });
 }
 
-// `do-it gate queue [--peak-mb N] [--label T] [--timeout-s N] -- command` (CLI entry; async).
-// args: parseArgs shape; the command argv comes from args.passthrough (the `--` tail; V1's cli.mjs names it).
-async function gateQueueCmd(ctx, args) {
-  const flags = (args && args.flags) || {};
-  const argv = (args && (args.passthrough || args.rest || args['--'])) || [];
-  if (flags.status) throw fail('USAGE', 1, { message: 'gate queue --status arrives with Q2' });
-  if (!Array.isArray(argv) || !argv.length) throw fail('USAGE', 1, { message: 'usage: do-it gate queue [--peak-mb N] [--label T] [--timeout-s N] -- command' });
+function gateQueuePsSnapshotSync() {
+  const [bin, args] = gateQueuePsCall();
+  let text = '';
+  try { text = cp.execFileSync(bin, args, { ...gateQueuePsOpts(), stdio: ['ignore', 'pipe', 'ignore'] }); } catch (e) {
+    text = e && typeof e.stdout === 'string' ? e.stdout : '';
+  }
+  const snap = gateQueuePsParse(text);
+  return snap.size ? snap : null;
+}
+
+function gateQueueTrackKey(p) {
+  return p.pid + '@' + p.start;
+}
+
+// Tracker for one command: root pid = its pgid (spawned detached). entries: key -> {pid, start}.
+function gateQueueTrackNew(rootPid) {
+  return { root: rootPid, pgid: rootPid, entries: new Map(), groupSeen: false, groupGone: false };
+}
+
+// Q2-02: fold one snapshot into the tracked set. Adds every member of the root's group (while the group is
+// ours) and everything reachable by ppid from a tracked process that is still the same process. Returns the
+// number of new entries. Accumulating keeps processes that were re-parented to PID 1 after their parent died.
+function gateQueueTrack(tr, snap) {
+  if (!snap) return 0;
+  let added = 0;
+  const add = (p) => {
+    if (p.pid <= 1 || p.pid === process.pid) return;
+    const k = gateQueueTrackKey(p);
+    if (tr.entries.has(k)) return;
+    tr.entries.set(k, { pid: p.pid, start: p.start });
+    added++;
+  };
+  if (!tr.groupGone) {
+    const members = [];
+    for (const p of snap.values()) if (p.pgid === tr.pgid) members.push(p);
+    // A group id is a pid we spawned and cannot be reused while the group lives; once the group has been seen
+    // and then holds no tracked member, it is gone and a later group with the same id is not ours.
+    const ours = tr.groupSeen ? members.some((p) => tr.entries.has(gateQueueTrackKey(p))) : members.length > 0;
+    if (ours) { tr.groupSeen = true; for (const p of members) add(p); } else if (tr.groupSeen) tr.groupGone = true;
+  }
+  const kids = new Map();
+  for (const p of snap.values()) {
+    if (!kids.has(p.ppid)) kids.set(p.ppid, []);
+    kids.get(p.ppid).push(p);
+  }
+  const stack = [];
+  for (const e of tr.entries.values()) {
+    const p = snap.get(e.pid);
+    if (p && p.start === e.start) stack.push(e.pid);
+  }
+  const seen = new Set();
+  while (stack.length) {
+    const pid = stack.pop();
+    if (seen.has(pid)) continue;
+    seen.add(pid);
+    for (const c of kids.get(pid) || []) { add(c); stack.push(c.pid); }
+  }
+  return added;
+}
+
+// Tracked entries that are still the same live (non-zombie) process in snap.
+function gateQueueTrackLive(tr, snap, includeZombies) {
+  const out = [];
+  if (!snap) return out;
+  for (const e of tr.entries.values()) {
+    const p = snap.get(e.pid);
+    if (p && p.start === e.start && (includeZombies || !p.zombie)) out.push({ ...e, pgid: p.pgid });
+  }
+  return out;
+}
+
+function gateQueueDelay(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+// Q2-04 (PRD-4 D17): `sig` to the group and to every tracked live process outside it, a 10 s grace, SIGKILL
+// for survivors, re-snapshot to confirm. Returns cleaned = tracked processes alive at the start and ended by it.
+// rootUnreaped(): true while the root has not been reaped, so its pid (= the group id) cannot be reused yet.
+async function gateQueueCleanup(ctx, tr, sig, err, rootUnreaped) {
+  let snap = await gateQueuePsSnapshot();
+  gateQueueTrack(tr, snap);
+  const atStart = gateQueueTrackLive(tr, snap);
+  if (ctx.env && ctx.env.DO_IT_FAULT === 'queue_skip_cleanup') {
+    err('[gate-queue] fault queue_skip_cleanup: kill step skipped');
+    return 0;
+  }
+  const signalled = new Set();
+  const send = (s, list) => {
+    // the group id is signalled only while it provably names our group: a tracked member is in it now, or the
+    // root is unreaped. An empty group's id may already belong to an unrelated new group (G-11: by PID only).
+    if (rootUnreaped() || list.some((e) => e.pgid === tr.pgid)) {
+      try { process.kill(-tr.pgid, s); } catch { /* group gone */ }
+    }
+    for (const e of list) {
+      if (s === sig && signalled.has(gateQueueTrackKey(e))) continue;
+      signalled.add(gateQueueTrackKey(e));
+      if (e.pgid === tr.pgid) continue;
+      try { process.kill(e.pid, s); } catch { /* gone */ }
+    }
+  };
+  send(sig, atStart);
+  let live = atStart;
+  const graceEnd = Date.now() + gateQueueGraceMs;
+  while (live.length && Date.now() < graceEnd) {
+    await gateQueueDelay(200);
+    snap = await gateQueuePsSnapshot();
+    if (!snap) continue;
+    gateQueueTrack(tr, snap);
+    live = gateQueueTrackLive(tr, snap);
+    // a process born during cleanup gets the same signal
+    const fresh = live.filter((e) => !signalled.has(gateQueueTrackKey(e)));
+    if (fresh.length) send(sig, fresh);
+  }
+  if (live.length) {
+    err('[gate-queue] cleanup: SIGKILL ' + live.length + ' after ' + Math.round(gateQueueGraceMs / 1000) + ' s grace');
+    send('SIGKILL', live);
+    const killEnd = Date.now() + 3000;
+    while (live.length && Date.now() < killEnd) {
+      await gateQueueDelay(100);
+      snap = await gateQueuePsSnapshot();
+      if (!snap) continue;
+      gateQueueTrack(tr, snap);
+      live = gateQueueTrackLive(tr, snap);
+      if (live.length) send('SIGKILL', live);
+    }
+    for (const e of live) err('[gate-queue] cleanup incomplete: pid ' + e.pid + ' still alive');
+  }
+  // dead children of dead parents linger as zombies for a moment; wait (bounded) until they are reaped
+  const reapEnd = Date.now() + 2000;
+  while (snap && gateQueueTrackLive(tr, snap, true).length > live.length && Date.now() < reapEnd) {
+    await gateQueueDelay(50);
+    snap = (await gateQueuePsSnapshot()) || snap;
+  }
+  const still = new Set(gateQueueTrackLive(tr, snap).map(gateQueueTrackKey));
+  return atStart.filter((e) => !still.has(gateQueueTrackKey(e))).length;
+}
+
+// Q2-01/02/03: run argv in its own process group, track, forward signals, clean up. Resolves
+// { exit, command_exit, signal, start_error, cleaned }. The exit follows PRD-4 D18.
+async function gateQueueExec(ctx, argv, run, opts) {
+  const err = run.err;
+  let signalled = null;
+  let wakeSig = null;
+  const sigP = new Promise((resolve) => { wakeSig = resolve; });
+  run.onSignal = (sig) => { if (!signalled) { signalled = sig; wakeSig(sig); } };
+  if (run.aborted) run.onSignal(run.aborted);
+  const startFailed = (e) => {
+    run.onSignal = null;
+    const code = (e && e.code) || 'error';
+    err('[gate-queue] command failed to start: ' + code);
+    return { exit: 127, start_error: code, cleaned: 0 };
+  };
+  let child;
+  try {
+    child = cp.spawn(argv[0], argv.slice(1), {
+      cwd: ctx.cwd, stdio: 'inherit', detached: true,
+      env: { ...ctx.env, DO_IT_GATE_HOLDER: opts.holderEnv },
+    });
+  } catch (e) {
+    return startFailed(e);
+  }
+  const spawnErr = await new Promise((resolve) => {
+    child.once('spawn', () => resolve(null));
+    child.once('error', (e) => resolve(e));
+  });
+  child.on('error', () => { /* a kill on a reaped child; cleanup works by pid */ });
+  if (spawnErr || !child.pid) return startFailed(spawnErr);
+  const tr = gateQueueTrackNew(child.pid);
+  if (opts.onStart) opts.onStart(child.pid);
+  let rootExit = null;
+  const exited = new Promise((resolve) => child.once('exit', (code, signal) => { rootExit = { code, signal }; resolve(rootExit); }));
+  gateQueueTrack(tr, await gateQueuePsSnapshot());
+  // early snapshots catch a tree that forks fast; then one snapshot per poll (D17)
+  const early = [250, 750, 1000];
+  for (let i = 0; !rootExit && !signalled; i++) {
+    let timer = null;
+    await Promise.race([exited, sigP, new Promise((r) => { timer = setTimeout(r, i < early.length ? early[i] : gateQueuePollMs); })]);
+    clearTimeout(timer);
+    if (rootExit || signalled) break;
+    gateQueueTrack(tr, await gateQueuePsSnapshot());
+  }
+  // a signal during cleanup changes nothing: cleanup is already ending every tracked process
+  run.onSignal = () => {};
+  const cleaned = await gateQueueCleanup(ctx, tr, signalled || 'SIGTERM', err, () => !rootExit);
+  const skipped = ctx.env && ctx.env.DO_IT_FAULT === 'queue_skip_cleanup';
+  const r = rootExit || (skipped ? null : await exited);
+  run.onSignal = null;
+  const cmdExit = !r ? null : (r.code != null ? r.code : 128 + (os.constants.signals[r.signal] || 0));
+  if (signalled) return { exit: 128 + gateQueueSignalNo[signalled], command_exit: cmdExit, signal: signalled, cleaned };
+  return { exit: cmdExit == null ? 1 : cmdExit, command_exit: cmdExit, cleaned };
+}
+
+// Q2-05: a reclaimed holder whose group still has members is reported, never killed (they are not ours now).
+function gateQueueReportOrphans(pgid, err) {
+  const snap = gateQueuePsSnapshotSync();
+  if (!snap) return;
+  let n = 0;
+  for (const p of snap.values()) if (p.pgid === pgid && !p.zombie) n++;
+  if (n) err('[gate-queue] orphan process group ' + pgid + ' still has ' + n + ' processes (not killed: not ours)');
+}
+
+// Q2-07 (PRD-4 D10): the project's gates.peak_mb from the workspace settings file, used when --peak-mb is absent.
+function gateQueueWorkspacePeak(ctx) {
+  if (!ctx || !ctx.home) return null;
+  const file = settingsPaths(ctx).workspace;
+  let doc = null;
+  try { doc = readJsonRegular(file, gateQueueEntryCap * 16); } catch (e) {
+    throw fail('QUEUE_SETTINGS_INVALID', 1, { file, message: 'workspace settings unreadable: ' + (e.code || 'error') });
+  }
+  const v = doc && doc.gates ? doc.gates.peak_mb : null;
+  if (v == null) return null;
+  if (!Number.isInteger(v) || v < 1) {
+    throw fail('QUEUE_SETTINGS_INVALID', 1, { file, key: 'gates.peak_mb', message: 'gates.peak_mb must be an integer >= 1 or null (got ' + JSON.stringify(v) + ')' });
+  }
+  return v;
+}
+
+function gateQueueResolvePeak(ctx, peakMb) {
+  return peakMb == null ? gateQueueWorkspacePeak(ctx) : peakMb;
+}
+
+// One run: nested pass-through, or admission, run, cleanup, then release (release only after cleanup, D17).
+async function gateQueueRunCore(ctx, o, run) {
+  const argv = o.argv;
+  const held = gateQueueHeldBySelf(ctx);
+  if (held) {
+    run.err('[gate-queue] nested under holder seq=' + held.seq + ': no second admission · admission: inherited');
+    const r = await gateQueueExec(ctx, argv, run, { holderEnv: ctx.env.DO_IT_GATE_HOLDER });
+    if (r.start_error) return { outcome: 'GATE_QUEUE_START_FAILED', exit: 127, seq: held.seq, nested: true, error: r.start_error };
+    if (r.signal) return { outcome: 'GATE_INTERRUPTED', exit: r.exit, seq: held.seq, nested: true, signal: r.signal, command_exit: r.command_exit };
+    return { outcome: 'GATE_QUEUE_RAN', exit: r.exit, seq: held.seq, nested: true, admission: 'inherited', cleaned: r.cleaned };
+  }
+  const admitted = await gateQueueAdmitCore(ctx, {
+    peakMb: gateQueueResolvePeak(ctx, o.peakMb), timeoutS: o.timeoutS, label: o.label, argv,
+    platform: o.platform, linuxRoot: o.linuxRoot,
+  }, run);
+  if (admitted.outcome !== 'GATE_QUEUE_ADMITTED') return admitted;
+  if (run.aborted) {
+    // a signal landed between admission and spawn: never start
+    gateQueueRelease(ctx, admitted, 128 + gateQueueSignalNo[run.aborted], 0);
+    return gateQueueInterrupted(run, admitted.seq);
+  }
+  const holderFile = path.join(admitted.root, 'holders', admitted.name);
+  const r = await gateQueueExec(ctx, argv, run, {
+    holderEnv: admitted.seq + '-' + process.pid,
+    // the holder file names the group; cleanup itself trusts only the in-memory pgid (T-Q2-14)
+    onStart: (pgid) => { try { atomicWriteJson(holderFile, { ...admitted.entry, pgid }); } catch { /* reported at release */ } },
+  });
+  gateQueueRelease(ctx, admitted, r.exit, r.cleaned);
+  if (r.start_error) return { outcome: 'GATE_QUEUE_START_FAILED', exit: 127, seq: admitted.seq, error: r.start_error };
+  if (r.signal) return { outcome: 'GATE_INTERRUPTED', exit: r.exit, seq: admitted.seq, signal: r.signal, command_exit: r.command_exit, cleaned: r.cleaned };
+  return { outcome: 'GATE_QUEUE_RAN', exit: r.exit, seq: admitted.seq, label: admitted.label, cleaned: r.cleaned };
+}
+
+// Q2-07 (PRD-4 D20): the one in-process entry point for train, nightly and manual runs. Resolves to the exit code.
+async function gateQueueRun(ctx, opts) {
+  const o = opts || {};
+  if (!Array.isArray(o.argv) || !o.argv.length) throw fail('USAGE', 1, { message: 'gateQueueRun needs a non-empty argv' });
   const run = gateQueueRuntime(ctx);
   run.trap();
   try {
-    let admitted;
-    try {
-      admitted = await gateQueueAdmitCore(ctx, {
-        peakMb: flags['peak-mb'] === undefined ? null : flags['peak-mb'],
-        timeoutS: flags['timeout-s'] === undefined ? null : flags['timeout-s'],
-        label: typeof flags.label === 'string' ? flags.label : null,
-        argv,
-      }, run);
-    } catch (e) {
-      if (e && e.outcome === 'QUEUE_SETTINGS_INVALID') run.err('[gate-queue] ' + (e.extra.message || 'queue settings invalid') + ' · not started');
-      throw e;
-    }
-    if (admitted.outcome !== 'GATE_QUEUE_ADMITTED') return admitted;
-    if (run.aborted) {
-      // a signal landed between admission and spawn: never start
-      gateQueueRelease(ctx, admitted, 128 + gateQueueSignalNo[run.aborted], 0);
-      return gateQueueInterrupted(run, admitted.seq);
-    }
-    const r = await gateQueueRunChild(ctx, admitted, argv, run);
-    gateQueueRelease(ctx, admitted, r.exit, 0);
-    if (r.signal) return { outcome: 'GATE_INTERRUPTED', exit: r.exit, seq: admitted.seq, signal: r.signal, command_exit: r.command_exit };
-    if (r.start_error) return { outcome: 'GATE_QUEUE_START_FAILED', exit: 127, seq: admitted.seq, error: r.start_error };
-    return { outcome: 'GATE_QUEUE_RAN', exit: r.exit, seq: admitted.seq, label: admitted.label };
+    const r = await gateQueueRunCore(ctx, { argv: o.argv, peakMb: o.peakMb, label: o.label, timeoutS: o.timeoutS }, run);
+    return r.exit;
+  } finally {
+    run.untrap();
+  }
+}
+
+// == --status (Q2-06, PRD-4 D20): a read-only snapshot; never writes, renames, removes or quarantines ==
+
+function gateQueueAge(iso, now) {
+  const t = Date.parse(iso || '');
+  return Number.isFinite(t) ? Math.max(0, Math.round((now - t) / 1000)) : null;
+}
+
+function gateQueueStatus(ctx, opts) {
+  const o = opts || {};
+  const root = gateQueueRoot(ctx);
+  const settings = gateQueueSettings(ctx);
+  const sig = gateSignalsRead({ env: ctx.env, platform: o.platform, linuxRoot: o.linuxRoot }, {});
+  const budget = gateQueueBudgetMb(settings.budget_pct, sig.total_mb);
+  const read = (kind) => gateQueueListNames(path.join(root, kind))
+    .map((name) => ({ name, ...gateQueueReadEntry(path.join(root, kind, name), name) }))
+    .filter((r) => !r.gone);
+  const hs = read('holders');
+  const ts = read('tickets');
+  const starts = gateProcStartMany([...hs, ...ts].filter((r) => r.entry).map((r) => r.entry.pid));
+  const now = Date.now();
+  const view = (r) => {
+    if (r.corrupt) return { name: r.name, corrupt: true, alive: false, state: 'corrupt (quarantine pending)' };
+    const e = r.entry;
+    const state = gateProcState(e.pid, e.pid_start, starts);
+    return {
+      seq: e.seq, pid: e.pid, pgid: e.pgid == null ? null : e.pgid, peak_mb: e.peak_mb == null ? null : e.peak_mb,
+      label: e.label || null, cwd: e.cwd || null, repo: e.repo || null,
+      enqueued_at: e.enqueued_at || null, admitted_at: e.admitted_at || null,
+      age_s: gateQueueAge(e.admitted_at || e.enqueued_at, now), reason: e.reason || null, checked_at: e.checked_at || null,
+      alive: state === 'alive' || state === 'alive-unverified', state,
+    };
+  };
+  const holders = hs.map(view);
+  const waiting = ts.map(view);
+  const live = holders.filter((h) => h.alive);
+  const held = live.reduce((s, h) => s + (h.peak_mb == null ? budget : h.peak_mb), 0);
+  const signals = {
+    source: sig.source, pressure: sig.pressure == null ? null : sig.pressure, avail_mb: sig.avail_mb == null ? null : sig.avail_mb,
+    total_mb: sig.total_mb, swap_used_mb: sig.swap_used_mb == null ? null : sig.swap_used_mb,
+    swapout_mb_per_s: sig.swapout_mb_per_s == null ? null : sig.swapout_mb_per_s, unavailable: sig.unavailable || [],
+  };
+  const res = { outcome: 'GATE_QUEUE_STATUS', exit: 0, budget_mb: budget, budget_pct: settings.budget_pct, held_mb: held, signals, holders, waiting };
+  if (o.json) return res;
+  const err = gateQueueErrWriter(ctx);
+  const na = (v, unit) => (v == null ? 'unavailable' : v + unit);
+  const peak = (v) => (v == null ? 'exclusive' : v + ' MB');
+  err('[gate-queue] budget ' + budget + ' MB · held ' + held + ' MB by ' + live.length + ' holder' + (live.length === 1 ? '' : 's') + ' · signals ' + sig.source);
+  err('[gate-queue] signals: pressure ' + na(signals.pressure, '') + ' · avail ' + na(signals.avail_mb == null ? null : Math.round(signals.avail_mb), ' MB') +
+    ' · swap used ' + na(signals.swap_used_mb == null ? null : Math.round(signals.swap_used_mb), ' MB') + ' · swap-out ' + na(signals.swapout_mb_per_s, ' MB/s') + ' (single read)');
+  const who = (e) => 'seq=' + e.seq + ' pid ' + e.pid + ' peak ' + peak(e.peak_mb) + ' label=' + (e.label || '?') + ' cwd=' + (e.cwd || '?') + ' repo=' + (e.repo || '-');
+  if (!holders.length) err('[gate-queue] no holders');
+  for (const h of holders) {
+    if (h.corrupt) { err('[gate-queue] corrupt holder file ' + h.name + ' (quarantine pending)'); continue; }
+    const line = 'holder ' + who(h) + ' admitted ' + (h.admitted_at || '?') + ' age ' + (h.age_s == null ? '?' : h.age_s + ' s');
+    err('[gate-queue] ' + (h.alive ? line : 'dead (reclaim pending): ' + line + ' · ' + h.state));
+  }
+  const liveTickets = waiting.filter((w) => w.alive);
+  if (!waiting.length) err('[gate-queue] nothing waiting');
+  let i = 0;
+  for (const w of waiting) {
+    if (w.corrupt) { err('[gate-queue] corrupt ticket file ' + w.name + ' (quarantine pending)'); continue; }
+    if (!w.alive) { err('[gate-queue] dead (reclaim pending): ticket ' + who(w) + ' · ' + w.state); continue; }
+    i++;
+    err('[gate-queue] waiting ' + i + '/' + liveTickets.length + ' ' + who(w) + ' checked ' + (w.checked_at || 'never') +
+      ' · waiting for ' + (w.reason || '(not checked yet)'));
+  }
+  return res;
+}
+
+// `do-it gate queue [--peak-mb N] [--label T] [--timeout-s N] -- command` and `gate queue --status [--json]`
+// (CLI entry; async). args: parseArgs shape; the command argv comes from args.passthrough (the `--` tail).
+async function gateQueueCmd(ctx, args) {
+  const flags = (args && args.flags) || {};
+  if (flags.status) return gateQueueStatus(ctx, { json: !!flags.json });
+  const argv = (args && (args.passthrough || args.rest || args['--'])) || [];
+  if (!Array.isArray(argv) || !argv.length) throw fail('USAGE', 1, { message: 'usage: do-it gate queue [--peak-mb N] [--label T] [--timeout-s N] -- command | --status [--json]' });
+  const run = gateQueueRuntime(ctx);
+  run.trap();
+  try {
+    return await gateQueueRunCore(ctx, {
+      peakMb: flags['peak-mb'] === undefined ? null : flags['peak-mb'],
+      timeoutS: flags['timeout-s'] === undefined ? null : flags['timeout-s'],
+      label: typeof flags.label === 'string' ? flags.label : null,
+      argv,
+    }, run);
+  } catch (e) {
+    if (e && e.outcome === 'QUEUE_SETTINGS_INVALID') run.err('[gate-queue] ' + ((e.extra && e.extra.message) || 'queue settings invalid') + ' · not started');
+    throw e;
   } finally {
     run.untrap();
   }
