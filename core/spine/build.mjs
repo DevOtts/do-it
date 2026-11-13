@@ -61,7 +61,7 @@ const out = [
   'const EMBEDDED_SCHEMAS = ' + JSON.stringify(schemas) + ';',
   '',
   bodies.join('\n'),
-  'const doItResult = cliMain(process.argv.slice(2), { cwd: process.cwd(), env: process.env });',
+  'const doItResult = await cliMain(process.argv.slice(2), { cwd: process.cwd(), env: process.env });',
   'process.stdout.write(doItResult.stdout);',
   'process.exitCode = doItResult.exit;',
   '',

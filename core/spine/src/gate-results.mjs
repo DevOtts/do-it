@@ -385,6 +385,8 @@ export function gateFold(rows, keyNow, now, opts) {
   }
   let horizon = null;
   for (let i = cleans.length - 1; i >= 0; i--) {
+    // the TTL horizon is per leg (R9, A4): a clean run of another leg never expires this leg's rows
+    if ((cleans[i].row.leg || 'unit') !== (o.leg || 'unit')) continue;
     const run = runs.get(cleans[i].row.run_id);
     if (run && run.end && run.end.tainted === true) continue;
     const h = gateFoldMs(run && run.start ? run.start.at : cleans[i].row.at);
@@ -508,6 +510,19 @@ export function gateFold(rows, keyNow, now, opts) {
 
   // step 10: no usable finish on the key
   if (usable.length === 0) {
+    // A5: FLAKY is file-sticky for 7 days across a key change, even before the new key has a row (streak 0)
+    if (carry) {
+      const others = norm.filter((f) => f.row.key !== K);
+      if (others.length) {
+        const prev = others[others.length - 1].row.components || {};
+        const nowC = keyNow.components || {};
+        out.invalidated = GATE_COMPONENT_ORDER.filter((c) => (prev[c] === undefined ? null : prev[c]) !== (nowC[c] === undefined ? null : nowC[c]));
+      }
+      out.state = 'FLAKY';
+      out.flakyPasses = 0;
+      out.reason = 'flaky-carry';
+      return out;
+    }
     const ignored = onKey.filter((f) => f.ignore !== null);
     if (ignored.length) {
       out.reason = ignored[ignored.length - 1].ignore;

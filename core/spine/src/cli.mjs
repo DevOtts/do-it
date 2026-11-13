@@ -23,19 +23,24 @@ import { redactFlushEvents } from './secrets.mjs';
 import { route } from './router.mjs';
 import { resolveSession } from './session.mjs';
 import { registerSessionRun } from './sessions.mjs';
-import { loadSettings } from './settings.mjs';
+import { gatesStage, loadSettings } from './settings.mjs';
+import { gateQueueCmd } from './gate-queue.mjs';
+import { gateRunCmd } from './gate-run.mjs';
+import { gateDecideCmd, gateResultsCmd } from './gate-verdict.mjs';
 import { gateStop } from './stopgate.mjs';
 import { advanceRunStatus, cleanReason, loadState, newRunId, newState, runDir, selectRunId, takeOvers, unreadableRuns, writeState } from './state.mjs';
 import { gateVerify } from './verify.mjs';
 import { DO_IT_VERSION } from './version.mjs';
 
-export const BOOL_FLAGS = new Set(['json', 'migrate', 'install', 'secrets', 'append', 'force', 'finalize', 'help', 'version', 'verbose', 'dry-run', 'take-over']);
+export const BOOL_FLAGS = new Set(['json', 'migrate', 'install', 'secrets', 'append', 'force', 'finalize', 'help', 'version', 'verbose', 'dry-run', 'take-over', 'resume', 'clean', 'status']);
 export const COMMANDS = ['init', 'start', 'next', 'record', 'gate', 'answer', 'handoff', 'resume', 'park', 'pack', 'status', 'meter', 'doctor'];
 
 export function parseArgs(argv) {
   const out = { positionals: [], flags: {}, sets: [] };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
+    // CONTRACT §11 A7: every token after the first bare `--` goes verbatim to the runner (never parsed as flags)
+    if (a === '--') { out.passthrough = argv.slice(i + 1); break; }
     if (a === '-v') { out.flags.version = true; continue; }
     if (!a.startsWith('--')) { out.positionals.push(a); continue; }
     let name = a.slice(2);
@@ -95,7 +100,8 @@ export function dispatch(ctx, args) {
 }
 
 // In-process entry: no process globals are read or written, so tests and the
-// built file share one code path. Returns { exit, stdout }.
+// built file share one code path. Returns { exit, stdout }, or a Promise of it for the asynchronous gate
+// subcommands (`gate run`, `gate queue`, `gate push`: queue admission waits without blocking signals).
 export function cliMain(argv, opts) {
   const args = parseArgs(argv);
   const json = !!args.flags.json;
@@ -119,12 +125,20 @@ export function cliMain(argv, opts) {
       result = dispatch(ctx, args);
     }
   } catch (e) {
-    if (e instanceof CliError) {
-      result = { outcome: e.outcome, exit: e.exit, ...e.extra };
-    } else {
-      result = { outcome: 'INTERNAL_ERROR', exit: 1, message: String(e && e.message ? e.message : e) };
-    }
+    result = cliErrorResult(e);
   }
+  if (result && typeof result.then === 'function') {
+    return result.then((r) => cliFinish(r, ctx, json), (e) => cliFinish(cliErrorResult(e), ctx, json));
+  }
+  return cliFinish(result, ctx, json);
+}
+
+export function cliErrorResult(e) {
+  if (e instanceof CliError) return { outcome: e.outcome, exit: e.exit, ...e.extra };
+  return { outcome: 'INTERNAL_ERROR', exit: 1, message: String(e && e.message ? e.message : e) };
+}
+
+export function cliFinish(result, ctx, json) {
   const exit = typeof result.exit === 'number' ? result.exit : 0;
   result.exit = exit;
   if (ctx) {
@@ -199,6 +213,8 @@ export function cmdStatus(ctx, args) {
   };
 }
 
+export const GATE_SUBCOMMANDS = ['verify', 'conclude', 'advance', 'build', 'stop', 'route', 'ceiling', 'escalate', 'run', 'results', 'decide', 'queue', 'push', 'train', 'nightly', 'schedule'];
+
 export function cmdGate(ctx, args) {
   const sub = args.positionals[1];
   switch (sub) {
@@ -210,9 +226,28 @@ export function cmdGate(ctx, args) {
     case 'route': return gateRoute(ctx, args);
     case 'ceiling': return gateCeiling(ctx, args);
     case 'escalate': return gateEscalate(ctx, args);
+    // test gates (resumable test gates, CONTRACT §3, §11 A7): run-free, never selectRunId, no .do-it/ needed
+    case 'run': return gateRunCmd(ctx, args);
+    case 'results': return gateResultsCmd(ctx, args);
+    case 'decide': return gateDecideCmd(ctx, args);
+    case 'queue': return gateQueueCmd(ctx, args);
+    case 'push': return gatePushCmd(ctx, args);
+    case 'train': return notImplemented('S2', 'gate train');
+    case 'nightly': return notImplemented('S2', 'gate nightly');
+    case 'schedule': return notImplemented('S2', 'gate schedule');
     default:
-      throw fail('USAGE', 1, { message: 'gate needs a subcommand', subcommands: ['verify', 'conclude', 'advance', 'build', 'stop', 'route', 'ceiling', 'escalate'] });
+      throw fail('USAGE', 1, { message: 'gate needs a subcommand', subcommands: GATE_SUBCOMMANDS });
   }
+}
+
+// `do-it gate push` (A7): gates.on_push under the queue, or the visible `[skip] on_push: no gate declared`, exit 0 (G-13).
+export function gatePushCmd(ctx, args) {
+  const stage = gatesStage(loadSettings(ctx, args.sets).values, 'on_push');
+  if (!stage.declared) return { outcome: 'GATE_SKIP_NO_GATE', exit: 0, stage: 'on_push', line: stage.line, say: [stage.line] };
+  const flags = { label: typeof args.flags.label === 'string' ? args.flags.label : 'on_push' };
+  if (args.flags['peak-mb'] !== undefined) flags['peak-mb'] = args.flags['peak-mb'];
+  if (args.flags['timeout-s'] !== undefined) flags['timeout-s'] = args.flags['timeout-s'];
+  return gateQueueCmd(ctx, { positionals: args.positionals, flags, sets: args.sets, passthrough: ['/bin/sh', '-c', stage.command] });
 }
 
 export function gateAdvance(ctx, args) {
