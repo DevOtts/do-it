@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { after, test } from 'node:test';
-import { FAKE_DECIDE, FILTER, cleanup, fakeResolver, minimalManifest, mkRepo, tmpDir } from '../helpers.mjs';
+import { FAKE_DECIDE_CMD, FILTER, cleanup, fakeResolver, minimalManifest, mkRepo, tmpDir } from '../helpers.mjs';
 
 after(cleanup);
 const filter = createRequire(import.meta.url)(FILTER);
@@ -24,7 +24,7 @@ test('T-A1-12 any decide failure (exit 1, timeout, malformed list, no list) runs
     minimalManifest(dir);
     const logs = [];
     const out = await filter.filterPaths(paths, {
-      env: { ...process.env, DO_IT_GATE_MANIFEST: path.join(dir, 'manifest.json'), DO_IT_GATE_DECIDE: FAKE_DECIDE, FAKE_DECIDE_MODE: mode, ...extra },
+      env: { ...process.env, DO_IT_GATE_MANIFEST: path.join(dir, 'manifest.json'), DO_IT_GATE_DECIDE: FAKE_DECIDE_CMD, FAKE_DECIDE_MODE: mode, ...extra },
       cwd: repo.dir, context: { resolver: fakeResolver(false), config: {}, version: '29.7.0' }, log: (m) => logs.push(m),
     });
     assert.equal(out.filtered.length, 30, mode + ': every path runs');

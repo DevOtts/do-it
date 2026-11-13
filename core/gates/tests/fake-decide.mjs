@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Stand-in for `do-it gate decide --run-dir D` (CONTRACT §11 A1) until the verdict lane's real command is wired in.
 // Built over L1's gateFold and F1's gateKeyFor, so the selection it makes is the spine's own fold, not a copy.
-//   argv:   gate decide --run-dir D          (cwd = the repository, as the jest adapter runs it)
+//   argv:   [DO_IT_GATE_DECIDE json array] --run-dir D   (e.g. [node, fake-decide.mjs, "gate", "decide"])          (cwd = the repository, as the jest adapter runs it)
 //   reads:  D/manifest.json, D/keys.json, the store named by manifest.store_dir
 //   writes: D/run-list.json {schema, files:[{file, key, components, lines, reason}]} and D/decision.json
 //   exit:   0 on success; any other exit, a timeout or a missing run-list.json means "run every file" to the adapter.
@@ -65,8 +65,8 @@ for (const f of keys.files) {
     reason = d.reason;
     source = fold.passRow;
   } else if (manifest.clean) reason = 'clean';
-  decision.push({ file: f.file, decision: reuse ? 'reuse' : 'run', why: reason, key_now: keyNow.key, source });
-  if (!reuse) out.push({ file: f.file, key: keyNow.key, components: keyNow.components, lines: keyNow.lines, reason });
+  decision.push({ file: f.file, key_now: keyNow.key, components: keyNow.components || null, class: f.class, decision: reuse ? 'reuse' : 'run', why: reason, source });
+  if (!reuse) out.push({ file: f.file, key: keyNow.key, why: reason });
 }
-fs.writeFileSync(path.join(dir, 'decision.json'), JSON.stringify({ schema: 'rtg-decision/1', files: decision }));
-fs.writeFileSync(path.join(dir, 'run-list.json'), JSON.stringify({ schema: 'rtg-run-list/1', files: out.map((o) => (o.key ? o : { file: o.file, reason: o.reason })) }));
+fs.writeFileSync(path.join(dir, 'decision.json'), JSON.stringify({ schema: 'do-it-gate-decision/1', run_id: manifest.run_id, files: decision }));
+fs.writeFileSync(path.join(dir, 'run-list.json'), JSON.stringify({ schema: 'do-it-gate-run-list/1', run_id: manifest.run_id, files: out.map((o) => o.file), entries: out }));

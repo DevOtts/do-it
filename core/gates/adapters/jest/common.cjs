@@ -39,7 +39,7 @@ function rowLine(row) {
 
 // One O_APPEND write per row (D1). Opened per row so a compaction that renames the active file is never written through
 // a stale descriptor. Throws on an oversized row or a short write; the caller turns that into ROW_WRITE_FAILED.
-function appendRow(storeDir, row) {
+function appendRow(storeDir, row, mirrorFile) {
   const line = rowLine(row);
   const bytes = Buffer.from(line, 'utf8');
   if (bytes.length > ROW_MAX_JSON) throw new Error('row too large: ' + bytes.length);
@@ -51,6 +51,9 @@ function appendRow(storeDir, row) {
     if (n !== buf.length) throw new Error('short write');
   } finally {
     fs.closeSync(fd);
+  }
+  if (mirrorFile) {
+    try { fs.appendFileSync(mirrorFile, buf); } catch { /* the store row is the record */ }
   }
   return line;
 }
@@ -282,17 +285,21 @@ function redact(text, set) {
 }
 
 // == decide invocation (CONTRACT §11 A1) ==
-// DO_IT_GATE_DECIDE names the do-it entry to run as `<entry> gate decide --run-dir D`: a script path (.mjs/.cjs/.js runs
-// under node) or an executable. Unset: the bundle next to the adapter (plugin or repo layout), else `do-it` on PATH.
+// DO_IT_GATE_DECIDE is a JSON argv array that calls decide, e.g. [node, ".../do-it.mjs", "gate", "decide"]; the adapter
+// appends `--run-dir D`. Unset or unparseable: the bundle next to the adapter (plugin or repo layout), else `do-it`.
 function decideCommand(env) {
-  const e = env || process.env;
-  const v = e.DO_IT_GATE_DECIDE;
-  if (v) return /\.(mjs|cjs|js)$/.test(v) ? [process.execPath, v] : [v];
+  const v = (env || process.env).DO_IT_GATE_DECIDE;
+  if (v) {
+    try {
+      const a = JSON.parse(v);
+      if (Array.isArray(a) && a.length && a.every((x) => typeof x === 'string')) return a;
+    } catch { /* fall back to the default entry */ }
+  }
   for (const rel of [['..', '..', '..', 'scripts', 'do-it.mjs'], ['..', '..', '..', 'spine', 'do-it.mjs']]) {
     const cand = path.join(__dirname, ...rel);
-    if (fs.existsSync(cand)) return [process.execPath, cand];
+    if (fs.existsSync(cand)) return [process.execPath, cand, 'gate', 'decide'];
   }
-  return ['do-it'];
+  return ['do-it', 'gate', 'decide'];
 }
 
 module.exports = {

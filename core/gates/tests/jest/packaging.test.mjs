@@ -24,7 +24,9 @@ test('T-A1-17 the adapter imports only node: modules, relative adapter files and
   assert.ok(!/require\([^)]*spine/.test(common), 'common.cjs never requires the spine');
   const desc = JSON.parse(fs.readFileSync(path.join(JEST_ADAPTER, 'adapter.json'), 'utf8'));
   assert.equal(desc.runner, 'jest');
-  assert.equal(desc.manifest.env, 'DO_IT_GATE_MANIFEST');
+  assert.equal(desc.manifest_env, 'DO_IT_GATE_MANIFEST');
+  assert.ok(desc.inject.includes('--passWithNoTests') && Array.isArray(desc.command) && Array.isArray(desc.solo));
+  for (const f of desc.files) assert.ok(fs.existsSync(path.join(JEST_ADAPTER, f)), f);
   const manifest = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'scripts', 'mirror-manifest.json'), 'utf8'));
   assert.ok(manifest.pairs.some((p) => p.src === 'core/gates/adapters' && p.dst === 'plugins/do-it/gates/adapters' && p.kind === 'dir'));
   assert.ok(!manifest.pairs.some((p) => p.src === 'core/gates'), 'fixtures under core/gates/tests are not shipped');

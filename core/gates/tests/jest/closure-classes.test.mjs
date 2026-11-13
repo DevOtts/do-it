@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { after, test } from 'node:test';
-import { CLOSURE, FILTER, FAKE_DECIDE, cleanup, fakeResolver, minimalManifest, mkRepo, tmpDir } from '../helpers.mjs';
+import { CLOSURE, FILTER, FAKE_DECIDE_CMD, cleanup, fakeResolver, minimalManifest, mkRepo, tmpDir } from '../helpers.mjs';
 
 after(cleanup);
 const require = createRequire(import.meta.url);
@@ -40,7 +40,7 @@ test('T-A1-06 closure classes: template require, readFileSync and a member with 
   const emptyList = path.join(dir, 'empty-list.json');
   fs.writeFileSync(emptyList, JSON.stringify({ files: [] }));
   const env = {
-    ...process.env, DO_IT_GATE_MANIFEST: path.join(dir, 'manifest.json'), DO_IT_GATE_DECIDE: FAKE_DECIDE,
+    ...process.env, DO_IT_GATE_MANIFEST: path.join(dir, 'manifest.json'), DO_IT_GATE_DECIDE: FAKE_DECIDE_CMD,
     FAKE_DECIDE_MODE: 'fixed', FAKE_DECIDE_RUNLIST: emptyList,
   };
   const out = await filter.filterPaths([boom, path.join(repo.dir, 'plain.spec.js')], {

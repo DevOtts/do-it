@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { after, test } from 'node:test';
-import { FAKE_DECIDE, FILTER, REPORTER, cleanup, fakeResolver, mkManifest, mkRepo, readJson, storeRows, testResult, write } from '../helpers.mjs';
+import { FAKE_DECIDE_CMD, FILTER, REPORTER, cleanup, fakeResolver, mkManifest, mkRepo, readJson, storeRows, testResult, write } from '../helpers.mjs';
 
 after(cleanup);
 const require = createRequire(import.meta.url);
@@ -19,7 +19,7 @@ test('T-A1-13 decide is called once; keys.json has 30 keyed entries; a dependenc
   });
   const m = mkManifest(repo, { alwaysRun: [] });
   const calls = path.join(m.runDir, 'calls');
-  const env = { ...process.env, DO_IT_GATE_MANIFEST: m.manifestFile, DO_IT_GATE_DECIDE: FAKE_DECIDE, FAKE_DECIDE_COUNT_FILE: calls };
+  const env = { ...process.env, DO_IT_GATE_MANIFEST: m.manifestFile, DO_IT_GATE_DECIDE: FAKE_DECIDE_CMD, FAKE_DECIDE_COUNT_FILE: calls };
   const paths = FILES.map((f) => path.join(repo.dir, f));
   const out = await filter.filterPaths(paths, { env, cwd: repo.dir, context: { resolver: fakeResolver(false), config: {}, version: '29.7.0' }, log: () => {} });
   assert.equal(out.filtered.length, 30);

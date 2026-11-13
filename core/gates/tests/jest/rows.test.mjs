@@ -55,6 +55,7 @@ test('T-A1-01 one start and one finish row per file, valid and CRC-true, FAIL te
   for (const f of [...walkFiles(repo.store), ...walkFiles(m.runDir)]) {
     assert.ok(!fs.readFileSync(f).includes(SECRET), 'secret value leaked into ' + f);
   }
+  assert.equal(fs.readFileSync(path.join(m.runDir, 'rows.jsonl'), 'utf8'), fs.readFileSync(path.join(repo.store, 'results.jsonl'), 'utf8'), 'rows mirrored line for line');
   const report = readJson(path.join(m.runDir, 'runner-report.json'));
   assert.equal(report.tainted, false);
   assert.equal(rows.filter((r) => r.type === 'run_end' || r.type === 'run_start').length, 0, 'the adapter writes no run rows');

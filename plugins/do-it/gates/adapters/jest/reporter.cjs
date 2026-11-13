@@ -86,7 +86,12 @@ class DoItGateReporter {
       this._runner = keys.runner || { name: 'jest', version: '-', argv: [] };
       for (const f of keys.files) if (f && typeof f.file === 'string') this._keys.set(f.file, f);
     }
-    const list = require('./filter.cjs').parseRunList(common.readJson(path.join(this._dir, 'run-list.json')), this._repo);
+    const list = require('./filter.cjs').parseRunList(common.readJson(path.join(this._dir, 'run-list.json')), this._repo) || new Map();
+    // key and components come from decision.json (key_now, components); a run-list entry may also carry a key
+    const dec = common.readJson(path.join(this._dir, 'decision.json'));
+    for (const d of dec && Array.isArray(dec.files) ? dec.files : []) {
+      if (d && typeof d.file === 'string' && typeof d.key_now === 'string') list.set(d.file, { ...(list.get(d.file) || {}), file: d.file, key: d.key_now, components: d.components });
+    }
     this._runList = list;
     this._selected = common.readJson(path.join(this._dir, 'selected.json'));
     this._redaction = common.redactionSet(this._manifest, this._env, this._repo);
@@ -143,7 +148,7 @@ class DoItGateReporter {
 
   _append(row) {
     try {
-      common.appendRow(this._manifest.store_dir, row);
+      common.appendRow(this._manifest.store_dir, row, path.join(this._dir, 'rows.jsonl'));
       return true;
     } catch (e) {
       this._reasons.add('ROW_WRITE_FAILED');

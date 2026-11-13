@@ -123,7 +123,7 @@ async function filterPaths(paths, opts) {
   try { fs.unlinkSync(runListFile); } catch { /* no stale list */ }
   const cmd = common.decideCommand(env);
   const timeout = Number(env.DO_IT_GATE_DECIDE_TIMEOUT_MS) || DEFAULT_DECIDE_TIMEOUT_MS;
-  const r = cp.spawnSync(cmd[0], [...cmd.slice(1), 'gate', 'decide', '--run-dir', dir], {
+  const r = cp.spawnSync(cmd[0], [...cmd.slice(1), '--run-dir', dir], {
     cwd: root, env, encoding: 'utf8', timeout, stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 1 << 26,
   });
   const list = !r.error && r.status === 0 ? parseRunList(common.readJson(runListFile), repo) : null;

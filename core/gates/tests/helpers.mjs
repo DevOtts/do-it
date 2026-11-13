@@ -22,6 +22,7 @@ export const COMMON = path.join(JEST_ADAPTER, 'common.cjs');
 export const FIXTURE = path.join(HERE, 'fixtures', 'jest-30');
 export const CLOSURE_DRIVER = path.join(HERE, 'jest', 'closure-driver.cjs');
 export const FAKE_DECIDE = path.join(HERE, 'fake-decide.mjs');
+export const FAKE_DECIDE_CMD = JSON.stringify([process.execPath, FAKE_DECIDE, 'gate', 'decide']);
 export const SPINE_SRC = path.join(REPO_ROOT, 'core', 'spine', 'src');
 export const GOLDEN_ROW = path.join(REPO_ROOT, 'core', 'spine', 'test', 'g1', 'fixtures');
 
@@ -183,7 +184,7 @@ export async function runJest(repo, o) {
   ];
   const env = {
     ...gitEnv(repo.home),
-    DO_IT_GATE_MANIFEST: m.manifestFile, DO_IT_GATE_DECIDE: process.env.A1_DECIDE_ENTRY || FAKE_DECIDE, FAKE_DECIDE_COUNT_FILE: callsFile,
+    DO_IT_GATE_MANIFEST: m.manifestFile, DO_IT_GATE_DECIDE: process.env.A1_DECIDE_ENTRY || FAKE_DECIDE_CMD, FAKE_DECIDE_COUNT_FILE: callsFile,
     FIXTURE_JEST_CACHE: repo.cache, ...(opts.planted ? { FIXTURE_PLANTED: '1' } : {}), ...(opts.resume ? { FAKE_DECIDE_RESUME: '1' } : {}),
     ...(opts.env || {}),
   };
