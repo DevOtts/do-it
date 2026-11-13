@@ -1,0 +1,28 @@
+core/spine/test/**/*.test.mjs: rc=0 # tests 252 # pass 251 # fail 0 # skipped 1 
+core/routing/tests/*.test.mjs: rc=0 # tests 24 # pass 24 # fail 0 # skipped 0 
+core/cache/tests/**/*.test.mjs: (none)
+core/pipelines/tests/*.test.mjs: rc=0 # tests 11 # pass 11 # fail 0 # skipped 0 
+core/pipelines/review-loop/tests/*.test.mjs: rc=0 # tests 23 # pass 23 # fail 0 # skipped 0 
+core/personas/tests/*.test.mjs: rc=0 # tests 7 # pass 7 # fail 0 # skipped 0 
+core/state-stores/tests/*.test.mjs: rc=0 # tests 13 # pass 13 # fail 0 # skipped 0 
+hosts/_interface/tests/*.test.mjs: rc=0 # tests 18 # pass 18 # fail 0 # skipped 0 
+hosts/codex/tests/*.test.mjs: rc=0 # tests 17 # pass 17 # fail 0 # skipped 0 
+hosts/opencode/tests/*.test.mjs: rc=0 # tests 18 # pass 18 # fail 0 # skipped 0 
+hosts/engine/tests/*.test.mjs: rc=1 # tests 36 # pass 26 # fail 3 # skipped 7 
+not ok 16 - T-N1-16 [REAL] live Control Tower checkpoint card
+  failureType: 'testCodeFailure'
+  error: 'engine POST /api/squads -> 404'
+not ok 17 - T-N1-17 [REAL] live ask on real channels and reply by ID
+  failureType: 'testCodeFailure'
+  error: 'engine POST /api/ask-cards -> 404'
+not ok 18 - T-N1-18 [REAL] definition read-back is lossless on Engine
+  failureType: 'testCodeFailure'
+hosts/engine/state-store/tests/*.test.mjs: rc=0 # tests 15 # pass 15 # fail 0 # skipped 0 
+tests/plugin/*.test.mjs: rc=0 # tests 17 # pass 17 # fail 0 # skipped 0 
+tests/catalog/*.test.mjs: rc=0 # tests 27 # pass 27 # fail 0 # skipped 0 
+tests/readme/*.test.mjs: rc=0 # tests 32 # pass 32 # fail 0 # skipped 0 
+tests/hosts/*.test.mjs: rc=0 # tests 58 # pass 58 # fail 0 # skipped 0 
+tests/status/*.test.mjs: rc=0 # tests 2 # pass 0 # fail 0 # skipped 2 
+tests/e2e/r4.test.mjs: rc=0 # tests 26 # pass 25 # fail 0 # skipped 1 
+core/gates/tests/**/*.test.mjs: (none)
+exit=1
