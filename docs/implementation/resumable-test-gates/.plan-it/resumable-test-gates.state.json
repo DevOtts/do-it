@@ -3,7 +3,7 @@
   "machineVersion": "5.2.0",
   "run": {
     "name": "resumable-test-gates",
-    "goal": "Plan resumable test gates: a per-test-file result store keyed by a dependency-closure fingerprint, a composed verdict that says it is composed, T3 clean as the safety net, a deterministic per-machine gate queue, generic in do-it (P1-P6) and adopted first by Engine-Core (P7).",
+    "goal": "Plan resumable test gates: a per-test-file result store keyed by a dependency-closure fingerprint, a composed verdict that says it is composed, T3 clean as the safety net, a deterministic per-machine gate queue, generic in do-it (P1-P6) and adopted first by the pilot consumer (P7).",
     "startedAt": "2026-11-06T13:10:07Z",
     "mode": "autonomous-draft",
     "topology": "orchestrator+squads",
@@ -11,7 +11,7 @@
     "doItRun": "r-20261106-130657-7ff2",
     "originSession": "study-bateria-testes-tempo",
     "anamnesis": {
-      "access": "read-only: do-it repo, Engine-Core repos via git show origin/main and installed node_modules/.venv; no credentials read",
+      "access": "read-only: do-it repo, the pilot consumer repos via git show origin/main and installed node_modules/.venv; no credentials read",
       "fences": "zero code, no edits outside docs/implementation/resumable-test-gates/, no PRs/pushes, no test suite or gate run, no git checkout in Engine repos, never print credentials",
       "naming": "do-it repo DevOtts/do-it; epic branches epic/<EID>-<slug>; Engine PRs per repo; settings block named gates (settings.tiers = model tiers)",
       "topology": "orchestrator+squads (owner away; conductor-spawned planner)",

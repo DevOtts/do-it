@@ -4,8 +4,8 @@
   "contract": "delivery/CONTRACT.md v1.1-draft",
   "pinned": {
     "do-it": "d38cedbee0e3e63e8c03b1e51f7ac2bbec4bfb71",
-    "brain-api-core": "1028113e385112dced98b3f0c85893f1ba8a1f05",
-    "brain-docs": "c68a70706028148664d2927e607a6ab5e0c84823"
+    "pilot-jest-repo": "1028113e385112dced98b3f0c85893f1ba8a1f05",
+    "pilot-docs-repo": "c68a70706028148664d2927e607a6ab5e0c84823"
   },
   "release": "do-it 1.2.0 on top of 1.1.0",
   "decisions": [
