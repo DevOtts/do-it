@@ -16,3 +16,14 @@
 - A catalog citation was written against an unpushed local branch (plan-it line 67), not the published line (63). Cite published `origin/main`.
 - the pilot org a consumer service main was already red (Docker build and E2E) before the adapter PR; a red main is not a reason to merge code blindly. Hold, and report it.
 - `git pull` / `git push` to DevOtts repos need `GH_TOKEN=$(gh auth token --user DevOtts)` in the same command; the default credential helper maps to another account.
+
+## do-it 1.1.0 (2026-11-06 to 2026-11-13)
+- Adversarial review (CP-03) does not converge to zero by fixing alone: each fix adds surface. Track the trend per round, and require every finding to come with a regression test that replays the attack, so earlier attacks keep holding.
+- Long single reviewers stall (2–3 h, no output). Split review by area, give each a time budget, and have it write its section file incrementally.
+- A `--dry-run` flag must be tested to write nothing. A reviewer's dry run overwrote a real user file before that test existed.
+- A suite runner that exits 0 on skips hides unverified cases; release runs set every env var and list skips explicitly.
+- Live-service probes must require a service-specific answer. "Any container named like it" plus "any HTTP status" turned an unrelated Mongo container and a 404 into "Engine reachable".
+- Long CPU-bound tests time out when other sessions load the machine (load average 26). Re-run a failed case alone before calling it a regression.
+- Driving a nested Claude Code TUI needs a clean env (no inherited CLAUDE_CODE_* variables) and a fixed terminal size. `--settings` that disables plugins also disables the plugin under test.
+- Plugin-shipped commands must not depend on repo-only files (companions.json); test them from a plugin-cache-style copy.
+- Before tagging a sibling, re-check its origin/main sha against the planned one; a local git config can display a merge commit as its parent.
