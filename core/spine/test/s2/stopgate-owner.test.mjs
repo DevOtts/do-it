@@ -187,7 +187,7 @@ test('T-S1-07 start records the host session and adds no settings key (G-8)', ()
   assert.equal(get(none), null, 'no host session: null, the only case where it is null');
   // G-8: the settings schema keeps exactly its 1.0.x top-level keys
   const keys = Object.keys(loadSchemaFile('settings.schema.json').properties).sort();
-  assert.deepEqual(keys, ['ceilings', 'handoff', 'host', 'interaction', 'isolation', 'observability', 'review', 'secrets', 'state', 'stop_gate', 'tiers', 'version']);
+  assert.deepEqual(keys, ['ceilings', 'gates', 'handoff', 'host', 'interaction', 'isolation', 'observability', 'review', 'secrets', 'state', 'stop_gate', 'tiers', 'version']);
 });
 
 test('T-S1-08 a corrupt state.json fails open with an event, and status reports the unreadable run', () => {

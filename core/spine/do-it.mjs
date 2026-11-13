@@ -7,7 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const EMBEDDED_SCHEMAS = {"answers.schema.json":{"$id":"do-it-answers/1","title":"answers.json: the parsed owner reply, deterministic (no timestamps)","type":"object","required":["pack_id","answers","pending","complete"],"properties":{"pack_id":{"type":"string","minLength":1},"complete":{"type":"boolean"},"pending":{"type":"array","items":{"type":"integer","minimum":1}},"answers":{"type":"array","items":{"type":"object","required":["n","answer","source","free_text"],"properties":{"n":{"type":"integer","minimum":1},"answer":{"type":"string"},"source":{"enum":["reply","recommendation","default"]},"free_text":{"type":"boolean"}},"additionalProperties":false}}},"additionalProperties":false},"do-it-state.1.schema.json":{"$id":"do-it-state/1","title":"do-it run state (written only by the spine)","type":"object","required":["schema","run_id","preset","request","status","size","host","stage","slices","gates","handoffs","stop_refusals","review","created_at","updated_at"],"properties":{"schema":{"const":"do-it-state/1"},"run_id":{"type":"string","minLength":1},"preset":{"type":["string","null"]},"request":{"type":"string"},"status":{"enum":["INTAKE","PLANNING","AWAIT_RATIFY","BUILDING","VERIFYING","REVIEWING","FIXING","DEPLOYING","PROVING","CONCLUDING","DONE","NEEDS_HUMAN","PARKED","BLOCKED","FAILED","PARTIAL_FAILURE","ROLLED_BACK","ESCALATED"]},"size":{"type":["integer","string","null"]},"host":{"type":["string","null"]},"stage":{"type":["string","null"]},"slices":{"type":"array","items":{"type":"object","required":["id","status"],"properties":{"id":{"type":"string","minLength":1},"lane":{"type":["string","null"]},"tier":{"type":["string","null"]},"wave":{"type":["string","null"]},"status":{"type":"string"},"attempts":{"type":"integer","minimum":0},"escalations":{"type":"integer","minimum":0}}}},"gates":{"type":"object"},"handoffs":{"type":"integer","minimum":0},"stop_refusals":{"type":"integer","minimum":0},"review":{"type":"object","required":["round","exit"],"properties":{"round":{"type":"integer","minimum":0},"exit":{"type":["string","null"]}}},"created_at":{"type":"string","minLength":1},"updated_at":{"type":"string","minLength":1},"ceiling":{"type":["string","object","null"]},"park":{"type":["object","null"]},"handoff_state":{"type":["string","object","null"]},"run_verdict":{"enum":["DONE_ALL_VERIFIED","DONE_WITH_RESIDUALS","BLOCKED","NEEDS_RESET","USAGE_LIMIT",null]},"deploy":{"type":["object","null"]},"last_journal":{"type":["string","null"]}}},"events.schema.json":{"$id":"do-it-event/1","title":"events.jsonl row (trace fields frozen for v2 exporters)","type":"object","required":["ts","run_id","slice_id","stage","persona","tier","model","host","event","parent_id","verdict"],"properties":{"ts":{"type":"string","minLength":1},"run_id":{"type":"string","minLength":1},"slice_id":{"type":["string","null"]},"stage":{"type":["string","null"]},"persona":{"type":["string","null"]},"tier":{"type":["string","null"]},"model":{"type":["string","null"]},"host":{"type":["string","null"]},"event":{"type":"string","minLength":1},"parent_id":{"type":["string","null"]},"verdict":{"type":["string","null"]},"detail":{"type":["object","string","null"]}},"additionalProperties":false},"finish-line.schema.json":{"$id":"do-it-finish-line/1","title":"finish-line.json: rows that must all become terminal","type":"object","required":["rows"],"properties":{"rows":{"type":"array","items":{"type":"object","required":["id","kind","state"],"properties":{"id":{"type":"string","minLength":1},"kind":{"enum":["wave","package","dod"]},"state":{"enum":["OPEN","DONE","PARKED","BLOCKED"]},"evidence":{"type":["string","null"]},"owner_question":{"type":["string","null"]},"reason":{"type":["string","null"]},"archived_to":{"type":["string","null"]},"run_id":{"type":["string","null"]}}}}}},"it-result.1.schema.json":{"$id":"it-result/1","title":"Result file every stage writes as its last act","type":"object","required":["schema","stage","run_id","status","exit_code"],"properties":{"schema":{"const":"it-result/1"},"stage":{"enum":["prompt-it","plan-it","build-it","review-it","deploy-it","conclude-it","reconcile-it"]},"run_id":{"type":"string","minLength":1},"slice_id":{"type":["string","null"]},"version":{"type":["string","null"]},"head_sha":{"type":["string","null"]},"status":{"enum":["ok","needs_human","blocked","failed","context_reset","usage_limit"]},"exit_code":{"type":"integer","minimum":0,"maximum":3},"verdicts":{"type":"array","items":{"type":"object","required":["row","verdict"],"properties":{"row":{"type":"string","minLength":1},"verdict":{"enum":["VERIFIED","IMPLEMENTED-NOT-VERIFIED","BLOCKED"]},"evidence":{"type":["string","null"]},"real":{"type":"boolean"}}}},"reason":{"type":["string","null"]},"run_verdict":{"enum":["DONE_ALL_VERIFIED","DONE_WITH_RESIDUALS","BLOCKED","NEEDS_RESET","USAGE_LIMIT",null]},"next":{"type":["object","null"]},"pending_human":{"type":["object","null"]},"artifacts":{"type":"array","items":{"type":"object","required":["path"],"properties":{"path":{"type":"string"},"kind":{"type":["string","null"]},"sha256":{"type":["string","null"]}}}},"resume":{"type":["object","null"]},"tokens":{"type":["object","null"]},"rollback":{"type":"boolean"},"legs":{"type":"array","items":{"type":"object","required":["leg","state"],"properties":{"leg":{"type":"string","minLength":1},"state":{"enum":["DEPLOYED_VERIFIED","DEPLOYED_UNVERIFIED","HELD","FAILED","NEEDS_HUMAN","ROLLED_BACK","ROLLBACK_FAILED"]},"evidence":{"type":["string","null"]},"compensate":{"type":["string","object","array","null"]}}}}}},"ledger.schema.json":{"$id":"do-it-ledger/1","title":"ledger.json: latest verdict and evidence per DoD row","type":"object","required":["schema","run_id","rows"],"properties":{"schema":{"const":"do-it-ledger/1"},"run_id":{"type":"string","minLength":1},"rows":{"type":"array","items":{"type":"object","required":["row","verdict","evidence","evidence_sha256","real","recorded_at","updated_at"],"properties":{"row":{"type":"string","minLength":1},"verdict":{"enum":["VERIFIED","IMPLEMENTED-NOT-VERIFIED","BLOCKED"]},"evidence":{"type":["string","null"]},"evidence_path":{"type":["string","null"]},"evidence_sha256":{"type":["string","null"]},"real":{"type":"boolean"},"reason":{"type":["string","null"]},"recorded_at":{"type":"string","minLength":1},"updated_at":{"type":"string","minLength":1}}}}}},"owner-pack.schema.json":{"$id":"do-it-owner-pack/1","title":"owner-pack.json: the single set of questions for the human","type":"object","required":["pack_id","run_id","questions","created_at"],"properties":{"pack_id":{"type":["string","null"]},"run_id":{"type":"string","minLength":1},"created_at":{"type":"string","minLength":1},"questions":{"type":"array","items":{"type":"object","required":["n","kind","text","options","recommendation","default","reversible"],"properties":{"n":{"type":"integer","minimum":1},"kind":{"type":"string","minLength":1},"text":{"type":"string","minLength":1},"options":{"type":"array","items":{"type":"string"}},"recommendation":{"type":["string","null"]},"default":{"type":["string","null"]},"reversible":{"type":"boolean"},"source":{"type":"string","minLength":1},"status":{"enum":["withdrawn"]},"withdrawn_at":{"type":"string"},"withdrawn_reason":{"type":"string"}},"additionalProperties":false}}},"additionalProperties":false},"readiness.schema.json":{"$id":"do-it-readiness/1","title":"plan/READINESS.json: the verdict that lets a build start (G-8)","type":"object","required":["decisions","preflight"],"properties":{"decisions":{"type":["array","object"]},"preflight":{"type":"object","required":["passed"],"properties":{"passed":{"type":"boolean"}}},"credentials":{"type":"array","items":{"type":"string","minLength":1}},"owner_dependent_slices":{"type":"integer","minimum":0},"review_checkpoints":{"type":"object","required":["schema","count","checkpoints"],"properties":{"schema":{"const":"review-checkpoints/1"},"count":{"type":"integer","minimum":0},"level":{"enum":["none","light","standard","heightened","full"]},"checkpoints":{"type":"array","items":{"type":"object","required":["id","kind","evidence"],"properties":{"id":{"type":"string","pattern":"^CP-\\d{2}$"},"kind":{"enum":["phase","wave","adversarial","pre-merge","pre-release"]},"evidence":{"type":"string","minLength":1},"at":{"type":"string"},"review":{"type":"string"},"blocks":{"type":"string"},"gates":{"type":"array","minItems":1,"items":{"enum":["dependents","promotion","merge","release"]}},"covers":{"type":"array","items":{"type":"string","minLength":1}}}}}}},"slices":{"type":"array","items":{"type":"object","required":["id"],"properties":{"id":{"type":"string","minLength":1},"lane":{"type":["string","null"]},"tier":{"type":["string","null"]},"class":{"enum":["deterministic","gather","implementation","hard",null]},"depends_on":{"type":"array","items":{"type":"string"}},"wave":{"type":["string","null"]},"depends_on_owner_answer":{"type":"boolean"}}}}}},"settings.schema.json":{"$id":"do-it-settings/1","title":"do-it settings (workspace, global or merged)","type":"object","additionalProperties":false,"properties":{"version":{"const":1},"interaction":{"type":"object","additionalProperties":false,"properties":{"owner_pack":{"enum":["auto","native","html","markdown"]},"fallback":{"type":"array","items":{"enum":["native","html","markdown"]}}}},"host":{"type":"object","additionalProperties":false,"properties":{"driver":{"type":"string","minLength":1},"alias":{"type":["string","null"]}}},"isolation":{"type":"object","additionalProperties":false,"properties":{"driver":{"type":"string","minLength":1}}},"state":{"type":"object","properties":{"backend":{"type":"string","minLength":1}},"additionalProperties":{"type":"object"}},"secrets":{"type":"object","additionalProperties":false,"properties":{"provider":{"enum":["file","env","aws-secrets-manager","onepassword","1password"]},"ref":{"type":"string"}}},"handoff":{"type":"object","additionalProperties":false,"properties":{"mode":{"enum":["auto","ask"]},"max_per_run":{"type":"integer","minimum":1}}},"review":{"type":"object","additionalProperties":false,"properties":{"max_rounds":{"type":"integer","minimum":1},"cost_cap_tokens":{"type":"integer","minimum":1}}},"tiers":{"type":"object","additionalProperties":false,"properties":{"T1":{"type":"string"},"T2":{"type":"string"},"T3":{"type":"string"}}},"ceilings":{"type":"object","additionalProperties":false,"properties":{"warn_tokens":{"type":"integer","minimum":0},"warn_pct":{"type":"number","minimum":0,"maximum":100},"block_tokens":{"type":"integer","minimum":0},"block_pct":{"type":"number","minimum":0,"maximum":100}}},"stop_gate":{"type":"object","additionalProperties":false,"properties":{"patience":{"type":"integer","minimum":0}}},"observability":{"type":"object","additionalProperties":false,"properties":{"provider":{"type":"string","minLength":1}}}}},"token-meter.schema.json":{"$id":"do-it-token-meter/1","title":"token-meter.jsonl row: the event fields plus usage fields","type":"object","required":["ts","run_id","slice_id","stage","persona","tier","model","host","event","parent_id","verdict","tokens_in","tokens_out","cache_read","cache_write","estimated","source"],"properties":{"ts":{"type":"string","minLength":1},"run_id":{"type":"string","minLength":1},"slice_id":{"type":["string","null"]},"stage":{"type":["string","null"]},"persona":{"type":["string","null"]},"tier":{"type":["string","null"]},"model":{"type":["string","null"]},"host":{"type":["string","null"]},"event":{"type":"string","minLength":1},"parent_id":{"type":["string","null"]},"verdict":{"type":["string","null"]},"tokens_in":{"type":["integer","null"],"minimum":0},"tokens_out":{"type":["integer","null"],"minimum":0},"cache_read":{"type":["integer","null"],"minimum":0},"cache_write":{"type":["integer","null"],"minimum":0},"estimated":{"type":"boolean"},"source":{"enum":["provider","estimate","unknown"]},"extra":{"type":["object","null"]}},"additionalProperties":false}};
+const EMBEDDED_SCHEMAS = {"answers.schema.json":{"$id":"do-it-answers/1","title":"answers.json: the parsed owner reply, deterministic (no timestamps)","type":"object","required":["pack_id","answers","pending","complete"],"properties":{"pack_id":{"type":"string","minLength":1},"complete":{"type":"boolean"},"pending":{"type":"array","items":{"type":"integer","minimum":1}},"answers":{"type":"array","items":{"type":"object","required":["n","answer","source","free_text"],"properties":{"n":{"type":"integer","minimum":1},"answer":{"type":"string"},"source":{"enum":["reply","recommendation","default"]},"free_text":{"type":"boolean"}},"additionalProperties":false}}},"additionalProperties":false},"do-it-state.1.schema.json":{"$id":"do-it-state/1","title":"do-it run state (written only by the spine)","type":"object","required":["schema","run_id","preset","request","status","size","host","stage","slices","gates","handoffs","stop_refusals","review","created_at","updated_at"],"properties":{"schema":{"const":"do-it-state/1"},"run_id":{"type":"string","minLength":1},"preset":{"type":["string","null"]},"request":{"type":"string"},"status":{"enum":["INTAKE","PLANNING","AWAIT_RATIFY","BUILDING","VERIFYING","REVIEWING","FIXING","DEPLOYING","PROVING","CONCLUDING","DONE","NEEDS_HUMAN","PARKED","BLOCKED","FAILED","PARTIAL_FAILURE","ROLLED_BACK","ESCALATED"]},"size":{"type":["integer","string","null"]},"host":{"type":["string","null"]},"stage":{"type":["string","null"]},"slices":{"type":"array","items":{"type":"object","required":["id","status"],"properties":{"id":{"type":"string","minLength":1},"lane":{"type":["string","null"]},"tier":{"type":["string","null"]},"wave":{"type":["string","null"]},"status":{"type":"string"},"attempts":{"type":"integer","minimum":0},"escalations":{"type":"integer","minimum":0}}}},"gates":{"type":"object"},"handoffs":{"type":"integer","minimum":0},"stop_refusals":{"type":"integer","minimum":0},"review":{"type":"object","required":["round","exit"],"properties":{"round":{"type":"integer","minimum":0},"exit":{"type":["string","null"]}}},"created_at":{"type":"string","minLength":1},"updated_at":{"type":"string","minLength":1},"ceiling":{"type":["string","object","null"]},"park":{"type":["object","null"]},"handoff_state":{"type":["string","object","null"]},"run_verdict":{"enum":["DONE_ALL_VERIFIED","DONE_WITH_RESIDUALS","BLOCKED","NEEDS_RESET","USAGE_LIMIT",null]},"deploy":{"type":["object","null"]},"last_journal":{"type":["string","null"]}}},"events.schema.json":{"$id":"do-it-event/1","title":"events.jsonl row (trace fields frozen for v2 exporters)","type":"object","required":["ts","run_id","slice_id","stage","persona","tier","model","host","event","parent_id","verdict"],"properties":{"ts":{"type":"string","minLength":1},"run_id":{"type":"string","minLength":1},"slice_id":{"type":["string","null"]},"stage":{"type":["string","null"]},"persona":{"type":["string","null"]},"tier":{"type":["string","null"]},"model":{"type":["string","null"]},"host":{"type":["string","null"]},"event":{"type":"string","minLength":1},"parent_id":{"type":["string","null"]},"verdict":{"type":["string","null"]},"detail":{"type":["object","string","null"]}},"additionalProperties":false},"finish-line.schema.json":{"$id":"do-it-finish-line/1","title":"finish-line.json: rows that must all become terminal","type":"object","required":["rows"],"properties":{"rows":{"type":"array","items":{"type":"object","required":["id","kind","state"],"properties":{"id":{"type":"string","minLength":1},"kind":{"enum":["wave","package","dod"]},"state":{"enum":["OPEN","DONE","PARKED","BLOCKED"]},"evidence":{"type":["string","null"]},"owner_question":{"type":["string","null"]},"reason":{"type":["string","null"]},"archived_to":{"type":["string","null"]},"run_id":{"type":["string","null"]}}}}}},"gate-manifest.1.schema.json":{"$id":"do-it-gate-manifest/1","title":"rtg-manifest/1: the per-run manifest a gate run hands to its runner adapter (names, paths, digests, HMACs; never a value)","type":"object","required":["schema","run_id","scope","leg","clean","runner","lines","components","hashes","wide_patterns","wide_hits","wide_all","tree","dirty","never","env_names","env_files"],"additionalProperties":false,"properties":{"schema":{"const":"rtg-manifest/1"},"run_id":{"type":"string","pattern":"^g-[0-9]{8}T[0-9]{6}Z-[0-9a-f]{4}$"},"scope":{"enum":["edit","push","train","nightly"]},"leg":{"type":"string","minLength":1},"clean":{"type":"boolean"},"runner":{"enum":["jest","pytest","vitest"]},"lines":{"type":"array","items":{"type":"string","minLength":1}},"argv_sha":{"type":"string","pattern":"^[0-9a-f]{64}$"},"components":{"type":"object","additionalProperties":false,"properties":{"gate":{"type":"string","pattern":"^[0-9a-f]{64}$"},"core":{"type":"string","pattern":"^[0-9a-f]{64}$"},"installed":{"type":["string","null"],"pattern":"^[0-9a-f]{64}$"},"env":{"type":"string","pattern":"^[0-9a-f]{64}$"},"platform":{"type":["string","null"],"pattern":"^[0-9a-f]{64}$"}}},"hashes":{"type":"object","additionalProperties":{"type":"string","pattern":"^([0-9a-f]{64}|-)$"}},"wide_patterns":{"type":"object","required":["node","python"],"additionalProperties":false,"properties":{"node":{"type":"string"},"python":{"type":"string"}}},"wide_hits":{"type":"array","items":{"type":"string"}},"wide_all":{"type":"boolean"},"tree":{"type":"string","pattern":"^[0-9a-f]{64}$"},"dirty":{"type":"array","items":{"type":"string"}},"never":{"type":"array","items":{"type":"string"}},"env_names":{"type":"array","items":{"type":"string"}},"env_files":{"type":"array","items":{"type":"string"}},"platform_expect":{"type":["array","null"],"items":{"type":"string"}},"store_dir":{"type":["string","null"]},"reason":{"type":["string","null"]}}},"gate-result.1.schema.json":{"$id":"do-it-gate-result/1","title":"gate results store row (one canonical JSON line of results.jsonl)","type":"object","required":["schema","type","run_id","at","crc"],"additionalProperties":false,"properties":{"schema":{"const":"do-it-gate-result/1"},"type":{"enum":["start","finish","run_start","run_end","clean"]},"run_id":{"type":"string","pattern":"^g-[0-9]{8}T[0-9]{6}Z-[0-9a-f]{4}$"},"at":{"type":"string","pattern":"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,9})?Z$"},"file":{"type":"string","minLength":1},"leg":{"type":"string","minLength":1,"pattern":"^[A-Za-z0-9_.:-]+$"},"scope":{"enum":["edit","push","train","nightly"]},"key":{"type":"string","pattern":"^[0-9a-f]{64}$"},"components":{"type":"object","additionalProperties":false,"properties":{"gate":{"type":"string","pattern":"^[0-9a-f]{64}$"},"runner":{"type":"string","pattern":"^[0-9a-f]{64}$"},"core":{"type":"string","pattern":"^[0-9a-f]{64}$"},"installed":{"type":"string","pattern":"^[0-9a-f]{64}$"},"env":{"type":"string","pattern":"^[0-9a-f]{64}$"},"platform":{"type":"string","pattern":"^[0-9a-f]{64}$"},"deps":{"type":"string","pattern":"^[0-9a-f]{64}$"},"class":{"enum":["NARROW","WIDE"]},"tree":{"type":"string","pattern":"^[0-9a-f]{64}$"}}},"result":{"enum":["PASS","FAIL","SKIPPED","DESELECTED"]},"retried":{"type":"boolean"},"counts":{"type":"object","required":["passed","failed","skipped","pending"],"additionalProperties":false,"properties":{"passed":{"type":"integer","minimum":0},"failed":{"type":"integer","minimum":0},"skipped":{"type":"integer","minimum":0},"pending":{"type":"integer","minimum":0}}},"exec_error":{"type":"boolean"},"duration_ms":{"type":"integer","minimum":0},"failure_ref":{"type":["string","null"],"pattern":"^failures/[0-9a-f]{64}\\.txt$"},"clean":{"type":"boolean"},"tree_dirty":{"type":"boolean"},"tainted":{"type":"boolean"},"reason":{"type":["string","null"]},"verdict":{"type":"string","pattern":"^[A-Z][A-Z_]*$"},"pid":{"type":"integer","minimum":1},"pid_start":{"type":["string","null"]},"crc":{"type":"string","pattern":"^[0-9a-f]{16}$"}}},"it-result.1.schema.json":{"$id":"it-result/1","title":"Result file every stage writes as its last act","type":"object","required":["schema","stage","run_id","status","exit_code"],"properties":{"schema":{"const":"it-result/1"},"stage":{"enum":["prompt-it","plan-it","build-it","review-it","deploy-it","conclude-it","reconcile-it"]},"run_id":{"type":"string","minLength":1},"slice_id":{"type":["string","null"]},"version":{"type":["string","null"]},"head_sha":{"type":["string","null"]},"status":{"enum":["ok","needs_human","blocked","failed","context_reset","usage_limit"]},"exit_code":{"type":"integer","minimum":0,"maximum":3},"verdicts":{"type":"array","items":{"type":"object","required":["row","verdict"],"properties":{"row":{"type":"string","minLength":1},"verdict":{"enum":["VERIFIED","IMPLEMENTED-NOT-VERIFIED","BLOCKED"]},"evidence":{"type":["string","null"]},"real":{"type":"boolean"}}}},"reason":{"type":["string","null"]},"run_verdict":{"enum":["DONE_ALL_VERIFIED","DONE_WITH_RESIDUALS","BLOCKED","NEEDS_RESET","USAGE_LIMIT",null]},"next":{"type":["object","null"]},"pending_human":{"type":["object","null"]},"artifacts":{"type":"array","items":{"type":"object","required":["path"],"properties":{"path":{"type":"string"},"kind":{"type":["string","null"]},"sha256":{"type":["string","null"]}}}},"resume":{"type":["object","null"]},"tokens":{"type":["object","null"]},"rollback":{"type":"boolean"},"legs":{"type":"array","items":{"type":"object","required":["leg","state"],"properties":{"leg":{"type":"string","minLength":1},"state":{"enum":["DEPLOYED_VERIFIED","DEPLOYED_UNVERIFIED","HELD","FAILED","NEEDS_HUMAN","ROLLED_BACK","ROLLBACK_FAILED"]},"evidence":{"type":["string","null"]},"compensate":{"type":["string","object","array","null"]}}}}}},"ledger.schema.json":{"$id":"do-it-ledger/1","title":"ledger.json: latest verdict and evidence per DoD row","type":"object","required":["schema","run_id","rows"],"properties":{"schema":{"const":"do-it-ledger/1"},"run_id":{"type":"string","minLength":1},"rows":{"type":"array","items":{"type":"object","required":["row","verdict","evidence","evidence_sha256","real","recorded_at","updated_at"],"properties":{"row":{"type":"string","minLength":1},"verdict":{"enum":["VERIFIED","IMPLEMENTED-NOT-VERIFIED","BLOCKED"]},"evidence":{"type":["string","null"]},"evidence_path":{"type":["string","null"]},"evidence_sha256":{"type":["string","null"]},"real":{"type":"boolean"},"reason":{"type":["string","null"]},"recorded_at":{"type":"string","minLength":1},"updated_at":{"type":"string","minLength":1}}}}}},"owner-pack.schema.json":{"$id":"do-it-owner-pack/1","title":"owner-pack.json: the single set of questions for the human","type":"object","required":["pack_id","run_id","questions","created_at"],"properties":{"pack_id":{"type":["string","null"]},"run_id":{"type":"string","minLength":1},"created_at":{"type":"string","minLength":1},"questions":{"type":"array","items":{"type":"object","required":["n","kind","text","options","recommendation","default","reversible"],"properties":{"n":{"type":"integer","minimum":1},"kind":{"type":"string","minLength":1},"text":{"type":"string","minLength":1},"options":{"type":"array","items":{"type":"string"}},"recommendation":{"type":["string","null"]},"default":{"type":["string","null"]},"reversible":{"type":"boolean"},"source":{"type":"string","minLength":1},"status":{"enum":["withdrawn"]},"withdrawn_at":{"type":"string"},"withdrawn_reason":{"type":"string"}},"additionalProperties":false}}},"additionalProperties":false},"readiness.schema.json":{"$id":"do-it-readiness/1","title":"plan/READINESS.json: the verdict that lets a build start (G-8)","type":"object","required":["decisions","preflight"],"properties":{"decisions":{"type":["array","object"]},"preflight":{"type":"object","required":["passed"],"properties":{"passed":{"type":"boolean"}}},"credentials":{"type":"array","items":{"type":"string","minLength":1}},"owner_dependent_slices":{"type":"integer","minimum":0},"review_checkpoints":{"type":"object","required":["schema","count","checkpoints"],"properties":{"schema":{"const":"review-checkpoints/1"},"count":{"type":"integer","minimum":0},"level":{"enum":["none","light","standard","heightened","full"]},"checkpoints":{"type":"array","items":{"type":"object","required":["id","kind","evidence"],"properties":{"id":{"type":"string","pattern":"^CP-\\d{2}$"},"kind":{"enum":["phase","wave","adversarial","pre-merge","pre-release"]},"evidence":{"type":"string","minLength":1},"at":{"type":"string"},"review":{"type":"string"},"blocks":{"type":"string"},"gates":{"type":"array","minItems":1,"items":{"enum":["dependents","promotion","merge","release"]}},"covers":{"type":"array","items":{"type":"string","minLength":1}}}}}}},"slices":{"type":"array","items":{"type":"object","required":["id"],"properties":{"id":{"type":"string","minLength":1},"lane":{"type":["string","null"]},"tier":{"type":["string","null"]},"class":{"enum":["deterministic","gather","implementation","hard",null]},"depends_on":{"type":"array","items":{"type":"string"}},"wave":{"type":["string","null"]},"depends_on_owner_answer":{"type":"boolean"}}}}}},"settings.schema.json":{"$id":"do-it-settings/1","title":"do-it settings (workspace, global or merged)","type":"object","additionalProperties":false,"properties":{"version":{"const":1},"interaction":{"type":"object","additionalProperties":false,"properties":{"owner_pack":{"enum":["auto","native","html","markdown"]},"fallback":{"type":"array","items":{"enum":["native","html","markdown"]}}}},"host":{"type":"object","additionalProperties":false,"properties":{"driver":{"type":"string","minLength":1},"alias":{"type":["string","null"]}}},"isolation":{"type":"object","additionalProperties":false,"properties":{"driver":{"type":"string","minLength":1}}},"state":{"type":"object","properties":{"backend":{"type":"string","minLength":1}},"additionalProperties":{"type":"object"}},"secrets":{"type":"object","additionalProperties":false,"properties":{"provider":{"enum":["file","env","aws-secrets-manager","onepassword","1password"]},"ref":{"type":"string"}}},"handoff":{"type":"object","additionalProperties":false,"properties":{"mode":{"enum":["auto","ask"]},"max_per_run":{"type":"integer","minimum":1}}},"review":{"type":"object","additionalProperties":false,"properties":{"max_rounds":{"type":"integer","minimum":1},"cost_cap_tokens":{"type":"integer","minimum":1}}},"tiers":{"type":"object","additionalProperties":false,"properties":{"T1":{"type":"string"},"T2":{"type":"string"},"T3":{"type":"string"}}},"ceilings":{"type":"object","additionalProperties":false,"properties":{"warn_tokens":{"type":"integer","minimum":0},"warn_pct":{"type":"number","minimum":0,"maximum":100},"block_tokens":{"type":"integer","minimum":0},"block_pct":{"type":"number","minimum":0,"maximum":100}}},"stop_gate":{"type":"object","additionalProperties":false,"properties":{"patience":{"type":"integer","minimum":0}}},"observability":{"type":"object","additionalProperties":false,"properties":{"provider":{"type":"string","minLength":1}}},"gates":{"type":"object","additionalProperties":false,"properties":{"on_push":{"type":["string","null"],"minLength":1},"on_train_complete":{"type":["string","null"],"minLength":1},"nightly":{"type":["string","null"],"minLength":1},"peak_mb":{"type":["integer","null"],"minimum":1},"reuse":{"type":"object","additionalProperties":false,"properties":{"core":{"type":"array","items":{"type":"string"}},"always_run":{"type":"array","items":{"type":"string"}},"never_reuse":{"type":"array","items":{"type":"string"}},"env":{"type":"array","items":{"type":"string"}},"env_files":{"type":"array","items":{"type":"string"}}}},"queue":{"type":"object","additionalProperties":false,"properties":{"budget_pct":{"type":["integer","null"],"minimum":1,"maximum":90},"timeout_s":{"type":["integer","null"],"minimum":1},"swap_used_max_mb":{"type":["integer","null"],"minimum":0}}}}}}},"token-meter.schema.json":{"$id":"do-it-token-meter/1","title":"token-meter.jsonl row: the event fields plus usage fields","type":"object","required":["ts","run_id","slice_id","stage","persona","tier","model","host","event","parent_id","verdict","tokens_in","tokens_out","cache_read","cache_write","estimated","source"],"properties":{"ts":{"type":"string","minLength":1},"run_id":{"type":"string","minLength":1},"slice_id":{"type":["string","null"]},"stage":{"type":["string","null"]},"persona":{"type":["string","null"]},"tier":{"type":["string","null"]},"model":{"type":["string","null"]},"host":{"type":["string","null"]},"event":{"type":"string","minLength":1},"parent_id":{"type":["string","null"]},"verdict":{"type":["string","null"]},"tokens_in":{"type":["integer","null"],"minimum":0},"tokens_out":{"type":["integer","null"],"minimum":0},"cache_read":{"type":["integer","null"],"minimum":0},"cache_write":{"type":["integer","null"],"minimum":0},"estimated":{"type":"boolean"},"source":{"enum":["provider","estimate","unknown"]},"extra":{"type":["object","null"]}},"additionalProperties":false}};
 
 // ---- answer.mjs ----
 function answersPath(ctx, runId) { return path.join(runDir(ctx, runId), 'answers.json'); }
@@ -606,6 +606,7 @@ function cmdDoctor(ctx, args) {
     repo: ctx.repo,
     files: loaded.files,
     entries: loaded.entries,
+    gate_stages: GATES_STAGES.map((st) => gatesStage(loaded.values, st)),
     settings,
   };
 }
@@ -899,7 +900,7 @@ function atomicWrite(file, data, opts) {
   const dir = path.dirname(file);
   fs.mkdirSync(dir, { recursive: true });
   const tmp = path.join(dir, '.' + path.basename(file) + '.tmp-' + process.pid + '-' + crypto.randomBytes(4).toString('hex'));
-  const fd = fs.openSync(tmp, 'w');
+  const fd = fs.openSync(tmp, 'w', (opts && opts.mode) || 0o666);
   try {
     let off = 0;
     while (off < buf.length) off += fs.writeSync(fd, buf, off, buf.length - off);
@@ -952,6 +953,63 @@ function appendRegular(file, text) {
     while (off < buf.length) off += fs.writeSync(fd, buf, off, buf.length - off);
   } finally {
     fs.closeSync(fd);
+  }
+}
+
+// RTG L1 (PRD-1 D4): one O_APPEND write per record, no redaction (the bytes carry a CRC computed by the caller).
+// The file must be a regular file (FIFO-safe as appendRegular). When the file's last byte is not LF (a torn tail
+// left by a crash) the buffer is prefixed with LF inside the SAME write, so the fragment cannot swallow the record.
+// The caller bounds the buffer size; this returns { written, expected } and never retries a short write, except
+// that a short write is followed by a lone LF so the next record starts on a fresh line.
+function appendRecord(file, buf) {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  let st = null;
+  try { st = fs.lstatSync(file); } catch (e) { if (e.code !== 'ENOENT') throw e; }
+  if (st && !st.isFile()) throw codedError('ENOTREG', 'not a regular file (' + fileKind(st) + '): ' + file);
+  const c = fs.constants;
+  const flags = c.O_RDWR | c.O_APPEND | c.O_CREAT | (c.O_NONBLOCK || 0) | (c.O_NOFOLLOW || 0);
+  const fd = fs.openSync(file, flags, 0o666);
+  try {
+    const fst = fs.fstatSync(fd);
+    if (!fst.isFile()) throw codedError('ENOTREG', 'not a regular file: ' + file);
+    let out = buf;
+    let prefixed = false;
+    if (fst.size > 0) {
+      const last = Buffer.alloc(1);
+      const got = fs.readSync(fd, last, 0, 1, fst.size - 1);
+      if (got === 1 && last[0] !== 0x0a) { out = Buffer.concat([Buffer.from('\n'), buf]); prefixed = true; }
+    }
+    const written = fs.writeSync(fd, out, 0, out.length);
+    if (written !== out.length) { try { fs.writeSync(fd, Buffer.from('\n'), 0, 1); } catch { /* best effort */ } }
+    return { written, expected: out.length, prefixed };
+  } finally {
+    fs.closeSync(fd);
+  }
+}
+
+// RTG L1 (PRD-1 D7, D8): create `file` exactly once with `buf`: temp file (exclusive, `mode`), fsync, then link(2)
+// onto the final name, so a reader never sees partial bytes and concurrent first-writers converge on one winner.
+// Returns true when this call created the file, false when it already existed (left untouched).
+function writeFileOnce(file, buf, mode) {
+  const dir = path.dirname(file);
+  fs.mkdirSync(dir, { recursive: true });
+  const tmp = path.join(dir, '.' + path.basename(file) + '.tmp-' + process.pid + '-' + crypto.randomBytes(4).toString('hex'));
+  const fd = fs.openSync(tmp, 'wx', mode === undefined ? 0o644 : mode);
+  try {
+    let off = 0;
+    while (off < buf.length) off += fs.writeSync(fd, buf, off, buf.length - off);
+    fs.fsyncSync(fd);
+  } finally {
+    fs.closeSync(fd);
+  }
+  try {
+    fs.linkSync(tmp, file);
+    return true;
+  } catch (e) {
+    if (e.code === 'EEXIST') return false;
+    throw e;
+  } finally {
+    try { fs.unlinkSync(tmp); } catch { /* already gone */ }
   }
 }
 
@@ -1052,6 +1110,2791 @@ function cleanStaleTmp(dir) {
     }
   }
   return removed;
+}
+
+// ---- gate-fingerprint.mjs ----
+// Fingerprint and invalidation (resumable test gates, epic F1; PRD-1 D16-D24, CONTRACT §2.2-§2.3, §4.6, §11 A1, A5, A6).
+// Builds the rtg-key/1 manifest of a test file. Every unknown input yields key null (the file runs, G-1). Env values never
+// leave this module except as salted HMACs (G-6).
+
+const GATE_FP_NODE_EXT = ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs'];
+const GATE_FP_RESOLVE_EXT = ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.json'];
+// CONTRACT §4.6 Node pattern, written in two pieces so the spine's raw-read source lint does not flag the literal.
+const GATE_FP_WIDE_NODE = 'read' + 'FileSync|readdirSync|glob|execSync|spawnSync|execFileSync|child_process|git ';
+const GATE_FP_WIDE_PY = 'open\\(|subprocess|Path\\(|glob|os\\.listdir';
+const GATE_FP_WIDE_DIGEST = sha256Bytes('rtg-wide/1\n' + GATE_FP_WIDE_NODE + '\n' + GATE_FP_WIDE_PY + '\n').slice(0, 16);
+const GATE_FP_LOCKS = ['package-lock.json', 'npm-shrinkwrap.json', 'yarn.lock', 'pnpm-lock.yaml', 'poetry.lock', 'uv.lock', 'Pipfile.lock'];
+const GATE_FP_ENV_NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
+
+// Per-runner descriptor table (D19 config files, D24 selection-only flags dropped from the runner line).
+const GATE_FP_RUNNERS = {
+  jest: {
+    runtime: 'node',
+    configs: [/^jest\.config\.(js|ts|cjs|mjs|json)$/, /^package\.json$/, /^babel\.config\.[^/]+$/, /^\.babelrc[^/]*$/, /^\.swcrc$/],
+    drop: ['--filter', '--runTestsByPath', '--json', '--outputFile', '--reporters', '--testPathPattern'],
+    dropValue: ['--filter', '--outputFile', '--reporters', '--testPathPattern'],
+    bool: ['--ci', '--runInBand', '-i', '--silent', '--verbose', '--json', '--runTestsByPath', '--detectOpenHandles', '--forceExit', '--passWithNoTests', '--coverage', '--no-cache', '--watchAll=false'],
+  },
+  vitest: {
+    runtime: 'node',
+    configs: [/^vitest\.config\.[^/]+$/, /^vite\.config\.[^/]+$/, /^vitest\.workspace\.[^/]+$/, /^package\.json$/],
+    drop: ['--reporter', '--outputFile', '--run'],
+    dropValue: ['--reporter', '--outputFile'],
+    bool: ['--run', '--silent', '--coverage', '--no-threads', '--passWithNoTests'],
+  },
+  pytest: {
+    runtime: 'python',
+    configs: [/^pyproject\.toml$/, /^pytest\.ini$/, /^setup\.cfg$/, /^tox\.ini$/],
+    drop: ['--do-it-manifest', '--json-report', '--json-report-file', '-q', '-v'],
+    dropValue: ['--do-it-manifest', '--json-report-file'],
+    bool: ['-q', '-v', '-x', '-s', '--json-report'],
+  },
+};
+
+function gateFpLog(opts) {
+  return (opts && opts.log) || ((m) => process.stderr.write(m + '\n'));
+}
+
+function gateFpGit(repo, args, env) {
+  return cp.execFileSync('git', args, {
+    cwd: repo, env: { ...(env || process.env), GIT_OPTIONAL_LOCKS: '0' }, maxBuffer: 1 << 30, stdio: ['ignore', 'pipe', 'ignore'],
+  });
+}
+
+function gateFpSplitZ(buf) {
+  return buf.toString('utf8').split('\0').filter((s) => s !== '');
+}
+
+// == manifest assembly (D16) ==
+function gateFpSortLines(lines) {
+  return lines.slice().sort((a, b) => Buffer.compare(Buffer.from(a, 'utf8'), Buffer.from(b, 'utf8')));
+}
+
+function gateFpLineText(fields) {
+  return fields.map(String).join('\t');
+}
+
+function gateFpEncodable(fields) {
+  return fields.every((f) => typeof f === 'string' && !/[\t\n\r]/.test(f) && f.isWellFormed());
+}
+
+// gateKeyAssemble(spineLines, adapterLines): each line is an array of fields. Returns {key, manifest, lines} or
+// {key: null, reason: 'path-unencodable'}.
+function gateKeyAssemble(spineLines, adapterLines) {
+  const all = [...(spineLines || []), ...(adapterLines || [])];
+  for (const l of all) if (!Array.isArray(l) || !gateFpEncodable(l.map(String))) return { key: null, reason: 'path-unencodable', manifest: null };
+  const texts = gateFpSortLines(all.map(gateFpLineText));
+  const manifest = 'rtg-key/1\n' + texts.map((t) => t + '\n').join('');
+  return { key: sha256Bytes(Buffer.from(manifest, 'utf8')), manifest, lines: texts };
+}
+
+// argv minus selection-only flags, in original order, joined by NUL, hashed (D24, research table #19).
+function gateFpRunnerLine(name, version, argv, drop) {
+  const d = drop || GATE_FP_RUNNERS[name] || { drop: [], dropValue: [], bool: [] };
+  const dropSet = new Set(d.drop || []);
+  const dropValue = new Set(d.dropValue || []);
+  const bool = new Set(d.bool || []);
+  const kept = [];
+  const args = argv || [];
+  for (let i = 0; i < args.length; i++) {
+    const a = String(args[i]);
+    if (a.startsWith('-')) {
+      const flag = a.includes('=') ? a.slice(0, a.indexOf('=')) : a;
+      if (dropSet.has(flag)) {
+        if (!a.includes('=') && dropValue.has(flag) && i + 1 < args.length && !String(args[i + 1]).startsWith('-')) i++;
+        continue;
+      }
+      kept.push(a);
+      continue;
+    }
+    // positional: a test path when it does not follow a flag that may take a value (unknown flags keep their value)
+    const prev = i > 0 ? String(args[i - 1]) : '';
+    const prevTakesValue = prev.startsWith('-') && !prev.includes('=') && !bool.has(prev) && !dropSet.has(prev);
+    if (!prevTakesValue) continue;
+    kept.push(a);
+  }
+  return ['runner', name + '@' + version, sha256Bytes(Buffer.from(kept.join('\0'), 'utf8'))];
+}
+
+function gateFpComponents(lines) {
+  const texts = lines.map(gateFpLineText);
+  const by = (tag) => lines.filter((l) => l[0] === tag);
+  const one = (tag) => { const l = by(tag)[0]; return l ? l : null; };
+  const out = {};
+  if (one('gate')) out.gate = one('gate')[1];
+  if (one('runner')) out.runner = sha256Bytes(gateFpLineText(one('runner')));
+  if (one('core')) out.core = one('core')[1];
+  if (one('installed')) out.installed = one('installed')[1];
+  out.env = sha256Bytes(gateFpSortLines(by('env').map(gateFpLineText)).map((t) => t + '\n').join(''));
+  if (one('platform')) out.platform = sha256Bytes(gateFpLineText(one('platform')));
+  if (one('class')) out.class = one('class')[1];
+  if (one('tree')) out.tree = one('tree')[1];
+  out.deps = sha256Bytes(gateFpSortLines(by('dep').map(gateFpLineText)).map((t) => t + '\n').join(''));
+  void texts;
+  return out;
+}
+
+// == file hashing (D18) ==
+const gateFpStatCache = new Map();
+
+function gateFpWideBits(rel, bytes) {
+  const ext = path.extname(rel).toLowerCase();
+  const text = GATE_FP_NODE_EXT.includes(ext) || ext === '.py' ? bytes.toString('utf8') : '';
+  const nodeHit = GATE_FP_NODE_EXT.includes(ext) && new RegExp(GATE_FP_WIDE_NODE).test(text);
+  const pyHit = ext === '.py' && new RegExp(GATE_FP_WIDE_PY).test(text);
+  return [nodeHit ? 1 : 0, pyHit ? 1 : 0];
+}
+
+// Hash of the on-disk bytes (through symlinks) with the in-process stat cache. Returns {sha, wide} or {sha: '-'}.
+function gateFpHashDisk(abs, rel) {
+  let st;
+  try { st = fs.statSync(abs, { bigint: true }); } catch { return { sha: '-', wide: [0, 0] }; }
+  if (!st.isFile()) return { sha: '-', wide: [0, 0], notFile: true };
+  const ck = [st.dev, st.ino, st.size, st.mtimeNs, st.ctimeNs].join(':');
+  const hit = gateFpStatCache.get(ck);
+  if (hit && hit.rel === rel) return { sha: hit.sha, wide: hit.wide };
+  let bytes;
+  try { bytes = readRegularFile(abs, BULK_READ_CAP); } catch { return { sha: '-', wide: [0, 0], unreadable: true }; }
+  const out = { sha: sha256Bytes(bytes), wide: gateFpWideBits(rel, bytes) };
+  gateFpStatCache.set(ck, { ...out, rel });
+  return out;
+}
+
+function gateFpStatCacheClear() {
+  gateFpStatCache.clear();
+}
+
+// Repo-relative realpath of a member (D18): symlinks resolved; outside the repository => @outside/{sha256(abs)};
+// a missing tail is resolved through its deepest existing ancestor.
+function gateFpRealRel(repo, rel) {
+  const root = fs.realpathSync(repo);
+  const abs = path.resolve(root, rel);
+  let base = abs;
+  const rest = [];
+  let real = null;
+  for (;;) {
+    try { real = fs.realpathSync(base); break; } catch { /* walk up */ }
+    const parent = path.dirname(base);
+    if (parent === base) break;
+    rest.unshift(path.basename(base));
+    base = parent;
+  }
+  const full = real ? path.join(real, ...rest) : abs;
+  const r = path.relative(root, full);
+  if (!r || r.startsWith('..') || path.isAbsolute(r)) return { rel: '@outside/' + sha256Bytes(full), abs: full, outside: true };
+  return { rel: r.split(path.sep).join('/'), abs: full, outside: false };
+}
+
+function gateFpHashPath(repo, rel, table) {
+  const rr = gateFpRealRel(repo, rel);
+  if (!rr.outside && table && table.hashes && Object.prototype.hasOwnProperty.call(table.hashes, rr.rel)) {
+    return { path: rr.rel, sha: table.hashes[rr.rel], wide: (table.wide && table.wide[rr.rel]) || [0, 0] };
+  }
+  const h = gateFpHashDisk(rr.abs, rr.rel);
+  return { path: rr.rel, sha: h.sha, wide: h.wide || [0, 0] };
+}
+
+function gateFpMemoDisabled(repo, env, tracked) {
+  if ((tracked || []).some((p) => p === '.gitattributes' || p.endsWith('/.gitattributes'))) return 'gitattributes';
+  try { if (fs.existsSync(path.join(repo, '.gitattributes'))) return 'gitattributes'; } catch { /* ignore */ }
+  try {
+    const common = gateFpGit(repo, ['rev-parse', '--path-format=absolute', '--git-common-dir'], env).toString('utf8').trim();
+    if (fs.existsSync(path.join(common, 'info', 'attributes'))) return 'info-attributes';
+  } catch { /* ignore */ }
+  let autocrlf = '';
+  try { autocrlf = gateFpGit(repo, ['config', '--get', 'core.autocrlf'], env).toString('utf8').trim(); } catch { autocrlf = ''; }
+  if (autocrlf && autocrlf !== 'false') return 'autocrlf';
+  let filters = '';
+  try { filters = gateFpGit(repo, ['config', '--get-regexp', '^filter\\.'], env).toString('utf8').trim(); } catch { filters = ''; }
+  if (filters) return 'filter';
+  return null;
+}
+
+function gateFpMemoSample(hits, fault) {
+  if (!hits.length) return [];
+  if (fault === 'memo_verify_all') return hits.slice();
+  const n = Math.max(1, Math.ceil(hits.length / 100));
+  const pick = new Set();
+  while (pick.size < n) pick.add(hits[crypto.randomInt(hits.length)]);
+  return Array.from(pick);
+}
+
+// {hashes: {path: sha|-}, wide: {path: [node, py]}, tracked, untracked, dirty, memoHits, memoDisabled, links}
+function gateFpHashTable(repo, store, opts) {
+  const o = opts || {};
+  const env = o.env || process.env;
+  const log = gateFpLog(o);
+  const fault = env.DO_IT_FAULT || '';
+  const ls = gateFpSplitZ(gateFpGit(repo, ['ls-files', '-s', '-v', '-z'], env));
+  const entries = [];
+  for (const rec of ls) {
+    const m = /^(\S+) ([0-7]+) ([0-9a-f]+) ([0-9]+)\t([\s\S]*)$/.exec(rec);
+    if (!m) continue;
+    if (m[4] !== '0' && entries.some((e) => e.path === m[5])) continue;
+    entries.push({ tag: m[1], mode: m[2], blob: m[3], path: m[5] });
+  }
+  const untracked = gateFpSplitZ(gateFpGit(repo, ['ls-files', '-o', '--exclude-standard', '-z'], env));
+  const dirty = new Set(gateFpSplitZ(gateFpGit(repo, ['diff-files', '-z', '--name-only'], env)));
+  // declared env files are keyed by salted HMAC only (G-6): never plain-hashed into the table, the tree or the memo
+  const exclude = new Set(o.exclude || []);
+  for (let i = entries.length - 1; i >= 0; i--) if (exclude.has(entries[i].path)) entries.splice(i, 1);
+  for (let i = untracked.length - 1; i >= 0; i--) if (exclude.has(untracked[i])) untracked.splice(i, 1);
+  const tracked = entries.map((e) => e.path);
+  const memoDisabled = store ? gateFpMemoDisabled(repo, env, tracked) : 'no-store';
+  const memoFile = store ? path.join(store.dir, 'blobmemo.jsonl') : null;
+  let memo = memoDisabled ? new Map() : gateStoreMemoRead(store);
+  const hashes = {};
+  const wide = {};
+  const hits = [];
+  const fresh = [];
+  const links = {};
+  const pd = GATE_FP_WIDE_DIGEST;
+  const fromDisk = (e) => {
+    const h = gateFpHashDisk(path.join(repo, e.path), e.path);
+    hashes[e.path] = h.sha;
+    wide[e.path] = h.wide || [0, 0];
+    return h;
+  };
+  for (const e of entries) {
+    if (e.mode === '120000') {
+      const rr = gateFpRealRel(repo, e.path);
+      links[e.path] = rr.rel;
+      const h = gateFpHashDisk(rr.abs, rr.rel);
+      hashes[e.path] = h.sha;
+      wide[e.path] = h.wide || [0, 0];
+      continue;
+    }
+    if (e.mode === '160000') { hashes[e.path] = sha256Bytes('gitlink ' + e.blob); wide[e.path] = [0, 0]; continue; }
+    const bypass = /^[a-z]$/.test(e.tag) || e.tag === 'S' || dirty.has(e.path);
+    const m = !memoDisabled && !bypass ? memo.get(e.blob) : undefined;
+    if (m && m.w && Array.isArray(m.w[pd])) {
+      hashes[e.path] = m.s;
+      wide[e.path] = m.w[pd];
+      hits.push(e);
+      continue;
+    }
+    const h = fromDisk(e);
+    if (!memoDisabled && !bypass && h.sha !== '-') fresh.push({ b: e.blob, s: h.sha, w: { [pd]: h.wide } });
+  }
+  // adversarial verification of memo hits (1%, at least 1; all under DO_IT_FAULT=memo_verify_all)
+  const sample = gateFpMemoSample(hits, fault); // MEMO-VERIFY
+  let mismatch = false;
+  for (const e of sample) {
+    const h = gateFpHashDisk(path.join(repo, e.path), e.path);
+    if (h.sha !== hashes[e.path]) { mismatch = true; break; }
+  }
+  let memoHits = hits.length;
+  if (mismatch) {
+    log('[gate-fingerprint] blob memo mismatch: memo discarded');
+    try { fs.renameSync(memoFile, memoFile + '.bad-' + Date.now()); } catch { /* already moved */ }
+    memo = new Map();
+    for (const e of hits) {
+      const h = fromDisk(e);
+      if (h.sha !== '-') fresh.push({ b: e.blob, s: h.sha, w: { [pd]: h.wide } });
+    }
+    memoHits = 0;
+  }
+  if (!memoDisabled && fresh.length) { try { gateStoreMemoAppend(store, fresh); } catch { /* memo is an optimisation */ } }
+  for (const rel of untracked) {
+    const h = gateFpHashDisk(path.join(repo, rel), rel);
+    hashes[rel] = h.sha;
+    wide[rel] = h.wide || [0, 0];
+  }
+  return { hashes, wide, tracked, untracked, dirty: Array.from(dirty).sort(), memoHits, memoDisabled, links };
+}
+
+function gateFpTree(table) {
+  const lines = Object.keys(table.hashes).map((p) => 't\t' + p + '\t' + table.hashes[p]);
+  return sha256Bytes('rtg-tree/1\n' + gateFpSortLines(lines).map((l) => l + '\n').join(''));
+}
+
+// == globs and the NEVER set (D23) ==
+function gateGlobRe(pattern) {
+  const p = String(pattern);
+  const conv = (s, allowBrace) => {
+    let re = '';
+    for (let i = 0; i < s.length; i++) {
+      const c = s[i];
+      if (c === '*') {
+        if (s[i + 1] === '*') {
+          i++;
+          if (s[i + 1] === '/') { i++; re += '(?:.*/)?'; } else re += '.*';
+        } else re += '[^/]*';
+      } else if (c === '?') re += '[^/]';
+      else if (c === '[') {
+        const j = s.indexOf(']', i + 2);
+        if (j < 0) throw new Error('unclosed [');
+        let body = s.slice(i + 1, j);
+        if (body.startsWith('!')) body = '^' + body.slice(1);
+        re += '[' + body.replace(/\\/g, '\\\\') + ']';
+        i = j;
+      } else if (c === '{') {
+        if (!allowBrace) throw new Error('nested {');
+        const j = s.indexOf('}', i + 1);
+        if (j < 0) throw new Error('unclosed {');
+        const body = s.slice(i + 1, j);
+        if (body.includes('{')) throw new Error('nested {');
+        re += '(?:' + body.split(',').map((alt) => conv(alt, false)).join('|') + ')';
+        i = j;
+      } else if (c === ']' || c === '}') {
+        throw new Error('unbalanced ' + c);
+      } else re += c.replace(/[.+^$()|\\]/g, '\\$&');
+    }
+    return re;
+  };
+  return new RegExp('^' + conv(p.replace(/^\.?\//, ''), true) + '$');
+}
+
+function gateGlobMatch(file, pattern, compiled) {
+  const re = compiled || gateGlobRe(pattern);
+  const target = String(pattern).includes('/') ? file : file.split('/').pop();
+  return re.test(target);
+}
+
+// {match(file) => {never, pattern}, invalid: [patterns]}; an unparsable pattern makes every file NEVER, printed once.
+function gateNeverCompile(globs, opts) {
+  const log = gateFpLog(opts);
+  const list = [];
+  const invalid = [];
+  for (const g of globs || []) {
+    try { list.push({ pattern: g, re: gateGlobRe(g) }); } catch { invalid.push(g); }
+  }
+  for (const g of invalid) log('[gate-fingerprint] invalid reuse glob: ' + g);
+  return {
+    invalid,
+    match(file) {
+      if (invalid.length) return { never: true, pattern: invalid[0] };
+      for (const x of list) if (gateGlobMatch(file, x.pattern, x.re)) return { never: true, pattern: x.pattern };
+      return { never: false, pattern: null };
+    },
+  };
+}
+
+function gateNeverMatch(file, globs, opts) {
+  return gateNeverCompile(globs, opts).match(file);
+}
+
+// NEVER precedence lives here only (G-16): V1 must call this for every file.
+function gateReuseDecision(input) {
+  const fold = (input && input.fold) || {};
+  const never = input && input.never;
+  if (never && never.never) return { reuse: false, reason: 'never-set', pattern: never.pattern };
+  return { reuse: fold.reuse || false, reason: fold.reason || 'no-row', pattern: null };
+}
+
+// == CORE sub-manifest (D19) ==
+function gateFpTsPaths(repo) {
+  try {
+    const raw = readRegularFile(path.join(repo, 'tsconfig.json'), 1024 * 1024).toString('utf8');
+    const stripped = raw.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:"'])\/\/.*$/gm, '$1').replace(/,(\s*[}\]])/g, '$1');
+    const j = JSON.parse(stripped);
+    const co = (j && j.compilerOptions) || {};
+    return { baseUrl: co.baseUrl || null, paths: co.paths || {} };
+  } catch {
+    return { baseUrl: null, paths: {} };
+  }
+}
+
+function gateFpIsFile(abs) {
+  try { return fs.statSync(abs).isFile(); } catch { return false; }
+}
+
+function gateFpResolveFile(repo, relBase) {
+  const abs = path.join(repo, relBase);
+  if (gateFpIsFile(abs)) return relBase;
+  for (const ext of GATE_FP_RESOLVE_EXT) if (gateFpIsFile(abs + ext)) return relBase + ext;
+  for (const ext of GATE_FP_RESOLVE_EXT) if (gateFpIsFile(path.join(abs, 'index' + ext))) return relBase + '/index' + ext;
+  return null;
+}
+
+// resolve a specifier from a repo-relative directory: {rel} | {unresolved: true} | {pkg: true}
+function gateFpResolveSpec(repo, fromDir, spec, ts) {
+  const norm = (p) => path.posix.normalize(p);
+  if (spec.startsWith('./') || spec.startsWith('../') || spec === '.' || spec === '..') {
+    const rel = norm(path.posix.join(fromDir || '.', spec));
+    if (rel.startsWith('..')) return { unresolved: true };
+    const r = gateFpResolveFile(repo, rel);
+    return r ? { rel: r } : { unresolved: true };
+  }
+  if (spec.startsWith('/')) return { unresolved: true };
+  const tsc = ts || { baseUrl: null, paths: {} };
+  for (const [pat, targets] of Object.entries(tsc.paths || {})) {
+    const star = pat.indexOf('*');
+    let tail = null;
+    if (star < 0) { if (spec === pat) tail = ''; } else if (spec.startsWith(pat.slice(0, star)) && spec.endsWith(pat.slice(star + 1))) {
+      tail = spec.slice(star, spec.length - (pat.length - star - 1));
+    }
+    if (tail === null) continue;
+    for (const t of Array.isArray(targets) ? targets : []) {
+      const rel = norm(path.posix.join(tsc.baseUrl || '.', String(t).replace('*', tail)));
+      const r = rel.startsWith('..') ? null : gateFpResolveFile(repo, rel);
+      if (r) return { rel: r };
+    }
+    return { unresolved: true };
+  }
+  if (tsc.baseUrl) {
+    const rel = norm(path.posix.join(tsc.baseUrl, spec));
+    const r = rel.startsWith('..') ? null : gateFpResolveFile(repo, rel);
+    if (r && !r.startsWith('node_modules/')) return { rel: r };
+  }
+  return { pkg: true };
+}
+
+function gateFpSpecifiers(text) {
+  const out = [];
+  const res = [
+    /\bimport\s+(?:type\s+)?(?:[\w*{}\s,$]+?\s+from\s+)?['"]([^'"\n]+)['"]/g,
+    /\bexport\s+(?:type\s+)?(?:[\w*{}\s,$]+?\s+)?from\s+['"]([^'"\n]+)['"]/g,
+    /\brequire\s*\(\s*['"]([^'"\n]+)['"]\s*\)/g,
+    /\bimport\s*\(\s*['"]([^'"\n]+)['"]\s*\)/g,
+  ];
+  for (const re of res) { let m; while ((m = re.exec(text))) out.push(m[1]); }
+  return Array.from(new Set(out));
+}
+
+function gateFpLiterals(text) {
+  const out = [];
+  const re = /(['"`])((?:\\.|(?!\1)[^\\\n])*)\1/g;
+  let m;
+  while ((m = re.exec(text))) {
+    if (m[1] === '`' && m[2].includes('${')) continue;
+    if (m[2].includes('\\')) continue;
+    out.push(m[2]);
+  }
+  return out;
+}
+
+// gateFpCore(repo, runner, table, {reuseCore, gateDigest, env}) => {lines, text, digest, wideAll, unresolved}
+function gateFpCore(repo, runner, table, opts) {
+  const o = opts || {};
+  const desc = GATE_FP_RUNNERS[runner] || { configs: [] };
+  const ts = gateFpTsPaths(repo);
+  const all = Object.keys(table.hashes);
+  const members = new Map();
+  const unresolved = [];
+  let wideAll = false;
+  const addMember = (rel) => {
+    if (members.has(rel)) return false;
+    const h = gateFpHashPath(repo, rel, table);
+    members.set(h.path, h.sha);
+    return true;
+  };
+  const configs = all.filter((p) => !p.includes('/') && desc.configs.some((re) => re.test(p))).sort();
+  const queue = [];
+  for (const cfg of configs) {
+    addMember(cfg);
+    let text = '';
+    try { text = readRegularFile(path.join(repo, cfg), 16 * 1024 * 1024).toString('utf8'); } catch { continue; }
+    if (runner === 'vitest' && /forceRerunTriggers/.test(text)) {
+      const fm = /forceRerunTriggers\s*:\s*\[([^\]]*)\]/.exec(text);
+      const body = fm ? fm[1].trim() : null;
+      if (body === null || !/^(\s*(['"])[^'"\n]*\2\s*,?)*\s*$/.test(body)) wideAll = true;
+      else for (const lit of gateFpLiterals(body)) {
+        let re = null;
+        try { re = gateGlobRe(lit.replace(/^\*\*\//, '**/')); } catch { wideAll = true; continue; }
+        for (const p of all) if (gateGlobMatch(p, lit, re)) addMember(p);
+      }
+    }
+    for (const lit0 of gateFpLiterals(text)) {
+      let lit = lit0;
+      if (lit.startsWith('<rootDir>')) lit = '.' + lit.slice('<rootDir>'.length);
+      if (/[*?$^|()[\]{}]/.test(lit)) continue;
+      if (!(lit.startsWith('./') || lit.startsWith('../'))) {
+        // CP-01 F-1: a bare literal that names a repo file (vitest `setupFiles: ['test/setup.ts']`) is CORE too.
+        // Only a hit counts; a bare string that resolves to nothing (a package name, a pattern) never widens.
+        if (lit.startsWith('/') || !lit.length) continue;
+        const rel = path.posix.normalize(path.posix.join(path.posix.dirname(cfg), lit));
+        const hit = rel.startsWith('..') ? null : gateFpResolveFile(repo, rel);
+        if (hit && Object.prototype.hasOwnProperty.call(table.hashes, hit)) { if (addMember(hit)) queue.push(hit); }
+        continue;
+      }
+      const r = gateFpResolveSpec(repo, path.posix.dirname(cfg), lit, ts);
+      if (r.rel) { if (addMember(r.rel)) queue.push(r.rel); continue; }
+      const ext = path.posix.extname(lit).toLowerCase();
+      if (GATE_FP_RESOLVE_EXT.includes(ext) || ext === '.py') unresolved.push([cfg, lit0]);
+    }
+  }
+  // static closure of config-referenced modules
+  const seen = new Set();
+  while (queue.length) {
+    const rel = queue.shift();
+    if (seen.has(rel)) continue;
+    seen.add(rel);
+    if (!GATE_FP_NODE_EXT.includes(path.posix.extname(rel).toLowerCase())) continue;
+    if (rel.startsWith('node_modules/') || rel.includes('/node_modules/')) continue;
+    let text = '';
+    try { text = readRegularFile(path.join(repo, rel), 16 * 1024 * 1024).toString('utf8'); } catch { continue; }
+    for (const spec of gateFpSpecifiers(text)) {
+      const r = gateFpResolveSpec(repo, path.posix.dirname(rel), spec, ts);
+      if (r.pkg) continue;
+      if (r.unresolved) { unresolved.push([rel, spec]); continue; }
+      if (r.rel.startsWith('node_modules/') || r.rel.includes('/node_modules/')) continue;
+      if (addMember(r.rel)) queue.push(r.rel);
+    }
+  }
+  for (const p of all) {
+    const base = p.split('/').pop();
+    if (/^tsconfig.*\.json$/.test(base) || base === 'conftest.py' || p.split('/').slice(0, -1).includes('__mocks__')) addMember(p);
+  }
+  // gates.reuse.core globs: the hash table plus a direct walk under each literal prefix (reaches ignored files)
+  for (const g of o.reuseCore || []) {
+    let re;
+    try { re = gateGlobRe(g); } catch { wideAll = true; continue; }
+    for (const p of all) if (gateGlobMatch(p, g, re)) addMember(p);
+    const segs = String(g).replace(/^\.?\//, '').split('/');
+    const literalDir = [];
+    for (let i = 0; i < segs.length - 1; i++) { if (/[*?[{]/.test(segs[i])) break; literalDir.push(segs[i]); }
+    const start = path.join(repo, ...literalDir);
+    const walk = (dir, depth) => {
+      if (depth > 32) return;
+      let ents = [];
+      try { ents = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
+      for (const e of ents) {
+        if (e.name === 'node_modules' || e.name === '.git') continue;
+        const abs = path.join(dir, e.name);
+        const rel = path.relative(repo, abs).split(path.sep).join('/');
+        if (e.isDirectory()) walk(abs, depth + 1);
+        else if (gateGlobMatch(rel, g, re)) addMember(rel);
+      }
+    };
+    if (literalDir.length) walk(start, 0);
+  }
+  if (unresolved.length) wideAll = true;
+  const lines = [];
+  for (const [p, s] of members) lines.push(['c', p, s]);
+  for (const [from, lit] of unresolved) lines.push(['c-unresolved', from, lit]);
+  if (o.gateDigest) lines.push(['c-gate', o.gateDigest]);
+  const okLines = lines.filter((l) => gateFpEncodable(l));
+  if (okLines.length !== lines.length) wideAll = true;
+  const text = 'rtg-core/1\n' + gateFpSortLines(okLines.map(gateFpLineText)).map((t) => t + '\n').join('');
+  return { lines: okLines, text, digest: sha256Bytes(text), wideAll, unresolved };
+}
+
+// == installed, env, platform (D20) ==
+const GATE_FP_PY_PROBE = [
+  'import hashlib, os, site, sys, sysconfig',
+  'from importlib import metadata',
+  'out = set()',
+  'for d in metadata.distributions():',
+  '    n = d.metadata.get("Name")',
+  '    v = d.version',
+  '    if n and v and "\\t" not in n + v and "\\n" not in n + v:',
+  '        out.add("py\\t%s==%s" % (n, v))',
+  'dirs = set()',
+  'for k in ("purelib", "platlib"):',
+  '    p = sysconfig.get_paths().get(k)',
+  '    if p: dirs.add(p)',
+  'try:',
+  '    dirs.update(site.getsitepackages())',
+  'except Exception:',
+  '    pass',
+  'for d in sorted(dirs):',
+  '    try:',
+  '        names = sorted(os.listdir(d))',
+  '    except OSError:',
+  '        continue',
+  '    for f in names:',
+  '        if f.endswith(".pth"):',
+  '            with open(os.path.join(d, f), "rb") as fh:',
+  '                out.add("pth\\t%s\\t%s" % (f, hashlib.sha256(fh.read()).hexdigest()))',
+  'sys.stdout.write("\\n".join(sorted(out)) + "\\n")',
+].join('\n');
+
+function gateFpPython(repo, opts) {
+  const o = opts || {};
+  if (o.python) return o.python;
+  const argv0 = o.argv && o.argv[0] ? String(o.argv[0]) : '';
+  if (/(^|\/)python[0-9.]*$/.test(argv0)) return argv0;
+  const venv = path.join(repo, '.venv', 'bin', 'python');
+  if (gateFpIsFile(venv)) return venv;
+  return 'python3';
+}
+
+function gateFpPyProbe(python, env) {
+  const r = cp.spawnSync(python, ['-I', '-c', GATE_FP_PY_PROBE], { env: env || process.env, encoding: 'utf8', timeout: 120000, maxBuffer: 1 << 26 });
+  if (r.error || r.status !== 0) return null;
+  const lines = r.stdout.split('\n').filter(Boolean).map((l) => l.split('\t'));
+  if (!lines.every((l) => (l[0] === 'py' && l.length === 2 && /^[^\t]+==[^\t]+$/.test(l[1])) || (l[0] === 'pth' && l.length === 3))) return null;
+  return lines;
+}
+
+// gateFpInstalled(repo, runner, {env, python, argv}) => {lines, text, digest} | {unknown: true, reason: 'installed-unknown'}
+function gateFpInstalled(repo, runner, opts) {
+  const o = opts || {};
+  const lines = [];
+  const rootFiles = (() => { try { return fs.readdirSync(repo); } catch { return []; } })();
+  for (const name of rootFiles.slice().sort()) {
+    if (GATE_FP_LOCKS.includes(name) || /^requirements.*\.txt$/.test(name)) {
+      const h = gateFpHashDisk(path.join(repo, name), name);
+      if (!h.notFile) lines.push(['lock', name, h.sha]);
+    }
+  }
+  const nmDirs = ['node_modules'];
+  try {
+    for (const p of fs.readdirSync(path.join(repo, 'packages')).sort()) {
+      if (fs.existsSync(path.join(repo, 'packages', p, 'node_modules'))) nmDirs.push('packages/' + p + '/node_modules');
+    }
+  } catch { /* no packages/ */ }
+  for (const d of nmDirs) {
+    const rel = d + '/.package-lock.json';
+    lines.push(['node-installed', rel, gateFpHashDisk(path.join(repo, rel), rel).sha]);
+  }
+  const nm = path.join(repo, 'node_modules');
+  const linkLine = (relName) => {
+    const rr = gateFpRealRel(repo, 'node_modules/' + relName);
+    lines.push(['link', 'node_modules/' + relName, rr.rel]);
+  };
+  let top = [];
+  try { top = fs.readdirSync(nm, { withFileTypes: true }); } catch { top = []; }
+  for (const e of top.sort((a, b) => (a.name < b.name ? -1 : 1))) {
+    if (e.isSymbolicLink()) { linkLine(e.name); continue; }
+    if (e.isDirectory() && e.name.startsWith('@')) {
+      let sub = [];
+      try { sub = fs.readdirSync(path.join(nm, e.name), { withFileTypes: true }); } catch { sub = []; }
+      for (const s of sub.sort((a, b) => (a.name < b.name ? -1 : 1))) if (s.isSymbolicLink()) linkLine(e.name + '/' + s.name);
+    }
+  }
+  if (runner === 'pytest') {
+    const py = gateFpPyProbe(gateFpPython(repo, o), o.env);
+    if (!py) return { unknown: true, reason: 'installed-unknown', lines: null, text: null, digest: null };
+    for (const l of py) lines.push(l);
+  }
+  const okLines = lines.filter((l) => gateFpEncodable(l));
+  if (okLines.length !== lines.length) return { unknown: true, reason: 'installed-unknown', lines: null, text: null, digest: null };
+  const text = 'rtg-installed/1\n' + gateFpSortLines(okLines.map(gateFpLineText)).map((t) => t + '\n').join('');
+  return { lines: okLines, text, digest: sha256Bytes(text) };
+}
+
+function gateFpHmac(salt, bytes) {
+  return crypto.createHmac('sha256', salt).update(bytes).digest('hex');
+}
+
+// gateFpEnv({repo, names, files, env, salt}) => {lines, text, digest, unhashable}
+function gateFpEnv(input) {
+  const { repo, salt } = input;
+  const env = input.env || {};
+  const lines = [];
+  let unhashable = false;
+  for (const name of input.names || []) {
+    const n = String(name);
+    if (!GATE_FP_ENV_NAME.test(n)) { lines.push(['env', gateFpEncodable([n]) ? n : sha256Bytes(n).slice(0, 16), '*']); unhashable = true; continue; }
+    const v = env[n];
+    lines.push(['env', n, v === undefined ? '-' : gateFpHmac(salt, Buffer.from(String(v), 'utf8'))]);
+  }
+  for (const f of input.files || []) {
+    const rel = String(f);
+    if (!gateFpEncodable([rel]) || path.isAbsolute(rel) || rel.split('/').includes('..')) { lines.push(['env', 'file:' + sha256Bytes(rel).slice(0, 16), '*']); unhashable = true; continue; }
+    let tok;
+    try {
+      tok = gateFpHmac(salt, readRegularFile(path.join(repo, rel), 16 * 1024 * 1024));
+    } catch (e) {
+      tok = e && e.code === 'ENOENT' ? '-' : '*';
+    }
+    if (tok === '*') unhashable = true;
+    lines.push(['env', 'file:' + rel, tok]);
+  }
+  const text = gateFpSortLines(lines.map(gateFpLineText)).map((t) => t + '\n').join('');
+  return { lines, text, digest: sha256Bytes(text), unhashable };
+}
+
+// {NAME: value} for every declared name that is set and every KEY=VALUE of every declared env file (D8 redaction set).
+function gateFpRedactValues(input) {
+  const out = {};
+  const env = input.env || {};
+  for (const n of input.names || []) if (typeof env[n] === 'string') out[n] = env[n];
+  for (const f of input.files || []) {
+    let text = '';
+    try { text = readRegularFile(path.join(input.repo, String(f)), 16 * 1024 * 1024).toString('utf8'); } catch { continue; }
+    for (const line of text.split(/\r?\n/)) {
+      const m = /^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/.exec(line);
+      if (!m) continue;
+      let v = m[2].trim();
+      if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) v = v.slice(1, -1);
+      if (v) out[m[1]] = v;
+    }
+  }
+  return out;
+}
+
+const GATE_FP_NODE_PROBE = "const os=require('os');process.stdout.write(JSON.stringify(['node',process.version,String(process.versions.icu||'-'),os.platform(),os.release(),os.arch(),String(os.cpus().length)]))";
+const GATE_FP_PY_PLATFORM = 'import json, os, platform, sys; sys.stdout.write(json.dumps(["python", platform.python_version(), "-", sys.platform, platform.release(), platform.machine(), str(os.cpu_count() or 0)]))';
+
+// gateFpPlatform({runtime: 'node'|'python', bin, env}) => ['platform', 7 fields] or null (probe failed)
+function gateFpPlatform(input) {
+  const o = input || {};
+  const runtime = o.runtime || 'node';
+  const bin = o.bin || (runtime === 'node' ? 'node' : 'python3');
+  const args = runtime === 'node' ? ['-e', GATE_FP_NODE_PROBE] : ['-I', '-c', GATE_FP_PY_PLATFORM];
+  const r = cp.spawnSync(bin, args, { env: o.env || process.env, encoding: 'utf8', timeout: 60000 });
+  if (r.error || r.status !== 0) return null;
+  let f;
+  try { f = JSON.parse(r.stdout); } catch { return null; }
+  if (!Array.isArray(f) || f.length !== 7 || !f.every((x) => typeof x === 'string' && x.length && !/[\t\n\r]/.test(x))) return null;
+  return ['platform', ...f];
+}
+
+// == gate component (D21) ==
+function gateFpBundleSection(text, name) {
+  const marker = '// ---- ' + name + ' ----\n';
+  const i = text.indexOf(marker);
+  if (i < 0) return null;
+  const j = text.indexOf('\n// ---- ', i + marker.length);
+  return text.slice(i, j < 0 ? text.length : j);
+}
+
+function gateFpFilesUnder(dir) {
+  const out = [];
+  const go = (d, rel) => {
+    let ents = [];
+    try { ents = fs.readdirSync(d, { withFileTypes: true }); } catch { return; }
+    for (const e of ents) {
+      const r = rel ? rel + '/' + e.name : e.name;
+      if (e.isDirectory()) go(path.join(d, e.name), r); else out.push(r);
+    }
+  };
+  go(dir, '');
+  return out.sort();
+}
+
+// gateFpGateDigest(runner, {bundle, adaptersDir}) => {digest, text}
+function gateFpGateDigest(runner, opts) {
+  const o = opts || {};
+  const self = fileURLToPath(import.meta.url);
+  const bundled = typeof EMBEDDED_SCHEMAS !== 'undefined';
+  const bundle = o.bundle || (bundled ? self : null);
+  const lines = [];
+  const adaptersRoot = o.adaptersDir || (bundle ? path.join(path.dirname(bundle), '..', 'gates', 'adapters') : path.join(path.dirname(self), '..', '..', 'gates', 'adapters'));
+  const adir = path.join(adaptersRoot, runner);
+  for (const rel of gateFpFilesUnder(adir)) {
+    let bytes;
+    try { bytes = readRegularFile(path.join(adir, rel), BULK_READ_CAP); } catch { bytes = Buffer.from('-'); }
+    lines.push('adapter:' + rel + '\t' + sha256Bytes(bytes));
+  }
+  if (bundle) {
+    const text = readRegularFile(bundle, BULK_READ_CAP).toString('utf8');
+    const a = gateFpBundleSection(text, 'gate-results.mjs');
+    const b = gateFpBundleSection(text, 'gate-fingerprint.mjs');
+    if (a === null || b === null) lines.push('bundle\t' + sha256Bytes(text));
+    else { lines.push('section:gate-results.mjs\t' + sha256Bytes(a)); lines.push('section:gate-fingerprint.mjs\t' + sha256Bytes(b)); }
+    const m = /^const EMBEDDED_SCHEMAS = (.*);$/m.exec(text);
+    let schema = null;
+    try { schema = m ? JSON.parse(m[1])['gate-result.1.schema.json'] : null; } catch { schema = null; }
+    lines.push('schema:gate-result.1.schema.json\t' + sha256Bytes(schema ? canonicalJson(schema) : '-'));
+  } else {
+    const dir = path.dirname(self);
+    for (const n of ['gate-results.mjs', 'gate-fingerprint.mjs']) {
+      lines.push('source:' + n + '\t' + sha256Bytes(readRegularFile(path.join(dir, n), BULK_READ_CAP)));
+    }
+    lines.push('schema:gate-result.1.schema.json\t' + sha256Bytes(canonicalJson(loadSchemaFile('gate-result.1.schema.json'))));
+  }
+  const text = 'rtg-gate/1\n' + gateFpSortLines(lines).map((l) => l + '\n').join('');
+  return { digest: sha256Bytes(text), text };
+}
+
+// == class (D22) ==
+function gateClassify(input) {
+  const o = input || {};
+  if (o.wideAll || (o.unresolved || 0) > 0) return 'WIDE';
+  for (const m of o.members || []) if (o.wideHits && o.wideHits.has(m)) return 'WIDE';
+  return 'NARROW';
+}
+
+// == spine components for one runner (D16-D23) ==
+// gateFpSpine({repo, runner, store, env, reuse: {core, env, env_files, always_run, never_reuse}, python, nodeBin,
+//   bundle, adaptersDir, argv, log}) => spine (pass to gateKeyFor). spine.reason is set when a component is unknown.
+function gateFpSpine(opts) {
+  try {
+    return gateFpSpineBuild(opts);
+  } catch (e) {
+    // a resolver or probe crash is an unknown component: every key is null and every file runs (G-1, CONTRACT §6)
+    return { reason: 'fingerprint-error', error: (e && (e.outcome || e.code || e.message)) || 'error', lines: [], runner: opts && opts.runner };
+  }
+}
+
+function gateFpSpineBuild(opts) {
+  const o = opts || {};
+  const repo = fs.realpathSync(o.repo);
+  const env = o.env || process.env;
+  const runner = o.runner;
+  const reuse = o.reuse || {};
+  const desc = GATE_FP_RUNNERS[runner] || { runtime: 'node' };
+  const log = gateFpLog(o);
+  const table = gateFpHashTable(repo, o.store || null, { env, log, exclude: (reuse.env_files || []).map(String) });
+  const gate = gateFpGateDigest(runner, { bundle: o.bundle, adaptersDir: o.adaptersDir });
+  const core = gateFpCore(repo, runner, table, { reuseCore: reuse.core || [], gateDigest: gate.digest, env });
+  const installed = gateFpInstalled(repo, runner, { env, python: o.python, argv: o.argv });
+  const salt = o.store ? gateStoreSalt(o.store, { log }) : crypto.randomBytes(32);
+  const envc = gateFpEnv({ repo, names: reuse.env || [], files: reuse.env_files || [], env, salt });
+  const platform = gateFpPlatform({ runtime: desc.runtime, bin: desc.runtime === 'node' ? o.nodeBin : gateFpPython(repo, o), env });
+  const wideHits = new Set();
+  for (const [p, w] of Object.entries(table.wide)) if (w && (w[0] || w[1])) wideHits.add(p);
+  let reason = null;
+  if (installed.unknown) reason = 'installed-unknown';
+  else if (!platform) reason = 'platform-unknown';
+  else if (envc.unhashable) reason = 'env-unhashable';
+  const lines = [['gate', gate.digest], ['core', core.digest], ...envc.lines];
+  if (!installed.unknown) lines.push(['installed', installed.digest]);
+  if (platform) lines.push(platform);
+  const spine = {
+    repo, runner, reason, table, wideHits, wideAll: core.wideAll, tree: gateFpTree(table), lines,
+    gate, core, installed, env: envc, platform, never: gateNeverCompile([...(reuse.always_run || []), ...(reuse.never_reuse || [])], { log }),
+    envFileTokens: new Map(envc.lines.filter((l) => l[1].startsWith('file:')).map((l) => [l[1].slice(5), l[2]])),
+    neverGlobs: [...(reuse.always_run || []), ...(reuse.never_reuse || [])], envNames: reuse.env || [], envFiles: reuse.env_files || [],
+  };
+  return spine;
+}
+
+// gateKeyFor(spine, {file, runner: {name, version, argv}, deps: [path | [path, sha]], unresolved, wide})
+//   => {key, components, manifest, lines, reason}
+function gateKeyFor(spine, entry) {
+  if (!spine || spine.reason) return { key: null, reason: (spine && spine.reason) || 'no-spine', components: null };
+  const e = entry || {};
+  const file = String(e.file || '');
+  if (!file || !gateFpEncodable([file])) return { key: null, reason: 'path-unencodable', components: null };
+  const r = e.runner || {};
+  const runnerLine = gateFpRunnerLine(r.name || spine.runner, r.version || '-', r.argv || []);
+  const depLines = new Map();
+  const members = [];
+  let wideMember = false;
+  for (const d of [file, ...(e.deps || [])]) {
+    if (Array.isArray(d)) {
+      depLines.set(String(d[0]), ['dep', String(d[0]), String(d[1])]);
+      members.push(String(d[0]));
+      continue;
+    }
+    const h = gateFpHashPath(spine.repo, String(d), spine.table);
+    if (spine.envFileTokens && spine.envFileTokens.has(h.path)) {
+      // a declared env file in a closure is keyed by its HMAC token, never by a plain SHA-256 of its bytes (G-6)
+      const tok = spine.envFileTokens.get(h.path);
+      if (tok === '*') return { key: null, reason: 'env-unhashable', components: null };
+      depLines.set(h.path, ['dep', h.path, tok]);
+      members.push(h.path);
+      continue;
+    }
+    depLines.set(h.path, ['dep', h.path, h.sha]);
+    members.push(h.path);
+    if (h.wide && (h.wide[0] || h.wide[1])) wideMember = true;
+  }
+  const cls = wideMember || e.wide ? 'WIDE' : gateClassify({ members, unresolved: e.unresolved || 0, wideHits: spine.wideHits, wideAll: spine.wideAll });
+  const adapterLines = [runnerLine, ['class', cls], ...(cls === 'WIDE' ? [['tree', spine.tree]] : []), ...depLines.values()];
+  const spineLines = spine.lines.filter((l) => l[0] !== 'core');
+  spineLines.push(['core', spine.core.digest]); // CORE-LINE
+  const a = gateKeyAssemble(spineLines, adapterLines);
+  if (!a.key) return { key: null, reason: a.reason, components: null };
+  const all = [...spineLines, ...adapterLines];
+  return { key: a.key, components: gateFpComponents(all), manifest: a.manifest, lines: a.lines, class: cls, reason: null };
+}
+
+// == components files, run manifest, --why (D17, D24) ==
+function gateFpComponentsWrite(store, spine) {
+  if (!store || !store.dir || !spine) return [];
+  const out = [];
+  for (const text of [spine.gate && spine.gate.text, spine.core && spine.core.text, spine.installed && spine.installed.text, spine.env && spine.env.text]) {
+    if (typeof text !== 'string') continue;
+    const sha = sha256Bytes(text);
+    writeFileOnce(path.join(store.dir, 'components', sha + '.txt'), Buffer.from(text, 'utf8'), 0o644);
+    out.push(sha);
+  }
+  return out;
+}
+
+function gateFpComponentText(store, digest) {
+  if (!store || !store.dir || !/^[0-9a-f]{64}$/.test(String(digest || ''))) return null;
+  try { return readRegularFile(path.join(store.dir, 'components', digest + '.txt'), 16 * 1024 * 1024).toString('utf8'); } catch { return null; }
+}
+
+function gateFpLineMap(text, tag) {
+  const m = new Map();
+  for (const l of String(text || '').split('\n')) {
+    const f = l.split('\t');
+    if (f[0] === tag && f.length >= 3) m.set(f[1], f.slice(2).join('\t'));
+  }
+  return m;
+}
+
+// gateWhy(prev, now, {store, nowText: {core, env}}) => lines like "invalidated: core (c jest.config.js changed)".
+// Env lines name the variable, never a value or an HMAC. A class change subsumes the deps and tree lines it implies.
+function gateWhy(prev, now, opts) {
+  const o = opts || {};
+  const p = prev || {};
+  const n = now || {};
+  const order = ['gate', 'runner', 'core', 'installed', 'env', 'platform', 'class', 'tree', 'deps'];
+  const val = (x, k) => (x[k] === undefined ? null : x[k]);
+  const differs = (k) => val(p, k) !== val(n, k);
+  const out = [];
+  for (const k of order) {
+    if (!differs(k)) continue;
+    if ((k === 'deps' || k === 'tree') && differs('class')) continue;
+    if (k === 'core') {
+      const a = gateFpComponentText(o.store, p.core);
+      const b = (o.nowText && o.nowText.core) || gateFpComponentText(o.store, n.core);
+      if (a && b) {
+        const ma = gateFpLineMap(a, 'c');
+        const mb = gateFpLineMap(b, 'c');
+        const det = [];
+        for (const [path0, s] of mb) { if (!ma.has(path0)) det.push('c ' + path0 + ' added'); else if (ma.get(path0) !== s) det.push('c ' + path0 + ' changed'); }
+        for (const path0 of ma.keys()) if (!mb.has(path0)) det.push('c ' + path0 + ' removed');
+        if (gateFpLineMap(a, 'c-unresolved').size !== gateFpLineMap(b, 'c-unresolved').size) det.push('unresolved CORE references changed');
+        if (!det.length && a !== b) det.push('gate code changed');
+        out.push('invalidated: core' + (det.length ? ' (' + det.sort().join(', ') + ')' : ''));
+      } else out.push('invalidated: core');
+      continue;
+    }
+    if (k === 'env') {
+      const a = gateFpComponentText(o.store, p.env);
+      const b = (o.nowText && o.nowText.env) || gateFpComponentText(o.store, n.env);
+      if (a !== null && b !== null) {
+        const ma = gateFpLineMap(a, 'env');
+        const mb = gateFpLineMap(b, 'env');
+        const names = new Set();
+        for (const [nm, t] of mb) if (ma.get(nm) !== t) names.add(nm);
+        for (const nm of ma.keys()) if (!mb.has(nm)) names.add(nm);
+        out.push('invalidated: env' + (names.size ? ' (' + Array.from(names).sort().join(', ') + ')' : ''));
+      } else out.push('invalidated: env');
+      continue;
+    }
+    if (k === 'class') { out.push('invalidated: class (' + (val(p, 'class') || '-') + ' to ' + (val(n, 'class') || '-') + ')'); continue; }
+    out.push('invalidated: ' + k);
+  }
+  return out;
+}
+
+function gateFpRunDir(runId) {
+  return path.join(os.tmpdir(), 'do-it-gate-' + runId);
+}
+
+// The rtg-manifest/1 object for adapters (names, paths, digests and HMACs only; no value, G-6).
+function gateFpManifestBuild(spine, run) {
+  const r = run || {};
+  const wideHits = Array.from(spine.wideHits || []).sort();
+  return {
+    schema: 'rtg-manifest/1',
+    run_id: r.run_id,
+    scope: r.scope || 'push',
+    leg: r.leg || 'unit',
+    clean: !!r.clean,
+    runner: spine.runner,
+    lines: gateFpSortLines(spine.lines.map(gateFpLineText)),
+    argv_sha: sha256Bytes(Buffer.from((r.argv || []).join('\0'), 'utf8')),
+    components: { gate: spine.gate.digest, core: spine.core.digest, installed: spine.installed.digest || null, env: spine.env.digest, platform: spine.platform ? sha256Bytes(gateFpLineText(spine.platform)) : null },
+    hashes: spine.table.hashes,
+    wide_patterns: { node: GATE_FP_WIDE_NODE, python: GATE_FP_WIDE_PY },
+    wide_hits: wideHits,
+    wide_all: !!spine.wideAll,
+    tree: spine.tree,
+    dirty: spine.table.dirty,
+    never: spine.neverGlobs || [],
+    env_names: spine.envNames || [],
+    env_files: spine.envFiles || [],
+    platform_expect: spine.platform ? spine.platform.slice(1) : null,
+    store_dir: r.store_dir || null,
+    reason: spine.reason || null,
+  };
+}
+
+function gateFpManifestWrite(runDir, manifest) {
+  const errors = validateSchema(loadSchemaFile('gate-manifest.1.schema.json'), manifest);
+  if (errors.length) throw fail('GATE_MANIFEST_INVALID', 1, { errors: errors.map((e) => e.pointer + ' ' + e.message) });
+  const file = path.join(runDir, 'manifest.json');
+  atomicWriteJson(file, manifest, { cap: BULK_READ_CAP });
+  return file;
+}
+
+// ---- gate-queue.mjs ----
+// Per-machine gate admission (CONTRACT §2.5, §3, §4.3–§4.5, §8 M3; PRD-4 D1–D15). Q1: admission half.
+// Files under {HOME}/.do-it/queue/: .lock/ (owner.json), seq, tickets/, holders/, corrupt/.
+// Every top-level name starts with gateQueue (bundle unique-name rule, G-15).
+//
+// Concurrency model:
+// - The lock is a directory renamed into place already holding owner.json, so `.lock/` never exists without an
+//   owner; it is held only for synchronous read-modify-write (seq + ticket write, admission rename).
+// - Liveness (pid + start time) is judged OUTSIDE the lock: "dead" and "start time differs" are permanent for a
+//   given file, so a reclaim decided early stays right; removal is one unlink (exactly one remover wins and prints).
+// - Release is one unlink of the caller's own holder file: it only lowers held memory, so it needs no lock.
+
+const gateQueuePollMs = 2000;
+const gateQueueReprintMs = 60000;
+// Effective defaults come from the settings layer's one helper constant (A8); read at call time because the bundle
+// may order this module before settings.mjs.
+function gateQueueDefaults() {
+  return { ...GATES_QUEUE_DEFAULTS, swap_used_max_mb: null };
+}
+const gateQueueEntryCap = 64 * 1024;
+const gateQueueNameRe = /^(\d{10})-(\d+)\.json$/;
+
+function gateQueueRoot(ctx) {
+  return path.join(ctx.userHome, '.do-it', 'queue');
+}
+
+function gateQueueName(seq, pid) {
+  return String(seq).padStart(10, '0') + '-' + pid + '.json';
+}
+
+function gateQueueErrWriter(ctx) {
+  if (ctx && typeof ctx.stderrWrite === 'function') return (line) => ctx.stderrWrite(line + '\n');
+  return (line) => process.stderr.write(line + '\n');
+}
+
+// == settings (Q1-07, PRD-4 D14): global layer only, never the workspace file ==
+
+function gateQueueSettings(ctx) {
+  const file = settingsPaths(ctx).global;
+  let doc = null;
+  try { doc = readJsonRegular(file, gateQueueEntryCap * 16); } catch (e) {
+    throw fail('QUEUE_SETTINGS_INVALID', 1, { file, message: 'global settings unreadable: ' + (e.code || 'error') });
+  }
+  const q = doc && doc.gates && doc.gates.queue;
+  const out = gateQueueDefaults();
+  if (q == null) return out;
+  if (typeof q !== 'object' || Array.isArray(q)) throw fail('QUEUE_SETTINGS_INVALID', 1, { file, key: 'gates.queue', message: 'gates.queue must be an object' });
+  const bad = (key, rule, v) => fail('QUEUE_SETTINGS_INVALID', 1, { file, key: 'gates.queue.' + key, message: 'gates.queue.' + key + ' must be ' + rule + ' (got ' + JSON.stringify(v) + ')' });
+  if (q.budget_pct != null) {
+    if (!Number.isInteger(q.budget_pct) || q.budget_pct < 1 || q.budget_pct > 90) throw bad('budget_pct', 'an integer 1-90', q.budget_pct);
+    out.budget_pct = q.budget_pct;
+  }
+  if (q.timeout_s != null) {
+    if (!Number.isInteger(q.timeout_s) || q.timeout_s < 1) throw bad('timeout_s', 'an integer >= 1', q.timeout_s);
+    out.timeout_s = q.timeout_s;
+  }
+  if (q.swap_used_max_mb != null) {
+    if (!Number.isInteger(q.swap_used_max_mb) || q.swap_used_max_mb < 1) throw bad('swap_used_max_mb', 'an integer >= 1 or null', q.swap_used_max_mb);
+    out.swap_used_max_mb = q.swap_used_max_mb;
+  }
+  return out;
+}
+
+function gateQueueBudgetMb(budgetPct, totalMb) {
+  return Math.floor((budgetPct / 100) * totalMb);
+}
+
+// == entries ==
+
+function gateQueueReadEntry(file, name) {
+  let v;
+  try { v = readJsonRegular(file, gateQueueEntryCap); } catch (e) {
+    if (e.code === 'ENOENT') return { gone: true };
+    return { corrupt: true };
+  }
+  if (v === null) return { gone: true };
+  const m = gateQueueNameRe.exec(name);
+  if (!v || typeof v !== 'object' || !Number.isInteger(v.seq) || !Number.isInteger(v.pid) || !m || Number(m[1]) !== v.seq || Number(m[2]) !== v.pid) return { corrupt: true };
+  if (v.peak_mb != null && !(Number.isInteger(v.peak_mb) && v.peak_mb >= 1)) return { corrupt: true };
+  return { entry: v };
+}
+
+function gateQueueListNames(dir) {
+  try { return fs.readdirSync(dir).filter((n) => gateQueueNameRe.test(n)).sort(); } catch (e) {
+    if (e.code === 'ENOENT') return [];
+    throw e;
+  }
+}
+
+function gateQueueQuarantine(root, kind, name, err) {
+  const from = path.join(root, kind, name);
+  const dir = path.join(root, 'corrupt');
+  fs.mkdirSync(dir, { recursive: true });
+  let to = path.join(dir, name);
+  if (fs.existsSync(to)) to = path.join(dir, name + '.' + Date.now() + '-' + crypto.randomBytes(3).toString('hex'));
+  try { fs.renameSync(from, to); } catch (e) { if (e.code === 'ENOENT') return; throw e; }
+  err('[gate-queue] corrupt ' + (kind === 'holders' ? 'holder' : 'ticket') + ' file ' + name + ' quarantined');
+}
+
+// Read both directories, quarantine damaged entries, reclaim dead ones (never kills anything).
+// mine = the caller's own file name (never judged, never reclaimed).
+function gateQueueScan(root, err, mine) {
+  const raw = { tickets: [], holders: [] };
+  for (const kind of ['tickets', 'holders']) {
+    for (const name of gateQueueListNames(path.join(root, kind))) {
+      const r = gateQueueReadEntry(path.join(root, kind, name), name);
+      if (r.gone) continue;
+      if (r.corrupt) { gateQueueQuarantine(root, kind, name, err); continue; }
+      raw[kind].push({ ...r.entry, kind, name, file: path.join(root, kind, name) });
+    }
+  }
+  const others = [...raw.tickets, ...raw.holders].filter((e) => !(mine && e.name === mine));
+  const starts = gateProcStartMany(others.filter((e) => e.pid_start).map((e) => e.pid));
+  const out = { tickets: [], holders: [] };
+  for (const kind of ['tickets', 'holders']) {
+    for (const e of raw[kind]) {
+      if (mine && e.name === mine) { out[kind].push(e); continue; }
+      const state = gateProcState(e.pid, e.pid_start, starts);
+      if (state === 'dead' || state === 'start time differs') {
+        try {
+          fs.unlinkSync(e.file);
+          err('[gate-queue] reclaimed seq=' + e.seq + ' pid ' + e.pid + ' (' + state + ')');
+        } catch (x) { if (x.code !== 'ENOENT') throw x; }
+        continue;
+      }
+      out[kind].push(e);
+    }
+    out[kind].sort((a, b) => a.seq - b.seq);
+  }
+  return out;
+}
+
+function gateQueuePeakOf(e, budgetMb) {
+  return e.peak_mb == null ? budgetMb : e.peak_mb;
+}
+
+function gateQueueWho(e) {
+  return (e.label || '?') + ' (' + path.basename(e.cwd || '?') + ', pid ' + e.pid + ')';
+}
+
+// == lock (PRD-4 D2) ==
+
+function gateQueueLockOwnerState(root, err) {
+  const lockDir = path.join(root, '.lock');
+  let st;
+  try { st = fs.statSync(lockDir); } catch { return null; }
+  let owner;
+  try { owner = readJsonRegular(path.join(lockDir, 'owner.json'), gateQueueEntryCap); } catch { owner = undefined; }
+  const age = Date.now() - st.mtimeMs;
+  let dead;
+  if (!owner || !Number.isInteger(owner.pid)) dead = age > 10000;
+  else {
+    // a fresh lock is judged on kill 0 alone; a lock held over 30 s also has its start time checked (PID reuse)
+    const s = gateProcState(owner.pid, age > 30000 ? owner.pid_start : null);
+    dead = s === 'dead' || s === 'start time differs';
+  }
+  return { dead, owner, key: JSON.stringify(owner === undefined ? null : owner) };
+}
+
+function gateQueueLockSteal(root, seen, err) {
+  const mutex = path.join(root, '.lock.steal');
+  try { fs.mkdirSync(mutex); } catch (e) {
+    if (e.code !== 'EEXIST') throw e;
+    try { if (Date.now() - fs.statSync(mutex).mtimeMs > 10000) fs.rmdirSync(mutex); } catch { /* raced */ }
+    return;
+  }
+  try {
+    const again = gateQueueLockOwnerState(root, err);
+    if (!again || !again.dead || again.key !== seen.key) return;
+    const stale = path.join(root, '.lock.stale-' + process.pid + '-' + crypto.randomBytes(4).toString('hex'));
+    try { fs.renameSync(path.join(root, '.lock'), stale); } catch (e) { if (e.code === 'ENOENT') return; throw e; }
+    fs.rmSync(stale, { recursive: true, force: true });
+    err('[gate-queue] stale queue lock (owner ' + (seen.owner && Number.isInteger(seen.owner.pid) ? seen.owner.pid : 'unknown') + ' dead) reclaimed');
+  } finally {
+    try { fs.rmdirSync(mutex); } catch { /* gone */ }
+  }
+}
+
+async function gateQueueLock(root, run) {
+  fs.mkdirSync(root, { recursive: true });
+  const me = { pid: process.pid, pid_start: run.selfStart, at: new Date().toISOString(), nonce: crypto.randomBytes(8).toString('hex') };
+  const tmpDir = path.join(root, '.lock.tmp-' + process.pid + '-' + me.nonce);
+  atomicWriteJson(path.join(tmpDir, 'owner.json'), me);
+  try {
+    for (let i = 0; ; i++) {
+      try {
+        fs.renameSync(tmpDir, path.join(root, '.lock'));
+        return me;
+      } catch (e) {
+        if (!['EEXIST', 'ENOTEMPTY', 'EPERM', 'EACCES', 'EBUSY'].includes(e.code)) throw e;
+      }
+      const seen = gateQueueLockOwnerState(root, run.err);
+      if (seen && seen.dead) gateQueueLockSteal(root, seen, run.err);
+      if (run.aborted) return null;
+      await run.sleep(5 + Math.floor(Math.random() * 25), true);
+    }
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
+}
+
+function gateQueueUnlock(root, me) {
+  if (!me) return;
+  const lockDir = path.join(root, '.lock');
+  let owner = null;
+  try { owner = readJsonRegular(path.join(lockDir, 'owner.json'), gateQueueEntryCap); } catch { owner = null; }
+  if (!owner || owner.pid !== me.pid || owner.nonce !== me.nonce) return;
+  // rename first: `.lock` is freed in one step and a contender never sees a half-removed lock
+  const gone = path.join(root, '.lock.rel-' + process.pid + '-' + me.nonce);
+  try { fs.renameSync(lockDir, gone); } catch { return; }
+  fs.rmSync(gone, { recursive: true, force: true });
+}
+
+async function gateQueueWithLock(root, run, fn) {
+  const me = await gateQueueLock(root, run);
+  if (!me) return { aborted: true };
+  try { return { value: fn() }; } finally { gateQueueUnlock(root, me); }
+}
+
+// == seq (monotonic; recomputed from the highest seq on disk when unreadable) ==
+
+function gateQueueDiskMaxSeq(root) {
+  let max = 0;
+  for (const kind of ['tickets', 'holders', 'corrupt']) {
+    let names = [];
+    try { names = fs.readdirSync(path.join(root, kind)); } catch { names = []; }
+    for (const n of names) { const m = /^(\d{10})-/.exec(n); if (m) max = Math.max(max, Number(m[1])); }
+  }
+  return max;
+}
+
+// Lock scratch dirs left by a process killed mid-acquire or mid-release (.lock.tmp-, .lock.stale-, .lock.rel-
+// with a dead pid). Runs under the lock; a live pid's dir is in use and kept.
+function gateQueueSweepLockScratch(root) {
+  let names = [];
+  try { names = fs.readdirSync(root); } catch { return; }
+  for (const n of names) {
+    const m = /^\.lock\.(?:tmp|stale|rel)-(\d+)-/.exec(n);
+    if (!m) continue;
+    if (gateProcState(Number(m[1]), null) === 'dead') fs.rmSync(path.join(root, n), { recursive: true, force: true });
+  }
+}
+
+function gateQueueNextSeq(root) {
+  gateQueueSweepLockScratch(root);
+  const file = path.join(root, 'seq');
+  let cur = null;
+  try { cur = readJsonRegular(file, 4096); } catch { cur = null; }
+  const base = Math.max(Number.isInteger(cur) && cur >= 0 ? cur : 0, gateQueueDiskMaxSeq(root));
+  const next = base + 1;
+  atomicWriteJson(file, next);
+  return next;
+}
+
+// == waiting runtime: abortable sleep and signal handling ==
+
+const gateQueueSignalNo = { SIGHUP: 1, SIGINT: 2, SIGTERM: 15 };
+
+function gateQueueRuntime(ctx) {
+  const run = {
+    err: gateQueueErrWriter(ctx),
+    aborted: null,
+    wake: null,
+    selfStart: gateProcStart(process.pid),
+    handlers: [],
+    // resolves true when a signal aborted the sleep. lockSpin sleeps are not woken early (tiny).
+    sleep(ms, lockSpin) {
+      if (run.aborted && !lockSpin) return Promise.resolve(true);
+      return new Promise((resolve) => {
+        const t = setTimeout(() => { run.wake = null; resolve(!!run.aborted); }, Math.max(0, ms));
+        if (!lockSpin) run.wake = () => { clearTimeout(t); run.wake = null; resolve(true); };
+      });
+    },
+    onSignal: null,
+    trap() {
+      for (const sig of Object.keys(gateQueueSignalNo)) {
+        const h = () => {
+          if (run.onSignal) { run.onSignal(sig); return; }
+          if (!run.aborted) run.aborted = sig;
+          if (run.wake) run.wake();
+        };
+        process.on(sig, h);
+        run.handlers.push([sig, h]);
+      }
+    },
+    untrap() {
+      for (const [sig, h] of run.handlers) process.removeListener(sig, h);
+      run.handlers = [];
+    },
+  };
+  return run;
+}
+
+// == admission (Q1-05, Q1-06; PRD-4 D11–D13) ==
+
+function gateQueueDefaultLabel(ctx, argv) {
+  const repo = ctx.git && ctx.git.top ? ctx.git.top : ctx.cwd;
+  const first = argv && argv.length ? path.basename(String(argv[0])) : 'gate';
+  return path.basename(repo) + ':' + first;
+}
+
+function gateQueueIntOpt(v, flag) {
+  if (v == null) return null;
+  const n = typeof v === 'number' ? v : (/^\d+$/.test(String(v)) ? Number(v) : NaN);
+  if (!Number.isInteger(n) || n < 1) throw fail('USAGE', 1, { message: flag + ' must be an integer >= 1 (got ' + JSON.stringify(v) + ')' });
+  return n;
+}
+
+// Prints, once per invocation, CONTRACT §6's budget-only line, or one `signal unavailable: {name}` per
+// missing signal (PRD-4 D6).
+function gateQueueSignalReporter(err) {
+  const warned = new Set();
+  let budgetOnlySaid = false;
+  return (sig) => {
+    if (gateSignalsBudgetOnly(sig)) {
+      if (!budgetOnlySaid) err('[gate-queue] memory signals unavailable: budget-only admission');
+      budgetOnlySaid = true;
+      return;
+    }
+    for (const n of sig.unavailable || []) {
+      if (!warned.has(n)) { warned.add(n); err('[gate-queue] signal unavailable: ' + n); }
+    }
+  };
+}
+
+// Blocks (asynchronously) until ADMITTED, WAIT_TIMEOUT, REJECTED or a signal. One process, one ticket,
+// a 2 s poll; non-head waiters read no memory signals (PRD-4 D15).
+async function gateQueueAdmitCore(ctx, opts, run) {
+  const root = gateQueueRoot(ctx);
+  const err = run.err;
+  const settings = gateQueueSettings(ctx);
+  const peak = opts.peakMb == null ? null : gateQueueIntOpt(opts.peakMb, '--peak-mb');
+  const timeoutS = opts.timeoutS == null ? settings.timeout_s : gateQueueIntOpt(opts.timeoutS, '--timeout-s');
+  const label = opts.label || gateQueueDefaultLabel(ctx, opts.argv);
+  const sigOpts = { env: ctx.env, platform: opts.platform, linuxRoot: opts.linuxRoot, sleep: (ms) => run.sleep(ms) };
+  const sigState = {};
+  const say = gateQueueSignalReporter(err);
+  const sig0 = gateSignalsRead(sigOpts, sigState);
+  say(sig0);
+  const budget = gateQueueBudgetMb(settings.budget_pct, sig0.total_mb);
+  if (peak != null && peak > budget) {
+    err('[REJECTED] gate-queue: peak ' + peak + ' MB above budget ' + budget + ' MB · not started');
+    return { outcome: 'GATE_QUEUE_REJECTED', exit: 1, peak_mb: peak, budget_mb: budget };
+  }
+  if (peak == null) err('[gate-queue] peak undeclared: exclusive');
+  const t0 = Date.now();
+  const deadline = t0 + timeoutS * 1000;
+  const entry = {
+    seq: null, pid: process.pid, pid_start: run.selfStart, pgid: null, cwd: ctx.cwd,
+    repo: ctx.git && ctx.git.top ? ctx.git.top : null, label, peak_mb: peak,
+    enqueued_at: new Date(t0).toISOString(), admitted_at: null, reason: null, checked_at: null,
+  };
+  const ticketFile = () => path.join(root, 'tickets', gateQueueName(entry.seq, entry.pid));
+  const enq = await gateQueueWithLock(root, run, () => {
+    entry.seq = gateQueueNextSeq(root);
+    atomicWriteJson(ticketFile(), entry);
+    return entry.seq;
+  });
+  if (enq.aborted) return gateQueueInterrupted(run, null);
+  const mine = gateQueueName(entry.seq, entry.pid);
+  const removeTicket = () => { try { fs.unlinkSync(ticketFile()); } catch (e) { if (e.code !== 'ENOENT') throw e; } };
+  {
+    const v = gateQueueScan(root, err, mine);
+    const n = v.holders.length + v.tickets.length;
+    const p = v.holders.length + v.tickets.findIndex((e) => e.name === mine) + 1;
+    err('[gate-queue] enqueued seq=' + entry.seq + ' position ' + p + '/' + n + ' peak=' + (peak == null ? 'exclusive' : peak + ' MB') + ' label=' + label);
+  }
+  let lastLine = null;
+  let lastAt = 0;
+  let lastWaitFor = 'turn';
+  let lastPos = '1/1';
+  for (;;) {
+    if (run.aborted) { removeTicket(); return gateQueueInterrupted(run, entry.seq); }
+    const v = gateQueueScan(root, err, mine);
+    if (!v.tickets.some((e) => e.name === mine)) {
+      // quarantined or removed under us: re-write it with the same seq (keeps the FIFO place)
+      atomicWriteJson(ticketFile(), entry);
+      err('[gate-queue] ticket file missing: re-written seq=' + entry.seq);
+      v.tickets.push({ ...entry, name: mine });
+      v.tickets.sort((a, b) => a.seq - b.seq);
+    }
+    const idx = v.tickets.findIndex((e) => e.name === mine);
+    const n = v.holders.length + v.tickets.length;
+    const pos = (v.holders.length + idx + 1) + '/' + n;
+    const held = v.holders.reduce((s, e) => s + gateQueuePeakOf(e, budget), 0);
+    let reason;
+    let waitFor;
+    let ahead = 'none';
+    if (idx > 0) {
+      reason = 'turn';
+      waitFor = 'turn';
+      ahead = gateQueueWho(v.tickets[idx - 1]);
+    } else {
+      const q = { peakMb: peak, budgetMb: budget, swapUsedMaxMb: settings.swap_used_max_mb };
+      const sig = await gateQueueHeadSignals(sigOpts, sigState, say, { ...q, heldMb: held }, deadline);
+      if (run.aborted) continue;
+      let dec = gateSignalsDecide(sig, { ...q, heldMb: held });
+      if (dec.admit && sig.swapout_mb_per_s == null && sig.swapout_pending_ms > 0) {
+        // the 5 s swap-out window is not complete yet (deadline too close to wait it out): not admitted on a guess
+        dec = { admit: false, reason: 'swap-out to stop (measuring)', wait_for: 'swap-out to stop' };
+      }
+      if (dec.admit) {
+        const res = await gateQueueWithLock(root, run, () => gateQueueTryAdmit(root, entry, mine, budget, q, sig));
+        if (res.aborted) continue;
+        if (res.value.admitted) {
+          const w = Math.round((Date.now() - t0) / 1000);
+          err('[gate-queue] admitted seq=' + entry.seq + ' after ' + w + ' s · peak ' + (peak == null ? 'exclusive' : peak + ' MB') +
+            ' · held ' + res.value.held + '/' + budget + ' MB · signals ' + sig.source);
+          return { outcome: 'GATE_QUEUE_ADMITTED', exit: 0, seq: entry.seq, name: mine, root, peak_mb: peak, budget_mb: budget, held_mb: res.value.held, label, waited_s: w, entry: res.value.entry };
+        }
+        dec = res.value.dec;
+      }
+      reason = dec.reason;
+      waitFor = dec.wait_for;
+      const blockers = v.holders.slice().sort((a, b) => gateQueuePeakOf(b, budget) - gateQueuePeakOf(a, budget));
+      if (blockers.length) ahead = gateQueueWho(blockers[0]);
+    }
+    lastWaitFor = waitFor;
+    lastPos = pos;
+    const line = '[gate-queue] position ' + pos + ' · waiting for ' + reason + ' · ahead: ' + ahead;
+    const now = Date.now();
+    if (line !== lastLine || now - lastAt >= gateQueueReprintMs) {
+      err(line);
+      if (line !== lastLine) {
+        entry.reason = reason;
+        entry.checked_at = new Date(now).toISOString();
+        atomicWriteJson(ticketFile(), entry);
+      }
+      lastLine = line;
+      lastAt = now;
+    }
+    if (Date.now() >= deadline) {
+      removeTicket();
+      const w = Math.round((Date.now() - t0) / 1000);
+      err('[WAIT-TIMEOUT] gate-queue: waited ' + w + ' s at position ' + lastPos + ' for ' + lastWaitFor + ' · not started · retryable');
+      return { outcome: 'GATE_WAIT_TIMEOUT', exit: 3, seq: entry.seq, waited_s: w, waiting_for: lastWaitFor };
+    }
+    await run.sleep(Math.min(gateQueuePollMs, Math.max(0, deadline - Date.now())));
+  }
+}
+
+// The head's signal read. The swap-out rate needs two reads >= 5 s apart; the extra wait is paid only when
+// every other condition would admit (a waiter blocked on pressure or budget never sleeps for it), and never
+// past the deadline.
+async function gateQueueHeadSignals(sigOpts, sigState, say, q, deadline) {
+  let sig = gateSignalsRead(sigOpts, sigState);
+  if (sig.swapout_mb_per_s == null && sig.swapout_pending_ms > 0 && gateSignalsDecide(sig, q).admit &&
+      Date.now() + sig.swapout_pending_ms < deadline) {
+    sig = await gateSignalsReadSettled(sigOpts, sigState);
+  }
+  say(sig);
+  return sig;
+}
+
+// Under the lock: still the head, still fits; then the ticket becomes a holder by rename.
+function gateQueueTryAdmit(root, entry, mine, budget, q, sig) {
+  const lower = gateQueueListNames(path.join(root, 'tickets')).filter((n) => n < mine);
+  if (lower.length) return { admitted: false, dec: { reason: 'turn', wait_for: 'turn' } };
+  let held = 0;
+  for (const name of gateQueueListNames(path.join(root, 'holders'))) {
+    const r = gateQueueReadEntry(path.join(root, 'holders', name), name);
+    if (r.entry) held += gateQueuePeakOf(r.entry, budget);
+  }
+  const dec = gateSignalsDecide(sig, { ...q, heldMb: held });
+  if (!dec.admit) return { admitted: false, dec };
+  const now = new Date().toISOString();
+  const holder = { ...entry, admitted_at: now, reason: null, checked_at: now };
+  const tf = path.join(root, 'tickets', mine);
+  atomicWriteJson(tf, holder);
+  fs.mkdirSync(path.join(root, 'holders'), { recursive: true });
+  fs.renameSync(tf, path.join(root, 'holders', mine));
+  return { admitted: true, held: held + gateQueuePeakOf(entry, budget), entry: holder };
+}
+
+function gateQueueInterrupted(run, seq) {
+  const sig = run.aborted || 'SIGTERM';
+  return { outcome: 'GATE_INTERRUPTED', exit: 128 + gateQueueSignalNo[sig], signal: sig, seq, started: false };
+}
+
+// Release = remove the caller's own holder file. Never kills; never needs the lock (it only lowers held).
+function gateQueueRelease(ctx, admitted, exitCode, cleaned) {
+  const err = gateQueueErrWriter(ctx);
+  try { fs.unlinkSync(path.join(admitted.root, 'holders', admitted.name)); } catch (e) {
+    if (e.code !== 'ENOENT') throw e;
+    err('[gate-queue] holder file missing at release');
+  }
+  err('[gate-queue] released seq=' + admitted.seq + ' exit=' + exitCode + ' cleaned=' + (cleaned || 0));
+}
+
+// In-process admission for `gate run` (CONTRACT §11 A8). Resolves to the CLI's result object; on ADMITTED it
+// carries release(exitCode). Signals while waiting remove the ticket (GATE_INTERRUPTED, never started).
+async function gateQueueAdmit(ctx, opts) {
+  const run = gateQueueRuntime(ctx);
+  run.trap();
+  let res;
+  try { res = await gateQueueAdmitCore(ctx, opts || {}, run); } finally { run.untrap(); }
+  if (res.outcome === 'GATE_QUEUE_ADMITTED') {
+    let done = false;
+    res.release = (exitCode, cleaned) => {
+      if (done) return;
+      done = true;
+      gateQueueRelease(ctx, res, exitCode == null ? 0 : exitCode, cleaned);
+    };
+  }
+  return res;
+}
+
+// The live holder named by DO_IT_GATE_HOLDER that is an ancestor of this process, or null (forged, stale,
+// or not above us). Used by nested admission and `gate run` (CONTRACT §11 A8).
+function gateQueueHeldBySelf(ctx) {
+  const v = ctx && ctx.env ? ctx.env.DO_IT_GATE_HOLDER : null;
+  const m = /^(\d+)-(\d+)$/.exec(v || '');
+  if (!m) return null;
+  const seq = Number(m[1]);
+  const pid = Number(m[2]);
+  const name = gateQueueName(seq, pid);
+  const r = gateQueueReadEntry(path.join(gateQueueRoot(ctx), 'holders', name), name);
+  if (!r.entry) return null;
+  const st = gateProcState(pid, r.entry.pid_start);
+  if (st !== 'alive' && st !== 'alive-unverified') return null;
+  let p = process.pid;
+  for (let i = 0; i < 64 && p && p > 1; i++) {
+    if (p === pid) return r.entry;
+    p = gateProcParent(p);
+  }
+  return null;
+}
+
+// Q1 basic run (Q2 replaces it with process-group cleanup): spawn, wait, release, exit passthrough.
+// Signals while running are forwarded to the child; the queue then exits 128 + N (PRD-4 D18).
+async function gateQueueRunChild(ctx, admitted, argv, run) {
+  const err = run.err;
+  return new Promise((resolve) => {
+    let child;
+    let settled = false;
+    let interrupted = null;
+    const finish = (exit, extra) => {
+      if (settled) return;
+      settled = true;
+      run.onSignal = null;
+      resolve({ exit, ...extra });
+    };
+    try {
+      child = cp.spawn(argv[0], argv.slice(1), {
+        cwd: ctx.cwd, stdio: 'inherit',
+        env: { ...ctx.env, DO_IT_GATE_HOLDER: admitted.seq + '-' + process.pid },
+      });
+    } catch (e) {
+      err('[gate-queue] command failed to start: ' + (e.code || 'error'));
+      finish(127, { start_error: e.code || 'error' });
+      return;
+    }
+    run.onSignal = (sig) => {
+      interrupted = interrupted || sig;
+      try { child.kill(sig); } catch { /* gone */ }
+    };
+    child.on('error', (e) => {
+      if (child.pid == null || e.code === 'ENOENT' || e.code === 'EACCES') {
+        err('[gate-queue] command failed to start: ' + (e.code || 'error'));
+        finish(127, { start_error: e.code || 'error' });
+      }
+    });
+    child.on('exit', (code, signal) => {
+      let exit = code;
+      if (exit == null) exit = 128 + (os.constants.signals[signal] || 0);
+      if (interrupted) finish(128 + gateQueueSignalNo[interrupted], { command_exit: exit, signal: interrupted });
+      else finish(exit, { command_exit: exit });
+    });
+  });
+}
+
+// `do-it gate queue [--peak-mb N] [--label T] [--timeout-s N] -- command` (CLI entry; async).
+// args: parseArgs shape; the command argv comes from args.passthrough (the `--` tail; V1's cli.mjs names it).
+async function gateQueueCmd(ctx, args) {
+  const flags = (args && args.flags) || {};
+  const argv = (args && (args.passthrough || args.rest || args['--'])) || [];
+  if (flags.status) throw fail('USAGE', 1, { message: 'gate queue --status arrives with Q2' });
+  if (!Array.isArray(argv) || !argv.length) throw fail('USAGE', 1, { message: 'usage: do-it gate queue [--peak-mb N] [--label T] [--timeout-s N] -- command' });
+  const run = gateQueueRuntime(ctx);
+  run.trap();
+  try {
+    let admitted;
+    try {
+      admitted = await gateQueueAdmitCore(ctx, {
+        peakMb: flags['peak-mb'] === undefined ? null : flags['peak-mb'],
+        timeoutS: flags['timeout-s'] === undefined ? null : flags['timeout-s'],
+        label: typeof flags.label === 'string' ? flags.label : null,
+        argv,
+      }, run);
+    } catch (e) {
+      if (e && e.outcome === 'QUEUE_SETTINGS_INVALID') run.err('[gate-queue] ' + (e.extra.message || 'queue settings invalid') + ' · not started');
+      throw e;
+    }
+    if (admitted.outcome !== 'GATE_QUEUE_ADMITTED') return admitted;
+    if (run.aborted) {
+      // a signal landed between admission and spawn: never start
+      gateQueueRelease(ctx, admitted, 128 + gateQueueSignalNo[run.aborted], 0);
+      return gateQueueInterrupted(run, admitted.seq);
+    }
+    const r = await gateQueueRunChild(ctx, admitted, argv, run);
+    gateQueueRelease(ctx, admitted, r.exit, 0);
+    if (r.signal) return { outcome: 'GATE_INTERRUPTED', exit: r.exit, seq: admitted.seq, signal: r.signal, command_exit: r.command_exit };
+    if (r.start_error) return { outcome: 'GATE_QUEUE_START_FAILED', exit: 127, seq: admitted.seq, error: r.start_error };
+    return { outcome: 'GATE_QUEUE_RAN', exit: r.exit, seq: admitted.seq, label: admitted.label };
+  } finally {
+    run.untrap();
+  }
+}
+
+// ---- gate-results.mjs ----
+// Gate results store (resumable test gates, epic L1; PRD-1 D1-D15, CONTRACT §2.1, §8 M1/M5, §11 A3-A6).
+// One append-only store per repository under {git-common-dir}/do-it/gate-results/. Every error path fails toward
+// running more (G-1): no store, an unreadable store, a corrupt line or an unknown key never yields a reuse.
+
+const GATE_ROW_SCHEMA = 'do-it-gate-result/1';
+const GATE_ROW_MAX_JSON = 4094;
+const GATE_STORE_ROWS = 'results.jsonl';
+const GATE_STORE_BASE = 'results.base.jsonl';
+const GATE_STORE_BASE_SCHEMA = 'do-it-gate-base/1';
+const GATE_STORE_SEG_RE = /^results\.seg-([0-9]+)\.jsonl$/;
+const GATE_STORE_LOCK_STALE_MS = 60000;
+const GATE_FAILURE_CAP = 1024 * 1024;
+const GATE_FOLD_DEFAULTS = Object.freeze({
+  resume: false,
+  ttlMs: 86400000,
+  unstableMs: 604800000,
+  flakyCarryMs: 604800000,
+  skewMs: 60000,
+});
+
+// == process start time (CONTRACT §11 A8, build decision Y4) ==
+// The default start-time probe is the queue lane's gateProcStart(pid) (gate-signals.mjs); callers may still inject
+// opts.procStart. A null start time counts as "dead or differs" (G-1 direction):
+// a run whose owner cannot be proven alive is never treated as live, and a lock whose owner cannot be proven alive
+// is reclaimable (the compaction nonce check then aborts the loser before it can replace the base).
+function gateStoreProcStartDefault(pid) {
+  return gateProcStart(pid);
+}
+
+function gateStorePidAlive(pid, pidStart, procStart) {
+  if (!Number.isInteger(pid) || pid <= 0) return false;
+  try {
+    process.kill(pid, 0);
+  } catch (e) {
+    if (!e || e.code !== 'EPERM') return false;
+  }
+  let nowStart = null;
+  try { nowStart = (procStart || gateStoreProcStartDefault)(pid); } catch { nowStart = null; }
+  if (nowStart === null || nowStart === undefined || pidStart === null || pidStart === undefined) return false;
+  return String(nowStart) === String(pidStart);
+}
+
+// == store handle (D1, D14) ==
+// {backend: 'local', dir} or null when the cwd is not inside a git repository (store unavailable: every file runs).
+function gateStoreOpen(opts) {
+  const o = opts || {};
+  const cwd = o.cwd || process.cwd();
+  const env = o.env || process.env;
+  const run = (args) => cp.execFileSync('git', args, { cwd, env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+  let common = null;
+  try {
+    common = run(['rev-parse', '--path-format=absolute', '--git-common-dir']);
+  } catch {
+    try { common = path.resolve(cwd, run(['rev-parse', '--git-common-dir'])); } catch { common = null; }
+  }
+  if (!common) return null;
+  let real = common;
+  try { real = fs.realpathSync(common); } catch { /* keep as resolved */ }
+  return { backend: 'local', dir: path.join(real, 'do-it', 'gate-results') };
+}
+
+// == rows: CRC and validation (D3, D5) ==
+function gateRowCrc(rowWithoutCrc) {
+  return sha256Bytes(canonicalJson(rowWithoutCrc)).slice(0, 16);
+}
+
+function gatePassInvariant(row) {
+  const c = row && row.counts;
+  return row.exec_error === false && !!c && c.failed === 0 && c.passed >= 1 && (row.failure_ref === null || row.failure_ref === undefined);
+}
+
+function gateRowStringsOk(v) {
+  if (typeof v === 'string') return v.isWellFormed();
+  if (Array.isArray(v)) return v.every(gateRowStringsOk);
+  if (v && typeof v === 'object') return Object.entries(v).every(([k, x]) => k.isWellFormed() && gateRowStringsOk(x));
+  if (typeof v === 'number') return Number.isSafeInteger(v);
+  return true;
+}
+
+// Schema plus the invariants the schema subset cannot express. opts.passInvariant (default true) adds the PASS
+// invariant (G-2 defence in depth). The scanner does not apply it: the fold re-applies it as FAIL (D13 step 5).
+function gateRowErrors(row, opts) {
+  const errors = [];
+  if (!row || typeof row !== 'object' || Array.isArray(row)) return ['row is not an object'];
+  for (const e of validateSchema(loadSchemaFile('gate-result.1.schema.json'), { ...row, crc: row.crc === undefined ? '0000000000000000' : row.crc })) {
+    errors.push(e.pointer + ' ' + e.message);
+  }
+  if (!gateRowStringsOk(row)) errors.push('a string is not well-formed UTF-16 or a number is not a safe integer');
+  const fileRow = row.type === 'start' || row.type === 'finish';
+  if (fileRow) {
+    if (typeof row.file !== 'string') errors.push('/file is required on ' + row.type);
+    if (typeof row.key !== 'string') errors.push('/key is required on ' + row.type);
+  } else {
+    if ('file' in row) errors.push('/file is not allowed on ' + row.type);
+    if ('key' in row) errors.push('/key is not allowed on ' + row.type);
+    if ('result' in row) errors.push('/result is not allowed on ' + row.type);
+  }
+  if (row.type === 'finish' && !('result' in row)) errors.push('/result is required on finish');
+  if (row.type !== 'finish' && 'result' in row) errors.push('/result is allowed on finish only');
+  for (const k of ['tainted', 'reason', 'verdict']) if (k in row && row.type !== 'run_end') errors.push('/' + k + ' is allowed on run_end only');
+  for (const k of ['pid', 'pid_start']) if (k in row && row.type !== 'run_start') errors.push('/' + k + ' is allowed on run_start only');
+  if (typeof row.file === 'string') {
+    const f = row.file;
+    if (/[\t\n\r]/.test(f)) errors.push('/file contains TAB, LF or CR');
+    if (f.startsWith('/')) errors.push('/file is absolute');
+    if (f.split('/').some((seg) => seg === '..')) errors.push('/file has a .. segment');
+  }
+  if (!opts || opts.passInvariant !== false) {
+    if (row.type === 'finish' && row.result === 'PASS' && !gatePassInvariant(row)) {
+      errors.push('PASS invariant: requires exec_error false, counts.failed 0, counts.passed >= 1, failure_ref null');
+    }
+  }
+  return errors;
+}
+
+// The line on disk is exactly canonicalJson(row with crc). Returns the line (without LF) or throws GATE_ROW_INVALID.
+function gateRowLine(row) {
+  const r = {};
+  for (const [k, v] of Object.entries(row || {})) if (v !== undefined && k !== 'crc') r[k] = v;
+  if (r.schema === undefined) r.schema = GATE_ROW_SCHEMA;
+  const errors = gateRowErrors(r);
+  if (errors.length) throw fail('GATE_ROW_INVALID', 1, { errors });
+  const crc = gateRowCrc(r);
+  return canonicalJson({ ...r, crc });
+}
+
+// D4: one bounded O_APPEND write per row. Rows larger than 4094 bytes of canonical JSON throw GATE_ROW_TOO_LARGE.
+function gateStoreAppend(store, row) {
+  if (!store || !store.dir) throw fail('GATE_STORE_UNAVAILABLE', 1, {});
+  const line = gateRowLine(row);
+  const bytes = Buffer.from(line, 'utf8');
+  if (bytes.length > GATE_ROW_MAX_JSON) throw fail('GATE_ROW_TOO_LARGE', 1, { bytes: bytes.length, max: GATE_ROW_MAX_JSON });
+  const res = appendRecord(path.join(store.dir, GATE_STORE_ROWS), Buffer.concat([bytes, Buffer.from('\n')]));
+  if (res.written !== res.expected) throw fail('GATE_ROW_SHORT_WRITE', 1, { written: res.written, expected: res.expected });
+  return { line, crc: JSON.parse(line).crc };
+}
+
+// == scan (D2, D6) ==
+// Parses one stored line. Returns the row or null when the line is corrupt (parse, CRC, schema or structural invariant).
+function gateRowParse(raw) {
+  let obj;
+  try { obj = JSON.parse(raw); } catch { return null; }
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj) || typeof obj.crc !== 'string') return null;
+  const rest = { ...obj };
+  delete rest.crc;
+  if (gateRowCrc(rest) !== obj.crc) return null; // CRC-GUARD: a row whose bytes changed after writing is CORRUPT
+  if (gateRowErrors(obj, { passInvariant: false }).length) return null;
+  return obj;
+}
+
+function gateRowAttribute(raw) {
+  const out = {};
+  const str = (name) => {
+    const m = new RegExp('"' + name + '"\\s*:\\s*"((?:[^"\\\\]|\\\\.)*)"').exec(raw);
+    if (!m) return undefined;
+    try { return JSON.parse('"' + m[1] + '"'); } catch { return undefined; }
+  };
+  const file = str('file');
+  if (typeof file === 'string' && file) out.file = file;
+  const leg = str('leg');
+  if (typeof leg === 'string' && leg) out.leg = leg;
+  const key = /"key"\s*:\s*"([0-9a-f]{64})"/.exec(raw);
+  if (key) out.key = key[1];
+  const run = /g-[0-9]{8}T[0-9]{6}Z-[0-9a-f]{4}/.exec(raw);
+  if (run) out.run_id = run[0];
+  return out;
+}
+
+function gateStoreReadFile(file) {
+  try {
+    return { bytes: readRegularFile(file, BULK_READ_CAP) };
+  } catch (e) {
+    if (e && e.code === 'ENOENT') return { bytes: null };
+    return { error: e };
+  }
+}
+
+function gateStoreSegments(dir) {
+  let names = [];
+  try { names = fs.readdirSync(dir); } catch { return []; }
+  return names
+    .map((n) => ({ name: n, m: GATE_STORE_SEG_RE.exec(n) }))
+    .filter((x) => x.m)
+    .map((x) => ({ name: x.name, n: Number(x.m[1]) }))
+    .sort((a, b) => a.n - b.n);
+}
+
+// The base file's first line is a metadata line recording how many bytes of each segment it absorbed, written in the
+// same atomic rename as the base content. A scan skips the absorbed bytes, so a crash between the base rename and the
+// segment clean-up can never present a row twice (PRD-1 D11; see the results file for this refinement of D2).
+function gateStoreBaseMeta(firstLine) {
+  let obj;
+  try { obj = JSON.parse(firstLine); } catch { return null; }
+  if (!obj || typeof obj !== 'object' || obj.schema !== GATE_STORE_BASE_SCHEMA || typeof obj.crc !== 'string') return null;
+  const rest = { ...obj };
+  delete rest.crc;
+  if (gateRowCrc(rest) !== obj.crc) return null;
+  if (!obj.absorbed || typeof obj.absorbed !== 'object') return null;
+  return obj;
+}
+
+function gateStoreSplit(bytes) {
+  const parts = bytes.toString('utf8').split('\n');
+  return parts.filter((l) => l.trim() !== '');
+}
+
+// Reads every row file in scan order. opts.withActive (default true) includes results.jsonl.
+// Returns {source, lines: [{raw, from}], absorbedOld, segSizes, error}. source: 'local' | 'none' | 'unavailable'.
+function gateStoreReadAll(store, opts) {
+  if (!store || !store.dir) return { source: 'unavailable', lines: [], absorbedOld: {}, segSizes: {} };
+  const dir = store.dir;
+  let st = null;
+  try { st = fs.statSync(dir); } catch (e) {
+    if (e && e.code === 'ENOENT') return { source: 'none', lines: [], absorbedOld: {}, segSizes: {} };
+    return { source: 'unavailable', lines: [], absorbedOld: {}, segSizes: {} };
+  }
+  if (!st.isDirectory()) return { source: 'unavailable', lines: [], absorbedOld: {}, segSizes: {} };
+  const lines = [];
+  let absorbedOld = {};
+  const base = gateStoreReadFile(path.join(dir, GATE_STORE_BASE));
+  if (base.error) return { source: 'unavailable', lines: [], absorbedOld: {}, segSizes: {} };
+  if (base.bytes) {
+    const all = gateStoreSplit(base.bytes);
+    const meta = all.length ? gateStoreBaseMeta(all[0]) : null;
+    if (meta) { absorbedOld = meta.absorbed; all.shift(); }
+    for (const raw of all) lines.push({ raw, from: GATE_STORE_BASE });
+  }
+  const segSizes = {};
+  for (const seg of gateStoreSegments(dir)) {
+    const r = gateStoreReadFile(path.join(dir, seg.name));
+    if (r.error) return { source: 'unavailable', lines: [], absorbedOld: {}, segSizes: {} };
+    if (!r.bytes) continue;
+    segSizes[seg.name] = r.bytes.length;
+    const skip = Number.isInteger(absorbedOld[seg.name]) && absorbedOld[seg.name] <= r.bytes.length ? absorbedOld[seg.name] : 0;
+    for (const raw of gateStoreSplit(r.bytes.subarray(skip))) lines.push({ raw, from: seg.name, tail: skip > 0 });
+  }
+  if (!opts || opts.withActive !== false) {
+    const act = gateStoreReadFile(path.join(dir, GATE_STORE_ROWS));
+    if (act.error) return { source: 'unavailable', lines: [], absorbedOld: {}, segSizes: {} };
+    if (act.bytes) for (const raw of gateStoreSplit(act.bytes)) lines.push({ raw, from: GATE_STORE_ROWS });
+  }
+  return { source: 'local', lines, absorbedOld, segSizes };
+}
+
+function gateStoreItem(raw, pos) {
+  const row = gateRowParse(raw);
+  if (row) return { pos, ok: true, row };
+  return { pos, ok: false, ...gateRowAttribute(raw) };
+}
+
+function gateStoreKeep(item, filter) {
+  if (!filter || (filter.file === undefined && filter.leg === undefined)) return true;
+  const leg = filter.leg;
+  if (item.ok) {
+    const r = item.row;
+    if (r.type !== 'start' && r.type !== 'finish') return true;
+    if (filter.file !== undefined && r.file !== filter.file) return false;
+    if (leg !== undefined && (r.leg || 'unit') !== leg) return false;
+    return true;
+  }
+  if (filter.file !== undefined && item.file !== undefined && item.file !== filter.file) return false;
+  if (leg !== undefined && item.file !== undefined && item.leg !== undefined && item.leg !== leg) return false;
+  return true;
+}
+
+// Never throws on content. With {file, leg}: that file's start/finish items, every run-level row, every corrupt item
+// attributed to that file and every unattributed corrupt item.
+function gateStoreScan(store, filter) {
+  const all = gateStoreReadAll(store);
+  const items = [];
+  let corrupt = 0;
+  let unattributed = 0;
+  all.lines.forEach((l, pos) => {
+    const it = gateStoreItem(l.raw, pos);
+    if (!gateStoreKeep(it, filter)) return;
+    if (!it.ok) { corrupt++; if (it.file === undefined) unattributed++; }
+    items.push(it);
+  });
+  return { items, corrupt, unattributed, source: all.source };
+}
+
+// == liveness of runs (D13 inputs; CONTRACT §11 A4) ==
+// Impure: the set of run ids whose run_start owner is alive (pid answers AND start time equals pid_start) and that
+// have no run_end. The fold itself never touches the OS.
+function gateStoreLiveRuns(items, opts) {
+  const procStart = (opts && opts.procStart) || gateStoreProcStartDefault;
+  const list = Array.isArray(items) ? items : (items && items.items) || [];
+  const ended = new Set();
+  const starts = new Map();
+  for (const it of list) {
+    if (!it || !it.ok) continue;
+    if (it.row.type === 'run_end') ended.add(it.row.run_id);
+    if (it.row.type === 'run_start' && !starts.has(it.row.run_id)) starts.set(it.row.run_id, it.row);
+  }
+  const live = new Set();
+  for (const [id, row] of starts) {
+    if (ended.has(id)) continue;
+    if (gateStorePidAlive(row.pid, row.pid_start, procStart)) live.add(id);
+  }
+  return live;
+}
+
+// == fold: pure (D13; CONTRACT §8 M1, §11 A3, A5). No fs, no child_process, no clock below this line. ==
+const GATE_COMPONENT_ORDER = ['gate', 'runner', 'core', 'installed', 'env', 'platform', 'class', 'tree', 'deps'];
+
+function gateFoldMs(at) {
+  const t = Date.parse(at);
+  return Number.isFinite(t) ? t : NaN;
+}
+
+function gateFoldSelect(all, opts) {
+  const leg = opts.leg || 'unit';
+  const out = [];
+  for (const it of all) {
+    if (!it) continue;
+    if (it.ok) {
+      const r = it.row;
+      if (r.type === 'start' || r.type === 'finish') {
+        if (opts.file !== undefined && r.file !== opts.file) continue;
+        if ((r.leg || 'unit') !== leg) continue;
+      }
+      out.push(it);
+    } else {
+      if (opts.file !== undefined && it.file !== undefined && it.file !== opts.file) continue;
+      if (it.file !== undefined && it.leg !== undefined && it.leg !== leg) continue;
+      out.push(it);
+    }
+  }
+  return out.map((it, i) => ({ it, i })).sort((a, b) => (a.it.pos - b.it.pos) || (a.i - b.i)).map((x) => x.it);
+}
+
+// gateFold(rows, keyNow, now, opts): rows = gateStoreScan items (or the scan result itself) for one (file, leg);
+// keyNow = {key, components} or null; now = epoch ms; opts = {file, leg, resume, liveRuns, ttlMs, unstableMs,
+// flakyCarryMs, skewMs, source}. Returns {state, reuse, passRow, key, kills, flakyPasses, unstableUntil,
+// invalidated, reason, corrupt}.
+function gateFold(rows, keyNow, now, opts) {
+  const o = { ...GATE_FOLD_DEFAULTS, ...(opts || {}) };
+  const scanObj = rows && !Array.isArray(rows) ? rows : null;
+  const all = scanObj ? scanObj.items || [] : rows || [];
+  const source = o.source || (scanObj ? scanObj.source : undefined);
+  const live = o.liveRuns instanceof Set ? o.liveRuns : new Set(o.liveRuns || []);
+  const out = {
+    state: 'NEVER_RUN', reuse: null, passRow: null, key: keyNow && keyNow.key ? keyNow.key : null,
+    kills: 0, flakyPasses: 0, unstableUntil: null, invalidated: [], reason: 'no-row', corrupt: 0,
+  };
+  // step 1: unknown component => the file runs (G-1)
+  if (!keyNow || typeof keyNow.key !== 'string' || !keyNow.key) { out.reason = 'key-unknown'; return out; }
+  const items = gateFoldSelect(all, o);
+  out.corrupt = items.filter((it) => !it.ok).length;
+  if (items.length === 0 && (source === 'none' || source === 'unavailable')) { out.reason = 'no-store'; return out; }
+  const K = keyNow.key;
+
+  // step 2: de-dup start/finish on (type, run_id, file, leg); step 3: run table
+  const seen = new Set();
+  const runs = new Map();
+  const cleans = [];
+  const finishes = [];
+  const starts = [];
+  const corrupts = [];
+  for (const it of items) {
+    if (!it.ok) { corrupts.push({ pos: it.pos, attributed: it.file !== undefined }); continue; }
+    const r = it.row;
+    if (r.type === 'start' || r.type === 'finish') {
+      const k = r.type + '\0' + r.run_id + '\0' + r.file + '\0' + (r.leg || 'unit');
+      if (seen.has(k)) continue;
+      seen.add(k);
+      (r.type === 'start' ? starts : finishes).push({ pos: it.pos, row: r });
+      continue;
+    }
+    const run = runs.get(r.run_id) || { start: null, end: null };
+    if (r.type === 'run_start' && !run.start) run.start = r;
+    if (r.type === 'run_end' && !run.end) run.end = r;
+    runs.set(r.run_id, run);
+    if (r.type === 'clean') cleans.push({ pos: it.pos, row: r });
+  }
+  let horizon = null;
+  for (let i = cleans.length - 1; i >= 0; i--) {
+    const run = runs.get(cleans[i].row.run_id);
+    if (run && run.end && run.end.tainted === true) continue;
+    const h = gateFoldMs(run && run.start ? run.start.at : cleans[i].row.at);
+    if (Number.isFinite(h)) { horizon = h; break; }
+  }
+  const lastCorruptPos = corrupts.length ? Math.max(...corrupts.map((c) => c.pos)) : -1;
+
+  // steps 4-5: corrupt voiding and normalisation of every finish
+  const norm = finishes.map((f) => {
+    const r = f.row;
+    let res = r.result === 'DESELECTED' ? 'SKIPPED' : r.result;
+    let inv = false;
+    if (res === 'PASS' && !gatePassInvariant(r)) { res = 'FAIL'; inv = true; }
+    let ignore = null;
+    if (res === 'PASS' || res === 'SKIPPED') {
+      const run = runs.get(r.run_id);
+      if (lastCorruptPos > f.pos) ignore = 'voided-by-corrupt';
+      else if (run && run.end && run.end.tainted === true) ignore = 'tainted-run';
+      else if (!(run && run.end) && live.has(r.run_id)) ignore = 'live-run';
+      else if (!o.resume && (!(run && run.end) || run.end.verdict === 'GATE_INTERRUPTED')) ignore = 'interrupted-run';
+    }
+    return { pos: f.pos, row: r, res, inv, ignore, at: gateFoldMs(r.at) };
+  });
+
+  // step 9: FLAKY carry-over from another key of the same file (A5)
+  let flakyAt = null;
+  const byKey = new Map();
+  for (const f of norm) {
+    if (f.ignore === 'voided-by-corrupt') continue;
+    if (!byKey.has(f.row.key)) byKey.set(f.row.key, []);
+    byKey.get(f.row.key).push(f);
+  }
+  for (const [k, list] of byKey) {
+    if (k === K) continue;
+    let prev = null;
+    for (const f of list) {
+      let ev = false;
+      if (f.res === 'PASS' && f.row.retried === true) ev = true;
+      if (prev && ((prev.res === 'PASS' && f.res === 'FAIL') || (prev.res === 'FAIL' && f.res === 'PASS'))) ev = true;
+      if (ev && Number.isFinite(f.at) && (flakyAt === null || f.at > flakyAt)) flakyAt = f.at;
+      if (f.res === 'PASS' || f.res === 'FAIL') prev = f;
+    }
+  }
+  const carry = flakyAt !== null && now < flakyAt + o.flakyCarryMs;
+
+  // step 6: key-scoped machine
+  const onKey = norm.filter((f) => f.row.key === K);
+  const usable = onKey.filter((f) => f.ignore === null);
+  let st = carry ? 'FLAKY' : 'NEVER_RUN';
+  let n = 0;
+  let carried = carry;
+  let decisive = null;
+  for (const f of usable) {
+    if (f.res === 'PASS') {
+      if (f.row.retried === true) { st = 'FLAKY'; n = 0; carried = false; }
+      else if (st === 'FAIL') { st = 'FLAKY'; n = 1; carried = false; }
+      else if (st === 'FLAKY') { n++; if (n >= 2) { st = 'PASS'; n = 0; } }
+      else st = 'PASS';
+      decisive = f;
+    } else if (f.res === 'FAIL') {
+      if (st === 'PASS' || st === 'FLAKY') { st = 'FLAKY'; n = 0; carried = false; } else st = 'FAIL';
+      decisive = f;
+    } else if (f.res === 'SKIPPED') {
+      if (st !== 'FAIL' && st !== 'FLAKY') { st = 'SKIPPED'; decisive = f; }
+    }
+  }
+
+  // step 7: kills and live starts on the key
+  const finished = new Set(finishes.map((f) => f.row.run_id + '\0' + f.row.file + '\0' + (f.row.leg || 'unit')));
+  const lastFinishOnKey = onKey.length ? Math.max(...onKey.map((f) => f.pos)) : -1;
+  let kills = 0;
+  let lastOpen = null;
+  let lastOpenFilePos = -1;
+  for (const s of starts) {
+    if (finished.has(s.row.run_id + '\0' + s.row.file + '\0' + (s.row.leg || 'unit'))) continue;
+    lastOpenFilePos = Math.max(lastOpenFilePos, s.pos);
+    if (s.row.key !== K || s.pos <= lastFinishOnKey) continue;
+    const run = runs.get(s.row.run_id);
+    const running = !(run && run.end) && live.has(s.row.run_id);
+    if (!running) kills++;
+    if (!lastOpen || s.pos > lastOpen.pos) lastOpen = { pos: s.pos, running };
+  }
+  out.kills = kills;
+
+  // step 4 (state): the latest item for the file is a corrupt line attributed to it => CORRUPT
+  const lastAttributedCorrupt = corrupts.filter((c) => c.attributed).reduce((m, c) => Math.max(m, c.pos), -1);
+  const lastFileEvent = Math.max(finishes.length ? Math.max(...finishes.map((f) => f.pos)) : -1, lastOpenFilePos);
+  if (lastAttributedCorrupt > lastFileEvent) {
+    out.state = 'CORRUPT';
+    out.reason = 'voided-by-corrupt';
+    return out;
+  }
+  if (lastOpen) {
+    if (lastOpen.running) { out.state = 'RUNNING'; out.reason = 'live-run'; return out; }
+    out.state = kills >= 2 ? 'SUSPECT_KILLER' : 'KILLED';
+    out.reason = kills >= 2 ? 'suspect-killer' : 'killed';
+    return out;
+  }
+
+  // step 8: UNSTABLE_UNDER_REUSE (file level, any key)
+  let u = null;
+  let uPos = -1;
+  const nonCleanPass = new Set();
+  for (const f of norm) {
+    if (f.ignore === 'voided-by-corrupt') continue;
+    if (f.res === 'PASS' && f.row.clean !== true) nonCleanPass.add(f.row.key);
+    if (f.row.clean === true && f.res === 'FAIL' && nonCleanPass.has(f.row.key) && Number.isFinite(f.at)) { u = f.at; uPos = f.pos; }
+  }
+  if (u !== null) {
+    const until = u + o.unstableMs;
+    const cleanAfter = norm.filter((f) => f.pos > uPos && f.row.clean === true && (f.res === 'FAIL' || (f.ignore === null && f.res === 'PASS')));
+    const last2 = cleanAfter.slice(-2);
+    const cleared = now >= until && last2.length === 2 && last2.every((f) => f.res === 'PASS');
+    if (!cleared) {
+      out.state = 'UNSTABLE_UNDER_REUSE';
+      out.unstableUntil = until;
+      out.reason = 'unstable';
+      return out;
+    }
+  }
+
+  // step 10: no usable finish on the key
+  if (usable.length === 0) {
+    const ignored = onKey.filter((f) => f.ignore !== null);
+    if (ignored.length) {
+      out.reason = ignored[ignored.length - 1].ignore;
+      return out;
+    }
+    const others = norm.filter((f) => f.row.key !== K);
+    if (others.length) {
+      const prev = others[others.length - 1].row.components || {};
+      const nowC = keyNow.components || {};
+      out.invalidated = GATE_COMPONENT_ORDER.filter((c) => (prev[c] === undefined ? null : prev[c]) !== (nowC[c] === undefined ? null : nowC[c]));
+      out.reason = 'invalidated';
+      return out;
+    }
+    out.reason = 'no-row';
+    return out;
+  }
+
+  out.state = st;
+  out.flakyPasses = st === 'FLAKY' ? n : 0;
+  if (st === 'FLAKY') { out.reason = carried ? 'flaky-carry' : 'flaky'; return out; }
+  if (st === 'FAIL') { out.reason = decisive && decisive.inv ? 'pass-invariant' : 'failed'; return out; }
+  if (st === 'NEVER_RUN') { out.reason = 'no-row'; return out; }
+  // step 11: age of a PASS or SKIPPED
+  out.passRow = { run_id: decisive.row.run_id, at: decisive.row.at };
+  const at = decisive.at;
+  if (!Number.isFinite(at) || at > now + o.skewMs) { out.reason = 'future-timestamp'; return out; }
+  if (at < now - o.ttlMs || (horizon !== null && at < horizon)) { out.state = 'EXPIRED'; out.reason = 'expired'; return out; }
+  out.reuse = st;
+  out.reason = st === 'PASS' ? 'ok' : 'skipped';
+  return out;
+}
+// == end fold: pure ==
+
+// == salt (D7) ==
+function gateStoreSalt(store, opts) {
+  if (!store || !store.dir) throw fail('GATE_STORE_UNAVAILABLE', 1, {});
+  const log = (opts && opts.log) || ((m) => process.stderr.write(m + '\n'));
+  const file = path.join(store.dir, '.salt');
+  fs.mkdirSync(store.dir, { recursive: true });
+  const read = () => readRegularFile(file, 4096, { noFollow: true });
+  let bytes = null;
+  try { bytes = read(); } catch (e) {
+    if (!e || e.code !== 'ENOENT') throw e;
+    writeFileOnce(file, crypto.randomBytes(32), 0o600);
+    bytes = read();
+  }
+  if (bytes.length !== 32) {
+    atomicWrite(file, crypto.randomBytes(32), { mode: 0o600 });
+    log('[gate-results] salt rotated');
+    bytes = read();
+  }
+  try {
+    const st = fs.statSync(file);
+    if ((st.mode & 0o777) !== 0o600) fs.chmodSync(file, 0o600);
+  } catch { /* best effort */ }
+  return Buffer.from(bytes);
+}
+
+// == failure side files (D8) ==
+function gateStoreRedact(text, redactValues) {
+  let out = String(text);
+  const forms = [];
+  for (const [name, value] of Object.entries(redactValues || {})) {
+    if (typeof value !== 'string' || value.length < 6) continue;
+    forms.push([value, name]);
+    const esc = JSON.stringify(value).slice(1, -1);
+    if (esc !== value) forms.push([esc, name]);
+  }
+  forms.sort((a, b) => b[0].length - a[0].length);
+  for (const [form, name] of forms) if (out.includes(form)) out = out.split(form).join('[REDACTED:' + name + ']');
+  return out;
+}
+
+function gateStoreFailureWrite(store, text, redactValues) {
+  if (!store || !store.dir) throw fail('GATE_STORE_UNAVAILABLE', 1, {});
+  let bytes = Buffer.from(gateStoreRedact(text, redactValues), 'utf8');
+  if (bytes.length > GATE_FAILURE_CAP) {
+    const marker = Buffer.from('\n[truncated]\n', 'utf8');
+    bytes = Buffer.concat([Buffer.from(bytes.subarray(0, GATE_FAILURE_CAP - marker.length).toString('utf8'), 'utf8'), marker]);
+  }
+  const sha = sha256Bytes(bytes);
+  writeFileOnce(path.join(store.dir, 'failures', sha + '.txt'), bytes, 0o644);
+  return 'failures/' + sha + '.txt';
+}
+
+// == blob memo file (D9) ==
+function gateStoreMemoLine(entry) {
+  const r = { b: entry.b, s: entry.s, w: entry.w || {} };
+  return canonicalJson({ ...r, crc: gateRowCrc(r) });
+}
+
+function gateStoreMemoRead(store, file) {
+  const memo = new Map();
+  if (!store || !store.dir) return memo;
+  const r = gateStoreReadFile(file || path.join(store.dir, 'blobmemo.jsonl'));
+  if (!r.bytes) return memo;
+  for (const raw of gateStoreSplit(r.bytes)) {
+    let obj;
+    try { obj = JSON.parse(raw); } catch { continue; }
+    if (!obj || typeof obj.b !== 'string' || typeof obj.s !== 'string' || typeof obj.crc !== 'string') continue;
+    if (!/^[0-9a-f]{40,64}$/.test(obj.b) || !/^[0-9a-f]{64}$/.test(obj.s)) continue;
+    const rest = { ...obj };
+    delete rest.crc;
+    if (gateRowCrc(rest) !== obj.crc) continue;
+    const prev = memo.get(obj.b);
+    memo.set(obj.b, { s: obj.s, w: { ...(prev ? prev.w : {}), ...(obj.w && typeof obj.w === 'object' ? obj.w : {}) } });
+  }
+  return memo;
+}
+
+function gateStoreMemoAppend(store, entries) {
+  if (!store || !store.dir) return 0;
+  const file = path.join(store.dir, 'blobmemo.jsonl');
+  let n = 0;
+  for (const e of entries || []) {
+    if (!e || !/^[0-9a-f]{40,64}$/.test(e.b || '') || !/^[0-9a-f]{64}$/.test(e.s || '')) continue;
+    const buf = Buffer.from(gateStoreMemoLine(e) + '\n', 'utf8');
+    if (buf.length > 4096) continue;
+    appendRecord(file, buf);
+    n++;
+  }
+  return n;
+}
+
+// == live-owner lock (D10) ==
+function gateStoreLockOwner(lockDir) {
+  try {
+    const obj = JSON.parse(readRegularFile(path.join(lockDir, 'owner.json'), 65536).toString('utf8'));
+    return obj && typeof obj === 'object' ? obj : null;
+  } catch {
+    return null;
+  }
+}
+
+function gateStoreLock(store, opts) {
+  if (!store || !store.dir) return { ok: false, outcome: 'GATE_STORE_UNAVAILABLE' };
+  const procStart = (opts && opts.procStart) || gateStoreProcStartDefault;
+  const lockDir = path.join(store.dir, '.lock');
+  fs.mkdirSync(store.dir, { recursive: true });
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      fs.mkdirSync(lockDir);
+      const nonce = crypto.randomBytes(8).toString('hex');
+      let pidStart = null;
+      try { pidStart = procStart(process.pid); } catch { pidStart = null; }
+      const owner = { pid: process.pid, pid_start: pidStart === undefined ? null : pidStart, cwd: process.cwd(), at: new Date().toISOString(), nonce };
+      atomicWrite(path.join(lockDir, 'owner.json'), Buffer.from(JSON.stringify(owner) + '\n', 'utf8'));
+      return { ok: true, nonce, dir: lockDir };
+    } catch (e) {
+      if (!e || e.code !== 'EEXIST') throw e;
+    }
+    const owner = gateStoreLockOwner(lockDir);
+    let dead;
+    if (owner) dead = !gateStorePidAlive(owner.pid, owner.pid_start, procStart);
+    else {
+      let age = 0;
+      try { age = Date.now() - fs.statSync(lockDir).mtimeMs; } catch { age = Infinity; }
+      dead = age > GATE_STORE_LOCK_STALE_MS;
+    }
+    if (!dead) return { ok: false, outcome: 'COMPACTION_BUSY', owner };
+    const stale = path.join(store.dir, '.lock.stale-' + (owner && owner.pid ? owner.pid : 0) + '-' + crypto.randomBytes(4).toString('hex'));
+    try { fs.renameSync(lockDir, stale); } catch { /* another reclaimer won; retry mkdir */ }
+    try { fs.rmSync(stale, { recursive: true, force: true }); } catch { /* best effort */ }
+  }
+  return { ok: false, outcome: 'COMPACTION_BUSY', owner: gateStoreLockOwner(lockDir) };
+}
+
+function gateStoreUnlock(store, lock) {
+  if (!store || !store.dir || !lock || !lock.nonce) return false;
+  const lockDir = path.join(store.dir, '.lock');
+  const owner = gateStoreLockOwner(lockDir);
+  if (!owner || owner.nonce !== lock.nonce) return false;
+  const gone = path.join(store.dir, '.lock.released-' + crypto.randomBytes(4).toString('hex'));
+  try { fs.renameSync(lockDir, gone); } catch { return false; }
+  try { fs.rmSync(gone, { recursive: true, force: true }); } catch { /* best effort */ }
+  return true;
+}
+
+// == compaction (D11, D12; CONTRACT §8 M5) ==
+// Fold-preserving reduction over scan-ordered lines: drops only (1) start/finish duplicates on
+// (type, run_id, file, leg) after the first, (2) start rows whose (run_id, file, leg) has a finish, and (3) run rows
+// (run_start, run_end) of runs that own no kept row and wrote no clean row. Corrupt lines are kept verbatim. Every
+// other row is kept, so fold(compact(rows)) equals fold(rows) for every key and every now (T-L1-14).
+function gateStoreReduce(lines) {
+  const parsed = lines.map((l) => ({ raw: l.raw, row: gateRowParse(l.raw) }));
+  const finished = new Set();
+  for (const p of parsed) {
+    if (p.row && p.row.type === 'finish') finished.add(p.row.run_id + '\0' + p.row.file + '\0' + (p.row.leg || 'unit'));
+  }
+  const seen = new Set();
+  const keep = parsed.map(() => true);
+  const owning = new Set();
+  parsed.forEach((p, i) => {
+    const r = p.row;
+    if (!r) return;
+    if (r.type === 'start' || r.type === 'finish') {
+      const k = r.type + '\0' + r.run_id + '\0' + r.file + '\0' + (r.leg || 'unit');
+      if (seen.has(k)) { keep[i] = false; return; }
+      seen.add(k);
+      if (r.type === 'start' && finished.has(r.run_id + '\0' + r.file + '\0' + (r.leg || 'unit'))) { keep[i] = false; return; }
+      owning.add(r.run_id);
+    }
+    if (r.type === 'clean') owning.add(r.run_id);
+  });
+  parsed.forEach((p, i) => {
+    const r = p.row;
+    if (r && (r.type === 'run_start' || r.type === 'run_end') && !owning.has(r.run_id)) keep[i] = false;
+  });
+  return parsed.filter((_, i) => keep[i]).map((p) => p.raw);
+}
+
+function gateStoreSleep(ms) {
+  if (ms > 0) Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+}
+
+function gateStoreSizes(dir) {
+  const out = {};
+  for (const s of gateStoreSegments(dir)) {
+    try { out[s.name] = fs.statSync(path.join(dir, s.name)).size; } catch { /* vanished */ }
+  }
+  return out;
+}
+
+function gateStoreFlakyView(store, lines, now) {
+  const items = lines.map((raw, pos) => gateStoreItem(raw, pos));
+  const byFile = new Map();
+  for (const it of items) {
+    if (!it.ok || it.row.type !== 'finish') continue;
+    byFile.set(it.row.file + '\0' + (it.row.leg || 'unit'), it.row);
+  }
+  const files = [];
+  for (const [fk, last] of byFile) {
+    const [file, leg] = fk.split('\0');
+    const f = gateFold(items, { key: last.key, components: last.components || {} }, now, { file, leg, resume: true });
+    if (f.state === 'FLAKY' || f.state === 'UNSTABLE_UNDER_REUSE') files.push({ file, leg, key: last.key, state: f.state });
+  }
+  files.sort((a, b) => (a.file < b.file ? -1 : a.file > b.file ? 1 : a.leg < b.leg ? -1 : 1));
+  atomicWriteJson(path.join(store.dir, 'views', 'flaky.json'), { schema: 'rtg-flaky-view/1', at: new Date(now).toISOString(), files });
+  return files.length;
+}
+
+// gateStoreCompact(store, {now, env, procStart, settleMs, log}) => {outcome, states, ...}
+// outcome: COMPACTED | COMPACTION_BUSY | ROLLED_BACK (states lists COMPACTING, COMPACTION_ABORTED, ROLLED_BACK).
+function gateStoreCompact(store, opts) {
+  const o = opts || {};
+  const env = o.env || process.env;
+  const fault = env.DO_IT_FAULT || '';
+  const now = Number.isFinite(o.now) ? o.now : Date.now();
+  const log = o.log || ((m) => process.stderr.write(m + '\n'));
+  const settleMs = Number.isFinite(o.settleMs) ? o.settleMs : 250;
+  if (!store || !store.dir) return { outcome: 'GATE_STORE_UNAVAILABLE', states: [] };
+  const states = ['COMPACTING'];
+  const lock = gateStoreLock(store, o);
+  if (!lock.ok) return { outcome: 'COMPACTION_BUSY', states: ['COMPACTION_BUSY'], owner: lock.owner || null };
+  const dir = store.dir;
+  const tmpDir = path.join(dir, 'tmp');
+  const tmpBase = path.join(tmpDir, 'base-' + lock.nonce + '.jsonl');
+  try {
+    // 2: freeze the active file as the next segment
+    const before = gateStoreReadAll(store, { withActive: false });
+    let maxN = 0;
+    for (const s of gateStoreSegments(dir)) maxN = Math.max(maxN, s.n);
+    for (const name of Object.keys(before.absorbedOld)) {
+      const m = GATE_STORE_SEG_RE.exec(name);
+      if (m) maxN = Math.max(maxN, Number(m[1]));
+    }
+    const active = path.join(dir, GATE_STORE_ROWS);
+    let st = null;
+    try { st = fs.statSync(active); } catch { st = null; }
+    if (st && st.size > 0) fs.renameSync(active, path.join(dir, 'results.seg-' + (maxN + 1) + '.jsonl'));
+    // 3: wait until every frozen segment's size is stable across two reads settleMs apart
+    let prev = gateStoreSizes(dir);
+    for (let i = 0; i < 40; i++) {
+      gateStoreSleep(settleMs);
+      const cur = gateStoreSizes(dir);
+      if (canonicalJson(cur) === canonicalJson(prev)) break;
+      prev = cur;
+    }
+    // 4: read base + segment tails, reduce, write the temp base
+    const read = gateStoreReadAll(store, { withActive: false });
+    if (read.source !== 'local') throw fail('GATE_STORE_UNAVAILABLE', 1, {});
+    const late = read.lines.filter((l) => l.tail && Object.prototype.hasOwnProperty.call(read.absorbedOld, l.from)).length;
+    const kept = gateStoreReduce(read.lines);
+    const absorbed = {};
+    for (const [name, size] of Object.entries(read.segSizes)) absorbed[name] = size;
+    const metaBody = { schema: GATE_STORE_BASE_SCHEMA, absorbed, at: new Date(now).toISOString() };
+    const metaLine = canonicalJson({ ...metaBody, crc: gateRowCrc(metaBody) });
+    const buf = Buffer.from([metaLine, ...kept].join('\n') + '\n', 'utf8');
+    atomicWrite(tmpBase, buf);
+    if (fault === 'compact_after_tmp') throw fail('FAULT_INJECTED', 1, { fault });
+    if (fault === 'compact_steal_lock') {
+      atomicWrite(path.join(dir, '.lock', 'owner.json'), Buffer.from(JSON.stringify({ pid: process.pid, pid_start: null, cwd: process.cwd(), at: new Date().toISOString(), nonce: 'stolen-' + crypto.randomBytes(4).toString('hex') }) + '\n', 'utf8'));
+    }
+    const owner = gateStoreLockOwner(path.join(dir, '.lock'));
+    if (!owner || owner.nonce !== lock.nonce) throw fail('COMPACTION_LOCK_LOST', 1, {});
+    fs.renameSync(tmpBase, path.join(dir, GATE_STORE_BASE));
+    if (fault === 'compact_after_base_rename') throw fail('FAULT_INJECTED', 1, { fault });
+    // 5: segments absorbed by the previous compaction are now absorbed twice over; remove them
+    for (const name of Object.keys(read.absorbedOld)) {
+      try { fs.unlinkSync(path.join(dir, name)); } catch { /* already gone */ }
+    }
+    if (late > 0) log('[gate-results] ' + late + ' late rows recovered');
+    // 6: derived view, release
+    try { gateStoreFlakyView(store, kept, now); } catch { /* derived, never authoritative */ }
+    gateStoreUnlock(store, lock);
+    states.push('COMPACTED');
+    return { outcome: 'COMPACTED', states, kept: kept.length, read: read.lines.length, late };
+  } catch (e) {
+    states.push('COMPACTION_ABORTED');
+    try { fs.rmSync(tmpBase, { force: true }); } catch { /* best effort */ }
+    for (const d of [dir, tmpDir]) {
+      let names = [];
+      try { names = fs.readdirSync(d); } catch { names = []; }
+      for (const n of names) if (/\.tmp-\d+-[0-9a-f]{8}$/.test(n)) { try { fs.unlinkSync(path.join(d, n)); } catch { /* best effort */ } }
+    }
+    gateStoreUnlock(store, lock);
+    states.push('ROLLED_BACK');
+    return { outcome: 'ROLLED_BACK', states, error: e && (e.outcome || e.code || e.message) };
+  }
+}
+
+// ---- gate-signals.mjs ----
+// Memory signals and process liveness for the gate queue (CONTRACT §2.5, §4.5, §6; PRD-4 D3–D8).
+// Every top-level name here starts with gateSignals or gateProc (bundle unique-name rule, G-15).
+// MB = 1,048,576 bytes everywhere. The darwin free-page count and the OS free-memory
+// call under-read badly on a compressing kernel; the available estimate is the compressor-aware one.
+
+const gateSignalsSwapWindowMs = 5000;
+const gateSignalsMB = 1048576;
+const gateSignalsSmallCap = 1024 * 1024;
+
+function gateSignalsPressureName(level) {
+  const n = Number(level);
+  if (n === 1) return 'normal';
+  if (n === 2) return 'warn';
+  if (n === 4) return 'critical';
+  // anything other than 1 waits (PRD-4 D4); an unknown level is named, never guessed
+  return Number.isFinite(n) ? 'level ' + n : null;
+}
+
+// `vm_stat` text -> { pagesize, counters by label }. Labels are matched by name, never by line position.
+function gateSignalsParseVmStat(text) {
+  const out = { pagesize: null, counters: {} };
+  const head = /page size of (\d+) bytes/.exec(text || '');
+  if (head) out.pagesize = Number(head[1]);
+  for (const line of String(text || '').split('\n')) {
+    const m = /^"?([^":]+)"?:\s+(\d+)\.?\s*$/.exec(line.trim());
+    if (m) out.counters[m[1].trim()] = Number(m[2]);
+  }
+  return out;
+}
+
+// `vm.swapusage` text -> used MB (`used = 4602.81M`), or null.
+function gateSignalsParseSwapUsage(text) {
+  const m = /used = ([\d.]+)([KMG])/.exec(text || '');
+  if (!m) return null;
+  const v = Number(m[1]);
+  const mult = m[2] === 'K' ? 1 / 1024 : m[2] === 'G' ? 1024 : 1;
+  return Math.round(v * mult * 100) / 100;
+}
+
+// Pure darwin parse over captured text (Q1-01). Returns the signal object without the swap-out rate
+// (that needs two reads; see gateSignalsSwapRate) plus the raw Swapouts counter.
+function gateSignalsParseDarwin(cap) {
+  const vm = gateSignalsParseVmStat(cap.vmstatText);
+  const pagesize = Number(cap.pagesizeText) || vm.pagesize || null;
+  const memsize = Number(String(cap.memsizeText || '').trim()) || null;
+  const pressureRaw = String(cap.pressureText == null ? '' : cap.pressureText).trim();
+  const pressure = pressureRaw === '' ? null : gateSignalsPressureName(pressureRaw);
+  const unavailable = [];
+  if (pressure == null) unavailable.push('pressure');
+  const total_mb = memsize ? Math.round(memsize / gateSignalsMB) : null;
+  let avail_est_bytes = null;
+  const c = vm.counters;
+  const anon = c['Anonymous pages'];
+  const wired = c['Pages wired down'];
+  const comp = c['Pages occupied by compressor'];
+  if (memsize && pagesize && [anon, wired, comp].every(Number.isFinite)) {
+    const totalPages = Math.floor(memsize / pagesize);
+    avail_est_bytes = Math.max(0, totalPages - anon - wired - comp) * pagesize;
+  } else unavailable.push('available memory');
+  const swap_used_mb = gateSignalsParseSwapUsage(cap.swapText);
+  if (swap_used_mb == null) unavailable.push('swap used');
+  const swapouts = Number.isFinite(c.Swapouts) ? c.Swapouts : null;
+  return {
+    source: 'darwin',
+    pressure,
+    total_mb,
+    avail_est_bytes,
+    avail_mb: avail_est_bytes == null ? null : Math.round(avail_est_bytes / gateSignalsMB),
+    swap_used_mb,
+    swapouts,
+    pagesize,
+    unavailable,
+  };
+}
+
+// Swap-out rate in MB/s from two cumulative page-counter samples {at_ms, pages, pagesize}; null when the
+// two reads are less than the 5 s window apart (CONTRACT §4.5) or a counter is missing.
+function gateSignalsSwapRate(prev, cur) {
+  if (!prev || !cur || !Number.isFinite(prev.pages) || !Number.isFinite(cur.pages)) return null;
+  const dt = cur.at_ms - prev.at_ms;
+  if (!(dt >= gateSignalsSwapWindowMs)) return null;
+  const pages = Math.max(0, cur.pages - prev.pages);
+  return Math.round((pages * (cur.pagesize || prev.pagesize || 4096) / gateSignalsMB / (dt / 1000)) * 1000) / 1000;
+}
+
+// Rolling sampler kept in the caller's per-process state: rate over the newest sample at least 5 s old.
+function gateSignalsSample(state, sample) {
+  if (!state.samples) state.samples = [];
+  const s = state.samples;
+  if (!Number.isFinite(sample.pages)) return { rate: null, window_ms: null, pending_ms: null };
+  s.push(sample);
+  let base = null;
+  for (let i = s.length - 2; i >= 0; i--) {
+    if (sample.at_ms - s[i].at_ms >= gateSignalsSwapWindowMs) { base = s[i]; break; }
+  }
+  // keep the window bounded: drop samples older than the chosen base
+  if (base) { const k = s.indexOf(base); if (k > 0) s.splice(0, k); }
+  if (s.length > 64) s.splice(0, s.length - 64);
+  if (!base) return { rate: null, window_ms: null, pending_ms: gateSignalsSwapWindowMs - (sample.at_ms - s[0].at_ms) };
+  return { rate: gateSignalsSwapRate(base, sample), window_ms: sample.at_ms - base.at_ms, pending_ms: 0 };
+}
+
+function gateSignalsExec(file, args) {
+  return cp.execFileSync(file, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 10000, env: { ...process.env, LC_ALL: 'C' } });
+}
+
+// Live darwin read (Q1-01). Each sysctl key is read on its own line; one failing key leaves only its signal
+// unavailable. state carries the swap-out sampler between reads of one process.
+function gateSignalsReadDarwin(state) {
+  const st = state || {};
+  const keys = ['kern.memorystatus_vm_pressure_level', 'vm.swapusage', 'hw.memsize', 'hw.pagesize'];
+  const vals = {};
+  for (const k of keys) {
+    try { vals[k] = gateSignalsExec('/usr/sbin/sysctl', ['-n', k]).trim(); } catch { vals[k] = null; }
+  }
+  let vmstatText = '';
+  try { vmstatText = gateSignalsExec('/usr/bin/vm_stat', []); } catch { vmstatText = ''; }
+  const at_ms = Date.now();
+  const sig = gateSignalsParseDarwin({
+    pressureText: vals['kern.memorystatus_vm_pressure_level'],
+    swapText: vals['vm.swapusage'],
+    memsizeText: vals['hw.memsize'],
+    pagesizeText: vals['hw.pagesize'],
+    vmstatText,
+  });
+  const r = gateSignalsSample(st, { at_ms, pages: sig.swapouts, pagesize: sig.pagesize });
+  sig.swapout_mb_per_s = r.rate;
+  sig.swapout_window_ms = r.window_ms;
+  sig.swapout_pending_ms = r.pending_ms;
+  if (sig.swapouts == null) sig.unavailable.push('swap-out');
+  sig.at = new Date(at_ms).toISOString();
+  if (!sig.total_mb && sig.avail_mb == null && sig.pressure == null) return gateSignalsUnavailable(sig.at);
+  return sig;
+}
+
+function gateSignalsReadSmall(file) {
+  try { return readRegularFile(file, gateSignalsSmallCap).toString('utf8'); } catch { return null; }
+}
+
+function gateSignalsKb(text, name) {
+  const m = new RegExp('^' + name + ':\\s+(\\d+)\\s*kB', 'm').exec(text || '');
+  return m ? Number(m[1]) : null;
+}
+
+// PSI text -> 'warn' when some avg10 > 10 or full avg10 > 0, else 'normal'; null when unparseable.
+function gateSignalsParsePsi(text) {
+  const some = /^some\s+avg10=([\d.]+)/m.exec(text || '');
+  const full = /^full\s+avg10=([\d.]+)/m.exec(text || '');
+  if (!some && !full) return null;
+  if (some && Number(some[1]) > 10) return 'warn';
+  if (full && Number(full[1]) > 0) return 'warn';
+  return 'normal';
+}
+
+// Linux read (Q1-02, PRD-4 D5) under a root path so tests feed a fixture tree. Swap-out pages are taken as
+// 4 KiB (pswpout counts pages; flagged for a live Linux [REAL] run).
+function gateSignalsReadLinux(root, state) {
+  const st = state || {};
+  const r = root || '/';
+  const at_ms = Date.now();
+  const meminfo = gateSignalsReadSmall(path.join(r, 'proc', 'meminfo'));
+  const unavailable = [];
+  const memTotalKb = gateSignalsKb(meminfo, 'MemTotal');
+  const memAvailKb = gateSignalsKb(meminfo, 'MemAvailable');
+  const swapTotalKb = gateSignalsKb(meminfo, 'SwapTotal');
+  const swapFreeKb = gateSignalsKb(meminfo, 'SwapFree');
+  let total_mb = memTotalKb == null ? null : Math.round(memTotalKb / 1024);
+  let avail_mb = memAvailKb == null ? null : Math.round(memAvailKb / 1024);
+  const cg = path.join(r, 'sys', 'fs', 'cgroup');
+  const maxText = gateSignalsReadSmall(path.join(cg, 'memory.max'));
+  const limit = maxText && /^\d+\s*$/.test(maxText) ? Number(maxText.trim()) : null;
+  let psiText = null;
+  if (limit != null) {
+    const limitMb = Math.round(limit / gateSignalsMB);
+    total_mb = total_mb == null ? limitMb : Math.min(total_mb, limitMb);
+    const curText = gateSignalsReadSmall(path.join(cg, 'memory.current'));
+    if (curText && /^\d+\s*$/.test(curText)) {
+      const room = Math.round(Math.max(0, limit - Number(curText.trim())) / gateSignalsMB);
+      avail_mb = avail_mb == null ? room : Math.min(avail_mb, room);
+    }
+    psiText = gateSignalsReadSmall(path.join(cg, 'memory.pressure'));
+  }
+  if (psiText == null) psiText = gateSignalsReadSmall(path.join(r, 'proc', 'pressure', 'memory'));
+  const pressure = gateSignalsParsePsi(psiText);
+  if (pressure == null) unavailable.push('pressure');
+  if (avail_mb == null) unavailable.push('available memory');
+  const swap_used_mb = swapTotalKb != null && swapFreeKb != null ? Math.round((swapTotalKb - swapFreeKb) / 1024 * 100) / 100 : null;
+  if (swap_used_mb == null) unavailable.push('swap used');
+  const vmstat = gateSignalsReadSmall(path.join(r, 'proc', 'vmstat'));
+  const pm = /^pswpout\s+(\d+)/m.exec(vmstat || '');
+  const pages = pm ? Number(pm[1]) : null;
+  if (pages == null) unavailable.push('swap-out');
+  const rr = gateSignalsSample(st, { at_ms, pages, pagesize: 4096 });
+  const at = new Date(at_ms).toISOString();
+  if (total_mb == null && avail_mb == null && pressure == null) return gateSignalsUnavailable(at);
+  return {
+    source: 'linux', pressure, total_mb, avail_mb, swap_used_mb,
+    swapout_mb_per_s: rr.rate, swapout_window_ms: rr.window_ms, swapout_pending_ms: pages == null ? null : rr.pending_ms,
+    unavailable, at,
+  };
+}
+
+function gateSignalsUnavailable(at, totalMb) {
+  return {
+    source: 'unavailable', pressure: null,
+    total_mb: totalMb || Math.round(os.totalmem() / gateSignalsMB),
+    avail_mb: null, swap_used_mb: null, swapout_mb_per_s: null, swapout_window_ms: null, swapout_pending_ms: null,
+    unavailable: ['pressure', 'available memory', 'swap used', 'swap-out'], at: at || new Date().toISOString(),
+  };
+}
+
+// R19 test seam: DO_IT_GATE_SIGNALS names a JSON fixture, re-read on every poll; no sysctl, no 5 s window.
+function gateSignalsReadFixture(file) {
+  let fx = null;
+  try { fx = readJsonRegular(file, gateSignalsSmallCap); } catch { fx = null; }
+  const at = new Date().toISOString();
+  if (!fx || typeof fx !== 'object') return gateSignalsUnavailable(at);
+  if (fx.unavailable === true) return gateSignalsUnavailable(at, Number(fx.total_mb) || null);
+  const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+  const sig = {
+    source: 'fixture',
+    pressure: typeof fx.pressure === 'string' ? fx.pressure : null,
+    total_mb: num(fx.total_mb) || Math.round(os.totalmem() / gateSignalsMB),
+    avail_mb: num(fx.avail_mb),
+    swap_used_mb: num(fx.swap_used_mb),
+    swapout_mb_per_s: num(fx.swapout_mb_per_s),
+    swapout_window_ms: null, swapout_pending_ms: null,
+    unavailable: [], at,
+  };
+  if (sig.pressure == null) sig.unavailable.push('pressure');
+  if (sig.avail_mb == null) sig.unavailable.push('available memory');
+  if (sig.swap_used_mb == null) sig.unavailable.push('swap used');
+  if (sig.swapout_mb_per_s == null) sig.unavailable.push('swap-out');
+  return sig;
+}
+
+// One read of the machine (fixture, darwin, linux, or unavailable). opts.env (ctx.env), opts.platform and
+// opts.linuxRoot exist for tests. Never blocks for the swap-out window; see gateSignalsReadSettled.
+function gateSignalsRead(opts, state) {
+  const o = opts || {};
+  const env = o.env || process.env;
+  if (env.DO_IT_GATE_SIGNALS) return gateSignalsReadFixture(env.DO_IT_GATE_SIGNALS);
+  const platform = o.platform || process.platform;
+  if (platform === 'darwin') return gateSignalsReadDarwin(state);
+  if (platform === 'linux') return gateSignalsReadLinux(o.linuxRoot || '/', state);
+  return gateSignalsUnavailable();
+}
+
+// A read whose swap-out rate spans the full 5 s window: when the sampler has no old-enough sample yet, wait
+// (abortable) and read again. opts.sleep(ms) -> Promise<boolean aborted>.
+async function gateSignalsReadSettled(opts, state) {
+  let sig = gateSignalsRead(opts, state);
+  for (let i = 0; i < 4 && sig.swapout_mb_per_s == null && sig.swapout_pending_ms > 0; i++) {
+    const aborted = opts && opts.sleep ? await opts.sleep(sig.swapout_pending_ms + 50) : await new Promise((res) => setTimeout(() => res(false), sig.swapout_pending_ms + 50));
+    if (aborted) return sig;
+    sig = gateSignalsRead(opts, state);
+  }
+  return sig;
+}
+
+// Budget-only when no memory signal is readable (CONTRACT §6).
+function gateSignalsBudgetOnly(sig) {
+  return sig.source === 'unavailable' || (sig.pressure == null && sig.avail_mb == null && sig.swap_used_mb == null && sig.swapout_mb_per_s == null);
+}
+
+function gateSignalsGb(mb) {
+  return (mb / 1024).toFixed(1);
+}
+
+// R13 conditions in order (PRD-4 D11). peakMb null = exclusive: reserves the whole budget, and the
+// available-memory check is skipped (no declared number to compare; pressure and swap still guard).
+// Returns { admit, reason, wait_for } — wait_for is the reason without its "(now …)" detail.
+function gateSignalsDecide(sig, q) {
+  const peak = q.peakMb == null ? q.budgetMb : q.peakMb;
+  if (sig.pressure != null && sig.pressure !== 'normal') {
+    return { admit: false, reason: 'memory pressure normal (now ' + sig.pressure + ')', wait_for: 'memory pressure normal' };
+  }
+  if (sig.swapout_mb_per_s != null && sig.swapout_mb_per_s > 1) {
+    return { admit: false, reason: 'swap-out to stop (' + sig.swapout_mb_per_s.toFixed(1) + ' MB/s)', wait_for: 'swap-out to stop' };
+  }
+  if (q.peakMb != null && sig.avail_mb != null && sig.avail_mb < q.peakMb) {
+    return { admit: false, reason: gateSignalsGb(q.peakMb) + ' GB free (' + gateSignalsGb(sig.avail_mb) + ' GB now)', wait_for: gateSignalsGb(q.peakMb) + ' GB free' };
+  }
+  if (q.swapUsedMaxMb != null && sig.swap_used_mb != null && sig.swap_used_mb > q.swapUsedMaxMb) {
+    return { admit: false, reason: 'swap used below ' + q.swapUsedMaxMb + ' MB (' + Math.round(sig.swap_used_mb) + ' MB now)', wait_for: 'swap used below ' + q.swapUsedMaxMb + ' MB' };
+  }
+  if (q.heldMb + peak > q.budgetMb) {
+    return { admit: false, reason: 'budget (' + q.heldMb + ' MB held + ' + peak + ' MB > ' + q.budgetMb + ' MB)', wait_for: 'budget' };
+  }
+  return { admit: true, reason: null, wait_for: null };
+}
+
+// == process start time and liveness (CONTRACT §2.5, PRD-4 D3) ==
+
+// Start times for many pids in one `ps` call (darwin) or /proc reads (linux). Map pid -> 'darwin:{text}' |
+// 'linux:{ticks}'. A pid missing from the map had no readable start time (dead, hidden, or ps failed).
+function gateProcStartMany(pids, platform) {
+  const plat = platform || process.platform;
+  const out = new Map();
+  const list = Array.from(new Set(pids.filter((p) => Number.isInteger(p) && p > 0)));
+  if (!list.length) return out;
+  if (plat === 'darwin') {
+    let text = '';
+    try {
+      text = gateSignalsExec('/bin/ps', ['-o', 'pid=,lstart=', '-p', list.join(',')]);
+    } catch (e) {
+      text = e && typeof e.stdout === 'string' ? e.stdout : '';
+    }
+    for (const line of text.split('\n')) {
+      const m = /^\s*(\d+)\s+(.*\S)\s*$/.exec(line);
+      if (m) out.set(Number(m[1]), 'darwin:' + m[2]);
+    }
+    return out;
+  }
+  if (plat === 'linux') {
+    for (const pid of list) {
+      const stat = gateSignalsReadSmall('/proc/' + pid + '/stat');
+      if (!stat) continue;
+      const rest = stat.slice(stat.lastIndexOf(')') + 2).split(' ');
+      // fields after "pid (comm)" start at field 3; starttime is field 22
+      if (rest[19] && /^\d+$/.test(rest[19])) out.set(pid, 'linux:' + rest[19]);
+    }
+  }
+  return out;
+}
+
+function gateProcStart(pid) {
+  return gateProcStartMany([pid]).get(pid) || null;
+}
+
+function gateProcSignalZero(pid) {
+  try { process.kill(pid, 0); return true; } catch (e) { return !!(e && e.code === 'EPERM'); }
+}
+
+// 'alive' | 'alive-unverified' (answers kill 0, start time unreadable: fail toward waiting) | 'dead' |
+// 'start time differs'. starts: optional Map from gateProcStartMany for batching.
+function gateProcState(pid, start, starts) {
+  if (!Number.isInteger(pid) || pid <= 0) return 'dead';
+  if (!gateProcSignalZero(pid)) return 'dead';
+  if (!start) return 'alive-unverified';
+  const now = starts ? starts.get(pid) : gateProcStart(pid);
+  if (!now) return gateProcSignalZero(pid) ? 'alive-unverified' : 'dead';
+  return now === start ? 'alive' : 'start time differs';
+}
+
+function gateProcAlive(pid, start, starts) {
+  const s = gateProcState(pid, start, starts);
+  return s === 'alive' || s === 'alive-unverified';
+}
+
+// Parent pid (for the ancestor walk of nested admission).
+function gateProcParent(pid, platform) {
+  const plat = platform || process.platform;
+  if (plat === 'linux') {
+    const stat = gateSignalsReadSmall('/proc/' + pid + '/stat');
+    if (!stat) return null;
+    const rest = stat.slice(stat.lastIndexOf(')') + 2).split(' ');
+    return Number(rest[1]) || null;
+  }
+  try {
+    const t = gateSignalsExec('/bin/ps', ['-o', 'ppid=', '-p', String(pid)]).trim();
+    return Number(t) || null;
+  } catch { return null; }
 }
 
 // ---- handoff.mjs ----
@@ -3442,7 +6285,26 @@ const SETTINGS_DEFAULTS = {
   ceilings: { warn_tokens: 150000, warn_pct: 40, block_tokens: 250000, block_pct: 60 },
   stop_gate: { patience: 3 },
   observability: { provider: 'none' },
+  gates: {
+    on_push: null,
+    on_train_complete: null,
+    nightly: null,
+    peak_mb: null,
+    reuse: { core: [], always_run: [], never_reuse: [], env: [], env_files: [] },
+    queue: { budget_pct: null, timeout_s: null, swap_used_max_mb: null },
+  },
 };
+
+const GATES_STAGES = ['on_push', 'on_train_complete', 'nightly'];
+const GATES_QUEUE_DEFAULTS = { budget_pct: 60, timeout_s: 14400 };
+
+// One stage of the gates block: { stage, declared, command, line }. A null leaf is never a silent pass:
+// `line` is the visible skip line (G-13). A declared stage has line null.
+function gatesStage(values, stage) {
+  const g = values && values.gates;
+  const cmd = g && typeof g[stage] === 'string' && g[stage].length ? g[stage] : null;
+  return { stage, declared: cmd !== null, command: cmd, line: cmd === null ? '[skip] ' + stage + ': no gate declared' : null };
+}
 
 // Host-owned settings: `state.<backend>` is one object keyed by the backend name. Core does not know its
 // shape; the host that provides the backend declares it in the `state_store.settings_schema` entry of
@@ -3647,6 +6509,32 @@ function loadSettings(ctx, setFlags) {
   const leaves = flattenSettings(merged, '', {});
   const entries = Object.keys(leaves).sort().map((key) => ({ key, value: leaves[key], source: sources[key] || 'default' }));
   return { values: merged, entries, files };
+}
+
+// The one place the effective gate-queue values are computed (A8). `queue.*` is honoured from the global
+// settings file only; a leaf whose merged source is the workspace or a run flag is listed in `ignored[]`.
+function gatesQueueSettings(ctx, loaded) {
+  let fromGlobal = {};
+  try {
+    const file = settingsPaths(ctx).global;
+    if (fs.existsSync(file)) {
+      const data = JSON.parse(readRegularFile(file, REGISTRY_READ_CAP).toString('utf8'));
+      if (isPlainObject(data) && isPlainObject(data.gates) && isPlainObject(data.gates.queue)) fromGlobal = data.gates.queue;
+    }
+  } catch { /* an unreadable global file is reported by loadSettings; here it means defaults */ }
+  const ignored = [];
+  for (const e of (loaded && loaded.entries) || []) {
+    if (e.key.startsWith('gates.queue.') && (e.source === 'workspace' || e.source === 'run-flag')) {
+      ignored.push({ key: e.key.slice('gates.'.length), source: e.source });
+    }
+  }
+  const pick = (k) => (Number.isInteger(fromGlobal[k]) ? fromGlobal[k] : null);
+  return {
+    budget_pct: pick('budget_pct') === null ? GATES_QUEUE_DEFAULTS.budget_pct : pick('budget_pct'),
+    timeout_s: pick('timeout_s') === null ? GATES_QUEUE_DEFAULTS.timeout_s : pick('timeout_s'),
+    swap_used_max_mb: pick('swap_used_max_mb'),
+    ignored,
+  };
 }
 
 // ---- state.mjs ----

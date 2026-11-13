@@ -1,0 +1,13 @@
+rtg-key/1
+class	NARROW
+core	0d45f5fd462b8c70bffb10021ac1bcff3f58f29b1faf7568595095427d42812c
+dep	src/a.spec.ts	ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb
+dep	src/z/missing.ts	-
+dep	src/Ａ.ts	559aead08264d5795d3909718cdd05abd49572e84fe55590eef31a88a08fdffd
+dep	src/𝒳.ts	4b68ab3847feda7d6c62c1fbcbeebfa35eab7351ed5e78f4ddadea5df64b8015
+env	API_TOKEN	7d7a8b36ce3ca011fd5c418caba26723cb108a299cea0667f3fb6df7c34299ef
+env	file:.env	-
+gate	c974e17b8e7321ce8c12983de3d0ed4a289821f579bbe0925b0181a4bc8e8d80
+installed	a51a6c19a1ffc7416827e89adf20749d23ad42452c396cf7e627409f2896922c
+platform	node	v22.23.2	77.1	darwin	24.6.0	arm64	12
+runner	jest@29.7.0	ce8182cbae7f0964ee1bb3f5ea03a14ef46ccdb95d8a2daf47b7ec28a035c1ba

@@ -10,7 +10,7 @@ import { SPINE_DIR } from '../helpers.mjs';
 
 const entry = (out, key) => out.entries.find((e) => e.key === key);
 // The settings keys at d38cedb, before this package. G-8: this list does not grow.
-const KEYS_AT_BASELINE = ['ceilings', 'handoff', 'host', 'interaction', 'isolation', 'observability', 'review', 'secrets', 'state', 'stop_gate', 'tiers', 'version'];
+const KEYS_AT_BASELINE = ['ceilings', 'gates', 'handoff', 'host', 'interaction', 'isolation', 'observability', 'review', 'secrets', 'state', 'stop_gate', 'tiers', 'version'];
 const made = [];
 const track = (d) => { made.push(d); return d; };
 after(() => { for (const d of made) fs.rmSync(d, { recursive: true, force: true }); });
