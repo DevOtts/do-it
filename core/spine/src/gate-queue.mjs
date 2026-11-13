@@ -659,7 +659,8 @@ function gateQueueDelay(ms) {
 
 // Q2-04 (PRD-4 D17): `sig` to the group and to every tracked live process outside it, a 10 s grace, SIGKILL
 // for survivors, re-snapshot to confirm. Returns cleaned = tracked processes alive at the start and ended by it.
-async function gateQueueCleanup(ctx, tr, sig, err) {
+// rootUnreaped(): true while the root has not been reaped, so its pid (= the group id) cannot be reused yet.
+async function gateQueueCleanup(ctx, tr, sig, err, rootUnreaped) {
   let snap = await gateQueuePsSnapshot();
   gateQueueTrack(tr, snap);
   const atStart = gateQueueTrackLive(tr, snap);
@@ -669,7 +670,11 @@ async function gateQueueCleanup(ctx, tr, sig, err) {
   }
   const signalled = new Set();
   const send = (s, list) => {
-    try { process.kill(-tr.pgid, s); } catch { /* group gone */ }
+    // the group id is signalled only while it provably names our group: a tracked member is in it now, or the
+    // root is unreaped. An empty group's id may already belong to an unrelated new group (G-11: by PID only).
+    if (rootUnreaped() || list.some((e) => e.pgid === tr.pgid)) {
+      try { process.kill(-tr.pgid, s); } catch { /* group gone */ }
+    }
     for (const e of list) {
       if (s === sig && signalled.has(gateQueueTrackKey(e))) continue;
       signalled.add(gateQueueTrackKey(e));
@@ -760,7 +765,7 @@ async function gateQueueExec(ctx, argv, run, opts) {
   }
   // a signal during cleanup changes nothing: cleanup is already ending every tracked process
   run.onSignal = () => {};
-  const cleaned = await gateQueueCleanup(ctx, tr, signalled || 'SIGTERM', err);
+  const cleaned = await gateQueueCleanup(ctx, tr, signalled || 'SIGTERM', err, () => !rootExit);
   const skipped = ctx.env && ctx.env.DO_IT_FAULT === 'queue_skip_cleanup';
   const r = rootExit || (skipped ? null : await exited);
   run.onSignal = null;
