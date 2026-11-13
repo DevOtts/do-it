@@ -16,7 +16,7 @@ export function atomicWrite(file, data, opts) {
   const dir = path.dirname(file);
   fs.mkdirSync(dir, { recursive: true });
   const tmp = path.join(dir, '.' + path.basename(file) + '.tmp-' + process.pid + '-' + crypto.randomBytes(4).toString('hex'));
-  const fd = fs.openSync(tmp, 'w');
+  const fd = fs.openSync(tmp, 'w', (opts && opts.mode) || 0o666);
   try {
     let off = 0;
     while (off < buf.length) off += fs.writeSync(fd, buf, off, buf.length - off);
@@ -69,6 +69,63 @@ export function appendRegular(file, text) {
     while (off < buf.length) off += fs.writeSync(fd, buf, off, buf.length - off);
   } finally {
     fs.closeSync(fd);
+  }
+}
+
+// RTG L1 (PRD-1 D4): one O_APPEND write per record, no redaction (the bytes carry a CRC computed by the caller).
+// The file must be a regular file (FIFO-safe as appendRegular). When the file's last byte is not LF (a torn tail
+// left by a crash) the buffer is prefixed with LF inside the SAME write, so the fragment cannot swallow the record.
+// The caller bounds the buffer size; this returns { written, expected } and never retries a short write, except
+// that a short write is followed by a lone LF so the next record starts on a fresh line.
+export function appendRecord(file, buf) {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  let st = null;
+  try { st = fs.lstatSync(file); } catch (e) { if (e.code !== 'ENOENT') throw e; }
+  if (st && !st.isFile()) throw codedError('ENOTREG', 'not a regular file (' + fileKind(st) + '): ' + file);
+  const c = fs.constants;
+  const flags = c.O_RDWR | c.O_APPEND | c.O_CREAT | (c.O_NONBLOCK || 0) | (c.O_NOFOLLOW || 0);
+  const fd = fs.openSync(file, flags, 0o666);
+  try {
+    const fst = fs.fstatSync(fd);
+    if (!fst.isFile()) throw codedError('ENOTREG', 'not a regular file: ' + file);
+    let out = buf;
+    let prefixed = false;
+    if (fst.size > 0) {
+      const last = Buffer.alloc(1);
+      const got = fs.readSync(fd, last, 0, 1, fst.size - 1);
+      if (got === 1 && last[0] !== 0x0a) { out = Buffer.concat([Buffer.from('\n'), buf]); prefixed = true; }
+    }
+    const written = fs.writeSync(fd, out, 0, out.length);
+    if (written !== out.length) { try { fs.writeSync(fd, Buffer.from('\n'), 0, 1); } catch { /* best effort */ } }
+    return { written, expected: out.length, prefixed };
+  } finally {
+    fs.closeSync(fd);
+  }
+}
+
+// RTG L1 (PRD-1 D7, D8): create `file` exactly once with `buf`: temp file (exclusive, `mode`), fsync, then link(2)
+// onto the final name, so a reader never sees partial bytes and concurrent first-writers converge on one winner.
+// Returns true when this call created the file, false when it already existed (left untouched).
+export function writeFileOnce(file, buf, mode) {
+  const dir = path.dirname(file);
+  fs.mkdirSync(dir, { recursive: true });
+  const tmp = path.join(dir, '.' + path.basename(file) + '.tmp-' + process.pid + '-' + crypto.randomBytes(4).toString('hex'));
+  const fd = fs.openSync(tmp, 'wx', mode === undefined ? 0o644 : mode);
+  try {
+    let off = 0;
+    while (off < buf.length) off += fs.writeSync(fd, buf, off, buf.length - off);
+    fs.fsyncSync(fd);
+  } finally {
+    fs.closeSync(fd);
+  }
+  try {
+    fs.linkSync(tmp, file);
+    return true;
+  } catch (e) {
+    if (e.code === 'EEXIST') return false;
+    throw e;
+  } finally {
+    try { fs.unlinkSync(tmp); } catch { /* already gone */ }
   }
 }
 

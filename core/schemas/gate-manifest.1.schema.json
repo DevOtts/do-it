@@ -1,0 +1,45 @@
+{
+  "$id": "do-it-gate-manifest/1",
+  "title": "rtg-manifest/1: the per-run manifest a gate run hands to its runner adapter (names, paths, digests, HMACs; never a value)",
+  "type": "object",
+  "required": ["schema", "run_id", "scope", "leg", "clean", "runner", "lines", "components", "hashes", "wide_patterns", "wide_hits", "wide_all", "tree", "dirty", "never", "env_names", "env_files"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": { "const": "rtg-manifest/1" },
+    "run_id": { "type": "string", "pattern": "^g-[0-9]{8}T[0-9]{6}Z-[0-9a-f]{4}$" },
+    "scope": { "enum": ["edit", "push", "train", "nightly"] },
+    "leg": { "type": "string", "minLength": 1 },
+    "clean": { "type": "boolean" },
+    "runner": { "enum": ["jest", "pytest", "vitest"] },
+    "lines": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "argv_sha": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "components": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "gate": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "core": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "installed": { "type": ["string", "null"], "pattern": "^[0-9a-f]{64}$" },
+        "env": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "platform": { "type": ["string", "null"], "pattern": "^[0-9a-f]{64}$" }
+      }
+    },
+    "hashes": { "type": "object", "additionalProperties": { "type": "string", "pattern": "^([0-9a-f]{64}|-)$" } },
+    "wide_patterns": {
+      "type": "object",
+      "required": ["node", "python"],
+      "additionalProperties": false,
+      "properties": { "node": { "type": "string" }, "python": { "type": "string" } }
+    },
+    "wide_hits": { "type": "array", "items": { "type": "string" } },
+    "wide_all": { "type": "boolean" },
+    "tree": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "dirty": { "type": "array", "items": { "type": "string" } },
+    "never": { "type": "array", "items": { "type": "string" } },
+    "env_names": { "type": "array", "items": { "type": "string" } },
+    "env_files": { "type": "array", "items": { "type": "string" } },
+    "platform_expect": { "type": ["array", "null"], "items": { "type": "string" } },
+    "store_dir": { "type": ["string", "null"] },
+    "reason": { "type": ["string", "null"] }
+  }
+}
