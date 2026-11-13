@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
+import { gateStoreCompact } from '../../src/gate-results.mjs';
 import {
   fileName, finishes, gate, harvest, isoAgo, lastStart, plantRun, range, rows, run, starts, stubRepo, writeBeh, writeStore,
 } from './g2-helpers.mjs';
@@ -296,6 +297,12 @@ test('T-V2-12 R18 quarantine view: rebuilt every run, never read for a decision'
   const v3 = JSON.parse(fs.readFileSync(view, 'utf8'));
   assert.equal(v3.schema, 'do-it-gate-flaky-view/1');
   assert.deepEqual(v3.files, v1.files);
+  // one view format: a compaction never rewrites the view (F-V2-3)
+  const comp = gateStoreCompact({ backend: 'local', dir: repo.store }, { settleMs: 1, log: () => {} });
+  assert.equal(comp.outcome, 'COMPACTED');
+  const v4 = JSON.parse(fs.readFileSync(view, 'utf8'));
+  assert.equal(v4.schema, 'do-it-gate-flaky-view/1');
+  assert.deepEqual(v4.files, v1.files);
   t.diagnostic('T-V2-12 view ' + v1.files.map((f) => f.file + ':' + f.state).join(', ') + ' | lists equal ' + listAbsent.join(','));
 });
 

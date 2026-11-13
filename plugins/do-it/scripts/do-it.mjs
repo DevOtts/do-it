@@ -3814,24 +3814,6 @@ function gateStoreSizes(dir) {
   return out;
 }
 
-function gateStoreFlakyView(store, lines, now) {
-  const items = lines.map((raw, pos) => gateStoreItem(raw, pos));
-  const byFile = new Map();
-  for (const it of items) {
-    if (!it.ok || it.row.type !== 'finish') continue;
-    byFile.set(it.row.file + '\0' + (it.row.leg || 'unit'), it.row);
-  }
-  const files = [];
-  for (const [fk, last] of byFile) {
-    const [file, leg] = fk.split('\0');
-    const f = gateFold(items, { key: last.key, components: last.components || {} }, now, { file, leg, resume: true });
-    if (f.state === 'FLAKY' || f.state === 'UNSTABLE_UNDER_REUSE') files.push({ file, leg, key: last.key, state: f.state });
-  }
-  files.sort((a, b) => (a.file < b.file ? -1 : a.file > b.file ? 1 : a.leg < b.leg ? -1 : 1));
-  atomicWriteJson(path.join(store.dir, 'views', 'flaky.json'), { schema: 'rtg-flaky-view/1', at: new Date(now).toISOString(), files });
-  return files.length;
-}
-
 // gateStoreCompact(store, {now, env, procStart, settleMs, log}) => {outcome, states, ...}
 // outcome: COMPACTED | COMPACTION_BUSY | ROLLED_BACK (states lists COMPACTING, COMPACTION_ABORTED, ROLLED_BACK).
 function gateStoreCompact(store, opts) {
@@ -3893,8 +3875,8 @@ function gateStoreCompact(store, opts) {
       try { fs.unlinkSync(path.join(dir, name)); } catch { /* already gone */ }
     }
     if (late > 0) log('[gate-results] ' + late + ' late rows recovered');
-    // 6: derived view, release
-    try { gateStoreFlakyView(store, kept, now); } catch { /* derived, never authoritative */ }
+    // 6: release. The quarantine view (views/flaky.json, do-it-gate-flaky-view/1) has one writer, `gate run`
+    // (gateVerdictWriteView); compaction never folds rows into a second format (CP F-V2-3).
     gateStoreUnlock(store, lock);
     states.push('COMPACTED');
     return { outcome: 'COMPACTED', states, kept: kept.length, read: read.lines.length, late };
