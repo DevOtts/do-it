@@ -183,7 +183,7 @@ export async function runJest(repo, o) {
   ];
   const env = {
     ...gitEnv(repo.home),
-    DO_IT_GATE_MANIFEST: m.manifestFile, DO_IT_GATE_DECIDE: FAKE_DECIDE, FAKE_DECIDE_COUNT_FILE: callsFile,
+    DO_IT_GATE_MANIFEST: m.manifestFile, DO_IT_GATE_DECIDE: process.env.A1_DECIDE_ENTRY || FAKE_DECIDE, FAKE_DECIDE_COUNT_FILE: callsFile,
     FIXTURE_JEST_CACHE: repo.cache, ...(opts.planted ? { FIXTURE_PLANTED: '1' } : {}), ...(opts.resume ? { FAKE_DECIDE_RESUME: '1' } : {}),
     ...(opts.env || {}),
   };
