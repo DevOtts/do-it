@@ -68,11 +68,20 @@ test('T-F1-14 [REAL] H2 H3 H7 on the pilot consumer jest repo: installed, worksp
   assert.ok(nodeLine, 'node-installed line with a digest');
   assert.ok(lockLine, 'lock line with a digest');
   assert.notEqual(nodeLine[1], lockLine[1]);
-  const link = /^link\tnode_modules\/(@[^/\t]+)\/llm-obs\tpackages\/llm-obs$/m.exec(inst);
-  assert.ok(link, 'workspace link line for llm-obs -> packages/llm-obs');
-  const h = gateFpHashPath(pilot, 'node_modules/' + link[1] + '/llm-obs/package.json', sp.table);
-  assert.ok(h.path.startsWith('packages/llm-obs/'), 'member resolves under packages/llm-obs/ (' + h.path + ')');
-  for (const want of ['jest.config.js', 'scripts/jest-real-mongo-reporter.js', 'src/common/testing/loopback-default.setup.ts']) {
+  // the pilot is a workspace repo: some installed link line points a node_modules package at a repo folder
+  const link = /^link\tnode_modules\/((?:@[^/\t]+\/)?[^/\t]+)\t([^\t\n]+)$/m.exec(inst);
+  assert.ok(link, 'a workspace link line node_modules/<pkg> -> <repo folder>');
+  const h = gateFpHashPath(pilot, 'node_modules/' + link[1] + '/package.json', sp.table);
+  assert.ok(h.path.startsWith(link[2] + '/'), 'member resolves under the linked repo folder (' + h.path + ')');
+  // every config literal that names an existing repo file is CORE (derived from the config, no pilot names here)
+  const cfgText = fs.readFileSync(path.join(pilot, 'jest.config.js'), 'utf8');
+  const wants = new Set(['jest.config.js']);
+  for (const m of cfgText.matchAll(/['"](?:<rootDir>\/|\.\/)([^'"*?$^|()[\]{}]+)['"]/g)) {
+    const rel = path.posix.normalize(m[1]);
+    if (fs.existsSync(path.join(pilot, rel)) && fs.statSync(path.join(pilot, rel)).isFile()) wants.add(rel);
+  }
+  assert.ok(wants.size >= 2, 'the pilot config references at least one repo file');
+  for (const want of wants) {
     assert.ok(sp.core.lines.some((l) => l[0] === 'c' && l[1] === want), 'CORE holds ' + want);
   }
   const after = status();

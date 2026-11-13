@@ -1598,8 +1598,16 @@ function gateFpCore(repo, runner, table, opts) {
     for (const lit0 of gateFpLiterals(text)) {
       let lit = lit0;
       if (lit.startsWith('<rootDir>')) lit = '.' + lit.slice('<rootDir>'.length);
-      if (!(lit.startsWith('./') || lit.startsWith('../'))) continue;
       if (/[*?$^|()[\]{}]/.test(lit)) continue;
+      if (!(lit.startsWith('./') || lit.startsWith('../'))) {
+        // CP-01 F-1: a bare literal that names a repo file (vitest `setupFiles: ['test/setup.ts']`) is CORE too.
+        // Only a hit counts; a bare string that resolves to nothing (a package name, a pattern) never widens.
+        if (lit.startsWith('/') || !lit.length) continue;
+        const rel = path.posix.normalize(path.posix.join(path.posix.dirname(cfg), lit));
+        const hit = rel.startsWith('..') ? null : gateFpResolveFile(repo, rel);
+        if (hit && Object.prototype.hasOwnProperty.call(table.hashes, hit)) { if (addMember(hit)) queue.push(hit); }
+        continue;
+      }
       const r = gateFpResolveSpec(repo, path.posix.dirname(cfg), lit, ts);
       if (r.rel) { if (addMember(r.rel)) queue.push(r.rel); continue; }
       const ext = path.posix.extname(lit).toLowerCase();

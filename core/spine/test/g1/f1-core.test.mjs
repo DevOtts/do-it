@@ -14,10 +14,11 @@ const SPECS = ['src/s1.spec.ts', 'src/s2.spec.ts', 'src/s3.spec.ts', 'src/s4.spe
 function coreRepo() {
   const files = {
     'package.json': '{"name":"fx","private":true}\n',
-    'jest.config.js': "module.exports = {\n  testEnvironment: 'node',\n  setupFiles: ['<rootDir>/test/setup.ts'],\n  reporters: ['default', './scripts/rep.js'],\n};\n",
+    'jest.config.js': "module.exports = {\n  testEnvironment: 'node',\n  setupFiles: ['<rootDir>/test/setup.ts'],\n  globalSetup: 'test/global.ts',\n  preset: 'ts-jest',\n  reporters: ['default', './scripts/rep.js'],\n};\n",
     'test/setup.ts': "import { a } from './helpers/a';\nexport const s = a;\n",
     'test/helpers/a.ts': "import { b } from './b';\nexport const a = b + 1;\n",
     'test/helpers/b.ts': 'export const b = 1;\n',
+    'test/global.ts': 'export default async () => {};\n',
     'scripts/rep.js': 'module.exports = class R {};\n',
     'tsconfig.json': '{ "extends": "./tsconfig.base.json" }\n',
     'tsconfig.base.json': '{ "compilerOptions": { "strict": true } }\n',
@@ -44,13 +45,15 @@ test('T-F1-03 G-7 H7: every CORE edit changes every key; an unrelated edit chang
   for (const f of SPECS) assert.match(base[f].key, /^[0-9a-f]{64}$/);
   const sp0 = spineOf(repo, { store, reuse });
   assert.equal(sp0.core.wideAll, false, 'the fixture CORE resolves completely');
-  for (const want of ['jest.config.js', 'test/setup.ts', 'test/helpers/a.ts', 'test/helpers/b.ts', 'scripts/rep.js', 'tsconfig.base.json', 'config/x.yaml']) {
+  for (const want of ['jest.config.js', 'test/setup.ts', 'test/helpers/a.ts', 'test/helpers/b.ts', 'test/global.ts', 'scripts/rep.js', 'tsconfig.base.json', 'config/x.yaml']) {
     assert.ok(sp0.core.lines.some((l) => l[0] === 'c' && l[1] === want), 'CORE holds ' + want);
   }
   const f = (rel) => path.join(repo.dir, rel);
   const edits = [
     ['jest.config.js', () => fs.appendFileSync(f('jest.config.js'), ' '), (o) => fs.writeFileSync(f('jest.config.js'), o)],
     ['test/helpers/b.ts', () => fs.appendFileSync(f('test/helpers/b.ts'), ' '), (o) => fs.writeFileSync(f('test/helpers/b.ts'), o)],
+    // CP-01 F-1: a bare (unprefixed) config literal naming a repo file is CORE
+    ['test/global.ts', () => fs.appendFileSync(f('test/global.ts'), ' '), (o) => fs.writeFileSync(f('test/global.ts'), o)],
     ['scripts/rep.js', () => fs.appendFileSync(f('scripts/rep.js'), ' '), (o) => fs.writeFileSync(f('scripts/rep.js'), o)],
     ['tsconfig.base.json', () => fs.appendFileSync(f('tsconfig.base.json'), ' '), (o) => fs.writeFileSync(f('tsconfig.base.json'), o)],
     ['src/__mocks__/fs.ts', () => write(repo, 'src/__mocks__/fs.ts', 'export default {};\n'), () => fs.rmSync(f('src/__mocks__'), { recursive: true })],
@@ -88,7 +91,7 @@ test('T-F1-03 G-7 H7: every CORE edit changes every key; an unrelated edit chang
   fs.writeFileSync(f('jest.config.js'), oldCfg);
   assert.equal(changed(mb, mk), 0, 'the mutant does not key CORE');
   console.log('CORE-NOT-KEYED (mutant without the core line: a jest.config.js edit changed 0 of 5 keys)');
-  console.log('T-F1-03 ' + all + ' of 7 CORE edits change 5 of 5 keys and components.core; unrelated edit 0 of 5');
+  console.log('T-F1-03 ' + all + ' of 8 CORE edits change 5 of 5 keys and components.core; unrelated edit 0 of 5');
 });
 
 test('T-F1-11 unresolved references: adapter-reported unresolved makes WIDE; a missing CORE literal makes every key WIDE; a package import adds nothing', () => {
