@@ -45,8 +45,19 @@ test('T-A1-08 [REAL] SIGKILL after 20 finish rows then resume: 12 files run, 18 
   const d = await runJest(repo2, { real, args: ['--runInBand'], resume: true });
   assert.equal(d.code, 0, d.stderr);
   const list = runListFiles(d);
-  assert.equal(list.length, 12);
-  assert.ok(list.includes('test/s19.spec.ts'));
-  assert.equal(d.finishes.length, 12);
+  const s19 = readJson(path.join(d.runDir, 'decision.json')).files.find((x) => x.file === 'test/s19.spec.ts');
+  if (s19.decision === 'solo') {
+    // the real decide (CONTRACT §4.5, M1, PRD-2 D14): two kills on one key make s19 SUSPECT_KILLER; it leaves the main
+    // list for the solo invocation `gate run` makes after it, so the run still owes s19 and 11 others
+    assert.equal(s19.why, 'suspect-killer');
+    assert.equal(list.length, 11);
+    assert.ok(!list.includes('test/s19.spec.ts'));
+    assert.deepEqual([...list, s19.file].sort(), [...GUARDS, ...sNN(19, 28)].sort());
+    assert.equal(d.finishes.length, 11);
+  } else {
+    assert.equal(list.length, 12);
+    assert.ok(list.includes('test/s19.spec.ts'));
+    assert.equal(d.finishes.length, 12);
+  }
   noDup(d);
 });

@@ -4895,7 +4895,8 @@ function gateVerdictKeys(raw) {
   for (const file of errors.keys()) if (!seen.has(file)) { seen.add(file); files.push({ file, cls: 'NARROW', deps: [], unresolved: 0 }); }
   files.sort((a, b) => gateVerdictCmpStr(a.file, b.file));
   const runner = raw.runner && typeof raw.runner === 'object' ? raw.runner : {};
-  return { files, errors, runner: { name: typeof runner.name === 'string' ? runner.name : null, version: typeof runner.version === 'string' ? runner.version : null } };
+  const argv = Array.isArray(runner.argv) && runner.argv.every((a) => typeof a === 'string') ? runner.argv : null;
+  return { files, errors, runner: { name: typeof runner.name === 'string' ? runner.name : null, version: typeof runner.version === 'string' ? runner.version : null, argv } };
 }
 
 // == gateSelect (D5): every file of keys.json gets a decision ==
@@ -4919,7 +4920,9 @@ function gateSelect(run, keys, scan, opts) {
     out.push(d);
     let k = null;
     try {
-      k = gateKeyFor(spine, { file: f.file, runner: { name, version, argv: run.argv || [] }, deps: f.deps, unresolved: f.unresolved, wide: f.cls === 'WIDE' });
+      // the runner line is a per-run fact the adapter reports (keys.runner: the argv the runner really received, A1 / F1
+      // gateKeyFor entry); without one the spine's own passthrough argv is used. gate/core/installed/env/platform stay spine-only.
+      k = gateKeyFor(spine, { file: f.file, runner: { name, version, argv: keys.runner.argv || run.argv || [] }, deps: f.deps, unresolved: f.unresolved, wide: f.cls === 'WIDE' });
     } catch (e) {
       k = { key: null, reason: 'key-error' };
     }

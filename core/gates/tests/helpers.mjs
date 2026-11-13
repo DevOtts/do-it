@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { GATE_FP_WIDE_NODE, gateFpManifestBuild, gateFpManifestWrite, gateFpRunDir, gateFpSpine } from '../../spine/src/gate-fingerprint.mjs';
 import { gateStoreAppend } from '../../spine/src/gate-results.mjs';
 import { gateProcStart } from '../../spine/src/gate-signals.mjs';
+import { gateVerdictSpineComponents, gateVerdictSpineDump } from '../../spine/src/gate-verdict.mjs';
 
 export const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const GATES_DIR = path.resolve(HERE, '..');
@@ -23,6 +24,15 @@ export const FIXTURE = path.join(HERE, 'fixtures', 'jest-30');
 export const CLOSURE_DRIVER = path.join(HERE, 'jest', 'closure-driver.cjs');
 export const FAKE_DECIDE = path.join(HERE, 'fake-decide.mjs');
 export const FAKE_DECIDE_CMD = JSON.stringify([process.execPath, FAKE_DECIDE, 'gate', 'decide']);
+export const DECIDE_COUNT = path.join(HERE, 'decide-count.mjs');
+
+// The decide a harness run calls. A1_DECIDE_ENTRY (JSON argv of the real `do-it gate decide`) runs the real command
+// through a call counter. The stand-in's failure-injection modes (FAKE_DECIDE_MODE: exit1, sleep, malformed, nofile,
+// fixed) have no real equivalent, so a run that sets one stays on fake-decide.mjs.
+export function decideCmd(env) {
+  if (process.env.A1_DECIDE_ENTRY && !(env && env.FAKE_DECIDE_MODE)) return JSON.stringify([process.execPath, DECIDE_COUNT]);
+  return FAKE_DECIDE_CMD;
+}
 export const SPINE_SRC = path.join(REPO_ROOT, 'core', 'spine', 'src');
 export const GOLDEN_ROW = path.join(REPO_ROOT, 'core', 'spine', 'test', 'g1', 'fixtures');
 
@@ -135,7 +145,13 @@ export function mkManifest(repo, o) {
   trackDir(runDir);
   const manifest = gateFpManifestBuild(spine, { run_id: runId, scope: opts.scope || 'push', leg: opts.leg || 'unit', clean: !!opts.clean, argv: opts.argv || [], store_dir: repo.store });
   gateFpManifestWrite(runDir, manifest);
-  return { runId, runDir, manifest, spine, manifestFile: path.join(runDir, 'manifest.json') };
+  // spine.json exactly as `gate run` writes it (V1): the real decide reads the spine from here, never from the adapter
+  fs.writeFileSync(path.join(runDir, 'spine.json'), JSON.stringify({
+    schema: 'do-it-gate-spine-run/1', owner: { pid: process.pid, pid_start: null }, run_id: runId, phase: 'main',
+    scope: opts.scope || 'push', leg: opts.leg || 'unit', clean: !!opts.clean, resume: !!opts.resume, runner: 'jest',
+    runner_version: null, argv: opts.argv || [], store_dir: repo.store, repo: spine.repo, solo: [], spine: gateVerdictSpineDump(spine),
+  }));
+  return { runId, runDir, manifest, spine, manifestFile: path.join(runDir, 'manifest.json'), components: gateVerdictSpineComponents(spine) };
 }
 
 export function storeHandle(repo) {
@@ -176,7 +192,7 @@ export async function waitFor(fn, ms, what) {
 // => {code, signal, killed, stdout, stderr, runId, runDir, report, keys, runList, selected, decideCalls, rows(), finishes()}
 export async function runJest(repo, o) {
   const opts = o || {};
-  const m = mkManifest(repo, { runId: opts.runId, clean: opts.clean, alwaysRun: opts.alwaysRun === undefined ? ['test/guards/**'] : opts.alwaysRun, argv: opts.args || [] });
+  const m = mkManifest(repo, { runId: opts.runId, clean: opts.clean, resume: opts.resume, alwaysRun: opts.alwaysRun === undefined ? ['test/guards/**'] : opts.alwaysRun, argv: opts.args || [] });
   const callsFile = path.join(m.runDir, 'decide-calls');
   const argv = [
     ...(opts.paths || []), ...(opts.paths ? ['--runTestsByPath'] : []),
@@ -184,7 +200,7 @@ export async function runJest(repo, o) {
   ];
   const env = {
     ...gitEnv(repo.home),
-    DO_IT_GATE_MANIFEST: m.manifestFile, DO_IT_GATE_DECIDE: process.env.A1_DECIDE_ENTRY || FAKE_DECIDE_CMD, FAKE_DECIDE_COUNT_FILE: callsFile,
+    DO_IT_GATE_MANIFEST: m.manifestFile, DO_IT_GATE_DECIDE: decideCmd(opts.env), A1_DECIDE_ENTRY: process.env.A1_DECIDE_ENTRY || '', FAKE_DECIDE_COUNT_FILE: callsFile,
     FIXTURE_JEST_CACHE: repo.cache, ...(opts.planted ? { FIXTURE_PLANTED: '1' } : {}), ...(opts.resume ? { FAKE_DECIDE_RESUME: '1' } : {}),
     ...(opts.env || {}),
   };
@@ -197,7 +213,7 @@ export async function runJest(repo, o) {
   const exited = new Promise((resolve) => child.on('close', (code, signal) => resolve({ code, signal })));
   appendRow(repo, {
     schema: 'do-it-gate-result/1', type: 'run_start', run_id: m.runId, at: nowIso(), scope: 'push', leg: 'unit',
-    pid: child.pid, pid_start: gateProcStart(child.pid),
+    pid: child.pid, pid_start: gateProcStart(child.pid), clean: !!opts.clean, components: m.components,
   });
   const ctx = { ...m, repo, child, rows: () => storeRows(repo).filter((r) => r.run_id === m.runId) };
   let killed = false;

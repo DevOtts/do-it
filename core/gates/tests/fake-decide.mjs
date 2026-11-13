@@ -45,7 +45,8 @@ const live = gateStoreLiveRuns(scan.items);
 const now = Date.now();
 const out = [];
 const decision = [];
-for (const f of keys.files) {
+// the real decide lists files in path order (stable whatever order the runner discovered them); so does the stand-in
+for (const f of keys.files.slice().sort((a, b) => (a.file < b.file ? -1 : a.file > b.file ? 1 : 0))) {
   const keyNow = f.unknown ? { key: null, reason: 'closure-unknown' } : gateKeyFor(spine, {
     file: f.file,
     runner: { name: 'jest', version: keys.runner.version, argv: keys.runner.argv },
@@ -68,5 +69,5 @@ for (const f of keys.files) {
   decision.push({ file: f.file, key_now: keyNow.key, components: keyNow.components || null, class: f.class, decision: reuse ? 'reuse' : 'run', why: reason, source });
   if (!reuse) out.push({ file: f.file, key: keyNow.key, why: reason });
 }
-fs.writeFileSync(path.join(dir, 'decision.json'), JSON.stringify({ schema: 'do-it-gate-decision/1', run_id: manifest.run_id, files: decision }));
-fs.writeFileSync(path.join(dir, 'run-list.json'), JSON.stringify({ schema: 'do-it-gate-run-list/1', run_id: manifest.run_id, files: out.map((o) => o.file), entries: out }));
+fs.writeFileSync(path.join(dir, 'decision.json'), JSON.stringify({ schema: 'do-it-gate-decision/1', run_id: manifest.run_id, files: decision }) + '\n');
+fs.writeFileSync(path.join(dir, 'run-list.json'), JSON.stringify({ schema: 'do-it-gate-run-list/1', run_id: manifest.run_id, files: out.map((o) => o.file), entries: out }) + '\n');

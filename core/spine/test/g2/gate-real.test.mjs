@@ -21,6 +21,14 @@ function jestMissing() {
   return null;
 }
 
+// node_modules of the installed jest (DO_IT_REAL_JEST), linked into each temp repository so jest resolves its own
+// environment, sequencer and transforms there (the repository itself installs nothing).
+function realNodeModules() {
+  const real = fs.realpathSync(process.env.DO_IT_REAL_JEST);
+  const i = real.lastIndexOf(path.sep + 'node_modules' + path.sep);
+  return i < 0 ? null : real.slice(0, i) + path.sep + 'node_modules';
+}
+
 function notVerified(t, id, why) {
   t.diagnostic('IMPLEMENTED-NOT-VERIFIED: ' + id + ' ' + why);
   process.stdout.write('# IMPLEMENTED-NOT-VERIFIED: ' + id + ' ' + why + '\n');
@@ -41,7 +49,7 @@ function jestRepo(t, files) {
   git(dir, env0, ['config', 'user.name', 'T']);
   fs.writeFileSync(path.join(dir, '.gitignore'), '.do-it/\nnode_modules/\n');
   fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ name: 'g2-jest-fixture', private: true }) + '\n');
-  fs.writeFileSync(path.join(dir, 'sequencer.cjs'), "const Seq = require(process.env.G2_JEST_SEQUENCER);\nclass Alpha extends Seq { sort(tests) { return tests.slice().sort((a, b) => (a.path < b.path ? -1 : 1)); } }\nmodule.exports = Alpha;\n");
+  fs.writeFileSync(path.join(dir, 'sequencer.cjs'), "const Seq = require('@jest/test-sequencer').default;\nclass Alpha extends Seq { sort(tests) { return tests.slice().sort((a, b) => (a.path < b.path ? -1 : 1)); } }\nmodule.exports = Alpha;\n");
   fs.writeFileSync(path.join(dir, 'jest.config.js'), "module.exports = { testEnvironment: 'node', testMatch: ['<rootDir>/src/**/*.spec.js'], testSequencer: '<rootDir>/sequencer.cjs' };\n");
   fs.mkdirSync(path.join(dir, 'src'), { recursive: true });
   for (let i = 1; i <= 30; i++) {
@@ -50,9 +58,8 @@ function jestRepo(t, files) {
   }
   git(dir, env0, ['add', '-A']);
   git(dir, env0, ['commit', '-q', '-m', 'fixture']);
-  const jestBin = process.env.DO_IT_REAL_JEST;
-  const seq = path.join(path.dirname(fs.realpathSync(jestBin)), '..', '..', '@jest', 'test-sequencer');
-  const env = { ...env0, G2_JEST_SEQUENCER: fs.existsSync(seq) ? seq : '@jest/test-sequencer' };
+  fs.symlinkSync(realNodeModules(), path.join(dir, 'node_modules'));
+  const env = { ...env0 };
   const repo = { dir, home, env, aux: home, store: path.join(dir, '.git', 'do-it', 'gate-results') };
   repo.rowsFile = path.join(repo.store, 'results.jsonl');
   t.after(() => { for (const d of [dir, home]) fs.rmSync(d, { recursive: true, force: true }); });
@@ -86,15 +93,17 @@ test('T-V1-16 G-8 on real worktrees: worktree B reuses worktree A\'s rows from t
 test('T-V1-17 first vertical slice on installed jest: SIGKILL the gate group at 20 finish rows, resume runs exactly 10', async (t) => {
   const why = jestMissing();
   if (why) return notVerified(t, 'T-V1-17', why);
-  const repo = jestRepo(t);
+  const stall = "test('file 21', async () => { if (process.env.G2_STALL) await new Promise((r) => setTimeout(r, 120000)); expect(21).toBe(21); }, 180000);\n";
+  const repo = jestRepo(t, { [fileName(21)]: stall });
   settings(repo, { reuse: { always_run: [fileName(25)], never_reuse: [fileName(26)] } });
   const argv = ['gate', 'run', '--scope', 'push', '--runner', 'jest', '--json', '--', process.env.DO_IT_REAL_JEST, '--ci', '--runInBand'];
-  const child = cp.spawn(process.execPath, [BIN, ...argv], { cwd: repo.dir, env: repo.env, detached: true, stdio: 'ignore' });
+  const child = cp.spawn(process.execPath, [BIN, ...argv], { cwd: repo.dir, env: { ...repo.env, G2_STALL: '1' }, detached: true, stdio: 'ignore' });
   let first = null;
   const t0 = Date.now();
   for (;;) {
-    const fin = rows(repo).filter((r) => r.type === 'finish');
-    if (fin.length >= 20) { first = fin[0].run_id; break; }
+    const all = rows(repo);
+    const fin = all.filter((r) => r.type === 'finish');
+    if (fin.length >= 20 && all.some((r) => r.type === 'start' && r.file === fileName(21))) { first = fin[0].run_id; break; }
     if (Date.now() - t0 > 600000) throw new Error('20 finish rows never appeared');
     await new Promise((r) => setTimeout(r, 50));
   }
@@ -120,13 +129,16 @@ test('T-V1-18 decide parity with A1\'s harness on the jest-30 fixture', (t) => {
   const home = tmp('dit-g2-j30-home-');
   t.after(() => { for (const d of [dir, home]) fs.rmSync(d, { recursive: true, force: true }); });
   fs.cpSync(JEST_30, dir, { recursive: true });
-  const env = { ...baseEnv(home), DO_IT_GATE_KEEP_RUN_DIR: '1' };
+  fs.writeFileSync(path.join(dir, '.gitignore'), 'node_modules\n.do-it/\n');
+  fs.symlinkSync(realNodeModules(), path.join(dir, 'node_modules'));
+  const env = { ...baseEnv(home), DO_IT_GATE_KEEP_RUN_DIR: '1', FIXTURE_JEST_CACHE: path.join(home, 'jest-cache') };
   git(dir, env, ['init', '-q', '-b', 'main']);
   git(dir, env, ['config', 'user.email', 't@example.com']);
   git(dir, env, ['config', 'user.name', 'T']);
   git(dir, env, ['add', '-A']);
   git(dir, env, ['commit', '-q', '-m', 'fixture']);
   const repo = { dir, home, env, store: path.join(dir, '.git', 'do-it', 'gate-results') };
+  settings(repo, { reuse: { always_run: ['test/guards/**'] } });
   const go = () => gate(repo, ['gate', 'run', '--scope', 'push', '--runner', 'jest', '--', process.env.DO_IT_REAL_JEST, '--ci', '--runInBand']);
   const parity = (out) => {
     const snap = tmp('dit-g2-j30-snap-');
