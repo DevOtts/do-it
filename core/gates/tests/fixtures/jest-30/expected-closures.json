@@ -1,0 +1,116 @@
+{
+  "note": "Hand-authored forward closures (members besides the spec itself), unresolved counts and WIDE classes of the 30 specs.",
+  "closures": {
+    "test/guards/g1.spec.ts": [],
+    "test/guards/g2.spec.ts": [],
+    "test/s01.spec.ts": [
+      "src/m01.ts",
+      "src/util.ts"
+    ],
+    "test/s02.spec.ts": [
+      "src/m02.ts",
+      "src/util.ts"
+    ],
+    "test/s03.spec.ts": [
+      "src/m03.ts",
+      "src/m02.ts",
+      "src/util.ts"
+    ],
+    "test/s04.spec.ts": [
+      "src/m04.ts",
+      "src/m03.ts",
+      "src/m02.ts",
+      "src/util.ts"
+    ],
+    "test/s05.spec.ts": [
+      "src/m05.ts",
+      "src/m04.ts",
+      "src/m03.ts",
+      "src/m02.ts",
+      "src/util.ts"
+    ],
+    "test/s06.spec.ts": [
+      "src/m06.ts",
+      "src/util.ts"
+    ],
+    "test/s07.spec.ts": [
+      "src/m07.ts"
+    ],
+    "test/s08.spec.ts": [],
+    "test/s09.spec.ts": [
+      "src/m06.ts",
+      "src/util.ts"
+    ],
+    "test/s10.spec.ts": [
+      "src/m06.ts",
+      "src/util.ts"
+    ],
+    "test/s11.spec.ts": [
+      "src/m06.ts",
+      "src/util.ts"
+    ],
+    "test/s12.spec.ts": [
+      "src/m06.ts",
+      "src/util.ts"
+    ],
+    "test/s13.spec.ts": [
+      "src/m06.ts",
+      "src/util.ts"
+    ],
+    "test/s14.spec.ts": [
+      "src/m06.ts",
+      "src/util.ts"
+    ],
+    "test/s15.spec.ts": [
+      "src/m06.ts",
+      "src/util.ts"
+    ],
+    "test/s16.spec.ts": [
+      "src/m06.ts",
+      "src/util.ts"
+    ],
+    "test/s17.spec.ts": [
+      "src/m07.ts"
+    ],
+    "test/s18.spec.ts": [
+      "src/m07.ts"
+    ],
+    "test/s19.spec.ts": [
+      "src/m07.ts"
+    ],
+    "test/s20.spec.ts": [
+      "src/m07.ts"
+    ],
+    "test/s21.spec.ts": [
+      "src/m07.ts"
+    ],
+    "test/s22.spec.ts": [
+      "src/m07.ts"
+    ],
+    "test/s23.spec.ts": [
+      "src/m07.ts"
+    ],
+    "test/s24.spec.ts": [
+      "src/m07.ts"
+    ],
+    "test/s25.spec.ts": [
+      "src/shape.ts"
+    ],
+    "test/s26.spec.ts": [
+      "src/mocked-only.ts"
+    ],
+    "test/s27.spec.ts": [
+      "test/__snapshots__/s27.spec.ts.snap"
+    ],
+    "test/s28.spec.ts": []
+  },
+  "unresolved": {
+    "test/s28.spec.ts": 1
+  },
+  "wide": [
+    "test/guards/g1.spec.ts",
+    "test/guards/g2.spec.ts",
+    "test/s08.spec.ts",
+    "test/s28.spec.ts"
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "runner": "jest",
+  "version": 1,
+  "files": [
+    "reporter.cjs",
+    "filter.cjs",
+    "closure.cjs",
+    "common.cjs"
+  ],
+  "command": [
+    "{node}",
+    "node_modules/jest/bin/jest.js"
+  ],
+  "inject": [
+    "--filter={adapter}/filter.cjs",
+    "--reporters={adapter}/reporter.cjs",
+    "--passWithNoTests"
+  ],
+  "solo": [
+    "--runInBand"
+  ],
+  "manifest_env": "DO_IT_GATE_MANIFEST",
+  "decide_env": "DO_IT_GATE_DECIDE",
+  "note": "--reporters replaces the project's reporters: a project that keeps its own list adds reporter.cjs to its reporters array and drops that inject entry"
+}
