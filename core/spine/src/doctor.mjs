@@ -5,7 +5,7 @@ import { loadSettings } from './settings.mjs';
 import { DO_IT_VERSION } from './version.mjs';
 export function cmdDoctor(ctx, args) {
   const f = args.flags;
-  if (f.install) return typeof f.host === 'string' ? cmdInstallCompanions(ctx, args) : cmdInstall(ctx);
+  if (f.install) return typeof f.host === 'string' ? cmdInstallCompanions(ctx, args) : cmdInstall(ctx, args);
   if (f.migrate) return cmdMigrate(ctx);
   if (f.secrets) return doctorSecrets(ctx, args);
   const loaded = loadSettings(ctx, args.sets);

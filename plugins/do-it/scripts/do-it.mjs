@@ -590,7 +590,7 @@ function makeCtx(opts) {
 // ---- doctor.mjs ----
 function cmdDoctor(ctx, args) {
   const f = args.flags;
-  if (f.install) return typeof f.host === 'string' ? cmdInstallCompanions(ctx, args) : cmdInstall(ctx);
+  if (f.install) return typeof f.host === 'string' ? cmdInstallCompanions(ctx, args) : cmdInstall(ctx, args);
   if (f.migrate) return cmdMigrate(ctx);
   if (f.secrets) return doctorSecrets(ctx, args);
   const loaded = loadSettings(ctx, args.sets);
@@ -1273,11 +1273,13 @@ function installSource() {
   return path.join(path.dirname(self), '..', 'do-it.mjs');
 }
 
-function cmdInstall(ctx) {
+function cmdInstall(ctx, args = { flags: {} }) {
   const source = installSource();
   if (!fs.existsSync(source)) throw fail('INSTALL_NO_BUILD', 1, { message: 'run node core/spine/build.mjs first', source });
   const binDir = ctx.env.DO_IT_BIN_DIR ? path.resolve(ctx.cwd, ctx.env.DO_IT_BIN_DIR) : path.join(ctx.userHome, '.do-it', 'bin');
   const dest = path.join(binDir, 'do-it');
+  // --dry-run never touches disk: it reports the plan only (CP-04 part A, D1).
+  if (args && args.flags && args.flags['dry-run']) return { outcome: 'INSTALL_PLANNED', exit: 0, dry_run: true, bin_dir: binDir, path: dest, version: DO_IT_VERSION, source };
   fs.mkdirSync(binDir, { recursive: true });
   atomicWrite(dest, readRegularFile(source, BULK_READ_CAP));
   fs.chmodSync(dest, 0o755);
@@ -4359,7 +4361,7 @@ function gateVerify(ctx, args) {
 }
 
 // ---- version.mjs ----
-const DO_IT_VERSION = '1.0.5';
+const DO_IT_VERSION = '1.1.0';
 
 // ---- wake.mjs ----
 const NO_WAKE_TEXT = 'no wake: parked; run do-it resume after the reset';

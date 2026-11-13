@@ -1,6 +1,6 @@
 {
   "host": "claude-code",
-  "version": "1.0.5",
+  "version": "1.1.0",
   "display": "Claude Code",
   "level": "native",
   "note": "plugin, `dependencies`, hooks, native question tool",
