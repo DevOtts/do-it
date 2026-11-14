@@ -176,10 +176,16 @@ test('T-V1-18 decide parity with A1\'s harness on the jest-30 fixture', (t) => {
   const edited = d2.files.find((d) => d.decision === 'reuse').file;
   fs.appendFileSync(path.join(dir, edited), '\n// edited\n');
   const r3 = go();
-  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(r3.out.run_dir, 'run-list.json'), 'utf8')).files.sort(), [...never, edited].sort());
+  // the epic says "NEVER set plus the edited file"; any edit also changes the tree digest, so WIDE-class files run too
+  // (CONTRACT §2.2: WIDE keys carry the tree). Reading: NEVER + edited + every WIDE file, nothing else.
+  const d3 = JSON.parse(fs.readFileSync(path.join(r3.out.run_dir, 'decision.json'), 'utf8'));
+  const wide = d3.files.filter((d) => d.class === 'WIDE').map((d) => d.file);
+  const list3 = JSON.parse(fs.readFileSync(path.join(r3.out.run_dir, 'run-list.json'), 'utf8')).files.sort();
+  assert.deepEqual(list3, Array.from(new Set([...never, edited, ...wide])).sort(), 'wide: ' + wide.join(','));
+  assert.ok(list3.includes(edited));
   parity(r3.out);
   for (const o of [r1.out, r2.out, r3.out]) fs.rmSync(o.run_dir, { recursive: true, force: true });
-  t.diagnostic('T-V1-18 run2 list ' + never.join(',') + ' run3 +' + edited);
+  t.diagnostic('T-V1-18 run2 list ' + never.join(',') + ' · run3 +' + edited + ' + WIDE ' + d3.files.filter((d) => d.class === 'WIDE').map((d) => d.file).join(',') + ' · run-list bytes equal fake-decide for runs 2 and 3');
 });
 
 test('T-V2-16 README T-05 on installed jest: an order-dependent pass hidden by reuse is caught by the clean run', (t) => {
